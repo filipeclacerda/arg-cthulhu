@@ -1,0 +1,125 @@
+
+@font-face {
+  font-family: win98;
+  src: url(../../public/fonts.ttf);
+}
+
+body {
+  background-color: #008080; /* Cor de fundo do Windows 98 */
+  font-family: win98, sans-serif;
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.container {
+  background-color: #c0c0c0;
+  padding: 30px 40px;
+  padding-top: 70px;
+  position: relative;
+  width: 430px;
+  display: flex;
+  justify-content: center;
+  box-shadow: inset -1px -1px #0a0a0a, inset 1px 1px #dfdfdf, inset -2px -2px grey, inset 2px 2px #fff;
+  .title{
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    font-weight: bold;
+    right: 5px;
+    display: flex;
+    justify-content: space-between;
+    background-color: #000080;
+    .text{
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding-left: 20px;
+      .p {
+        color: #fff;
+        margin-top: 0;
+        margin-bottom: 0;
+        font-size: 20pt;
+      }
+    }
+    margin-bottom: 20px;
+  }
+  .button {
+    font-family: win98, sans-serif;
+    font-weight: bold;
+    font-size: 20pt;
+    background-position: center;
+    background-repeat: no-repeat;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    background-color: #c0c0c0;
+    box-shadow: inset -1px -1px #0a0a0a, inset 1px 1px #fff, inset -2px -2px grey, inset 2px 2px #dfdfdf;
+    &:active {
+      box-shadow: inset -1px -1px #fff, inset 1px 1px #0a0a0a, inset -2px -2px #dfdfdf, inset 2px 2px grey;
+      text-shadow: 1px 1px #222;
+    }
+    &.btn-lg {
+      width: 130px;
+    }
+  }
+  .options {
+    margin-top: 50px;
+    display: flex;
+    gap: 5px;
+    justify-content: flex-end;
+  }
+
+  .form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    flex-direction: column;
+    .formItem {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      .label{
+        width: 130px;
+        font-size: 20pt;
+      }
+    }
+  }
+  .input{
+    background-color: #fff;
+    box-shadow: inset -1px -1px #fff, inset 1px 1px grey, inset -2px -2px #dfdfdf, inset 2px 2px #0a0a0a;
+    box-sizing: border-box;
+    border: none;
+    font-family: win98, sans-serif;
+    height: 40px;
+    font-size: 28px;
+    padding: 3px 4px;
+    outline: none;
+  }
+  .body {
+    display: flex;
+    flex-direction: column;
+    .description {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 40px;
+    }
+  }
+}
+h1 {
+  font-size: 18pt;
+}
+
+.windowButtons {
+  display: flex;
+  gap: 5px;
+  margin-top: 3px;
+  margin-bottom: 3px;
+  justify-content: flex-end;
+  margin-right: 5px;
+}
