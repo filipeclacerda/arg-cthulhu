@@ -41,13 +41,14 @@ const Desktop = () => {
   const handleClickIcon = (
     ev: React.MouseEvent<HTMLDivElement, MouseEvent>
   ) => {
-    deselectIcons();
     const target = ev.target as HTMLDivElement;
     const icon = target.closest(".desktop-icon");
-    console.log(icon?.classList.value);
+    console.log(icon?.classList)
+    console.log(icon?.classList);
     if (!icon) return;
     if (icon.classList.contains("selected")) {
       createPopUp("My Computer", <div>My Computer</div>);
+      deselectIcons();
     } else {
       icon?.classList.toggle("selected");
     }
@@ -66,24 +67,6 @@ const Desktop = () => {
         </button>
       </div>
       <div id="desktop-icons" onClick={(ev) => onClickOffsideIcon(ev)}>
-        <div className="desktop-icon" onClick={(ev) => handleClickIcon(ev)}>
-          <Image
-            src="/windows-98-logo.png"
-            alt="Windows 98 Logo"
-            width={100}
-            height={80}
-          />
-          <p>My Computer</p>
-        </div>
-        <div className="desktop-icon" onClick={(ev) => handleClickIcon(ev)}>
-          <Image
-            src="/windows-98-logo.png"
-            alt="Windows 98 Logo"
-            width={100}
-            height={80}
-          />
-          <p>My Computer</p>
-        </div>
         <div className="desktop-icon" onClick={(ev) => handleClickIcon(ev)}>
           <Image
             src="/windows-98-logo.png"
