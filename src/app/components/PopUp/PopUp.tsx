@@ -34,15 +34,42 @@ export const createPopUp = (title: string, children: React.ReactNode) => {
   const popUp = document.createElement("div");
   let max = 60;
   let min = 20;
+  let offsetX = 0;
+  let offsetY = 0;
+  let isDragging = false;
   popUp.style.position = "absolute";
   popUp.style.top = Math.ceil(Math.random() * (max - min) + min) + "%";
   popUp.style.left = Math.ceil(Math.random() * (max - min) + min) + "%";
   popUp.style.transform = "translate(-50%, -50%)";
 
+  // Adicionar evento de clique para iniciar o arrasto
+  popUp.addEventListener("mousedown", (e) => {
+    isDragging = true;
+    offsetX = e.clientX - popUp.getBoundingClientRect().left;
+    offsetY = e.clientY - popUp.getBoundingClientRect().top;
+  });
+
+  // Adicionar evento de soltura para parar o arrasto
+  window.addEventListener("mouseup", () => {
+    isDragging = false;
+  });
+
+  // Adicionar evento de movimento do mouse para arrastar a pop-up
+  window.addEventListener("mousemove", (e) => {
+    if (isDragging) {
+      popUp.style.left = e.clientX - offsetX + "px";
+      popUp.style.top = e.clientY - offsetY + "px";
+    }
+  });
+
   console.log(popUp);
   popUp.id = "pop-up-" + createUuid();
   root?.appendChild(popUp);
-  createRoot(popUp).render(<PopUp title={title} id={popUp.id}>{children}</PopUp>);
+  createRoot(popUp).render(
+    <PopUp title={title} id={popUp.id}>
+      {children}
+    </PopUp>
+  );
 };
 
 export default PopUp;

@@ -9,6 +9,10 @@ body {
     bottom: 0;
     height: 40px;
     position: fixed;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-right: 25px;
     width: 100%;
 }
 #start-button {

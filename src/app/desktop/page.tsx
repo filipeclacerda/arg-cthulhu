@@ -5,6 +5,7 @@ import "../globals.scss";
 import Image from "next/image";
 import { create } from "domain";
 import { createPopUp } from "../components/PopUp/PopUp";
+import Clock from "../components/Clock/Clock";
 
 const Desktop = () => {
   const [windows, setWindows] = useState([]);
@@ -43,7 +44,7 @@ const Desktop = () => {
   ) => {
     const target = ev.target as HTMLDivElement;
     const icon = target.closest(".desktop-icon");
-    console.log(icon?.classList)
+    console.log(icon?.classList);
     console.log(icon?.classList);
     if (!icon) return;
     if (icon.classList.contains("selected")) {
@@ -65,6 +66,7 @@ const Desktop = () => {
           />
           Start
         </button>
+        <Clock />
       </div>
       <div id="desktop-icons" onClick={(ev) => onClickOffsideIcon(ev)}>
         <div className="desktop-icon" onClick={(ev) => handleClickIcon(ev)}>
