@@ -72,18 +72,6 @@ export default function Home() {
           </div>
         </form>
       </WindowComponent>
-      {/* <PopUp title="Incorrect Username or Password">
-        <div className="description">
-          <p className="p">
-            The username or password you entered is incorrect. Please try again.
-          </p>
-        </div>
-        <div className="options">
-          <button className="button btn-lg" type="button">
-            OK
-          </button>
-        </div>
-      </PopUp> */}
     </>
   );
 }

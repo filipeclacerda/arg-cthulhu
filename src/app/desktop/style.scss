@@ -34,16 +34,17 @@ body {
     border-radius: 5px;
     padding: 10px;
     z-index: 10;
+    font-size: 15pt;
     text-align: center;
     p{
-        padding: 5px;
+        margin: 0;
+        padding: 5px 10px;
     }
 }
 .desktop-icon img {
-    height: 50px;
-    margin-bottom: 5px;
-    width: 50px;
-    padding: 5px;
+    height: 60px;
+    width: 60px;
+    padding: 10px;
 }
 .desktop-icon span {
     display: block;

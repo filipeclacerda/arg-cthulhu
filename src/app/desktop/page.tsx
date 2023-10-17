@@ -3,6 +3,8 @@ import React, { useState } from "react";
 import "./style.scss";
 import "../globals.scss";
 import Image from "next/image";
+import { create } from "domain";
+import { createPopUp } from "../components/PopUp/PopUp";
 
 const Desktop = () => {
   const [windows, setWindows] = useState([]);
@@ -12,6 +14,7 @@ const Desktop = () => {
   const [desktopBackground, setDesktopBackground] = useState("");
   const [taskbar, setTaskbar] = useState([]);
   const [taskbarIcons, setTaskbarIcons] = useState([]);
+  const [clickCount, setClickCount] = useState(0);
 
   const handleClickStart = () => {
     setStartMenu(!startMenu);
@@ -41,9 +44,10 @@ const Desktop = () => {
     deselectIcons();
     const target = ev.target as HTMLDivElement;
     const icon = target.closest(".desktop-icon");
+    console.log(icon?.classList.value);
     if (!icon) return;
     if (icon.classList.contains("selected")) {
-      //todo open window
+      createPopUp("My Computer", <div>My Computer</div>);
     } else {
       icon?.classList.toggle("selected");
     }
