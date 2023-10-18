@@ -6,6 +6,7 @@ import Image from "next/image";
 import { create } from "domain";
 import { createPopUp } from "../components/PopUp/PopUp";
 import Clock from "../components/Clock/Clock";
+import StartMenu from "../components/StartMenu/StartMenu";
 
 const Desktop = () => {
   const [windows, setWindows] = useState([]);
@@ -57,15 +58,9 @@ const Desktop = () => {
   return (
     <body>
       <div id="taskbar">
-        <button id="start-button" className="button">
-          <Image
-            src="/windows-logo.png"
-            alt="Windows Logo"
-            width={28}
-            height={28}
-          />
-          Start
-        </button>
+        <div>
+          <StartMenu />
+        </div>
         <Clock />
       </div>
       <div id="desktop-icons" onClick={(ev) => onClickOffsideIcon(ev)}>

@@ -29,15 +29,16 @@ const Clock = () => {
   return (
     <div
       style={{
-        fontFamily: "Segoe UI",
         fontSize: "14px",
         width: "70px",
+        justifyContent: "center",
+        alignItems: "center",
         display: "flex",
         flexDirection: "column",
       }}
     >
-      <p style={{ margin: 0 }}>{formatDate(currentTime)}</p>
       <p style={{ margin: 0 }}>{formatTime(currentTime)}</p>
+      <p style={{ margin: 0 }}>{formatDate(currentTime)}</p>
     </div>
   );
 };
