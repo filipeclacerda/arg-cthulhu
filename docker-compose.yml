@@ -1,0 +1,9 @@
+version: '3'
+services:
+  nextjs:
+    build:
+      context: ./  # Substitua pelo caminho para o código do seu aplicativo Next.js
+    ports:
+      - "3000:3000"
+    depends_on:
+      - nodejs
