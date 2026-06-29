@@ -1,5 +1,9 @@
 import "./globals.scss";
 import type { Metadata } from "next";
+import { WindowManagerProvider } from "./context/WindowManagerContext";
+import { ProgressProvider } from "./context/ProgressContext";
+import { ZoomProvider } from "./context/ZoomContext";
+import { WindowLayer } from "./components/WindowFrame/WindowFrame";
 
 export const metadata: Metadata = {
   title: "010001001",
@@ -13,7 +17,16 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" id="root">
-      <body>{children}</body>
+      <body>
+        <ZoomProvider>
+          <ProgressProvider>
+            <WindowManagerProvider>
+              {children}
+              <WindowLayer />
+            </WindowManagerProvider>
+          </ProgressProvider>
+        </ZoomProvider>
+      </body>
     </html>
   );
 }

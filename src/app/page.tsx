@@ -3,27 +3,37 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import WindowComponent from "./components/WindowComponent/WindowComponent";
-import PopUp, { createPopUp } from "./components/PopUp/PopUp";
+import { useWindowManager } from "./context/WindowManagerContext";
+
+// Sarah Bishop's own login, left on the machine she vanished from.
+const SARAH_USERNAME = "sarah.bishop";
+const SARAH_PASSWORD = "password";
 
 export default function Home() {
+  const { openWindow } = useWindowManager();
   const [form, setForm] = useState({
-    username: "sarah.bishop",
+    username: SARAH_USERNAME,
     password: "",
   });
 
   const handleSubmit = () => {
-    if (form.username === "sarah.bishop" && form.password === "password") {
+    if (form.username === SARAH_USERNAME && form.password === SARAH_PASSWORD) {
       window.location.href = "/desktop";
     } else {
-      console.log("incorrect username or password");
-      createPopUp(
-        "Incorrect Username or Password",
-        <div className="description">
-          <p className="p">
-            The username or password you entered is incorrect. Please try again.
-          </p>
-        </div>
-      );
+      openWindow({
+        appType: "generic",
+        title: "Incorrect Username or Password",
+        props: {
+          children: (
+            <div className="description">
+              <p className="p">
+                The username or password you entered is incorrect. Please try
+                again.
+              </p>
+            </div>
+          ),
+        },
+      });
     }
   };
   return (

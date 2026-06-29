@@ -27,20 +27,27 @@ body {
     width: 100vw;
 }
 .desktop-icon {
-    border-radius: 5px;
-    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: calc(var(--ui-scale, 1) * 96px);
+    border-radius: 2px;
+    padding: calc(var(--ui-scale, 1) * 10px) calc(var(--ui-scale, 1) * 6px);
     z-index: 10;
-    font-size: 15pt;
     text-align: center;
     p{
-        margin: 0;
-        padding: 5px 10px;
+        margin: calc(var(--ui-scale, 1) * 5px) 0 0;
+        padding: calc(var(--ui-scale, 1) * 1px) calc(var(--ui-scale, 1) * 3px);
+        color: #fff;
+        font-size: calc(var(--ui-scale, 1) * 14px);
+        text-shadow: 1px 1px 1px #000;
+        line-height: 1.2;
     }
 }
 .desktop-icon img {
-    height: 60px;
-    width: 60px;
-    padding: 10px;
+    height: calc(var(--ui-scale, 1) * 46px);
+    width: calc(var(--ui-scale, 1) * 46px);
+    image-rendering: pixelated;
 }
 .desktop-icon span {
     display: block;
@@ -51,8 +58,8 @@ body {
 }
 
 .desktop-icon.selected {
-    img, p {
+    p {
         background-color: #000080;
-        color: #ffffff;
+        text-shadow: none;
     }
 }

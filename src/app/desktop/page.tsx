@@ -1,26 +1,38 @@
 "use client";
-import React, { useState } from "react";
+import React from "react";
 import "./style.scss";
 import "../globals.scss";
 import Image from "next/image";
-import { create } from "domain";
-import { createPopUp } from "../components/PopUp/PopUp";
 import Clock from "../components/Clock/Clock";
 import StartMenu from "../components/StartMenu/StartMenu";
+import { useWindowManager, AppType } from "../context/WindowManagerContext";
+
+interface DesktopApp {
+  id: string;
+  label: string;
+  appType: AppType;
+  icon: string;
+  props?: Record<string, any>;
+}
+
+const desktopApps: DesktopApp[] = [
+  {
+    id: "my-computer",
+    label: "My Computer",
+    appType: "explorer",
+    icon: "/icons/my-computer.png",
+    props: { folderId: "my-computer" },
+  },
+  {
+    id: "inbox",
+    label: "E-mail",
+    appType: "email",
+    icon: "/icons/inbox.png",
+  },
+];
 
 const Desktop = () => {
-  const [windows, setWindows] = useState([]);
-  const [startMenu, setStartMenu] = useState(false);
-  const [startMenuItems, setStartMenuItems] = useState([]);
-  const [desktopIcons, setDesktopIcons] = useState([]);
-  const [desktopBackground, setDesktopBackground] = useState("");
-  const [taskbar, setTaskbar] = useState([]);
-  const [taskbarIcons, setTaskbarIcons] = useState([]);
-  const [clickCount, setClickCount] = useState(0);
-
-  const handleClickStart = () => {
-    setStartMenu(!startMenu);
-  };
+  const { openWindow } = useWindowManager();
 
   const onClickOffsideIcon = (
     ev: React.MouseEvent<HTMLDivElement, MouseEvent>
@@ -44,15 +56,21 @@ const Desktop = () => {
     ev: React.MouseEvent<HTMLDivElement, MouseEvent>
   ) => {
     const target = ev.target as HTMLDivElement;
-    const icon = target.closest(".desktop-icon");
-    console.log(icon?.classList);
-    console.log(icon?.classList);
+    const icon = target.closest(".desktop-icon") as HTMLElement | null;
     if (!icon) return;
     if (icon.classList.contains("selected")) {
-      createPopUp("My Computer", <div>My Computer</div>);
+      const app = desktopApps.find((a) => a.id === icon.dataset.appId);
+      if (app) {
+        openWindow({
+          id: app.id,
+          appType: app.appType,
+          title: app.label,
+          props: app.props,
+        });
+      }
       deselectIcons();
     } else {
-      icon?.classList.toggle("selected");
+      icon.classList.toggle("selected");
     }
   };
   return (
@@ -64,15 +82,17 @@ const Desktop = () => {
         <Clock />
       </div>
       <div id="desktop-icons" onClick={(ev) => onClickOffsideIcon(ev)}>
-        <div className="desktop-icon" onClick={(ev) => handleClickIcon(ev)}>
-          <Image
-            src="/windows-98-logo.png"
-            alt="Windows 98 Logo"
-            width={100}
-            height={80}
-          />
-          <p>My Computer</p>
-        </div>
+        {desktopApps.map((app) => (
+          <div
+            key={app.id}
+            className="desktop-icon"
+            data-app-id={app.id}
+            onClick={(ev) => handleClickIcon(ev)}
+          >
+            <Image src={app.icon} alt={app.label} width={46} height={46} />
+            <p>{app.label}</p>
+          </div>
+        ))}
       </div>
     </body>
   );

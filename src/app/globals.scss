@@ -1,4 +1,6 @@
 
+@import "./styles/corruption";
+
 @font-face {
   font-family: win98;
   src: url(../../public/fonts.ttf);
@@ -8,7 +10,26 @@
   font-family: win98, sans-serif;
 }
 body {
-  background-color: #008080; /* Cor de fundo do Windows 98 */
+  /* Teal clássico do Windows 98, com o dither diagonal das wallpapers
+     bitmap em 256 cores em vez de uma cor chapada. */
+  background-color: #008080;
+  background-image: linear-gradient(
+      45deg,
+      rgba(255, 255, 255, 0.05) 25%,
+      transparent 25%,
+      transparent 75%,
+      rgba(255, 255, 255, 0.05) 75%
+    ),
+    linear-gradient(
+      45deg,
+      rgba(255, 255, 255, 0.05) 25%,
+      transparent 25%,
+      transparent 75%,
+      rgba(255, 255, 255, 0.05) 75%
+    ),
+    radial-gradient(ellipse at top left, rgba(0, 200, 200, 0.35), transparent 60%);
+  background-size: 8px 8px, 8px 8px, 100% 100%;
+  background-position: 0 0, 4px 4px, 0 0;
   font-family: win98, sans-serif;
   margin: 0;
   padding: 0;
@@ -21,35 +42,34 @@ body {
 
 .container {
   background-color: #c0c0c0;
-  padding: 30px 40px;
-  padding-top: 70px;
+  padding: 3px;
   position: absolute;
-  width: 430px;
+  min-width: calc(var(--ui-scale, 1) * 400px);
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   box-shadow: inset -1px -1px #0a0a0a, inset 1px 1px #dfdfdf, inset -2px -2px grey, inset 2px 2px #fff;
   .title{
-    position: absolute;
-    top: 5px;
-    left: 5px;
-    font-weight: bold;
-    right: 5px;
+    flex-shrink: 0;
     display: flex;
     justify-content: space-between;
-    background-color: #000080;
+    align-items: center;
+    background: linear-gradient(90deg, #000080 0%, #1084d0 100%);
+    padding: 3px 4px;
+    margin-bottom: 4px;
     .text{
       display: flex;
-      justify-content: center;
       align-items: center;
-      padding-left: 20px;
+      overflow: hidden;
       .p {
         color: #fff;
-        margin-top: 0;
-        margin-bottom: 0;
-        font-size: 20pt;
+        margin: 0;
+        font-size: calc(var(--ui-scale, 1) * 16px);
+        font-weight: bold;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
     }
-    margin-bottom: 20px;
   }
 }
 .button {
@@ -70,6 +90,13 @@ body {
   &.btn-lg {
     width: 130px;
   }
+}
+.windowButtons .button {
+  width: calc(var(--ui-scale, 1) * 24px);
+  height: calc(var(--ui-scale, 1) * 22px);
+  font-size: calc(var(--ui-scale, 1) * 14px);
+  font-weight: bold;
+  line-height: 1;
 }
 .options {
   margin-top: 50px;
@@ -107,6 +134,7 @@ body {
 .body {
   display: flex;
   flex-direction: column;
+  padding: calc(var(--ui-scale, 1) * 14px);
   .description {
     display: flex;
     align-items: center;
@@ -120,9 +148,6 @@ h1 {
 
 .windowButtons {
   display: flex;
-  gap: 5px;
-  margin-top: 3px;
-  margin-bottom: 3px;
+  gap: 2px;
   justify-content: flex-end;
-  margin-right: 5px;
 }
