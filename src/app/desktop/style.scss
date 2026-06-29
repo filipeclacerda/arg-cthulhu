@@ -1,9 +1,47 @@
-body {
+body.desktop-mode {
+    overflow: hidden;
+}
+
+#desktop-root {
+    position: absolute;
+    inset: 0;
     background-color: #008080;
+    background-image:
+        radial-gradient(circle at 18% 16%, rgba(255, 255, 255, 0.08), transparent 14%),
+        radial-gradient(circle at 70% 68%, rgba(0, 0, 0, 0.16), transparent 26%);
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
+    overflow: hidden;
 }
+
+.desktop-atmosphere {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background:
+        linear-gradient(115deg, transparent 0 62%, rgba(255, 255, 255, 0.06) 63%, transparent 64%),
+        radial-gradient(ellipse at 78% 12%, rgba(255, 255, 255, 0.08), transparent 18%),
+        radial-gradient(ellipse at 24% 88%, rgba(0, 0, 0, 0.2), transparent 24%);
+    opacity: 0.8;
+}
+
+.desktop-case-label {
+    position: fixed;
+    top: 18px;
+    right: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    color: rgba(255, 255, 255, 0.42);
+    font-family: win98, sans-serif;
+    font-size: calc(var(--ui-scale, 1) * 13px);
+    letter-spacing: 1px;
+    text-align: right;
+    text-shadow: 1px 1px #003838;
+    pointer-events: none;
+}
+
 #taskbar {
     background-color: #c0c0c0;
     bottom: 0;
@@ -14,6 +52,8 @@ body {
     align-items: center;
     padding-right: 25px;
     width: 100%;
+    z-index: 8000;
+    box-shadow: inset 0 1px #fff, inset 0 2px #dfdfdf, 0 -1px #0a0a0a;
 }
 
 #desktop-icons {
@@ -25,6 +65,9 @@ body {
     align-items: flex-start;
     height: 100vh;
     width: 100vw;
+    padding-top: calc(var(--ui-scale, 1) * 10px);
+    padding-left: calc(var(--ui-scale, 1) * 6px);
+    box-sizing: border-box;
 }
 .desktop-icon {
     display: flex;
@@ -35,6 +78,8 @@ body {
     padding: calc(var(--ui-scale, 1) * 10px) calc(var(--ui-scale, 1) * 6px);
     z-index: 10;
     text-align: center;
+    user-select: none;
+    transition: filter 80ms steps(2, end), transform 80ms steps(2, end);
     p{
         margin: calc(var(--ui-scale, 1) * 5px) 0 0;
         padding: calc(var(--ui-scale, 1) * 1px) calc(var(--ui-scale, 1) * 3px);
@@ -58,8 +103,101 @@ body {
 }
 
 .desktop-icon.selected {
+    img {
+        filter: drop-shadow(1px 1px 0 #fff) drop-shadow(-1px -1px 0 #000080);
+    }
+
     p {
         background-color: #000080;
         text-shadow: none;
+    }
+}
+
+.briefing-window {
+    width: calc(var(--ui-scale, 1) * 430px);
+    padding: calc(var(--ui-scale, 1) * 4px);
+
+    h2 {
+        margin: 0 0 calc(var(--ui-scale, 1) * 12px);
+        font-size: calc(var(--ui-scale, 1) * 22px);
+    }
+
+    p {
+        margin: 0 0 calc(var(--ui-scale, 1) * 12px);
+        font-size: calc(var(--ui-scale, 1) * 16px);
+        line-height: 1.35;
+    }
+
+    .briefing-kicker {
+        display: inline-block;
+        margin-bottom: calc(var(--ui-scale, 1) * 10px);
+        padding: calc(var(--ui-scale, 1) * 3px) calc(var(--ui-scale, 1) * 7px);
+        background: #000080;
+        color: #fff;
+        font-size: calc(var(--ui-scale, 1) * 12px);
+        letter-spacing: 1px;
+    }
+
+    .briefing-actions {
+        display: flex;
+        gap: calc(var(--ui-scale, 1) * 8px);
+        margin: calc(var(--ui-scale, 1) * 16px) 0;
+    }
+
+    .button {
+        width: auto;
+        height: calc(var(--ui-scale, 1) * 34px);
+        padding: 0 calc(var(--ui-scale, 1) * 14px);
+        font-size: calc(var(--ui-scale, 1) * 15px);
+    }
+
+    .briefing-footnote {
+        color: #4b0000;
+        font-size: calc(var(--ui-scale, 1) * 14px);
+        border-top: 1px solid #808080;
+        box-shadow: 0 -1px #fff;
+        padding-top: calc(var(--ui-scale, 1) * 10px);
+    }
+}
+
+.new-mail-alert {
+    width: calc(var(--ui-scale, 1) * 380px);
+    padding: calc(var(--ui-scale, 1) * 4px);
+
+    .new-mail-alert__kicker {
+        display: inline-block;
+        margin: 0 0 calc(var(--ui-scale, 1) * 10px);
+        padding: calc(var(--ui-scale, 1) * 3px) calc(var(--ui-scale, 1) * 7px);
+        color: #fff;
+        background: #8b0000;
+        font-size: calc(var(--ui-scale, 1) * 12px);
+        letter-spacing: 1px;
+        text-transform: uppercase;
+    }
+
+    h2 {
+        margin: 0 0 calc(var(--ui-scale, 1) * 10px);
+        font-size: calc(var(--ui-scale, 1) * 20px);
+        word-break: break-all;
+    }
+
+    p {
+        margin: 0 0 calc(var(--ui-scale, 1) * 14px);
+        font-size: calc(var(--ui-scale, 1) * 16px);
+        line-height: 1.35;
+    }
+
+    .button {
+        width: calc(var(--ui-scale, 1) * 130px);
+        height: calc(var(--ui-scale, 1) * 34px);
+        font-size: calc(var(--ui-scale, 1) * 15px);
+    }
+}
+
+.recovered-program-alert {
+    .new-mail-alert__kicker {
+        background: #000;
+        color: #ffb8c8;
+        text-shadow: -1px 0 rgba(255, 0, 60, 0.7), 1px 0 rgba(0, 200, 255, 0.7);
     }
 }

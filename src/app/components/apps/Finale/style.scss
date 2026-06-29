@@ -1,0 +1,80 @@
+.finale {
+  width: calc(var(--ui-scale, 1) * 540px);
+  padding: calc(var(--ui-scale, 1) * 6px);
+}
+
+.finale-terminal {
+  position: relative;
+  overflow: hidden;
+  min-height: calc(var(--ui-scale, 1) * 250px);
+  padding: calc(var(--ui-scale, 1) * 16px);
+  color: #b8ffbd;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(80, 255, 110, 0.13), transparent 36%),
+    #050b05;
+  box-shadow: inset -1px -1px #fff, inset 1px 1px #0a0a0a,
+    inset -2px -2px #808080, inset 2px 2px #000;
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      0deg,
+      rgba(255, 255, 255, 0.08) 0,
+      rgba(255, 255, 255, 0.08) 1px,
+      transparent 1px,
+      transparent 4px
+    );
+    opacity: 0.45;
+  }
+
+  pre {
+    position: relative;
+    z-index: 1;
+    white-space: pre-wrap;
+    margin: 0;
+    font-family: win98, monospace;
+    font-size: calc(var(--ui-scale, 1) * 15px);
+    line-height: 1.35;
+    text-shadow: 0 0 5px rgba(80, 255, 110, 0.65);
+  }
+}
+
+.finale-actions {
+  display: flex;
+  gap: calc(var(--ui-scale, 1) * 12px);
+  justify-content: center;
+  margin-top: calc(var(--ui-scale, 1) * 16px);
+
+  .button {
+    width: calc(var(--ui-scale, 1) * 170px);
+    height: calc(var(--ui-scale, 1) * 42px);
+    font-size: calc(var(--ui-scale, 1) * 15px);
+  }
+}
+
+.finale-caption {
+  margin: calc(var(--ui-scale, 1) * 14px) 0 0;
+  color: #444;
+  font-size: calc(var(--ui-scale, 1) * 14px);
+  font-style: italic;
+}
+
+.finale--restore .finale-terminal {
+  color: #d8f7ff;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(0, 200, 255, 0.15), transparent 36%),
+    #05070b;
+
+  pre {
+    text-shadow: -1px 0 rgba(255, 0, 60, 0.55), 1px 0 rgba(0, 200, 255, 0.55);
+  }
+}
+
+.finale--shutdown .finale-terminal {
+  min-height: calc(var(--ui-scale, 1) * 290px);
+  color: #d8d8d8;
+  background: #000;
+}

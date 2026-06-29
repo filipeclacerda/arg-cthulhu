@@ -8,6 +8,8 @@ import {
 import Explorer from "../apps/Explorer/Explorer";
 import Notepad from "../apps/Notepad/Notepad";
 import Email from "../apps/Email/Email";
+import Registration from "../apps/Registration/Registration";
+import Finale from "../apps/Finale/Finale";
 
 const renderAppContent = (win: WindowInstance) => {
   switch (win.appType) {
@@ -17,6 +19,10 @@ const renderAppContent = (win: WindowInstance) => {
       return <Notepad fileId={win.props.fileId} />;
     case "email":
       return <Email />;
+    case "registration":
+      return <Registration />;
+    case "finale":
+      return <Finale />;
     case "generic":
       return win.props.children ?? null;
     default:

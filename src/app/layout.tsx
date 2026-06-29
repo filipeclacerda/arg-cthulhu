@@ -6,8 +6,8 @@ import { ZoomProvider } from "./context/ZoomContext";
 import { WindowLayer } from "./components/WindowFrame/WindowFrame";
 
 export const metadata: Metadata = {
-  title: "010001001",
-  description: "???",
+  title: "O Arquivo de Amanhã",
+  description: "Recovered disk image — Sarah Bishop workstation",
 };
 
 export default function RootLayout({

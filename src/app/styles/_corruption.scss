@@ -32,12 +32,38 @@
   }
 }
 
-// Reusable "the desktop is wrong" effect — applied to a single window's
-// .body via a conditional `corrupted` className, so window chrome (title
-// bar, close button) stays stable and clickable while the content glitches.
+@keyframes scanline-drift {
+  0% { background-position: 0 0; }
+  100% { background-position: 0 80px; }
+}
+
+@keyframes abyss-breathe {
+  0%,
+  100% {
+    opacity: 0.1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.24;
+    transform: scale(1.035);
+  }
+}
+
+@keyframes wrong-focus {
+  0%,
+  100% {
+    filter: none;
+  }
+  50% {
+    filter: saturate(1.25) contrast(1.08);
+  }
+}
+
+// Stage 1 — applied to a single window's body via the `corrupted` className.
+// Window chrome (title bar, close button) stays stable and clickable.
 .corrupted {
   .title {
-    background-color: #4b0000;
+    background: linear-gradient(90deg, #4b0000 0%, #a00030 55%, #002b4b 100%);
   }
 
   .body {
@@ -61,4 +87,103 @@
       mix-blend-mode: screen;
     }
   }
+
+  .notepad-textarea,
+  .email-detail,
+  .explorer-view {
+    background-image: radial-gradient(
+      ellipse at 50% 0%,
+      rgba(255, 0, 60, 0.06),
+      transparent 46%
+    );
+  }
+}
+
+// Stage 2 — the clock starts remembering the wrong time. Subtle jitter on it.
+:root[data-corruption="2"],
+:root[data-corruption="3"],
+:root[data-corruption="4"] {
+  .clock {
+    animation: corruption-jitter 1200ms infinite steps(2, end);
+    text-shadow: -1px 0 rgba(255, 0, 60, 0.4), 1px 0 rgba(0, 200, 255, 0.4);
+  }
+
+  #taskbar {
+    box-shadow: inset 0 1px #fff, inset 0 2px #dfdfdf, 0 -1px #0a0a0a,
+      0 -8px 24px rgba(255, 0, 60, 0.12);
+  }
+}
+
+// Stage 3 — the whole screen wrong: scanlines + jitter on desktop icons.
+:root[data-corruption="3"],
+:root[data-corruption="4"] {
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9999;
+    background: repeating-linear-gradient(
+      0deg,
+      rgba(0, 0, 0, 0.07) 0px,
+      transparent 1px,
+      transparent 4px
+    );
+    animation: scanline-drift 3s linear infinite;
+  }
+
+  .desktop-icon {
+    animation: corruption-jitter 2400ms infinite steps(2, end);
+  }
+
+  #desktop-root::before {
+    content: "";
+    position: fixed;
+    inset: -10%;
+    pointer-events: none;
+    z-index: 1;
+    background:
+      radial-gradient(ellipse at 50% 54%, rgba(70, 0, 25, 0.26), transparent 34%),
+      radial-gradient(ellipse at 50% 54%, transparent 0 22%, rgba(0, 0, 0, 0.2) 23% 24%, transparent 25%);
+    animation: abyss-breathe 7s ease-in-out infinite;
+  }
+}
+
+// Stage 4 — full chromatic aberration. The machine is completely wrong.
+:root[data-corruption="4"] {
+  body,
+  #desktop-root,
+  .container {
+    animation: wrong-focus 3s ease-in-out infinite;
+  }
+
+  #taskbar {
+    animation: corruption-jitter 800ms infinite steps(2, end);
+  }
+
+  .title {
+    text-shadow: -2px 0 rgba(255, 0, 60, 0.5), 2px 0 rgba(0, 200, 255, 0.5);
+  }
+
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9998;
+    background: rgba(255, 0, 60, 0.03);
+    mix-blend-mode: screen;
+  }
+
+  .desktop-case-label {
+    color: rgba(255, 210, 220, 0.65);
+    text-shadow: -2px 0 rgba(255, 0, 60, 0.45), 2px 0 rgba(0, 200, 255, 0.45);
+  }
+}
+
+// The untypeable cipher input glitches when the player types.
+.input-glitch {
+  animation: corruption-jitter 60ms infinite steps(2, end);
+  color: rgba(255, 0, 60, 0.8);
+  text-shadow: -1px 0 rgba(0, 200, 255, 0.6);
 }

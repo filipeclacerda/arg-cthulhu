@@ -1,0 +1,63 @@
+.registration {
+  width: calc(var(--ui-scale, 1) * 430px);
+  padding: calc(var(--ui-scale, 1) * 6px);
+
+  .registration-kicker {
+    display: inline-block;
+    margin: 0 0 calc(var(--ui-scale, 1) * 10px);
+    padding: calc(var(--ui-scale, 1) * 3px) calc(var(--ui-scale, 1) * 7px);
+    color: #fff;
+    background: #000080;
+    font-size: calc(var(--ui-scale, 1) * 12px);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  h2 {
+    margin: 0 0 calc(var(--ui-scale, 1) * 10px);
+    font-size: calc(var(--ui-scale, 1) * 24px);
+  }
+
+  p {
+    margin: 0 0 calc(var(--ui-scale, 1) * 16px);
+    font-size: calc(var(--ui-scale, 1) * 16px);
+    line-height: 1.35;
+  }
+}
+
+.registration-fields {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--ui-scale, 1) * 10px);
+}
+
+.registration-row {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--ui-scale, 1) * 8px);
+
+  label {
+    width: calc(var(--ui-scale, 1) * 112px);
+    flex-shrink: 0;
+    font-size: calc(var(--ui-scale, 1) * 16px);
+  }
+
+  .input {
+    flex: 1;
+    height: calc(var(--ui-scale, 1) * 32px);
+    font-size: calc(var(--ui-scale, 1) * 16px);
+  }
+}
+
+.registration-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: calc(var(--ui-scale, 1) * 8px);
+  margin-top: calc(var(--ui-scale, 1) * 8px);
+
+  .button {
+    height: calc(var(--ui-scale, 1) * 34px);
+    width: calc(var(--ui-scale, 1) * 110px);
+    font-size: calc(var(--ui-scale, 1) * 15px);
+  }
+}

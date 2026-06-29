@@ -1,6 +1,8 @@
 .email {
   width: calc(var(--ui-scale, 1) * 880px);
   height: calc(var(--ui-scale, 1) * 580px);
+  max-width: calc(100vw - 70px);
+  max-height: calc(100vh - 110px);
   display: flex;
   flex-direction: column;
 
@@ -24,6 +26,7 @@
 
   .email-toolbar {
     display: flex;
+    align-items: center;
     gap: calc(var(--ui-scale, 1) * 4px);
     flex-shrink: 0;
     padding: calc(var(--ui-scale, 1) * 4px) calc(var(--ui-scale, 1) * 2px);
@@ -45,6 +48,12 @@
         box-shadow: inset -1px -1px #fff, inset 1px 1px #0a0a0a,
           inset -2px -2px #dfdfdf, inset 2px 2px grey;
       }
+    }
+
+    .email-toolbar-status {
+      margin-left: auto;
+      color: #4b4b4b;
+      font-size: calc(var(--ui-scale, 1) * 13px);
     }
   }
 
@@ -76,6 +85,11 @@
     &.selected {
       background-color: #000080;
       color: #fff;
+
+      .email-date,
+      .email-new-badge {
+        color: #fff;
+      }
     }
 
     p {
@@ -91,11 +105,36 @@
       white-space: normal;
       word-break: break-all;
     }
+
+    .email-list-row {
+      display: flex;
+      align-items: center;
+      gap: calc(var(--ui-scale, 1) * 6px);
+    }
+
+    .email-new-badge {
+      margin-left: auto;
+      padding: 1px calc(var(--ui-scale, 1) * 4px);
+      color: #8b0000;
+      border: 1px solid currentColor;
+      font-size: calc(var(--ui-scale, 1) * 10px);
+      line-height: 1.1;
+    }
+
+    .email-date {
+      margin-top: calc(var(--ui-scale, 1) * 3px);
+      color: #555;
+      font-size: calc(var(--ui-scale, 1) * 10pt);
+    }
   }
 
   .email-detail {
     flex: 1;
     overflow-y: auto;
+    background: #f7f7f7;
+    box-shadow: inset -1px -1px #fff, inset 1px 1px grey,
+      inset -2px -2px #dfdfdf, inset 2px 2px #0a0a0a;
+    padding: calc(var(--ui-scale, 1) * 12px);
 
     .email-detail-header {
       border-bottom: 1px solid #808080;
@@ -114,5 +153,24 @@
       font-size: calc(var(--ui-scale, 1) * 14pt);
       margin: 0;
     }
+  }
+
+  .email-empty,
+  .email-empty-detail {
+    padding: calc(var(--ui-scale, 1) * 12px);
+    color: #555;
+    font-size: calc(var(--ui-scale, 1) * 14px);
+  }
+
+  .email-statusbar {
+    display: flex;
+    justify-content: space-between;
+    gap: calc(var(--ui-scale, 1) * 12px);
+    flex-shrink: 0;
+    margin-top: calc(var(--ui-scale, 1) * 6px);
+    padding: calc(var(--ui-scale, 1) * 4px) calc(var(--ui-scale, 1) * 8px);
+    font-size: calc(var(--ui-scale, 1) * 13px);
+    box-shadow: inset -1px -1px #fff, inset 1px 1px grey,
+      inset -2px -2px #dfdfdf, inset 2px 2px #0a0a0a;
   }
 }

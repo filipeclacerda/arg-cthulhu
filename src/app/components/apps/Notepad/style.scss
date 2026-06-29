@@ -1,8 +1,51 @@
 .notepad {
   width: calc(var(--ui-scale, 1) * 720px);
+  height: calc(var(--ui-scale, 1) * 610px);
+  max-width: calc(100vw - 70px);
+  max-height: calc(100vh - 110px);
+  display: flex;
+  flex-direction: column;
+
+  .notepad-menubar {
+    display: flex;
+    gap: calc(var(--ui-scale, 1) * 16px);
+    padding: 0 calc(var(--ui-scale, 1) * 2px) calc(var(--ui-scale, 1) * 5px);
+    font-size: calc(var(--ui-scale, 1) * 14px);
+
+    span {
+      padding: calc(var(--ui-scale, 1) * 2px) calc(var(--ui-scale, 1) * 6px);
+
+      &:hover {
+        background-color: #000080;
+        color: #fff;
+      }
+    }
+  }
+
+  .notepad-meta {
+    display: flex;
+    align-items: center;
+    gap: calc(var(--ui-scale, 1) * 8px);
+    padding: calc(var(--ui-scale, 1) * 5px) calc(var(--ui-scale, 1) * 8px);
+    margin-bottom: calc(var(--ui-scale, 1) * 8px);
+    background: #e7e7e7;
+    border-top: 1px solid #808080;
+    border-bottom: 1px solid #fff;
+    font-size: calc(var(--ui-scale, 1) * 13px);
+
+    strong {
+      padding: 1px calc(var(--ui-scale, 1) * 5px);
+      color: #fff;
+      background: #8b0000;
+      font-size: calc(var(--ui-scale, 1) * 11px);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+  }
 
   .notepad-textarea {
-    max-height: calc(var(--ui-scale, 1) * 560px);
+    flex: 1;
+    min-height: 0;
     overflow-y: auto;
     background-color: #fff;
     box-shadow: inset -1px -1px #fff, inset 1px 1px grey,
@@ -61,5 +104,17 @@
       color: #006400;
       font-weight: bold;
     }
+  }
+
+  .notepad-statusbar {
+    display: flex;
+    justify-content: space-between;
+    gap: calc(var(--ui-scale, 1) * 12px);
+    margin-top: calc(var(--ui-scale, 1) * 10px);
+    padding: calc(var(--ui-scale, 1) * 4px) calc(var(--ui-scale, 1) * 8px);
+    color: #333;
+    font-size: calc(var(--ui-scale, 1) * 13px);
+    box-shadow: inset -1px -1px #fff, inset 1px 1px grey,
+      inset -2px -2px #dfdfdf, inset 2px 2px #0a0a0a;
   }
 }

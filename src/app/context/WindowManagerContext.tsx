@@ -7,7 +7,7 @@ import React, {
 } from "react";
 import { createUuid } from "@/app/utils/utils";
 
-export type AppType = "explorer" | "notepad" | "email" | "generic";
+export type AppType = "explorer" | "notepad" | "email" | "registration" | "finale" | "generic";
 
 export interface WindowInstance {
   id: string;
@@ -102,14 +102,17 @@ const WindowManagerContext = createContext<WindowManagerContextValue | null>(
   null
 );
 
-const randomPosition = () => ({
-  x: Math.round(
-    window.innerWidth * 0.1 + Math.random() * window.innerWidth * 0.3
-  ),
-  y: Math.round(
-    window.innerHeight * 0.1 + Math.random() * window.innerHeight * 0.3
-  ),
-});
+const randomPosition = () => {
+  // Keep even the largest apps inside a typical browser viewport. A little
+  // jitter preserves the old-Windows pile-of-dialogs feel without making the
+  // player chase windows that opened beyond the screen.
+  const maxX = Math.max(8, window.innerWidth - 960);
+  const maxY = Math.max(8, window.innerHeight - 680);
+  return {
+    x: Math.round(Math.min(maxX, 24 + Math.random() * 120)),
+    y: Math.round(Math.min(maxY, 24 + Math.random() * 70)),
+  };
+};
 
 export const WindowManagerProvider = ({
   children,
