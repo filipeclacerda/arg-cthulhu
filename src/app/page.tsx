@@ -3,6 +3,8 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import WindowComponent from "./components/WindowComponent/WindowComponent";
 import { useWindowManager } from "./context/WindowManagerContext";
+import { useProgress } from "./context/ProgressContext";
+import { ProgressStateV3, puzzleAct } from "./game/progress";
 import { resolveTokens } from "./utils/narrative";
 import "./page.scss";
 
@@ -12,15 +14,33 @@ const SARAH_PASSWORD = "password";
 
 export default function Home() {
   const { openWindow } = useWindowManager();
+  const {
+    state,
+    isHydrated,
+    newCase,
+    previewCode,
+    importCode,
+  } = useProgress();
   const [form, setForm] = useState({
     username: SARAH_USERNAME,
     password: SARAH_PASSWORD,
   });
   const [tomorrowStamp, setTomorrowStamp] = useState("--/--/----");
+  const [showImport, setShowImport] = useState(false);
+  const [caseCode, setCaseCode] = useState("");
+  const [casePreview, setCasePreview] = useState<ProgressStateV3 | null>(null);
+  const [caseError, setCaseError] = useState("");
 
   useEffect(() => {
     setTomorrowStamp(resolveTokens("{TOMORROW}"));
   }, []);
+
+  const hasExistingCase =
+    Boolean(state.playerName) ||
+    state.readFileIds.length > 0 ||
+    state.readEmailIds.length > 0 ||
+    Object.values(state.puzzles).some((puzzle) => puzzle.solvedAt) ||
+    Boolean(state.flags.registration_shown);
 
   const handleSubmit = () => {
     if (form.username === SARAH_USERNAME && form.password === SARAH_PASSWORD) {
@@ -150,7 +170,7 @@ export default function Home() {
                   className="button btn-lg entry-primary"
                   type="submit"
                 >
-                  Mount
+                  {hasExistingCase ? "Continue Case" : "Mount"}
                 </button>
               </div>
             </form>
@@ -159,6 +179,106 @@ export default function Home() {
               <strong>Warning:</strong> The mounted image contains files dated{" "}
               {tomorrowStamp}. Windows will report this as a clock error.
             </div>
+
+            {isHydrated && (
+              <div className="entry-case-actions">
+                <span>
+                  {hasExistingCase
+                    ? `Existing case: ${state.playerName || "NEXT USER"} / Act ${puzzleAct(state)}`
+                    : "No prior investigation found on this machine."}
+                </span>
+                <div>
+                  <button
+                    className="button"
+                    type="button"
+                    onClick={async () => {
+                      if (
+                        hasExistingCase &&
+                        !window.confirm(
+                          "Start a new case? The current case will be checkpointed before it is replaced."
+                        )
+                      ) {
+                        return;
+                      }
+                      await newCase();
+                    }}
+                  >
+                    New Case
+                  </button>
+                  <button
+                    className="button"
+                    type="button"
+                    onClick={() => {
+                      setShowImport((value) => !value);
+                      setCaseError("");
+                      setCasePreview(null);
+                    }}
+                  >
+                    Import Case Code
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {showImport && (
+              <div className="case-import">
+                <label htmlFor="case-code">MISK3 Case Code</label>
+                <textarea
+                  id="case-code"
+                  value={caseCode}
+                  onChange={(event) => {
+                    setCaseCode(event.target.value);
+                    setCasePreview(null);
+                    setCaseError("");
+                  }}
+                  placeholder="MISK3.payload.checksum"
+                />
+                {caseError && <p className="case-import__error">{caseError}</p>}
+                {casePreview && (
+                  <div className="case-import__preview">
+                    <strong>{casePreview.playerName || "NEXT USER"}</strong>
+                    <span>Act {puzzleAct(casePreview)}</span>
+                    <span>{new Date(casePreview.updatedAt).toLocaleString()}</span>
+                    <small>Player name and Case Notes are included in this code.</small>
+                  </div>
+                )}
+                <div className="case-import__buttons">
+                  {!casePreview ? (
+                    <button
+                      className="button"
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          setCasePreview(await previewCode(caseCode));
+                        } catch (error) {
+                          setCaseError(
+                            error instanceof Error
+                              ? error.message
+                              : "Invalid Case Code."
+                          );
+                        }
+                      }}
+                    >
+                      Verify
+                    </button>
+                  ) : (
+                    <button
+                      className="button"
+                      type="button"
+                      onClick={async () => {
+                        await importCode(caseCode);
+                        window.location.href = "/desktop";
+                      }}
+                    >
+                      Replace &amp; Continue
+                    </button>
+                  )}
+                  <button className="button" type="button" onClick={() => setShowImport(false)}>
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
           </section>
         </div>
       </WindowComponent>

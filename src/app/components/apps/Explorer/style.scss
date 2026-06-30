@@ -153,6 +153,13 @@
       color: #fff;
     }
 
+    &.selected {
+      background-color: #000080;
+      color: #fff;
+      outline: 1px dotted #fff;
+      outline-offset: -3px;
+    }
+
     &--special {
       color: #4b0000;
       font-weight: bold;

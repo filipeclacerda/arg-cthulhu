@@ -15,16 +15,28 @@ const DEFAULT_FOLDER_ICON = "/icons/folder.png";
 const FILE_ICON = "/icons/file.png";
 
 const Explorer = ({ folderId = "my-computer" }: ExplorerProps) => {
-  const { flags, corruptionStage, playerName } = useProgress();
+  const {
+    flags,
+    corruptionStage,
+    playerName,
+    discoveredEvidenceIds,
+    state,
+  } = useProgress();
   const { openWindow } = useWindowManager();
   const [currentFolderId, setCurrentFolderId] = useState(folderId);
+  const [selectedFileId, setSelectedFileId] = useState<string | null>(null);
+
+  const solvedPuzzleIds = Object.entries(state.puzzles)
+    .filter(([, progress]) => Boolean(progress.solvedAt))
+    .map(([id]) => id as keyof typeof state.puzzles);
+  const unlockContext = { flags, discoveredEvidenceIds, solvedPuzzleIds };
 
   const currentFolder = folders.find((f) => f.id === currentFolderId);
   const subfolders = folders.filter(
-    (f) => f.parentId === currentFolderId && isUnlocked(f.unlock, flags)
+    (f) => f.parentId === currentFolderId && isUnlocked(f.unlock, unlockContext)
   );
   const folderFiles = files.filter(
-    (f) => f.folderId === currentFolderId && isUnlocked(f.unlock, flags)
+    (f) => f.folderId === currentFolderId && isUnlocked(f.unlock, unlockContext)
   );
 
   // Act 3: when the rot is deep enough, the user folder takes the player's name.
@@ -55,18 +67,33 @@ const Explorer = ({ folderId = "my-computer" }: ExplorerProps) => {
   const openFile = (fileId: string) => {
     const file = files.find((f) => f.id === fileId);
     if (!file) return;
+    const appType =
+      file.kind === "image"
+        ? "image"
+        : file.kind === "audio"
+        ? "audio"
+        : "notepad";
     openWindow({
-      id: `notepad-${fileId}`,
-      appType: "notepad",
+      id: `${appType}-${fileId}`,
+      appType,
       title: file.name,
       props: {
         fileId,
-        // Stage 1+: every window in a corrupted session gets the glitch class.
         windowClassName:
-          file.raisesCorruptionTo != null || corruptionStage >= 1
-            ? "corrupted"
-            : undefined,
+          corruptionStage >= 1 ? "corrupted" : undefined,
       },
+    });
+  };
+
+  const openProperties = () => {
+    if (!selectedFileId) return;
+    const file = files.find((candidate) => candidate.id === selectedFileId);
+    if (!file) return;
+    openWindow({
+      id: `properties-${selectedFileId}`,
+      appType: "properties",
+      title: `${file.name} Properties`,
+      props: { fileId: selectedFileId },
     });
   };
 
@@ -95,6 +122,14 @@ const Explorer = ({ folderId = "my-computer" }: ExplorerProps) => {
         <button type="button" className="explorer-tool-button" disabled>
           Folders
         </button>
+        <button
+          type="button"
+          className="explorer-tool-button"
+          disabled={!selectedFileId}
+          onClick={openProperties}
+        >
+          Properties
+        </button>
         <span className="explorer-hint">Double-click to open</span>
       </div>
       <div className="explorer-address">
@@ -118,10 +153,11 @@ const Explorer = ({ folderId = "my-computer" }: ExplorerProps) => {
           {subfolders.map((folder) => (
             <div
               key={folder.id}
-              className={`explorer-item ${
-                folder.icon?.includes("special") ? "explorer-item--special" : ""
-              }`}
-              onDoubleClick={() => setCurrentFolderId(folder.id)}
+              className="explorer-item"
+              onDoubleClick={() => {
+                setSelectedFileId(null);
+                setCurrentFolderId(folder.id);
+              }}
               title="Double-click to open"
             >
               <Image
@@ -138,8 +174,9 @@ const Explorer = ({ folderId = "my-computer" }: ExplorerProps) => {
             <div
               key={file.id}
               className={`explorer-item ${
-                file.raisesCorruptionTo != null ? "explorer-item--unstable" : ""
+                selectedFileId === file.id ? "selected" : ""
               }`}
+              onClick={() => setSelectedFileId(file.id)}
               onDoubleClick={() => openFile(file.id)}
               title="Double-click to open"
             >
@@ -152,9 +189,9 @@ const Explorer = ({ folderId = "my-computer" }: ExplorerProps) => {
       <div className="explorer-statusbar">
         <span>{itemCount} object(s)</span>
         <span>
-          {currentFolder?.id === "sarah"
-            ? "Start with diary.txt, field_notes.txt, and what_i_found.txt."
-            : "Items may unlock after decoded files are submitted."}
+          {selectedFileId
+            ? "File selected. Properties may contain information not shown in the filename."
+            : "Read-only forensic image"}
         </span>
       </div>
     </div>

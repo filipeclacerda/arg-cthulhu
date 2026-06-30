@@ -3,12 +3,16 @@ export const WindowComponent = ({
   title,
   children,
   onClose,
+  onMinimize,
+  onMaximize,
   className,
   ...otherProps
 }: {
   title: string;
   children: React.ReactNode;
   onClose?: () => void;
+  onMinimize?: () => void;
+  onMaximize?: () => void;
   className?: string;
   [key: string]: any;
 }) => {
@@ -19,8 +23,8 @@ export const WindowComponent = ({
           <p className="p">{title}</p>
         </div>
         <div className="windowButtons">
-          <button className="button minimize">_</button>
-          <button className="button maximize">&#9633;</button>
+          <button className="button minimize" onClick={onMinimize} aria-label="Minimize">_</button>
+          <button className="button maximize" onClick={onMaximize} aria-label="Maximize">&#9633;</button>
           <button className="button close" onClick={onClose}>
             X
           </button>

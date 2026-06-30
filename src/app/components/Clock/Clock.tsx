@@ -4,7 +4,7 @@ import { useProgress } from "@/app/context/ProgressContext";
 import { formatGameDate, tomorrow } from "@/app/utils/narrative";
 
 const Clock = () => {
-  const { corruptionStage } = useProgress();
+  const { corruptionStage, isPuzzleSolved, collectReference } = useProgress();
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
   // Accumulated "wrongness" the clock has remembered into the future.
   const skewRef = useRef(0);
@@ -40,6 +40,14 @@ const Clock = () => {
   return (
     <div
       className="clock"
+      title={
+        isPuzzleSolved("future_log")
+          ? "Clock registry object reference: B9"
+          : "System clock"
+      }
+      onClick={() => {
+        if (isPuzzleSolved("future_log")) collectReference("B9");
+      }}
       style={{
         fontSize: "14px",
         width: "70px",

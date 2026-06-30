@@ -4,6 +4,7 @@ import { WindowManagerProvider } from "./context/WindowManagerContext";
 import { ProgressProvider } from "./context/ProgressContext";
 import { ZoomProvider } from "./context/ZoomContext";
 import { WindowLayer } from "./components/WindowFrame/WindowFrame";
+import NavigationGuard from "./components/NavigationGuard/NavigationGuard";
 
 export const metadata: Metadata = {
   title: "O Arquivo de Amanhã",
@@ -21,6 +22,7 @@ export default function RootLayout({
         <ZoomProvider>
           <ProgressProvider>
             <WindowManagerProvider>
+              <NavigationGuard />
               {children}
               <WindowLayer />
             </WindowManagerProvider>

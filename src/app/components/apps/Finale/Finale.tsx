@@ -7,19 +7,19 @@ import "./style.scss";
 type FinaleState = "choice" | "restore" | "shutdown";
 
 const Finale = () => {
-  const { setFlag, playerName } = useProgress();
+  const { chooseEnding, playerName } = useProgress();
   const [screen, setScreen] = useState<FinaleState>("choice");
 
   const ctx = { playerName };
   const tomorrowStr = formatGameDate(tomorrow());
 
   const handleRestore = () => {
-    setFlag("ending_restore");
+    chooseEnding("restore");
     setScreen("restore");
   };
 
   const handleShutdown = () => {
-    setFlag("ending_shutdown");
+    chooseEnding("shutdown");
     setScreen("shutdown");
   };
 

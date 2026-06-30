@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import "./style.scss";
 import "../globals.scss";
 import Image from "next/image";
@@ -25,16 +25,57 @@ const desktopApps: DesktopApp[] = [
     props: { folderId: "my-computer" },
   },
   {
+    id: "my-documents",
+    label: "My Documents",
+    appType: "explorer",
+    icon: "/icons/my-documents.png",
+    props: { folderId: "sarah" },
+  },
+  {
+    id: "internet-explorer",
+    label: "Internet Explorer",
+    appType: "browser",
+    icon: "/icons/internet-explorer.png",
+  },
+  {
     id: "inbox",
-    label: "E-mail",
+    label: "Outlook Express",
     appType: "email",
-    icon: "/icons/inbox.png",
+    icon: "/icons/outlook-express.png",
+  },
+  {
+    id: "recycle-bin",
+    label: "Recycle Bin",
+    appType: "recycle-bin",
+    icon: "/icons/recycle-bin.png",
   },
 ];
 
+const appIcon = (appType: AppType) => {
+  if (appType === "browser") return "/icons/internet-explorer.png";
+  if (appType === "email") return "/icons/outlook-express.png";
+  if (appType === "case-notes" || appType === "notepad") return "/icons/notepad.png";
+  if (appType === "audio") return "/icons/media-player.png";
+  if (appType === "help") return "/icons/help.png";
+  if (appType === "recycle-bin") return "/icons/recycle-bin.png";
+  return "/icons/file.png";
+};
+
 const Desktop = () => {
-  const { openWindow } = useWindowManager();
-  const { playerName, flags, isHydrated, setFlag } = useProgress();
+  const { openWindow, windows, focusWindow } = useWindowManager();
+  const {
+    playerName,
+    flags,
+    isHydrated,
+    setFlag,
+    saveStatus,
+    isReadOnly,
+    persistenceAvailable,
+    recoveredFromCheckpoint,
+    exportCode,
+  } = useProgress();
+  const [warningDismissed, setWarningDismissed] = useState(false);
+  const [caseCodeCopied, setCaseCodeCopied] = useState(false);
 
   useEffect(() => {
     document.body.classList.add("desktop-mode");
@@ -274,10 +315,40 @@ const Desktop = () => {
         <span>READ ONLY / VOL_114</span>
       </div>
       <div id="taskbar">
-        <div>
+        <div className="taskbar-left">
           <StartMenu />
+          <div className="taskbar-divider" />
+          <div className="taskbar-windows">
+            {windows.map((win) => (
+              <button
+                key={win.id}
+                className={`button taskbar-window ${
+                  win.minimized ? "taskbar-window--minimized" : ""
+                }`}
+                onClick={() => focusWindow(win.id)}
+                title={win.title}
+              >
+                <Image src={appIcon(win.appType)} alt="" width={18} height={18} />
+                <span>{win.title}</span>
+              </button>
+            ))}
+          </div>
         </div>
-        <Clock />
+        <div className="taskbar-tray">
+          <span
+            className={`save-indicator save-indicator--${saveStatus}`}
+            title={
+              isReadOnly
+                ? "Case open in another tab"
+                : persistenceAvailable
+                  ? "Archive changes retained"
+                  : "Archive is not retaining changes"
+            }
+          >
+            {isReadOnly ? "READ ONLY" : saveStatus.toUpperCase()}
+          </span>
+          <Clock />
+        </div>
       </div>
       <div id="desktop-icons" onClick={(ev) => onClickOffsideIcon(ev)}>
         {desktopApps.map((app) => (
@@ -293,6 +364,46 @@ const Desktop = () => {
           </div>
         ))}
       </div>
+      {!warningDismissed &&
+        isHydrated &&
+        (isReadOnly || !persistenceAvailable || recoveredFromCheckpoint) && (
+          <div className="archive-warning" role="status">
+            <Image src="/icons/help.png" alt="" width={34} height={34} />
+            <div>
+              <strong>
+                {isReadOnly
+                  ? "This case is already open in another window."
+                  : recoveredFromCheckpoint
+                    ? "Archive consistency check recovered an earlier checkpoint."
+                    : "Archive is not retaining changes."}
+              </strong>
+              <p>
+                {isReadOnly
+                  ? "This copy is read-only. Close the other tab before continuing."
+                  : "Export a Case Code if you want a portable copy of your notes and progress."}
+              </p>
+            </div>
+            {!isReadOnly && (
+              <button
+                className="button"
+                onClick={async () => {
+                  const code = await exportCode();
+                  await navigator.clipboard.writeText(code);
+                  setCaseCodeCopied(true);
+                }}
+              >
+                {caseCodeCopied ? "Copied" : "Copy Case Code"}
+              </button>
+            )}
+            <button
+              className="button archive-warning__close"
+              aria-label="Dismiss"
+              onClick={() => setWarningDismissed(true)}
+            >
+              ×
+            </button>
+          </div>
+        )}
     </main>
   );
 };

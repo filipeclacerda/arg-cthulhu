@@ -7,7 +7,24 @@ import React, {
 } from "react";
 import { createUuid } from "@/app/utils/utils";
 
-export type AppType = "explorer" | "notepad" | "email" | "registration" | "finale" | "generic";
+export type AppType =
+  | "explorer"
+  | "notepad"
+  | "email"
+  | "registration"
+  | "finale"
+  | "browser"
+  | "image"
+  | "audio"
+  | "cipher-lab"
+  | "case-notes"
+  | "properties"
+  | "help"
+  | "calculator"
+  | "paint"
+  | "system-properties"
+  | "recycle-bin"
+  | "generic";
 
 export interface WindowInstance {
   id: string;
@@ -16,6 +33,8 @@ export interface WindowInstance {
   props: Record<string, any>;
   position: { x: number; y: number };
   zIndex: number;
+  minimized: boolean;
+  maximized: boolean;
 }
 
 interface WindowManagerState {
@@ -24,9 +43,14 @@ interface WindowManagerState {
 }
 
 type Action =
-  | { type: "OPEN_WINDOW"; window: Omit<WindowInstance, "zIndex"> }
+  | {
+      type: "OPEN_WINDOW";
+      window: Omit<WindowInstance, "zIndex" | "minimized" | "maximized">;
+    }
   | { type: "CLOSE_WINDOW"; id: string }
   | { type: "FOCUS_WINDOW"; id: string }
+  | { type: "TOGGLE_MINIMIZE"; id: string }
+  | { type: "TOGGLE_MAXIMIZE"; id: string }
   | { type: "MOVE_WINDOW"; id: string; x: number; y: number };
 
 const initialState: WindowManagerState = { windows: [], nextZIndex: 10 };
@@ -42,7 +66,9 @@ function reducer(
         return {
           ...state,
           windows: state.windows.map((w) =>
-            w.id === action.window.id ? { ...w, zIndex: state.nextZIndex } : w
+            w.id === action.window.id
+              ? { ...w, minimized: false, zIndex: state.nextZIndex }
+              : w
           ),
           nextZIndex: state.nextZIndex + 1,
         };
@@ -51,7 +77,12 @@ function reducer(
         ...state,
         windows: [
           ...state.windows,
-          { ...action.window, zIndex: state.nextZIndex },
+          {
+            ...action.window,
+            minimized: false,
+            maximized: false,
+            zIndex: state.nextZIndex,
+          },
         ],
         nextZIndex: state.nextZIndex + 1,
       };
@@ -65,9 +96,27 @@ function reducer(
       return {
         ...state,
         windows: state.windows.map((w) =>
-          w.id === action.id ? { ...w, zIndex: state.nextZIndex } : w
+          w.id === action.id
+            ? { ...w, minimized: false, zIndex: state.nextZIndex }
+            : w
         ),
         nextZIndex: state.nextZIndex + 1,
+      };
+    case "TOGGLE_MINIMIZE":
+      return {
+        ...state,
+        windows: state.windows.map((w) =>
+          w.id === action.id ? { ...w, minimized: !w.minimized } : w
+        ),
+      };
+    case "TOGGLE_MAXIMIZE":
+      return {
+        ...state,
+        windows: state.windows.map((w) =>
+          w.id === action.id
+            ? { ...w, minimized: false, maximized: !w.maximized }
+            : w
+        ),
       };
     case "MOVE_WINDOW":
       return {
@@ -95,6 +144,8 @@ interface WindowManagerContextValue {
   openWindow: (options: OpenWindowOptions) => void;
   closeWindow: (id: string) => void;
   focusWindow: (id: string) => void;
+  toggleMinimize: (id: string) => void;
+  toggleMaximize: (id: string) => void;
   moveWindow: (id: string, x: number, y: number) => void;
 }
 
@@ -148,6 +199,14 @@ export const WindowManagerProvider = ({
       dispatch({ type: "MOVE_WINDOW", id, x, y }),
     []
   );
+  const toggleMinimize = useCallback(
+    (id: string) => dispatch({ type: "TOGGLE_MINIMIZE", id }),
+    []
+  );
+  const toggleMaximize = useCallback(
+    (id: string) => dispatch({ type: "TOGGLE_MAXIMIZE", id }),
+    []
+  );
 
   return (
     <WindowManagerContext.Provider
@@ -156,6 +215,8 @@ export const WindowManagerProvider = ({
         openWindow,
         closeWindow,
         focusWindow,
+        toggleMinimize,
+        toggleMaximize,
         moveWindow,
       }}
     >

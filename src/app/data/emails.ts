@@ -9,6 +9,9 @@ export interface VEmail {
   /** Supports {TOMORROW}, {TODAY}, {PLAYER} tokens. */
   body: string;
   unlock: UnlockCondition;
+  evidenceId?: string;
+  messageId?: string;
+  reference?: string;
 }
 
 // Chronological order of events. The Email app shows them sorted by unlock
@@ -21,6 +24,7 @@ export const emails: VEmail[] = [
     subject: "Found this. Thought you asked for it.",
     date: "{TOMORROW}",
     unlock: { type: "always" },
+    evidenceId: "tom_delivery",
     body: `I found the computer that belonged to Sarah Bishop.
 
 You asked me for a copy. I don't remember when we spoke.
@@ -58,6 +62,7 @@ Call me back.
     subject: "Re: Re: Re: are you even alive",
     date: "2026-03-10",
     unlock: { type: "always" },
+    evidenceId: "em_warning",
     body: `Sarah,
 
 I know you're reading these. Your read receipts are on and you forget every single time.
@@ -78,6 +83,7 @@ P.S. Dad's birthday is the 22nd. Don't let the research eat that too.`,
     subject: "Your order has shipped — Lot 114",
     date: "2026-02-28",
     unlock: { type: "always" },
+    evidenceId: "lot_114_order",
     body: `Dear Ms. Bishop,
 
 Your order (Lot 114, "Bound MS., provenance unknown, ex-library Whateley") has shipped via courier as requested, no signature required per your instructions.
@@ -132,6 +138,9 @@ If anyone else is reading this, I don't know who has this laptop now, or why, bu
     subject: "you opened it",
     date: "{TOMORROW}",
     unlock: { type: "flag", flag: "sarah_email_arrived" },
+    evidenceId: "sarah_live_email",
+    messageId: "<SB-TOMORROW-0314-E7@miskatonic-research.org>",
+    reference: "E7",
     body: `I know you opened it because I watched you open it. I'm watching from the other side of the date on that file.
 
 It doesn't hurt. I need you to know that because you're going to be afraid in a moment and I want you to know it doesn't hurt.

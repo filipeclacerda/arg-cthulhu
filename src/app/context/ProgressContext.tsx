@@ -1,222 +1,353 @@
 "use client";
+
 import React, {
   createContext,
+  useCallback,
   useContext,
   useEffect,
+  useMemo,
   useReducer,
+  useRef,
   useState,
 } from "react";
 import {
-  ABSENCE_THRESHOLD_MS,
-  MAX_CORRUPTION_STAGE,
-  SARAH_EMAIL_STAGE,
-} from "../utils/narrative";
+  createInitialProgress,
+  EndingId,
+  firstUnsolvedPuzzle,
+  GameEvent,
+  ProgressStateV3,
+  puzzleCorruptionStage,
+  PuzzleId,
+} from "../game/progress";
+import { reduceGameEvent } from "../game/puzzles";
+import {
+  clearCurrentProgress,
+  exportCaseCode,
+  importCaseCode,
+  loadProgress,
+  persistProgress,
+} from "../game/persistence";
+import { ABSENCE_THRESHOLD_MS } from "../utils/narrative";
 
-interface ProgressState {
-  version: 2;
-  flags: Record<string, boolean>;
-  readFileIds: string[];
-  readEmailIds: string[];
-  /** 0 = pristine .. 4 = the whole machine is wrong. See narrative.ts. */
-  corruptionStage: number;
-  /** Captured diegetically early; weaponized in Act 3. null until registered. */
-  playerName: string | null;
-  /** Epoch ms. Lets the desktop "remember" the player across sessions. */
-  firstSeenAt: number | null;
-  lastSeenAt: number | null;
-}
+type SaveStatus = "loading" | "saving" | "saved" | "error" | "readonly";
 
-const STORAGE_KEY = "arg-cthulhu-progress";
-const SEEN_INTERVAL_MS = 15 * 1000;
-
-const initialState: ProgressState = {
-  version: 2,
-  flags: {},
-  readFileIds: [],
-  readEmailIds: [],
-  corruptionStage: 0,
-  playerName: null,
-  firstSeenAt: null,
-  lastSeenAt: null,
-};
-
-/**
- * Brings any persisted blob up to the current shape. v1 saves (flags + read
- * arrays only) keep their progress — testers don't get wiped on upgrade.
- */
-function migrate(parsed: any): ProgressState | null {
-  if (!parsed || typeof parsed !== "object") return null;
-  if (parsed.version !== 1 && parsed.version !== 2) return null;
-  return {
-    ...initialState,
-    ...parsed,
-    version: 2,
-    flags: parsed.flags ?? {},
-    readFileIds: parsed.readFileIds ?? [],
-    readEmailIds: parsed.readEmailIds ?? [],
-  };
-}
-
-type Action =
-  | { type: "SET_FLAG"; flag: string }
-  | { type: "MARK_FILE_READ"; fileId: string }
-  | { type: "MARK_EMAIL_READ"; emailId: string }
-  | { type: "RAISE_CORRUPTION"; stage: number }
-  | { type: "SET_PLAYER_NAME"; name: string | null }
-  | { type: "TOUCH_SEEN"; now: number }
-  | { type: "RESET" }
-  | { type: "HYDRATE"; state: ProgressState };
-
-function reducer(state: ProgressState, action: Action): ProgressState {
-  switch (action.type) {
-    case "SET_FLAG":
-      if (state.flags[action.flag]) return state;
-      return { ...state, flags: { ...state.flags, [action.flag]: true } };
-    case "MARK_FILE_READ":
-      if (state.readFileIds.includes(action.fileId)) return state;
-      return { ...state, readFileIds: [...state.readFileIds, action.fileId] };
-    case "MARK_EMAIL_READ":
-      if (state.readEmailIds.includes(action.emailId)) return state;
-      return {
-        ...state,
-        readEmailIds: [...state.readEmailIds, action.emailId],
-      };
-    case "RAISE_CORRUPTION": {
-      const next = Math.min(
-        MAX_CORRUPTION_STAGE,
-        Math.max(state.corruptionStage, action.stage)
-      );
-      if (next === state.corruptionStage) return state;
-      // Some flags are downstream of how deep the rot has gone: once the clock
-      // starts skewing, Sarah's live email "arrives".
-      const flags = { ...state.flags };
-      if (next >= SARAH_EMAIL_STAGE) flags.sarah_email_arrived = true;
-      return { ...state, corruptionStage: next, flags };
-    }
-    case "SET_PLAYER_NAME":
-      return { ...state, playerName: action.name };
-    case "TOUCH_SEEN":
-      return {
-        ...state,
-        firstSeenAt: state.firstSeenAt ?? action.now,
-        lastSeenAt: action.now,
-      };
-    case "RESET":
-      return { ...initialState };
-    case "HYDRATE":
-      return action.state;
-    default:
-      return state;
-  }
+interface DispatchResult {
+  solvedPuzzle?: PuzzleId;
+  sequenceFault?: boolean;
+  commandAccepted?: boolean;
 }
 
 interface ProgressContextValue {
+  state: ProgressStateV3;
   isHydrated: boolean;
+  isReadOnly: boolean;
+  persistenceAvailable: boolean;
+  recoveredFromCheckpoint: boolean;
+  saveStatus: SaveStatus;
   flags: Record<string, boolean>;
   readFileIds: string[];
   readEmailIds: string[];
+  discoveredEvidenceIds: string[];
+  visitedPageIds: string[];
+  collectedReferences: string[];
   corruptionStage: number;
   playerName: string | null;
-  /** Real time (ms) the player was away when this session started. */
   absenceMs: number;
+  caseNotes: string;
+  activePuzzle: PuzzleId | null;
+  dispatchGameEvent: (event: GameEvent) => DispatchResult;
   setFlag: (flag: string) => void;
   markFileRead: (fileId: string) => void;
   markEmailRead: (emailId: string) => void;
-  raiseCorruption: (stage: number) => void;
+  discoverEvidence: (evidenceId: string, resourceId?: string) => void;
+  visitPage: (pageId: string) => void;
+  solvePuzzle: (puzzleId: PuzzleId) => void;
+  attemptPuzzle: (puzzleId: PuzzleId) => void;
+  unlockHint: (puzzleId: PuzzleId, level?: number) => void;
+  collectReference: (reference: string) => void;
+  recordSequenceAction: (action: string) => DispatchResult;
+  runCommand: (command: string) => DispatchResult;
+  chooseEnding: (ending: EndingId) => void;
   setPlayerName: (name: string | null) => void;
-  reset: () => void;
+  setCaseNotes: (notes: string) => void;
+  newCase: () => Promise<void>;
+  exportCode: () => Promise<string>;
+  previewCode: (code: string) => Promise<ProgressStateV3>;
+  importCode: (code: string) => Promise<ProgressStateV3>;
   hasFlag: (flag: string) => boolean;
+  hasEvidence: (evidenceId: string) => boolean;
+  isPuzzleSolved: (puzzleId: PuzzleId) => boolean;
 }
 
+const SSR_STATE = createInitialProgress(0, "pending");
 const ProgressContext = createContext<ProgressContextValue | null>(null);
+
+const reducer = (state: ProgressStateV3, event: GameEvent): ProgressStateV3 =>
+  reduceGameEvent(state, event).state;
+
+const milestoneSignature = (state: ProgressStateV3): string =>
+  `${Object.values(state.puzzles)
+    .map((puzzle) => puzzle.solvedAt ?? 0)
+    .join(":")}:${state.ending ?? ""}:${state.caseId}`;
 
 export const ProgressProvider = ({
   children,
 }: {
   children: React.ReactNode;
 }) => {
-  const [state, dispatch] = useReducer(reducer, initialState);
-  const [absenceMs, setAbsenceMs] = useState(0);
+  const [state, dispatch] = useReducer(reducer, SSR_STATE);
+  const stateRef = useRef(state);
   const [isHydrated, setIsHydrated] = useState(false);
+  const [isReadOnly, setIsReadOnly] = useState(false);
+  const [persistenceAvailable, setPersistenceAvailable] = useState(true);
+  const [recoveredFromCheckpoint, setRecoveredFromCheckpoint] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>("loading");
+  const previousMilestone = useRef("");
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const channelRef = useRef<BroadcastChannel | null>(null);
 
-  // Mount-only: reading localStorage during initial render would mismatch
-  // the server-rendered HTML (App Router renders this tree on the server first).
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const migrated = migrate(JSON.parse(raw));
-        if (migrated) {
-          // Measure the gap BEFORE we overwrite lastSeenAt — this is the
-          // "while you were gone" beat. The desktop kept time; you didn't.
-          const now = Date.now();
-          const gap = migrated.lastSeenAt ? now - migrated.lastSeenAt : 0;
-          dispatch({ type: "HYDRATE", state: migrated });
-          if (gap > ABSENCE_THRESHOLD_MS) {
-            setAbsenceMs(gap);
-            dispatch({ type: "SET_FLAG", flag: "returned_after_absence" });
-          }
-        }
-      }
-    } catch {
-      // localStorage unavailable (private mode, etc.) — play without persistence.
-    }
-    dispatch({ type: "TOUCH_SEEN", now: Date.now() });
-    setIsHydrated(true);
-  }, []);
+    stateRef.current = state;
+  }, [state]);
 
-  // Keep a heartbeat so the next visit can tell how long the player was away.
   useEffect(() => {
-    const id = setInterval(
-      () => dispatch({ type: "TOUCH_SEEN", now: Date.now() }),
-      SEEN_INTERVAL_MS
-    );
-    const onLeave = () => dispatch({ type: "TOUCH_SEEN", now: Date.now() });
-    window.addEventListener("beforeunload", onLeave);
+    let cancelled = false;
+    loadProgress().then((result) => {
+      if (cancelled) return;
+      const now = Date.now();
+      const gap = result.state.lastSeenAt ? now - result.state.lastSeenAt : 0;
+      const hydrated = {
+        ...result.state,
+        absenceMs: gap > ABSENCE_THRESHOLD_MS ? gap : 0,
+        flags: {
+          ...result.state.flags,
+          ...(gap > ABSENCE_THRESHOLD_MS
+            ? { returned_after_absence: true }
+            : {}),
+        },
+        lastSeenAt: now,
+      };
+      dispatch({ type: "HYDRATE", state: hydrated });
+      setPersistenceAvailable(result.persistenceAvailable);
+      setRecoveredFromCheckpoint(result.recovered);
+      previousMilestone.current = milestoneSignature(hydrated);
+      setIsHydrated(true);
+      setSaveStatus("saved");
+    });
     return () => {
-      clearInterval(id);
-      window.removeEventListener("beforeunload", onLeave);
+      cancelled = true;
     };
   }, []);
 
   useEffect(() => {
-    if (!isHydrated) return;
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    } catch {
-      // ignore — see above.
-    }
-  }, [isHydrated, state]);
-
-  // Expose the rot level to CSS the same way ZoomContext exposes --ui-scale,
-  // so stylesheets can react with [data-corruption="N"] selectors.
-  useEffect(() => {
-    document.documentElement.dataset.corruption = String(state.corruptionStage);
-  }, [state.corruptionStage]);
-
-  const value: ProgressContextValue = {
-    isHydrated,
-    flags: state.flags,
-    readFileIds: state.readFileIds,
-    readEmailIds: state.readEmailIds,
-    corruptionStage: state.corruptionStage,
-    playerName: state.playerName,
-    absenceMs,
-    setFlag: (flag) => dispatch({ type: "SET_FLAG", flag }),
-    markFileRead: (fileId) => dispatch({ type: "MARK_FILE_READ", fileId }),
-    markEmailRead: (emailId) => dispatch({ type: "MARK_EMAIL_READ", emailId }),
-    raiseCorruption: (stage) => dispatch({ type: "RAISE_CORRUPTION", stage }),
-    setPlayerName: (name) => dispatch({ type: "SET_PLAYER_NAME", name }),
-    reset: () => {
+    if (!isHydrated || isReadOnly) return;
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    setSaveStatus("saving");
+    const signature = milestoneSignature(state);
+    const checkpoint = signature !== previousMilestone.current;
+    saveTimer.current = setTimeout(async () => {
       try {
-        localStorage.removeItem(STORAGE_KEY);
+        const destination = await persistProgress(state, checkpoint);
+        setPersistenceAvailable(destination === "indexeddb");
+        previousMilestone.current = signature;
+        setSaveStatus("saved");
       } catch {
-        // ignore
+        setSaveStatus("error");
       }
-      dispatch({ type: "RESET" });
+    }, checkpoint ? 0 : 300);
+    return () => {
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+    };
+  }, [isHydrated, isReadOnly, state]);
+
+  useEffect(() => {
+    if (!isHydrated || isReadOnly) return;
+    const flush = () => {
+      void persistProgress(
+        {
+          ...stateRef.current,
+          lastSeenAt: Date.now(),
+          updatedAt: Date.now(),
+        },
+        false
+      );
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") flush();
+    };
+    window.addEventListener("pagehide", flush);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("pagehide", flush);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [isHydrated, isReadOnly]);
+
+  useEffect(() => {
+    if (!isHydrated || typeof BroadcastChannel === "undefined") return;
+    const channel = new BroadcastChannel("miskatonic-case-session");
+    channelRef.current = channel;
+    const tabId = crypto.randomUUID?.() ?? Math.random().toString(36);
+    channel.onmessage = (message) => {
+      if (!message.data || message.data.caseId !== stateRef.current.caseId) return;
+      if (message.data.type === "HELLO" && !isReadOnly) {
+        channel.postMessage({
+          type: "ACTIVE",
+          caseId: stateRef.current.caseId,
+          tabId,
+        });
+      }
+      if (message.data.type === "ACTIVE" && message.data.tabId !== tabId) {
+        setIsReadOnly(true);
+        setSaveStatus("readonly");
+      }
+    };
+    channel.postMessage({
+      type: "HELLO",
+      caseId: state.caseId,
+      tabId,
+    });
+    return () => {
+      channel.close();
+      channelRef.current = null;
+    };
+  }, [isHydrated, isReadOnly, state.caseId]);
+
+  useEffect(() => {
+    if (!isHydrated || isReadOnly) return;
+    let lastTick = Date.now();
+    const timer = window.setInterval(() => {
+      if (document.visibilityState !== "visible") {
+        lastTick = Date.now();
+        return;
+      }
+      const now = Date.now();
+      const puzzleId = firstUnsolvedPuzzle(stateRef.current);
+      if (puzzleId) {
+        dispatch({
+          type: "ADD_ACTIVE_TIME",
+          puzzleId,
+          elapsedMs: now - lastTick,
+        });
+      }
+      lastTick = now;
+    }, 30_000);
+    return () => window.clearInterval(timer);
+  }, [isHydrated, isReadOnly]);
+
+  useEffect(() => {
+    document.documentElement.dataset.corruption = String(
+      puzzleCorruptionStage(state.puzzles)
+    );
+  }, [state.puzzles]);
+
+  const dispatchGameEvent = useCallback(
+    (event: GameEvent): DispatchResult => {
+      if (isReadOnly) return {};
+      const result = reduceGameEvent(stateRef.current, event);
+      dispatch(event);
+      return {
+        solvedPuzzle: result.solvedPuzzle,
+        sequenceFault: result.sequenceFault,
+        commandAccepted: result.commandAccepted,
+      };
     },
-    hasFlag: (flag) => !!state.flags[flag],
-  };
+    [isReadOnly]
+  );
+
+  const newCase = useCallback(async () => {
+    if (isReadOnly) return;
+    await persistProgress(stateRef.current, true);
+    await clearCurrentProgress();
+    const next = createInitialProgress();
+    previousMilestone.current = milestoneSignature(next);
+    dispatch({ type: "RESET", state: next });
+  }, [isReadOnly]);
+
+  const importCode = useCallback(
+    async (code: string) => {
+      if (isReadOnly) throw new Error("This case is open in another tab.");
+      await persistProgress(stateRef.current, true);
+      const imported = await importCaseCode(code);
+      dispatch({ type: "HYDRATE", state: imported });
+      await persistProgress(imported, true);
+      return imported;
+    },
+    [isReadOnly]
+  );
+
+  const value = useMemo<ProgressContextValue>(
+    () => ({
+      state,
+      isHydrated,
+      isReadOnly,
+      persistenceAvailable,
+      recoveredFromCheckpoint,
+      saveStatus,
+      flags: state.flags,
+      readFileIds: state.readFileIds,
+      readEmailIds: state.readEmailIds,
+      discoveredEvidenceIds: state.discoveredEvidenceIds,
+      visitedPageIds: state.visitedPageIds,
+      collectedReferences: state.collectedReferences,
+      corruptionStage: puzzleCorruptionStage(state.puzzles),
+      playerName: state.playerName,
+      absenceMs: state.absenceMs,
+      caseNotes: state.caseNotes,
+      activePuzzle: firstUnsolvedPuzzle(state),
+      dispatchGameEvent,
+      setFlag: (flag) => dispatchGameEvent({ type: "SET_FLAG", flag }),
+      markFileRead: (fileId) =>
+        dispatchGameEvent({ type: "MARK_FILE_READ", fileId }),
+      markEmailRead: (emailId) =>
+        dispatchGameEvent({ type: "MARK_EMAIL_READ", emailId }),
+      discoverEvidence: (evidenceId, resourceId) =>
+        dispatchGameEvent({
+          type: "DISCOVER_EVIDENCE",
+          evidenceId,
+          resourceId,
+        }),
+      visitPage: (pageId) =>
+        dispatchGameEvent({ type: "VISIT_PAGE", pageId }),
+      solvePuzzle: (puzzleId) =>
+        dispatchGameEvent({ type: "SOLVE_PUZZLE", puzzleId }),
+      attemptPuzzle: (puzzleId) =>
+        dispatchGameEvent({ type: "ATTEMPT_PUZZLE", puzzleId }),
+      unlockHint: (puzzleId, level) =>
+        dispatchGameEvent({ type: "UNLOCK_HINT", puzzleId, level }),
+      collectReference: (reference) =>
+        dispatchGameEvent({ type: "COLLECT_REFERENCE", reference }),
+      recordSequenceAction: (action) =>
+        dispatchGameEvent({ type: "FUTURE_SEQUENCE_ACTION", action }),
+      runCommand: (command) =>
+        dispatchGameEvent({ type: "RUN_COMMAND", command }),
+      chooseEnding: (ending) =>
+        dispatchGameEvent({ type: "CHOOSE_ENDING", ending }),
+      setPlayerName: (name) =>
+        dispatchGameEvent({ type: "SET_PLAYER_NAME", name }),
+      setCaseNotes: (notes) =>
+        dispatchGameEvent({ type: "SET_CASE_NOTES", notes }),
+      newCase,
+      exportCode: () => exportCaseCode(stateRef.current),
+      previewCode: (code) => importCaseCode(code),
+      importCode,
+      hasFlag: (flag) => Boolean(state.flags[flag]),
+      hasEvidence: (evidenceId) =>
+        state.discoveredEvidenceIds.includes(evidenceId),
+      isPuzzleSolved: (puzzleId) => Boolean(state.puzzles[puzzleId].solvedAt),
+    }),
+    [
+      dispatchGameEvent,
+      importCode,
+      isHydrated,
+      isReadOnly,
+      newCase,
+      persistenceAvailable,
+      recoveredFromCheckpoint,
+      saveStatus,
+      state,
+    ]
+  );
 
   return (
     <ProgressContext.Provider value={value}>
@@ -226,9 +357,9 @@ export const ProgressProvider = ({
 };
 
 export const useProgress = () => {
-  const ctx = useContext(ProgressContext);
-  if (!ctx) {
+  const context = useContext(ProgressContext);
+  if (!context) {
     throw new Error("useProgress must be used within a ProgressProvider");
   }
-  return ctx;
+  return context;
 };

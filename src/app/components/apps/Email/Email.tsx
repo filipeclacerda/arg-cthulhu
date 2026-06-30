@@ -7,10 +7,25 @@ import { useProgress } from "@/app/context/ProgressContext";
 import { resolveTokens } from "@/app/utils/narrative";
 
 const Email = () => {
-  const { markEmailRead, readEmailIds, flags, playerName, absenceMs } =
-    useProgress();
+  const {
+    markEmailRead,
+    readEmailIds,
+    flags,
+    playerName,
+    absenceMs,
+    discoveredEvidenceIds,
+    state,
+    discoverEvidence,
+    isPuzzleSolved,
+    collectReference,
+  } = useProgress();
 
-  const visibleEmails = emails.filter((e) => isUnlocked(e.unlock, flags));
+  const solvedPuzzleIds = Object.entries(state.puzzles)
+    .filter(([, progress]) => Boolean(progress.solvedAt))
+    .map(([id]) => id as keyof typeof state.puzzles);
+  const visibleEmails = emails.filter((e) =>
+    isUnlocked(e.unlock, { flags, discoveredEvidenceIds, solvedPuzzleIds })
+  );
   const visibleEmailIds = visibleEmails.map((email) => email.id).join("|");
 
   const [selectedId, setSelectedId] = useState<string | null>(
@@ -29,7 +44,14 @@ const Email = () => {
   const selected = visibleEmails.find((e) => e.id === selectedId);
 
   useEffect(() => {
-    if (selectedId) markEmailRead(selectedId);
+    if (selectedId) {
+      markEmailRead(selectedId);
+      const email = visibleEmails.find((candidate) => candidate.id === selectedId);
+      if (email?.evidenceId) discoverEvidence(email.evidenceId, email.id);
+      if (email?.reference && isPuzzleSolved("future_log")) {
+        collectReference(email.reference);
+      }
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedId]);
 
@@ -96,6 +118,11 @@ const Email = () => {
                 <p>
                   <strong>Subject:</strong> {selected.subject}
                 </p>
+                {selected.messageId && isPuzzleSolved("future_log") && (
+                  <p className="email-message-id">
+                    <strong>Message-ID:</strong> {selected.messageId}
+                  </p>
+                )}
               </div>
               <pre className="email-body">
                 {resolveTokens(selected.body, ctx)}

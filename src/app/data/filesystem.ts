@@ -1,6 +1,18 @@
+import { PuzzleId } from "../game/progress";
+
 export type UnlockCondition =
   | { type: "always" }
-  | { type: "flag"; flag: string };
+  | { type: "flag"; flag: string }
+  | { type: "puzzleSolved"; puzzleId: PuzzleId }
+  | { type: "evidenceOpened"; evidenceId: string }
+  | { type: "allOf"; conditions: UnlockCondition[] }
+  | { type: "anyOf"; conditions: UnlockCondition[] };
+
+export interface UnlockContext {
+  flags: Record<string, boolean>;
+  discoveredEvidenceIds?: string[];
+  solvedPuzzleIds?: PuzzleId[];
+}
 
 export interface VFolder {
   id: string;
@@ -15,9 +27,14 @@ export interface VFile {
   id: string;
   name: string;
   folderId: string;
-  kind: "text" | "cipher";
+  kind: "text" | "cipher" | "image" | "audio" | "help";
   content: string;
   unlock: UnlockCondition;
+  evidenceId?: string;
+  alias?: string;
+  size?: string;
+  modified?: string;
+  reference?: string;
   /** Only set for kind === "cipher". Normalized (lowercase, no spaces) expected answer. */
   answer?: string;
   /** Only set for kind === "cipher". Flag set on a correct answer; also used to gate folders. */
@@ -33,11 +50,35 @@ export interface VFile {
   setsFlagOnOpen?: string;
 }
 
+const isUnlockContext = (
+  value: UnlockContext | Record<string, boolean>
+): value is UnlockContext =>
+  typeof (value as UnlockContext).flags === "object" &&
+  (value as UnlockContext).flags !== null;
+
 export function isUnlocked(
   condition: UnlockCondition,
-  flags: Record<string, boolean>
+  contextOrFlags: UnlockContext | Record<string, boolean>
 ): boolean {
-  return condition.type === "always" || !!flags[condition.flag];
+  const context: UnlockContext = isUnlockContext(contextOrFlags)
+    ? contextOrFlags
+    : { flags: contextOrFlags };
+  switch (condition.type) {
+    case "always":
+      return true;
+    case "flag":
+      return Boolean(context.flags[condition.flag]);
+    case "puzzleSolved":
+      return Boolean(context.solvedPuzzleIds?.includes(condition.puzzleId));
+    case "evidenceOpened":
+      return Boolean(
+        context.discoveredEvidenceIds?.includes(condition.evidenceId)
+      );
+    case "allOf":
+      return condition.conditions.every((child) => isUnlocked(child, context));
+    case "anyOf":
+      return condition.conditions.some((child) => isUnlocked(child, context));
+  }
 }
 
 /** Straight substitution cipher used throughout Sarah's research notes. */
@@ -110,15 +151,13 @@ export const folders: VFolder[] = [
     id: "restricted",
     name: "RECOVERED",
     parentId: "sarah",
-    unlock: { type: "flag", flag: "cipher_1_solved" },
-    icon: "/icons/folder-special.png",
+    unlock: { type: "puzzleSolved", puzzleId: "lot_114" },
   },
   {
     id: "chapter-seven",
     name: "CHAPTER_SEVEN",
     parentId: "restricted",
-    unlock: { type: "flag", flag: "cipher_2_solved" },
-    icon: "/icons/folder-special.png",
+    unlock: { type: "puzzleSolved", puzzleId: "counting_audio" },
   },
 ];
 
@@ -130,6 +169,9 @@ export const files: VFile[] = [
     folderId: "sarah",
     kind: "text",
     unlock: { type: "always" },
+    evidenceId: "diary",
+    alias: "DIARY.TXT",
+    size: "7 KB",
     content: `RESEARCH JOURNAL — S. BISHOP
 
 Feb 24 — Em called. I let it go to voicemail again and I hate that I did. She just wants to know I'm eating. I'll call her back when this lot is catalogued. I keep saying that.
@@ -150,6 +192,7 @@ March 16 —`,
     folderId: "sarah",
     kind: "text",
     unlock: { type: "always" },
+    evidenceId: "todo",
     content: `- call Em back (actually do it)
 - coffee, lightbulbs, more paper towels
 - ask Tom to cover Thursday seminar
@@ -164,6 +207,8 @@ March 16 —`,
     folderId: "sarah",
     kind: "text",
     unlock: { type: "always" },
+    evidenceId: "miriam_1998",
+    alias: "MOM_1998.TXT",
     content: `[Recovered from Mom's old user profile. This is why I keep the machine running. Half of it only exists here.]
 
 M. BISHOP — ACCESSION NOTES, Whateley deposit, 1998
@@ -180,6 +225,8 @@ If anyone reads this after me: the counting is not a countdown. Do not finish th
     folderId: "sarah",
     kind: "text",
     unlock: { type: "always" },
+    evidenceId: "incident_report",
+    alias: "INCIDE~1.TXT",
     content: `MISKATONIC CAMPUS SECURITY — INCIDENT 2026-0316-4
 SUBJECT: Bishop, S. (faculty, Special Collections)
 
@@ -193,43 +240,79 @@ Case open. No signs of forced entry or struggle.`,
   },
   {
     id: "notes",
-    name: "field_notes.txt",
+    name: "borrower_index.txt",
     folderId: "sarah",
     kind: "text",
     unlock: { type: "always" },
-    content: `TRANSLATION KEY (copied from the margin notes, Vol. II, ch. 7)
+    evidenceId: "borrower_index",
+    alias: "BORROW~1.TXT",
+    content: `WHATELEY DEPOSIT — RESTRICTED READER INDEX
 
-a ᚨ   b ᛒ   c ᚲ   d ᛞ   e ᛖ   f ᚠ   g ᚷ   h ᚺ   i ᛁ   j ᛃ
-k ᛣ   l ᛚ   m ᛗ   n ᚾ   o ᛟ   p ᛈ   q ᛩ   r ᚱ   s ᛋ   t ᛏ
-u ᚢ   v ᚡ   w ᚹ   x ᛪ   y ᚤ   z ᛉ
+01. Dyer
+02. Whateley
+03. Akeley
+04. Gilman
+05. Carter
+06. Marsh
+07. Olmstead
+08. Peaslee
+09. Bishop
 
-Whoever wrote this wasn't being careful. It's a straight substitution, no shift, no trick. If you find more of this alphabet, write it out letter by letter and it should read like English underneath.
-
-— S.B.`,
+The dates in the old ledger are unreliable. Preserve the order of the names.
+Miriam underlined that sentence twice.`,
   },
   {
     id: "cipher_1",
-    name: "what_i_found.txt",
+    name: "margin_ch7.enc",
     folderId: "sarah",
-    kind: "cipher",
-    unlock: { type: "always" },
-    answer: "rlyeh",
-    unlocksFlag: "cipher_1_solved",
-    content: `Found scratched into the inside cover, over and over, like whoever held the pen couldn't stop:
+    kind: "text",
+    unlock: { type: "puzzleSolved", puzzleId: "palimpsest" },
+    evidenceId: "margin_ciphertext",
+    alias: "MARGIN~1.ENC",
+    content: `TRANSCRIPTION — VOL. II, CH. 7
 
-${toRunic("rlyeh")}   ${toRunic("rlyeh")}   ${toRunic("rlyeh")}
+XMWBC TMVEM LDQDV ZSQRW LZEXQ DVVCA GVKVA YQAEW TPMGJ
 
-Decode it with the key from field_notes.txt and type the word below to continue.`,
+Sarah's note in the margin:
+"Not substitution. The alphabet moves under the word. G.B. knew why.
+The key is not mine. It belongs to the first cataloguer."`,
   },
 
   // --- Act 2: the pattern (RECOVERED, unlocked by cipher_1) -----------------
+  {
+    id: "lot_114_scan",
+    name: "114_verso.tif",
+    folderId: "restricted",
+    kind: "image",
+    unlock: { type: "always" },
+    evidenceId: "lot_114_scan",
+    alias: "114VER~1.TIF",
+    size: "14.8 MB",
+    modified: "{TOMORROW} 03:12",
+    reference: "A1",
+    content: "/artifacts/114-verso.png",
+  },
+  {
+    id: "counting_audio",
+    name: "counting.wav",
+    folderId: "restricted",
+    kind: "audio",
+    unlock: { type: "puzzleSolved", puzzleId: "margin_cipher" },
+    evidenceId: "counting_audio",
+    alias: "COUNTI~1.WAV",
+    size: "43.1 MB",
+    modified: "{TOMORROW} 03:13",
+    reference: "C4",
+    content: "/artifacts/counting.wav",
+  },
   {
     id: "manuscript",
     name: "DO_NOT_OPEN.txt",
     folderId: "restricted",
     kind: "text",
     unlock: { type: "always" },
-    raisesCorruptionTo: 1,
+    evidenceId: "do_not_open",
+    alias: "DONOTO~1.TXT",
     content: `[The text resists being read. Every time your eyes settle on a line, it has already become a different line.]
 
 She didn't disappear. She finished the working. The date on this file is {TOMORROW}.
@@ -242,6 +325,7 @@ If you are reading this, the desktop is already starting to remember things that
     folderId: "restricted",
     kind: "text",
     unlock: { type: "always" },
+    evidenceId: "counting_transcript",
     content: `[Audio recovered from the office. 4 min 11 sec. Auto-transcribed; the second voice could not be rendered to text.]
 
 S. BISHOP: ...okay. It's the fourteenth. I'm recording this so there's proof I'm not — [pause] — it's doing it again. Listen.
@@ -256,7 +340,7 @@ S. BISHOP (whisper): ...that's not how many days. That's how many people.`,
     folderId: "restricted",
     kind: "text",
     unlock: { type: "always" },
-    raisesCorruptionTo: 1,
+    evidenceId: "office_after",
     content: `[Image metadata: taken 03/19 — three days after the office was sealed. Photographer unknown.]
 
 An empty office. Chair pushed back. The damp patch under the desk, darker now.
@@ -270,15 +354,18 @@ The office was empty when this was taken. The monitor was off. You are looking a
     name: "access_log.txt",
     folderId: "restricted",
     kind: "text",
-    unlock: { type: "always" },
-    content: `FILE ACCESS LOG (most recent first)
+    unlock: { type: "puzzleSolved", puzzleId: "lineage" },
+    evidenceId: "future_access_log",
+    alias: "ACCESS~1.TXT",
+    reference: "B9",
+    content: `FILE ACCESS LOG — sequence incomplete
 
-{TOMORROW} 03:14  OPEN  the_name.txt
-{TOMORROW} 03:14  OPEN  DO_NOT_OPEN.txt
-{TOMORROW} 03:13  OPEN  what_i_found.txt
-{TOMORROW} 03:12  LOGIN sarah.bishop
+{TOMORROW} 03:12  TRANSFORM  114VER~1.TIF /MIRROR
+{TOMORROW} 03:13  PLAY       COUNTI~1.WAV /LEFT /REVERSE
+{TOMORROW} 03:14  OPEN       THENAM~1.TXT
+{TOMORROW} 03:15  RUN        INDEX.EXE /JOIN [4 REFERENCES LOST]
 
-These are your clicks. You have not made them yet.`,
+The aliases are intact. The long filenames were overwritten.`,
   },
   {
     id: "while_you_were_out",
@@ -286,55 +373,38 @@ These are your clicks. You have not made them yet.`,
     folderId: "restricted",
     kind: "text",
     unlock: { type: "flag", flag: "returned_after_absence" },
-    raisesCorruptionTo: 1,
+    evidenceId: "absence_note",
     content: `You were gone {ELAPSED_HOURS} hours.
 
 It was not.
 
 While the window was closed, the files kept their appointments. Something was catalogued in your absence. The next entry is dated {TOMORROW} and the cataloguer's initials are yours.`,
   },
-  {
-    id: "cipher_2",
-    name: "margin_ch7.txt",
-    folderId: "restricted",
-    kind: "cipher",
-    unlock: { type: "always" },
-    answer: "yhanthlei",
-    unlocksFlag: "cipher_2_solved",
-    content: `More of the same hand, crowded into the margin of chapter seven. The coastline has a name underneath the name Sarah used. Decode it.
-
-${toRunic("yhanthlei")}
-
-(Same key as before. Type the decoded word to open what it points to.)`,
-  },
-
   // --- Act 2/3: chapter seven (unlocked by cipher_2) -----------------------
   {
     id: "the_pattern",
     name: "the_pattern.txt",
     folderId: "chapter-seven",
     kind: "text",
-    unlock: { type: "always" },
-    raisesCorruptionTo: 2,
-    content: `Sarah's last note. Five names, five dates, one coastline. Each one read chapter seven. None of them is buried anywhere.
+    unlock: { type: "puzzleSolved", puzzleId: "lineage" },
+    evidenceId: "lineage_pattern",
+    content: `SARAH'S WORKING NOTES — DO NOT FILE BY YEAR
 
-  1791 — Obed M.        (read it)
-  1844 — A. Gilman      (53 years later)
-  1898 — E. Whateley    (54 years later)
-  1951 — H. Akeley      (53 years later)
-  1998 — Miriam Bishop  (47 years later)
+1798 → 1863 → 1912 → 1949 → 1977 → 1998 → 2014 → [blank]
 
-"The gaps are getting shorter. I worked out when the next one falls.
- I'm not going to write the year down. You already know it.
- You're reading chapter seven right now."`,
+The interval is what survives, not the date.
+Each gap remembers roughly three quarters of the gap before it.
+
+There is already a catalogue record for the blank year.
+It should not exist yet.`,
   },
   {
     id: "toms_recording",
     name: "toms_last_message.txt",
     folderId: "chapter-seven",
     kind: "text",
-    unlock: { type: "always" },
-    raisesCorruptionTo: 3,
+    unlock: { type: "puzzleSolved", puzzleId: "lineage" },
+    evidenceId: "tom_last_message",
     content: `[Text file left by T. Alvarez, dated 03/23, the day he tried to upload the disk image and then stopped answering.]
 
 I made a forensic copy of Sarah's drive to send to people who'd take it seriously. Before I could upload it I opened the image to verify it.
@@ -350,15 +420,36 @@ Don't look for the next file. You'll open it anyway. I know because the log alre
     name: "the_name.txt",
     folderId: "chapter-seven",
     kind: "cipher",
-    unlock: { type: "always" },
+    unlock: { type: "puzzleSolved", puzzleId: "lineage" },
+    evidenceId: "the_name",
+    alias: "THENAM~1.TXT",
+    size: "0 bytes",
+    modified: "{TOMORROW} 03:14",
     untypeable: true,
-    raisesCorruptionTo: 4,
-    setsFlagOnOpen: "endgame_available",
     content: `The last thing in chapter seven is its name. Not "R'lyeh" — that was Sarah's polite approximation, a word small enough to fit in a footnote. This is the thing underneath it.
 
 The runes will not hold still long enough to copy. Try to write the name below and see for yourself.
 
 Chapter seven is not in the book. Chapter seven is the person trying to understand it.`,
+  },
+  {
+    id: "index_help",
+    name: "INDEX.HLP",
+    folderId: "chapter-seven",
+    kind: "help",
+    unlock: { type: "puzzleSolved", puzzleId: "future_log" },
+    evidenceId: "index_help",
+    alias: "INDEX.HLP",
+    content: `MISKATONIC RECOVERY INDEXER 0.7
+
+The indexer does not accept names. It joins object references already held by
+the mounted image.
+
+Syntax:
+  INDEX /JOIN <REF-REF-REF-REF>
+
+Reference order is chronological. Object properties may change after a
+successful future-log replay.`,
   },
 
   // --- Ending reveal: RESTORE SARAH ---------------------------------------
@@ -377,5 +468,30 @@ These are your files now. They're dated {TOMORROW}, because that's where you are
 I'll watch for you. The way you watched for me.
 
 — S.`,
+  },
+  {
+    id: "expedition_tmp",
+    name: "EXPEDITION.TMP",
+    folderId: "deleted",
+    kind: "text",
+    unlock: { type: "always" },
+    evidenceId: "deleted_expedition_fragment",
+    alias: "EXPEDI~1.TMP",
+    size: "1 KB",
+    modified: "01/22/1931 06:17",
+    content: `[Recovered from unallocated space. Original path unknown.]
+
+DYER FIELD COPY / LAKE CAMP
+
+Pabodie says the drill is sound. Danforth has stopped looking at the specimens
+and started looking south. Gedney's cot was empty before the wind took the tent.
+
+There are mountains behind the mountains. On clear mornings the second range
+is closer than the first.
+
+Audio note appended by unknown process:
+TEKELI—LI / TEKELI—LI / TEKELI—LI
+
+[The file's deletion timestamp is {TOMORROW}.]`,
   },
 ];

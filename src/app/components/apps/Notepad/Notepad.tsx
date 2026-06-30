@@ -10,8 +10,15 @@ interface NotepadProps {
 }
 
 const Notepad = ({ fileId }: NotepadProps) => {
-  const { markFileRead, setFlag, hasFlag, raiseCorruption, playerName, absenceMs } =
-    useProgress();
+  const {
+    markFileRead,
+    hasFlag,
+    playerName,
+    absenceMs,
+    discoverEvidence,
+    recordSequenceAction,
+    isPuzzleSolved,
+  } = useProgress();
   const file = files.find((f) => f.id === fileId);
   const [answer, setAnswer] = useState("");
   const [wrongAttempt, setWrongAttempt] = useState(false);
@@ -21,8 +28,10 @@ const Notepad = ({ fileId }: NotepadProps) => {
   useEffect(() => {
     if (!file) return;
     markFileRead(file.id);
-    if (file.raisesCorruptionTo != null) raiseCorruption(file.raisesCorruptionTo);
-    if (file.setsFlagOnOpen) setFlag(file.setsFlagOnOpen);
+    if (file.evidenceId) discoverEvidence(file.evidenceId, file.id);
+    if (file.id === "the_name" && isPuzzleSolved("lineage")) {
+      recordSequenceAction("file:the_name");
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fileId]);
 
@@ -41,7 +50,6 @@ const Notepad = ({ fileId }: NotepadProps) => {
     if (file.untypeable) return; // the name cannot be submitted
     const normalized = answer.trim().toLowerCase().replace(/\s+/g, "");
     if (normalized === file.answer) {
-      if (file.unlocksFlag) setFlag(file.unlocksFlag);
       setWrongAttempt(false);
     } else {
       setWrongAttempt(true);

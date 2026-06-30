@@ -1,0 +1,61 @@
+.media-player__screen {
+  position: relative;
+  color: #63ff8b;
+  background: #050805;
+  font-family: "Courier New", monospace;
+}
+
+.media-player__display {
+  text-align: center;
+
+  strong {
+    font-size: 34px;
+  }
+
+  audio {
+    width: min(540px, 100%);
+    margin-top: 24px;
+  }
+}
+
+.media-player__wave {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  height: 120px;
+  margin-top: 16px;
+
+  i {
+    width: 4px;
+    height: calc(12px + (var(--n, 1) * 1px));
+    min-height: 15px;
+    max-height: 90px;
+    background: #167c33;
+
+    &:nth-child(3n) { height: 55px; }
+    &:nth-child(5n) { height: 82px; }
+    &:nth-child(7n) { height: 34px; }
+  }
+
+  &.recovered i {
+    background: #8dffff;
+    box-shadow: 0 0 6px #37ffff;
+  }
+}
+
+.media-player__transcript,
+.media-player__properties {
+  margin: 14px auto;
+  max-width: 620px;
+  padding: 12px;
+  border: 1px solid #2bb84f;
+  background: rgba(0, 35, 15, 0.85);
+}
+
+.media-player__check {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+

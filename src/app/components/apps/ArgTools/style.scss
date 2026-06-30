@@ -1,0 +1,144 @@
+.arg-tool {
+  width: min(760px, calc(100vw - 64px));
+  height: min(560px, calc(100vh - 110px));
+  display: flex;
+  flex-direction: column;
+  background: #c0c0c0;
+  color: #101010;
+  font-family: Arial, sans-serif;
+  font-size: 13px;
+
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
+}
+
+.arg-tool__menubar {
+  display: flex;
+  gap: 20px;
+  padding: 4px 8px;
+  border-bottom: 1px solid #777;
+  background: #d4d0c8;
+}
+
+.arg-tool__toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px;
+  border-bottom: 1px solid #808080;
+
+  input,
+  select {
+    min-height: 26px;
+    border: 2px inset #fff;
+    background: white;
+    padding: 2px 6px;
+  }
+
+  input {
+    flex: 1;
+  }
+}
+
+.arg-tool__content {
+  flex: 1;
+  overflow: auto;
+  background: #fff;
+  border: 2px inset #fff;
+  margin: 6px;
+  padding: 18px;
+}
+
+.arg-tool__status {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 4px 7px;
+  border: 2px inset #fff;
+  margin: 0 6px 6px;
+  font-size: 11px;
+}
+
+.arg-tool__kicker {
+  margin: 0 0 5px;
+  color: #555;
+  font-size: 11px;
+  font-weight: bold;
+  letter-spacing: 0.08em;
+}
+
+.arg-tool__paper {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 20px;
+  border: 1px solid #c8c3b2;
+  background: #f4f0df;
+  box-shadow: 2px 2px 0 #aaa;
+  font-family: "Courier New", monospace;
+}
+
+.arg-tool__result {
+  margin: 14px 0;
+  padding: 12px;
+  border-left: 5px solid #000080;
+  background: #e8e8ef;
+}
+
+.arg-tool__warning {
+  border-left-color: #700;
+  background: #f2dddd;
+}
+
+.arg-tool__properties {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 7px 12px;
+  margin: 15px 0;
+
+  dt {
+    font-weight: bold;
+  }
+
+  dd {
+    margin: 0;
+    font-family: "Courier New", monospace;
+    overflow-wrap: anywhere;
+  }
+}
+
+.arg-tool__reference {
+  padding: 8px;
+  color: #fff;
+  background: #000;
+  font: bold 18px "Courier New", monospace;
+  letter-spacing: 0.18em;
+}
+
+.arg-tool__textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 130px;
+  resize: vertical;
+  border: 2px inset #fff;
+  padding: 8px;
+  background: #fff;
+  font-family: "Courier New", monospace;
+}
+
+.arg-tool__split {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.75fr) minmax(260px, 1.25fr);
+  gap: 14px;
+  min-height: 100%;
+}
+
+@media (max-width: 700px) {
+  .arg-tool__split {
+    grid-template-columns: 1fr;
+  }
+}
+

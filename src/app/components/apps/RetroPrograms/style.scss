@@ -1,0 +1,248 @@
+.retro-calculator {
+  width: calc(var(--ui-scale, 1) * 245px);
+  padding: calc(var(--ui-scale, 1) * 9px);
+  background: #c0c0c0;
+}
+
+.retro-calculator__display {
+  box-sizing: border-box;
+  width: 100%;
+  height: calc(var(--ui-scale, 1) * 38px);
+  margin-bottom: calc(var(--ui-scale, 1) * 9px);
+  padding: calc(var(--ui-scale, 1) * 5px) calc(var(--ui-scale, 1) * 8px);
+  overflow: hidden;
+  color: #111;
+  background: #fff;
+  box-shadow: inset -1px -1px #fff, inset 1px 1px #808080,
+    inset -2px -2px #dfdfdf, inset 2px 2px #0a0a0a;
+  font: calc(var(--ui-scale, 1) * 23px) "Courier New", monospace;
+  text-align: right;
+}
+
+.retro-calculator__keys {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: calc(var(--ui-scale, 1) * 5px);
+
+  .button {
+    width: auto;
+    height: calc(var(--ui-scale, 1) * 36px);
+    color: #000080;
+    font-size: calc(var(--ui-scale, 1) * 16px);
+  }
+
+  .operator {
+    color: #8b0000;
+  }
+
+  .wide {
+    grid-column: span 2;
+  }
+
+  .zero {
+    grid-column: span 2;
+  }
+}
+
+.retro-paint {
+  width: min(720px, calc(100vw - 70px));
+  height: min(530px, calc(100vh - 120px));
+  display: flex;
+  flex-direction: column;
+  background: #c0c0c0;
+}
+
+.retro-paint__menu,
+.retro-paint__toolbar {
+  padding: 5px 8px;
+  border-bottom: 1px solid #808080;
+}
+
+.retro-paint__toolbar {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+
+  .button {
+    width: 30px;
+    height: 28px;
+    font-size: 15px;
+  }
+
+  span {
+    margin-left: 8px;
+    color: #555;
+    font-size: 12px;
+  }
+}
+
+.retro-paint__workspace {
+  flex: 1;
+  overflow: auto;
+  padding: 16px;
+  background: #808080;
+  box-shadow: inset 1px 1px #0a0a0a, inset -1px -1px #fff;
+
+  canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-width: 420px;
+    min-height: 280px;
+    background: white;
+    image-rendering: pixelated;
+    box-shadow: 1px 1px #000;
+  }
+}
+
+.retro-paint__palette {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 7px;
+
+  button,
+  .retro-paint__current {
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border: 1px solid #000;
+    box-shadow: inset 1px 1px rgba(255, 255, 255, 0.7);
+  }
+
+  button.selected {
+    outline: 2px dotted #000;
+    outline-offset: 1px;
+  }
+
+  .retro-paint__current {
+    width: 32px;
+    height: 28px;
+    margin-right: 8px;
+    box-shadow: inset 2px 2px #fff, inset -2px -2px #0a0a0a;
+  }
+}
+
+.system-properties {
+  width: calc(var(--ui-scale, 1) * 430px);
+  padding: calc(var(--ui-scale, 1) * 12px);
+  font-size: calc(var(--ui-scale, 1) * 14px);
+}
+
+.system-properties__hero {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--ui-scale, 1) * 16px);
+
+  img {
+    object-fit: contain;
+  }
+
+  div {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  strong {
+    font-size: calc(var(--ui-scale, 1) * 18px);
+  }
+}
+
+.system-properties__rule {
+  height: 2px;
+  margin: 10px 0;
+  background: #808080;
+  box-shadow: 0 1px #fff;
+}
+
+.system-properties dl {
+  display: grid;
+  grid-template-columns: 125px 1fr;
+  gap: 7px 10px;
+
+  dt {
+    font-weight: bold;
+  }
+
+  dd {
+    margin: 0;
+  }
+}
+
+.system-properties__buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 7px;
+  margin-top: 18px;
+
+  .button {
+    width: 82px;
+    height: 30px;
+    font-size: 14px;
+  }
+}
+
+.recycle-bin {
+  width: min(620px, calc(100vw - 70px));
+  height: min(420px, calc(100vh - 120px));
+  display: flex;
+  flex-direction: column;
+  background: #c0c0c0;
+}
+
+.recycle-bin__toolbar,
+.recycle-bin__address,
+.recycle-bin__status {
+  padding: 6px 8px;
+  border-bottom: 1px solid #808080;
+}
+
+.recycle-bin__address {
+  display: flex;
+  gap: 8px;
+
+  span {
+    flex: 1;
+    padding: 2px 5px;
+    background: #fff;
+    box-shadow: inset 1px 1px #808080, inset -1px -1px #fff;
+  }
+}
+
+.recycle-bin__files {
+  flex: 1;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 14px;
+  background: #fff;
+  box-shadow: inset 2px 2px #808080;
+
+  button {
+    width: 105px;
+    border: 0;
+    background: transparent;
+
+    img {
+      image-rendering: pixelated;
+    }
+
+    span {
+      display: block;
+      margin-top: 4px;
+      overflow-wrap: anywhere;
+    }
+
+    &:focus span {
+      color: #fff;
+      background: #000080;
+    }
+  }
+}
+
+.recycle-bin__status {
+  border-top: 1px solid #fff;
+  border-bottom: 0;
+  font-size: 12px;
+}
