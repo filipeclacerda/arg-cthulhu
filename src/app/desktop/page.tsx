@@ -64,7 +64,6 @@ const appIcon = (appType: AppType) => {
 const Desktop = () => {
   const { openWindow, windows, focusWindow } = useWindowManager();
   const {
-    playerName,
     flags,
     isHydrated,
     setFlag,
@@ -81,94 +80,6 @@ const Desktop = () => {
     document.body.classList.add("desktop-mode");
     return () => document.body.classList.remove("desktop-mode");
   }, []);
-
-  // Open the diegetic registration dialog on first visit (playerName not yet set).
-  // We use null as the sentinel — a player who explicitly skipped is also null,
-  // but the flag "registration_shown" prevents us from asking twice.
-  useEffect(() => {
-    if (!isHydrated) return;
-    if (playerName === null && !flags.registration_shown) {
-      // Small delay so the desktop renders before the dialog pops.
-      const t = setTimeout(() => {
-        openWindow({
-          id: "registration",
-          appType: "registration",
-          title: "Researcher Visitor Log",
-        });
-      }, 800);
-      return () => clearTimeout(t);
-    }
-  }, [flags.registration_shown, isHydrated, openWindow, playerName]);
-
-  // After the visitor log is handled, give the player a diegetic nudge instead
-  // of a tutorial overlay. This makes the first goal legible without breaking
-  // the "old computer" fantasy.
-  useEffect(() => {
-    if (!isHydrated) return;
-    if (!flags.registration_shown || flags.desktop_intro_shown) return;
-
-    const t = setTimeout(() => {
-      setFlag("desktop_intro_shown");
-      openWindow({
-        id: "mount-briefing",
-        appType: "generic",
-        title: "Mount Complete",
-        props: {
-          children: (
-            <div className="briefing-window">
-              <p className="briefing-kicker">READ-ONLY DISK IMAGE</p>
-              <h2>Sarah Bishop&apos;s workstation is mounted.</h2>
-              <p>
-                Two useful places survived the transfer: her Inbox and her user
-                folder. The newest message explains how this copy reached you.
-              </p>
-              <div className="briefing-actions">
-                <button
-                  className="button"
-                  type="button"
-                  onClick={() =>
-                    openWindow({
-                      id: "inbox",
-                      appType: "email",
-                      title: "E-mail",
-                    })
-                  }
-                >
-                  Open Inbox
-                </button>
-                <button
-                  className="button"
-                  type="button"
-                  onClick={() =>
-                    openWindow({
-                      id: "sarah-files",
-                      appType: "explorer",
-                      title: "Sarah Bishop",
-                      props: { folderId: "sarah" },
-                    })
-                  }
-                >
-                  Sarah&apos;s Files
-                </button>
-              </div>
-              <p className="briefing-footnote">
-                Tip: double-click desktop icons and files. If a date looks
-                wrong, write it down anyway.
-              </p>
-            </div>
-          ),
-        },
-      });
-    }, 650);
-
-    return () => clearTimeout(t);
-  }, [
-    flags.desktop_intro_shown,
-    flags.registration_shown,
-    isHydrated,
-    openWindow,
-    setFlag,
-  ]);
 
   useEffect(() => {
     if (!isHydrated) return;

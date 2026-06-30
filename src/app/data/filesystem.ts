@@ -35,6 +35,12 @@ export interface VFile {
   size?: string;
   modified?: string;
   reference?: string;
+  caption?: string;
+  camera?: string;
+  dimensions?: string;
+  location?: string;
+  taken?: string;
+  comment?: string;
   /** Only set for kind === "cipher". Normalized (lowercase, no spaces) expected answer. */
   answer?: string;
   /** Only set for kind === "cipher". Flag set on a correct answer; also used to gate folders. */
@@ -148,6 +154,13 @@ export const folders: VFolder[] = [
     unlock: { type: "always" },
   },
   {
+    id: "pictures",
+    name: "My Pictures",
+    parentId: "sarah",
+    unlock: { type: "always" },
+    icon: "/icons/folder-special.png",
+  },
+  {
     id: "restricted",
     name: "RECOVERED",
     parentId: "sarah",
@@ -162,6 +175,65 @@ export const folders: VFolder[] = [
 ];
 
 export const files: VFile[] = [
+  // --- Personal photographs: Sarah before she becomes a case file ----------
+  {
+    id: "photo_sarah_office",
+    name: "late_again.png",
+    folderId: "pictures",
+    kind: "image",
+    unlock: { type: "always" },
+    evidenceId: "photo_sarah_office",
+    alias: "LATEAG~1.PNG",
+    size: "2.8 MB",
+    modified: "2026-02-17 23:48",
+    taken: "2026-02-17 23:42",
+    dimensions: "1456 × 1092",
+    camera: "Em's compact camera / flash off",
+    location: "Orne Library, basement archive",
+    caption: "Em: “Proof that you do, technically, still exist.”",
+    comment:
+      "Sarah kept this one even though she hated having her picture taken. The beige computer behind her belonged to Miriam.",
+    content: "/photos/sarah_archive_office_2026.png",
+  },
+  {
+    id: "photo_miriam_sarah",
+    name: "mom_and_me_1998.png",
+    folderId: "pictures",
+    kind: "image",
+    unlock: { type: "always" },
+    evidenceId: "photo_miriam_sarah_1998",
+    alias: "MOMAND~1.PNG",
+    size: "3.1 MB",
+    modified: "2026-02-02 01:14",
+    taken: "1998-07-11 / scanned 2026-02-02",
+    dimensions: "1456 × 1092",
+    camera: "35mm point-and-shoot / scanner unknown",
+    location: "Orne Library, basement archive",
+    caption: "Miriam and Sarah. Seven weeks before the Whateley deposit arrived.",
+    comment:
+      "The monitor and tower in this photograph are the machine now being viewed. Sarah was seven when Miriam disappeared.",
+    content: "/photos/miriam_sarah_1998.png",
+  },
+  {
+    id: "photo_sarah_em_coast",
+    name: "innsmouth_trip.png",
+    folderId: "pictures",
+    kind: "image",
+    unlock: { type: "always" },
+    evidenceId: "photo_sarah_em_coast",
+    alias: "INNSMO~1.PNG",
+    size: "2.6 MB",
+    modified: "2025-11-04 18:20",
+    taken: "2025-11-02 15:06",
+    dimensions: "1456 × 1092",
+    camera: "Em's compact camera / auto",
+    location: "North shore, outside Innsmouth",
+    caption: "Sarah and Em. The trip where Sarah promised not to make everything research.",
+    comment:
+      "Em says the vertical shape offshore is an old piling. She does not remember seeing it when the photograph was taken.",
+    content: "/photos/sarah_em_coast_2025.png",
+  },
+
   // --- Act 1: the person (always visible in Sarah's home folder) ------------
   {
     id: "diary",

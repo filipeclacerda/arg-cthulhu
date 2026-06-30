@@ -11,7 +11,6 @@ export type AppType =
   | "explorer"
   | "notepad"
   | "email"
-  | "registration"
   | "finale"
   | "browser"
   | "image"

@@ -8,7 +8,6 @@ import {
 import Explorer from "../apps/Explorer/Explorer";
 import Notepad from "../apps/Notepad/Notepad";
 import Email from "../apps/Email/Email";
-import Registration from "../apps/Registration/Registration";
 import Finale from "../apps/Finale/Finale";
 import RecoveredBrowser from "../apps/RecoveredBrowser/RecoveredBrowser";
 import ImageViewer from "../apps/ImageViewer/ImageViewer";
@@ -32,8 +31,6 @@ const renderAppContent = (win: WindowInstance) => {
       return <Notepad fileId={win.props.fileId} />;
     case "email":
       return <Email />;
-    case "registration":
-      return <Registration />;
     case "finale":
       return <Finale />;
     case "browser":

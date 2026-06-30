@@ -14,31 +14,9 @@ export interface VEmail {
   reference?: string;
 }
 
-// Chronological order of events. The Email app shows them sorted by unlock
-// status first, then by array order — so the frame email always appears at top.
+// Sarah Bishop's recovered mailbox. The external delivery envelope belongs to
+// the relay screen before mount and must never appear inside her computer.
 export const emails: VEmail[] = [
-  // --- The frame (always first — the link that brought the player here) -----
-  {
-    id: "email-frame",
-    sender: "unknown",
-    subject: "Found this. Thought you asked for it.",
-    date: "{TOMORROW}",
-    unlock: { type: "always" },
-    evidenceId: "tom_delivery",
-    body: `I found the computer that belonged to Sarah Bishop.
-
-You asked me for a copy. I don't remember when we spoke.
-
-The disk image is attached. Username is already filled in. The password is:  password
-
-I'm sorry there's only one copy. I tried to send it to more people.
-That didn't go the way I meant to.
-
-— Tom Alvarez
-
-P.S. The file metadata says I sent this tomorrow. I'm writing it now.`,
-  },
-
   // --- Backstory thread (always unlocked, establishes Sarah as a person) ----
   {
     id: "email-1",

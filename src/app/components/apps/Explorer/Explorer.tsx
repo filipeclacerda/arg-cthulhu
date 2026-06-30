@@ -180,7 +180,18 @@ const Explorer = ({ folderId = "my-computer" }: ExplorerProps) => {
               onDoubleClick={() => openFile(file.id)}
               title="Double-click to open"
             >
-              <Image className="explorer-icon" src={FILE_ICON} alt="" width={44} height={44} />
+              {file.kind === "image" && file.folderId === "pictures" ? (
+                <span className="explorer-photo-thumbnail">
+                  <Image
+                    src={file.content}
+                    alt=""
+                    width={58}
+                    height={44}
+                  />
+                </span>
+              ) : (
+                <Image className="explorer-icon" src={FILE_ICON} alt="" width={44} height={44} />
+              )}
               <p>{file.name}</p>
             </div>
           ))}

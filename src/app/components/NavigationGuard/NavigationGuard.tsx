@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 const GUARD_KEY = "__miskatonicNavigationGuard";
+const GUARD_URL_KEY = "__miskatonicNavigationGuardUrl";
 
 const NavigationGuard = () => {
   const pathname = usePathname();
@@ -22,11 +23,17 @@ const NavigationGuard = () => {
     const guardState = {
       ...(window.history.state ?? {}),
       [GUARD_KEY]: true,
+      [GUARD_URL_KEY]: lockedUrl,
     };
 
     // A same-document entry absorbs the browser's first Back operation. When
-    // it is popped, we immediately restore it at the same URL.
-    if (!window.history.state?.[GUARD_KEY]) {
+    // it is popped, we immediately restore it at the same URL. The URL marker
+    // matters because a full navigation can inherit history.state from the
+    // relay page; "/" and "/desktop" each need their own guard entry.
+    if (
+      !window.history.state?.[GUARD_KEY] ||
+      window.history.state?.[GUARD_URL_KEY] !== lockedUrl
+    ) {
       window.history.pushState(guardState, "", lockedUrl);
     }
 
@@ -82,8 +89,16 @@ const NavigationGuard = () => {
       role="status"
       aria-live="polite"
     >
-      <strong>Mounted image cannot be left this way.</strong>
-      <span>Use the controls inside the recovered computer.</span>
+      <strong>
+        {pathname === "/desktop"
+          ? "Mounted image cannot be left this way."
+          : "Relay session cannot be left this way."}
+      </strong>
+      <span>
+        {pathname === "/desktop"
+          ? "Use the controls inside the recovered computer."
+          : "Close the sealed session from inside the relay."}
+      </span>
     </div>
   );
 };

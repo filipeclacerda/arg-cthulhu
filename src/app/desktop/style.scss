@@ -238,53 +238,6 @@ body.desktop-mode {
     }
 }
 
-.briefing-window {
-    width: calc(var(--ui-scale, 1) * 430px);
-    padding: calc(var(--ui-scale, 1) * 4px);
-
-    h2 {
-        margin: 0 0 calc(var(--ui-scale, 1) * 12px);
-        font-size: calc(var(--ui-scale, 1) * 22px);
-    }
-
-    p {
-        margin: 0 0 calc(var(--ui-scale, 1) * 12px);
-        font-size: calc(var(--ui-scale, 1) * 16px);
-        line-height: 1.35;
-    }
-
-    .briefing-kicker {
-        display: inline-block;
-        margin-bottom: calc(var(--ui-scale, 1) * 10px);
-        padding: calc(var(--ui-scale, 1) * 3px) calc(var(--ui-scale, 1) * 7px);
-        background: #000080;
-        color: #fff;
-        font-size: calc(var(--ui-scale, 1) * 12px);
-        letter-spacing: 1px;
-    }
-
-    .briefing-actions {
-        display: flex;
-        gap: calc(var(--ui-scale, 1) * 8px);
-        margin: calc(var(--ui-scale, 1) * 16px) 0;
-    }
-
-    .button {
-        width: auto;
-        height: calc(var(--ui-scale, 1) * 34px);
-        padding: 0 calc(var(--ui-scale, 1) * 14px);
-        font-size: calc(var(--ui-scale, 1) * 15px);
-    }
-
-    .briefing-footnote {
-        color: #4b0000;
-        font-size: calc(var(--ui-scale, 1) * 14px);
-        border-top: 1px solid #808080;
-        box-shadow: 0 -1px #fff;
-        padding-top: calc(var(--ui-scale, 1) * 10px);
-    }
-}
-
 .new-mail-alert {
     width: calc(var(--ui-scale, 1) * 380px);
     padding: calc(var(--ui-scale, 1) * 4px);
