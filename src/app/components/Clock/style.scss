@@ -1,0 +1,29 @@
+.clock {
+  width: 88px;
+  min-width: 88px;
+  min-height: 34px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1px 4px;
+  border: 0;
+  color: #111;
+  background: transparent;
+  font: 11px/1.25 Arial, sans-serif;
+  cursor: default;
+
+  &:hover {
+    background: #d4d0c8;
+    box-shadow: inset 1px 1px #808080, inset -1px -1px #fff;
+  }
+
+  &:active {
+    box-shadow: inset 1px 1px #0a0a0a, inset -1px -1px #fff;
+  }
+
+  span {
+    display: block;
+    white-space: nowrap;
+  }
+}

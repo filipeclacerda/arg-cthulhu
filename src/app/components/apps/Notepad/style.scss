@@ -41,6 +41,19 @@
       letter-spacing: 0.5px;
       text-transform: uppercase;
     }
+
+    .notepad-properties {
+      min-width: calc(var(--ui-scale, 1) * 82px);
+      margin-left: auto;
+      padding: calc(var(--ui-scale, 1) * 4px)
+        calc(var(--ui-scale, 1) * 9px);
+      border: 0;
+      background: #c0c0c0;
+      box-shadow: inset -1px -1px #0a0a0a, inset 1px 1px #fff,
+        inset -2px -2px #808080, inset 2px 2px #dfdfdf;
+      font-family: win98, sans-serif;
+      font-size: calc(var(--ui-scale, 1) * 12px);
+    }
   }
 
   .notepad-textarea {

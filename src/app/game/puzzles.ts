@@ -113,6 +113,12 @@ export const reduceGameEvent = (
       }
       break;
     case "MARK_FILE_READ":
+      if (
+        state.readFileIds.includes(event.fileId) &&
+        state.lastResourceId === event.fileId
+      ) {
+        break;
+      }
       state = {
         ...state,
         readFileIds: uniquePush(state.readFileIds, event.fileId),
@@ -120,23 +126,43 @@ export const reduceGameEvent = (
       };
       break;
     case "MARK_EMAIL_READ":
+      if (
+        state.readEmailIds.includes(event.emailId) &&
+        state.lastResourceId === event.emailId
+      ) {
+        break;
+      }
       state = {
         ...state,
         readEmailIds: uniquePush(state.readEmailIds, event.emailId),
         lastResourceId: event.emailId,
       };
       break;
-    case "DISCOVER_EVIDENCE":
+    case "DISCOVER_EVIDENCE": {
+      const nextResourceId = event.resourceId ?? state.lastResourceId;
+      if (
+        state.discoveredEvidenceIds.includes(event.evidenceId) &&
+        state.lastResourceId === nextResourceId
+      ) {
+        break;
+      }
       state = {
         ...state,
         discoveredEvidenceIds: uniquePush(
           state.discoveredEvidenceIds,
           event.evidenceId
         ),
-        lastResourceId: event.resourceId ?? state.lastResourceId,
+        lastResourceId: nextResourceId,
       };
       break;
+    }
     case "VISIT_PAGE":
+      if (
+        state.visitedPageIds.includes(event.pageId) &&
+        state.lastResourceId === event.pageId
+      ) {
+        break;
+      }
       state = {
         ...state,
         visitedPageIds: uniquePush(state.visitedPageIds, event.pageId),
@@ -157,15 +183,17 @@ export const reduceGameEvent = (
       break;
     case "SOLVE_PUZZLE": {
       const wasSolved = Boolean(state.puzzles[event.puzzleId].solvedAt);
+      if (wasSolved) return { state: current };
       state = solve(state, event.puzzleId, event.solvedAt);
       return {
         state: touch(state),
-        solvedPuzzle: wasSolved ? undefined : event.puzzleId,
+        solvedPuzzle: event.puzzleId,
       };
     }
     case "UNLOCK_HINT": {
       const currentLevel = state.puzzles[event.puzzleId].hintsUnlocked;
       const level = Math.min(3, Math.max(currentLevel, event.level ?? currentLevel + 1));
+      if (level === currentLevel) break;
       state = {
         ...state,
         puzzles: {
@@ -195,22 +223,25 @@ export const reduceGameEvent = (
       }
       break;
     }
-    case "COLLECT_REFERENCE":
+    case "COLLECT_REFERENCE": {
+      const reference = event.reference.toUpperCase();
+      if (state.collectedReferences.includes(reference)) break;
       state = {
         ...state,
-        collectedReferences: uniquePush(
-          state.collectedReferences,
-          event.reference.toUpperCase()
-        ),
+        collectedReferences: [...state.collectedReferences, reference],
       };
       break;
+    }
     case "SET_PLAYER_NAME":
+      if (state.playerName === event.name) break;
       state = { ...state, playerName: event.name };
       break;
     case "SET_CASE_NOTES":
+      if (state.caseNotes === event.notes) break;
       state = { ...state, caseNotes: event.notes };
       break;
     case "SET_LAST_RESOURCE":
+      if (state.lastResourceId === event.resourceId) break;
       state = { ...state, lastResourceId: event.resourceId };
       break;
     case "FUTURE_SEQUENCE_ACTION": {
@@ -260,6 +291,7 @@ export const reduceGameEvent = (
       break;
     }
     case "CHOOSE_ENDING":
+      if (state.ending === event.ending) break;
       state = {
         ...state,
         ending: event.ending,
@@ -270,6 +302,12 @@ export const reduceGameEvent = (
       };
       break;
     case "TOUCH_SEEN":
+      if (
+        state.firstSeenAt !== null &&
+        state.lastSeenAt === event.now
+      ) {
+        break;
+      }
       state = {
         ...state,
         firstSeenAt: state.firstSeenAt ?? event.now,
@@ -278,5 +316,5 @@ export const reduceGameEvent = (
       break;
   }
 
-  return { state: touch(state) };
+  return { state: state === current ? current : touch(state) };
 };

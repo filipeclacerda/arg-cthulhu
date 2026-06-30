@@ -7,6 +7,8 @@ import "../ArgTools/style.scss";
 type Algorithm = "caesar" | "substitution" | "vigenere";
 const CIPHERTEXT = "XMWBC TMVEM LDQDV ZSQRW LZEXQ DVVCA GVKVA YQAEW TPMGJ";
 const EXPECTED = "LEFTCHANNELREVERSEFOURELEVENCOUNTNAMESNOTDAYS";
+const RECOVERED_MESSAGE =
+  "LEFT CHANNEL / REVERSE / 4:11 / COUNT NAMES, NOT DAYS";
 
 const decodeVigenere = (text: string, key: string): string => {
   const normalizedKey = key.toUpperCase().replace(/[^A-Z]/g, "");
@@ -52,15 +54,17 @@ const CipherLab = () => {
         String.fromCharCode(65 + ((letter.charCodeAt(0) - 64) % 26))
       );
     }
-    setOutput(result);
     const normalized = result.replace(/[^A-Z]/gi, "").toUpperCase();
-    if (
+    const solved =
       algorithm === "vigenere" &&
       key.trim().toUpperCase() === "MIRIAM" &&
-      normalized === EXPECTED
-    ) {
+      normalized === EXPECTED;
+
+    if (solved) {
+      setOutput(RECOVERED_MESSAGE);
       solvePuzzle("margin_cipher");
     } else {
+      setOutput(result);
       setError("The output has no stable word boundaries.");
     }
   };
@@ -103,4 +107,3 @@ const CipherLab = () => {
 };
 
 export default CipherLab;
-

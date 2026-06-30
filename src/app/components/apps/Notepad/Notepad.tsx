@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import "./style.scss";
 import { files } from "@/app/data/filesystem";
 import { useProgress } from "@/app/context/ProgressContext";
+import { useWindowManager } from "@/app/context/WindowManagerContext";
 import { resolveTokens } from "@/app/utils/narrative";
 
 interface NotepadProps {
@@ -19,6 +20,7 @@ const Notepad = ({ fileId }: NotepadProps) => {
     recordSequenceAction,
     isPuzzleSolved,
   } = useProgress();
+  const { openWindow } = useWindowManager();
   const file = files.find((f) => f.id === fileId);
   const [answer, setAnswer] = useState("");
   const [wrongAttempt, setWrongAttempt] = useState(false);
@@ -80,6 +82,14 @@ const Notepad = ({ fileId }: NotepadProps) => {
   };
 
   const isUntypeable = !!file.untypeable;
+  const openProperties = () => {
+    openWindow({
+      id: `properties-${file.id}`,
+      appType: "properties",
+      title: `${file.name} Properties`,
+      props: { fileId: file.id },
+    });
+  };
 
   return (
     <div className="notepad">
@@ -93,6 +103,13 @@ const Notepad = ({ fileId }: NotepadProps) => {
         <span>{file.name}</span>
         {file.raisesCorruptionTo != null && <strong>unstable text</strong>}
         {file.unlocksFlag && solved && <strong>decoded</strong>}
+        <button
+          type="button"
+          className="notepad-properties"
+          onClick={openProperties}
+        >
+          Properties
+        </button>
       </div>
       <div className="notepad-textarea">
         <pre className="notepad-content">{resolvedContent}</pre>

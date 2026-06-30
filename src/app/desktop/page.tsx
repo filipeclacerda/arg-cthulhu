@@ -32,6 +32,12 @@ const desktopApps: DesktopApp[] = [
     props: { folderId: "sarah" },
   },
   {
+    id: "case-notes",
+    label: "Case Notes",
+    appType: "case-notes",
+    icon: "/icons/notepad.png",
+  },
+  {
     id: "internet-explorer",
     label: "Internet Explorer",
     appType: "browser",
@@ -44,6 +50,12 @@ const desktopApps: DesktopApp[] = [
     icon: "/icons/outlook-express.png",
   },
   {
+    id: "msn-messenger",
+    label: "MSN Messenger",
+    appType: "messenger",
+    icon: "/icons/msn-messenger.png",
+  },
+  {
     id: "recycle-bin",
     label: "Recycle Bin",
     appType: "recycle-bin",
@@ -54,6 +66,7 @@ const desktopApps: DesktopApp[] = [
 const appIcon = (appType: AppType) => {
   if (appType === "browser") return "/icons/internet-explorer.png";
   if (appType === "email") return "/icons/outlook-express.png";
+  if (appType === "messenger") return "/icons/msn-messenger.png";
   if (appType === "case-notes" || appType === "notepad") return "/icons/notepad.png";
   if (appType === "audio") return "/icons/media-player.png";
   if (appType === "help") return "/icons/help.png";

@@ -15,6 +15,7 @@ const ImageViewer = ({ fileId }: { fileId: string }) => {
     discoverEvidence,
     solvePuzzle,
     isPuzzleSolved,
+    state: progress,
     recordSequenceAction,
     collectReference,
   } = useProgress();
@@ -26,13 +27,15 @@ const ImageViewer = ({ fileId }: { fileId: string }) => {
 
   const gallery = useMemo(
     () =>
-      file
+      file?.folderId === "pictures"
         ? files.filter(
             (candidate) =>
               candidate.kind === "image" &&
               candidate.folderId === file.folderId
           )
-        : [],
+        : file
+          ? [file]
+          : [],
     [file]
   );
   const galleryIndex = gallery.findIndex(
@@ -41,6 +44,7 @@ const ImageViewer = ({ fileId }: { fileId: string }) => {
   const isPalimpsest = file?.id === "lot_114_scan";
   const recovered =
     Boolean(isPalimpsest) && mirrored && inverted && contrast >= 90;
+  const palimpsestSolved = Boolean(progress.puzzles.palimpsest.solvedAt);
 
   useEffect(() => {
     setCurrentFileId(fileId);
@@ -59,9 +63,9 @@ const ImageViewer = ({ fileId }: { fileId: string }) => {
   }, [currentFileId]);
 
   useEffect(() => {
-    if (!recovered || !isPalimpsest) return;
-    if (!isPuzzleSolved("palimpsest")) solvePuzzle("palimpsest");
-  }, [isPalimpsest, isPuzzleSolved, recovered, solvePuzzle]);
+    if (!recovered || !isPalimpsest || palimpsestSolved) return;
+    solvePuzzle("palimpsest");
+  }, [isPalimpsest, palimpsestSolved, recovered, solvePuzzle]);
 
   if (!file) return <div className="arg-tool">Image not found.</div>;
 

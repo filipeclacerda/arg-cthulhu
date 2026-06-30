@@ -32,6 +32,12 @@ const PROGRAMS: ProgramEntry[] = [
     appType: "email",
   },
   {
+    id: "msn-messenger",
+    label: "MSN Messenger",
+    icon: "/icons/msn-messenger.png",
+    appType: "messenger",
+  },
+  {
     id: "windows-explorer",
     label: "Windows Explorer",
     icon: "/icons/my-computer.png",

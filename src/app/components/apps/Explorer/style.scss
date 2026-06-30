@@ -147,6 +147,7 @@
       height: calc(var(--ui-scale, 1) * 44px);
       display: grid;
       place-items: center;
+      overflow: hidden;
       margin: 0 auto;
       padding: calc(var(--ui-scale, 1) * 3px);
       box-sizing: border-box;
@@ -154,9 +155,21 @@
       box-shadow: 1px 1px #0a0a0a, inset 1px 1px #dfdfdf;
 
       img {
-        width: 100%;
-        height: 100%;
+        display: block;
+        width: 100% !important;
+        height: 100% !important;
+        max-width: 100%;
         object-fit: cover;
+      }
+
+      &--document {
+        width: calc(var(--ui-scale, 1) * 44px);
+        height: calc(var(--ui-scale, 1) * 58px);
+        background: #d8d1b8;
+
+        img {
+          object-fit: contain;
+        }
       }
     }
 

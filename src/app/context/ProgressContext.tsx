@@ -276,6 +276,101 @@ export const ProgressProvider = ({
     [isReadOnly]
   );
 
+  const setFlag = useCallback(
+    (flag: string) => dispatchGameEvent({ type: "SET_FLAG", flag }),
+    [dispatchGameEvent]
+  );
+  const markFileRead = useCallback(
+    (fileId: string) =>
+      dispatchGameEvent({ type: "MARK_FILE_READ", fileId }),
+    [dispatchGameEvent]
+  );
+  const markEmailRead = useCallback(
+    (emailId: string) =>
+      dispatchGameEvent({ type: "MARK_EMAIL_READ", emailId }),
+    [dispatchGameEvent]
+  );
+  const discoverEvidence = useCallback(
+    (evidenceId: string, resourceId?: string) =>
+      dispatchGameEvent({
+        type: "DISCOVER_EVIDENCE",
+        evidenceId,
+        resourceId,
+      }),
+    [dispatchGameEvent]
+  );
+  const visitPage = useCallback(
+    (pageId: string) =>
+      dispatchGameEvent({ type: "VISIT_PAGE", pageId }),
+    [dispatchGameEvent]
+  );
+  const solvePuzzle = useCallback(
+    (puzzleId: PuzzleId) =>
+      dispatchGameEvent({ type: "SOLVE_PUZZLE", puzzleId }),
+    [dispatchGameEvent]
+  );
+  const attemptPuzzle = useCallback(
+    (puzzleId: PuzzleId) =>
+      dispatchGameEvent({ type: "ATTEMPT_PUZZLE", puzzleId }),
+    [dispatchGameEvent]
+  );
+  const unlockHint = useCallback(
+    (puzzleId: PuzzleId, level?: number) =>
+      dispatchGameEvent({ type: "UNLOCK_HINT", puzzleId, level }),
+    [dispatchGameEvent]
+  );
+  const collectReference = useCallback(
+    (reference: string) =>
+      dispatchGameEvent({ type: "COLLECT_REFERENCE", reference }),
+    [dispatchGameEvent]
+  );
+  const recordSequenceAction = useCallback(
+    (action: string) =>
+      dispatchGameEvent({ type: "FUTURE_SEQUENCE_ACTION", action }),
+    [dispatchGameEvent]
+  );
+  const runCommand = useCallback(
+    (command: string) =>
+      dispatchGameEvent({ type: "RUN_COMMAND", command }),
+    [dispatchGameEvent]
+  );
+  const chooseEnding = useCallback(
+    (ending: EndingId) =>
+      dispatchGameEvent({ type: "CHOOSE_ENDING", ending }),
+    [dispatchGameEvent]
+  );
+  const setPlayerName = useCallback(
+    (name: string | null) =>
+      dispatchGameEvent({ type: "SET_PLAYER_NAME", name }),
+    [dispatchGameEvent]
+  );
+  const setCaseNotes = useCallback(
+    (notes: string) =>
+      dispatchGameEvent({ type: "SET_CASE_NOTES", notes }),
+    [dispatchGameEvent]
+  );
+  const exportCode = useCallback(
+    () => exportCaseCode(stateRef.current),
+    []
+  );
+  const previewCode = useCallback(
+    (code: string) => importCaseCode(code),
+    []
+  );
+  const hasFlag = useCallback(
+    (flag: string) => Boolean(state.flags[flag]),
+    [state.flags]
+  );
+  const hasEvidence = useCallback(
+    (evidenceId: string) =>
+      state.discoveredEvidenceIds.includes(evidenceId),
+    [state.discoveredEvidenceIds]
+  );
+  const isPuzzleSolved = useCallback(
+    (puzzleId: PuzzleId) => Boolean(state.puzzles[puzzleId].solvedAt),
+    [state.puzzles]
+  );
+
   const value = useMemo<ProgressContextValue>(
     () => ({
       state,
@@ -296,56 +391,57 @@ export const ProgressProvider = ({
       caseNotes: state.caseNotes,
       activePuzzle: firstUnsolvedPuzzle(state),
       dispatchGameEvent,
-      setFlag: (flag) => dispatchGameEvent({ type: "SET_FLAG", flag }),
-      markFileRead: (fileId) =>
-        dispatchGameEvent({ type: "MARK_FILE_READ", fileId }),
-      markEmailRead: (emailId) =>
-        dispatchGameEvent({ type: "MARK_EMAIL_READ", emailId }),
-      discoverEvidence: (evidenceId, resourceId) =>
-        dispatchGameEvent({
-          type: "DISCOVER_EVIDENCE",
-          evidenceId,
-          resourceId,
-        }),
-      visitPage: (pageId) =>
-        dispatchGameEvent({ type: "VISIT_PAGE", pageId }),
-      solvePuzzle: (puzzleId) =>
-        dispatchGameEvent({ type: "SOLVE_PUZZLE", puzzleId }),
-      attemptPuzzle: (puzzleId) =>
-        dispatchGameEvent({ type: "ATTEMPT_PUZZLE", puzzleId }),
-      unlockHint: (puzzleId, level) =>
-        dispatchGameEvent({ type: "UNLOCK_HINT", puzzleId, level }),
-      collectReference: (reference) =>
-        dispatchGameEvent({ type: "COLLECT_REFERENCE", reference }),
-      recordSequenceAction: (action) =>
-        dispatchGameEvent({ type: "FUTURE_SEQUENCE_ACTION", action }),
-      runCommand: (command) =>
-        dispatchGameEvent({ type: "RUN_COMMAND", command }),
-      chooseEnding: (ending) =>
-        dispatchGameEvent({ type: "CHOOSE_ENDING", ending }),
-      setPlayerName: (name) =>
-        dispatchGameEvent({ type: "SET_PLAYER_NAME", name }),
-      setCaseNotes: (notes) =>
-        dispatchGameEvent({ type: "SET_CASE_NOTES", notes }),
+      setFlag,
+      markFileRead,
+      markEmailRead,
+      discoverEvidence,
+      visitPage,
+      solvePuzzle,
+      attemptPuzzle,
+      unlockHint,
+      collectReference,
+      recordSequenceAction,
+      runCommand,
+      chooseEnding,
+      setPlayerName,
+      setCaseNotes,
       newCase,
-      exportCode: () => exportCaseCode(stateRef.current),
-      previewCode: (code) => importCaseCode(code),
+      exportCode,
+      previewCode,
       importCode,
-      hasFlag: (flag) => Boolean(state.flags[flag]),
-      hasEvidence: (evidenceId) =>
-        state.discoveredEvidenceIds.includes(evidenceId),
-      isPuzzleSolved: (puzzleId) => Boolean(state.puzzles[puzzleId].solvedAt),
+      hasFlag,
+      hasEvidence,
+      isPuzzleSolved,
     }),
     [
+      attemptPuzzle,
+      chooseEnding,
+      collectReference,
+      discoverEvidence,
       dispatchGameEvent,
+      exportCode,
+      hasEvidence,
+      hasFlag,
       importCode,
       isHydrated,
+      isPuzzleSolved,
       isReadOnly,
+      markEmailRead,
+      markFileRead,
       newCase,
       persistenceAvailable,
+      previewCode,
+      recordSequenceAction,
       recoveredFromCheckpoint,
+      runCommand,
       saveStatus,
+      setCaseNotes,
+      setFlag,
+      setPlayerName,
+      solvePuzzle,
       state,
+      unlockHint,
+      visitPage,
     ]
   );
 

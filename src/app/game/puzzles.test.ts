@@ -82,6 +82,44 @@ describe("ARG progression reducer", () => {
     expect(accepted.commandAccepted).toBe(true);
     expect(accepted.state.flags.endgame_available).toBe(true);
   });
+
+  it("does not create revisions for duplicate evidence events", () => {
+    const initial = createInitialProgress(1_700_000_000_000, "test-case");
+    const discovered = reduceGameEvent(initial, {
+      type: "DISCOVER_EVIDENCE",
+      evidenceId: "lot_114_scan",
+      resourceId: "lot_114_scan",
+    }).state;
+    const duplicate = reduceGameEvent(discovered, {
+      type: "DISCOVER_EVIDENCE",
+      evidenceId: "lot_114_scan",
+      resourceId: "lot_114_scan",
+    }).state;
+
+    expect(duplicate).toBe(discovered);
+    expect(duplicate.revision).toBe(discovered.revision);
+  });
+
+  it("does not touch state for already solved puzzles or invalid commands", () => {
+    const initial = createInitialProgress(1_700_000_000_000, "test-case");
+    const solved = reduceGameEvent(initial, {
+      type: "SOLVE_PUZZLE",
+      puzzleId: "lot_114",
+    }).state;
+
+    expect(
+      reduceGameEvent(solved, {
+        type: "SOLVE_PUZZLE",
+        puzzleId: "lot_114",
+      }).state
+    ).toBe(solved);
+    expect(
+      reduceGameEvent(solved, {
+        type: "RUN_COMMAND",
+        command: "NOT A VALID COMMAND",
+      }).state
+    ).toBe(solved);
+  });
 });
 
 describe("compound unlock conditions", () => {
@@ -116,4 +154,3 @@ describe("compound unlock conditions", () => {
     ).toBe(false);
   });
 });
-

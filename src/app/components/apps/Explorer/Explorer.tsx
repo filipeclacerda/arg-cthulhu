@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import "./style.scss";
-import { folders, files, isUnlocked } from "@/app/data/filesystem";
+import { folders, files, isUnlocked, VFile } from "@/app/data/filesystem";
 import { useProgress } from "@/app/context/ProgressContext";
 import { useWindowManager } from "@/app/context/WindowManagerContext";
 import { IDENTITY_REVEAL_STAGE } from "@/app/utils/narrative";
@@ -13,6 +13,25 @@ interface ExplorerProps {
 
 const DEFAULT_FOLDER_ICON = "/icons/folder.png";
 const FILE_ICON = "/icons/file.png";
+const EXTENSION_ICONS: Record<string, string> = {
+  txt: "/icons/notepad.png",
+  hlp: "/icons/help.png",
+  wav: "/icons/sound-recorder.png",
+};
+
+const extensionOf = (name: string) =>
+  name.match(/\.([a-z0-9]+)$/i)?.[1].toLowerCase() ?? "";
+
+const isDocumentScan = (file: VFile) =>
+  ["tif", "tiff"].includes(extensionOf(file.name));
+
+/**
+ * Windows 98 associates familiar extensions with their programs. Unknown
+ * formats such as .ENC and .TMP deliberately retain the generic file icon.
+ */
+const fileIconFor = (file: VFile) =>
+  EXTENSION_ICONS[extensionOf(file.name)] ??
+  (file.kind === "audio" ? "/icons/sound-recorder.png" : FILE_ICON);
 
 const Explorer = ({ folderId = "my-computer" }: ExplorerProps) => {
   const {
@@ -180,8 +199,14 @@ const Explorer = ({ folderId = "my-computer" }: ExplorerProps) => {
               onDoubleClick={() => openFile(file.id)}
               title="Double-click to open"
             >
-              {file.kind === "image" && file.folderId === "pictures" ? (
-                <span className="explorer-photo-thumbnail">
+              {file.kind === "image" ? (
+                <span
+                  className={`explorer-photo-thumbnail ${
+                    isDocumentScan(file)
+                      ? "explorer-photo-thumbnail--document"
+                      : ""
+                  }`}
+                >
                   <Image
                     src={file.content}
                     alt=""
@@ -190,7 +215,13 @@ const Explorer = ({ folderId = "my-computer" }: ExplorerProps) => {
                   />
                 </span>
               ) : (
-                <Image className="explorer-icon" src={FILE_ICON} alt="" width={44} height={44} />
+                <Image
+                  className="explorer-icon"
+                  src={fileIconFor(file)}
+                  alt=""
+                  width={44}
+                  height={44}
+                />
               )}
               <p>{file.name}</p>
             </div>

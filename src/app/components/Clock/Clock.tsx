@@ -1,10 +1,13 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import { useProgress } from "@/app/context/ProgressContext";
+import { useWindowManager } from "@/app/context/WindowManagerContext";
 import { formatGameDate, tomorrow } from "@/app/utils/narrative";
+import "./style.scss";
 
 const Clock = () => {
-  const { corruptionStage, isPuzzleSolved, collectReference } = useProgress();
+  const { corruptionStage, isPuzzleSolved } = useProgress();
+  const { openWindow } = useWindowManager();
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
   // Accumulated "wrongness" the clock has remembered into the future.
   const skewRef = useRef(0);
@@ -36,32 +39,32 @@ const Clock = () => {
       ? formatGameDate(tomorrow(new Date()))
       : formatGameDate(currentTime)
     : "--/--/----";
+  const referenceVisible = isPuzzleSolved("future_log");
+
+  const openProperties = () => {
+    openWindow({
+      id: "clock-properties",
+      appType: "clock-properties",
+      title: "Date/Time Properties",
+    });
+  };
 
   return (
-    <div
+    <button
+      type="button"
       className="clock"
       title={
-        isPuzzleSolved("future_log")
-          ? "Clock registry object reference: B9"
-          : "System clock"
+        referenceVisible
+          ? "Open Date/Time Properties — indexed registry data available"
+          : "Open Date/Time Properties"
       }
-      onClick={() => {
-        if (isPuzzleSolved("future_log")) collectReference("B9");
-      }}
-      style={{
-        fontSize: "14px",
-        width: "70px",
-        justifyContent: "center",
-        alignItems: "center",
-        display: "flex",
-        flexDirection: "column",
-      }}
+      onClick={openProperties}
     >
-      <p style={{ margin: 0 }}>
+      <span>
         {currentTime ? formatTime(currentTime) : "--:--:-- --"}
-      </p>
-      <p style={{ margin: 0 }}>{dateString}</p>
-    </div>
+      </span>
+      <span>{dateString}</span>
+    </button>
   );
 };
 

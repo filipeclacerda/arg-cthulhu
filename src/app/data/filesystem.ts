@@ -233,6 +233,44 @@ export const files: VFile[] = [
       "Em says the vertical shape offshore is an old piling. She does not remember seeing it when the photograph was taken.",
     content: "/photos/sarah_em_coast_2025.png",
   },
+  {
+    id: "photo_sarah_tom",
+    name: "tom_after_symposium.png",
+    folderId: "pictures",
+    kind: "image",
+    unlock: { type: "always" },
+    evidenceId: "photo_sarah_tom_2024",
+    alias: "TOMAF~1.PNG",
+    size: "2.9 MB",
+    modified: "2024-10-19 17:31",
+    taken: "2024-10-19 17:24",
+    dimensions: "1536 × 1024",
+    camera: "Tom's digital camera / self-timer",
+    location: "Miskatonic University, Orne Library steps",
+    caption: "Tom and Sarah after the Special Collections symposium.",
+    comment:
+      "Tom wrote on the printout: “You survived questions, lukewarm coffee, and Professor Armitage's slides.”",
+    content: "/photos/sarah_tom_campus_2024.png",
+  },
+  {
+    id: "photo_bishop_birthday",
+    name: "dads_65th.png",
+    folderId: "pictures",
+    kind: "image",
+    unlock: { type: "always" },
+    evidenceId: "photo_bishop_birthday_2025",
+    alias: "DADS65~1.PNG",
+    size: "3.0 MB",
+    modified: "2025-08-24 21:08",
+    taken: "2025-08-24 19:46",
+    dimensions: "1536 × 1024",
+    camera: "Em's compact camera / kitchen timer",
+    location: "Bishop family home, Arkham",
+    caption: "Dad's 65th. Sarah made it before the candles burned down.",
+    comment:
+      "Em renamed the file three times before settling on this. The original name was everybody_act_normal.png.",
+    content: "/photos/bishop_birthday_2025.png",
+  },
 
   // --- Act 1: the person (always visible in Sarah's home folder) ------------
   {
@@ -420,6 +458,25 @@ An empty office. Chair pushed back. The damp patch under the desk, darker now.
 In the black mirror of the powered-off monitor there is a reflection of someone sitting at the desk, facing the camera.
 
 The office was empty when this was taken. The monitor was off. You are looking at it through a monitor that is on.`,
+  },
+  {
+    id: "office_after_photo",
+    name: "office_after.jpg",
+    folderId: "restricted",
+    kind: "image",
+    unlock: { type: "always" },
+    evidenceId: "office_after_photo",
+    alias: "OFFICE~1.JPG",
+    size: "1.7 MB",
+    modified: "{TOMORROW} 08:14",
+    taken: "2026-03-19 08:14",
+    dimensions: "1536 × 1024",
+    camera: "Miskatonic Campus Security / evidence camera 04",
+    location: "Orne Library, basement archive B2",
+    caption: "Evidence photograph 2026-0316-4 / frame 12.",
+    comment:
+      "The evidence index describes the monitor as powered off. The seated reflection does not appear in frames 11 or 13.",
+    content: "/photos/office_after_2026.png",
   },
   {
     id: "access_log",

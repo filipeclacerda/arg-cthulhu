@@ -10,10 +10,12 @@ import Notepad from "../apps/Notepad/Notepad";
 import Email from "../apps/Email/Email";
 import Finale from "../apps/Finale/Finale";
 import RecoveredBrowser from "../apps/RecoveredBrowser/RecoveredBrowser";
+import Messenger from "../apps/Messenger/Messenger";
 import ImageViewer from "../apps/ImageViewer/ImageViewer";
 import MediaPlayer from "../apps/MediaPlayer/MediaPlayer";
 import CipherLab from "../apps/CipherLab/CipherLab";
 import CaseNotes from "../apps/CaseNotes/CaseNotes";
+import ClockProperties from "../apps/ClockProperties/ClockProperties";
 import FileProperties from "../apps/FileProperties/FileProperties";
 import HelpCenter from "../apps/HelpCenter/HelpCenter";
 import {
@@ -35,6 +37,8 @@ const renderAppContent = (win: WindowInstance) => {
       return <Finale />;
     case "browser":
       return <RecoveredBrowser initialAddress={win.props.initialAddress} />;
+    case "messenger":
+      return <Messenger />;
     case "image":
       return <ImageViewer fileId={win.props.fileId} />;
     case "audio":
@@ -43,6 +47,8 @@ const renderAppContent = (win: WindowInstance) => {
       return <CipherLab />;
     case "case-notes":
       return <CaseNotes />;
+    case "clock-properties":
+      return <ClockProperties />;
     case "properties":
       return <FileProperties fileId={win.props.fileId} />;
     case "help":
