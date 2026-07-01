@@ -28,6 +28,7 @@ import {
   RecycleBin,
   SystemProperties,
 } from "../apps/RetroPrograms/RetroPrograms";
+import { useI18n } from "@/app/i18n";
 
 const renderAppContent = (win: WindowInstance) => {
   switch (win.appType) {
@@ -81,6 +82,7 @@ const renderAppContent = (win: WindowInstance) => {
 };
 
 const WindowFrame = ({ win }: { win: WindowInstance }) => {
+  const { t } = useI18n();
   const {
     closeWindow,
     focusWindow,
@@ -144,7 +146,11 @@ const WindowFrame = ({ win }: { win: WindowInstance }) => {
       onMouseDown={handleMouseDown}
     >
       <WindowComponent
-        title={win.title}
+        title={
+          win.appType === "case-reconstruction"
+            ? t("caseReconstructionLabel")
+            : win.title
+        }
         onClose={() => closeWindow(win.id)}
         onMinimize={() => toggleMinimize(win.id)}
         onMaximize={() => toggleMaximize(win.id)}

@@ -56,6 +56,7 @@ const desktopApps: DesktopApp[] = [
   {
     id: "case-reconstruction",
     label: "Case Reconstruction",
+    labelKey: "caseReconstructionLabel",
     appType: "case-reconstruction",
     icon: "/icons/folder-special.png",
     maximized: true,
@@ -118,6 +119,10 @@ const Desktop = () => {
   const { play, setAmbientActive, muted, toggleMuted } = useSound();
   const { t } = useI18n();
   const appLabel = (app: DesktopApp) => (app.labelKey ? t(app.labelKey) : app.label);
+  const windowTitle = (win: (typeof windows)[number]) =>
+    win.appType === "case-reconstruction"
+      ? t("caseReconstructionLabel")
+      : win.title;
   const SAVE_STATUS_LABELS: Record<string, TranslationKey> = {
     loading: "statusLoading",
     saving: "statusSaving",
@@ -506,10 +511,10 @@ const Desktop = () => {
                   win.minimized ? "taskbar-window--minimized" : ""
                 }`}
                 onClick={() => focusWindow(win.id)}
-                title={win.title}
+                title={windowTitle(win)}
               >
                 <Image src={appIcon(win.appType)} alt="" width={18} height={18} />
-                <span>{win.title}</span>
+                <span>{windowTitle(win)}</span>
               </button>
             ))}
           </div>

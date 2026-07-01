@@ -11,6 +11,7 @@ import {
   TOKENS_BY_ID,
 } from "@/app/game/campaign";
 import { CaseQuestionId } from "@/app/game/progress";
+import { displayedEvidenceIds } from "@/app/game/caseReconstruction";
 import {
   BoardCard,
   BoardCategory,
@@ -70,7 +71,9 @@ const CaseReconstruction = () => {
     {}
   );
   const [activeSlot, setActiveSlot] = useState<string | null>(null);
-  const [evidenceIds, setEvidenceIds] = useState<string[]>([]);
+  const [evidenceIds, setEvidenceIds] = useState<string[]>(
+    state.caseAnswers[firstOpen]?.evidenceIds ?? []
+  );
   const [feedback, setFeedback] = useState("");
   const [feedbackTone, setFeedbackTone] = useState<
     "neutral" | "warm" | "cold"
@@ -83,6 +86,11 @@ const CaseReconstruction = () => {
     visibleStatements[0];
   const retained = state.caseAnswers[statement.id];
   const solved = Boolean(retained?.solvedAt);
+  const attachedEvidenceIds = displayedEvidenceIds(
+    solved,
+    retained?.evidenceIds,
+    evidenceIds
+  );
   const lockedSlots = retained?.lockedSlots ?? [];
   const effectiveSlots = { ...(retained?.slots ?? {}), ...slotSelections };
   const selectedSlot =
@@ -411,7 +419,7 @@ const CaseReconstruction = () => {
             <div className="case-reconstruction__evidence-heading">
               <strong>{locale === "pt-BR" ? "Registros anexados" : "Attached records"}</strong>
               <span className="case-reconstruction__evidence-count">
-                {(retained?.evidenceIds ?? evidenceIds).length}/5
+                {attachedEvidenceIds.length}/5
               </span>
             </div>
             <input
@@ -432,7 +440,7 @@ const CaseReconstruction = () => {
                   <h4>{categoryLabel(group.category)}</h4>
                   <div className="case-reconstruction__evidence-grid">
                     {group.cards.map((card) => {
-                      const selected = (retained?.evidenceIds ?? evidenceIds).includes(card.id);
+                      const selected = attachedEvidenceIds.includes(card.id);
                       return (
                         <div
                           className={`case-reconstruction__evidence-card ${
@@ -441,8 +449,10 @@ const CaseReconstruction = () => {
                           key={card.id}
                         >
                           <button
+                            type="button"
                             className="case-reconstruction__evidence-toggle"
                             title={card.summary}
+                            aria-pressed={selected}
                             onClick={() => toggleEvidence(card.id)}
                             disabled={solved}
                           >
