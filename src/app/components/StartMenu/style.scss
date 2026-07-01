@@ -8,7 +8,9 @@
     box-shadow: inset -1px -1px #0a0a0a, inset 1px 1px #fff,
         inset -2px -2px grey, inset 2px 2px #dfdfdf;
     padding: calc(var(--ui-scale, 1) * 3px);
-    z-index: 999;
+    // Window z-index climbs by 1 on every click (each mousedown refocuses its
+    // window), so it can pass small fixed values well within a play session.
+    z-index: 100000;
     display: flex;
     gap: calc(var(--ui-scale, 1) * 6px);
 }
@@ -16,7 +18,7 @@
 .start-menu-scrim {
     position: fixed;
     inset: 0;
-    z-index: 998;
+    z-index: 99999;
     border: 0;
     background: transparent;
 }
@@ -116,7 +118,7 @@
     padding: calc(var(--ui-scale, 1) * 8px) calc(var(--ui-scale, 1) * 12px);
     box-shadow: inset -1px -1px #0a0a0a, inset 1px 1px #dfdfdf,
         inset -2px -2px grey, inset 2px 2px #fff;
-    z-index: 10000;
+    z-index: 100001;
     width: min(calc(var(--ui-scale, 1) * 490px), calc(100vw - 40px));
     display: grid;
     grid-template-columns: auto 1fr auto;
