@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { useProgress } from "@/app/context/ProgressContext";
 import { useSound } from "@/app/context/SoundContext";
 import { resolveTokens, formatGameDate, tomorrow } from "@/app/utils/narrative";
+import { useI18n } from "@/app/i18n";
 import "./style.scss";
 
 type FinaleState = "choice" | "restore" | "shutdown";
@@ -10,6 +11,7 @@ type FinaleState = "choice" | "restore" | "shutdown";
 const Finale = () => {
   const { chooseEnding, playerName } = useProgress();
   const { play } = useSound();
+  const { t } = useI18n();
   const [screen, setScreen] = useState<FinaleState>("choice");
 
   const ctx = { playerName };
@@ -31,29 +33,10 @@ const Finale = () => {
     return (
       <div className="finale finale--restore">
         <div className="finale-terminal">
-          <pre>
-          {resolveTokens(
-            `[SIGNAL RECEIVED — {TOMORROW}]
-
-S: i'm here
-S: i can hear you on the other side of it
-S: come back i'm right here
-
-[SIGNAL LOST]
-
-[REBOOTING]
-[USER: sarah.bishop]
-[LAST LOGIN: {TOMORROW}]
-
-New documents found in this folder.
-Owner: {PLAYER}
-Created: {TOMORROW}`,
-            ctx
-          )}
-          </pre>
+          <pre>{resolveTokens(t("finaleRestoreTerminal"), ctx)}</pre>
         </div>
         <p className="finale-caption">
-          Sarah&apos;s account is restored. Your files are dated {tomorrowStr}.
+          {t("finaleRestoreCaption")} {tomorrowStr}.
         </p>
       </div>
     );
@@ -63,20 +46,10 @@ Created: {TOMORROW}`,
     return (
       <div className="finale finale--shutdown">
         <div className="finale-terminal">
-          <pre>
-{`Windows 98 is shutting down.
-
-It is now safe to turn off your computer.
-
-...
-
-...
-
-...`}
-          </pre>
+          <pre>{t("finaleShutdownTerminal")}</pre>
         </div>
         <p className="finale-caption">
-          Check your inbox.
+          {t("finaleShutdownCaption")}
         </p>
       </div>
     );
@@ -86,17 +59,7 @@ It is now safe to turn off your computer.
   return (
     <div className="finale">
       <div className="finale-terminal">
-        <pre>
-        {resolveTokens(
-          `[RECOVERED PROGRAM — last modified {TOMORROW}]
-
-Chapter seven is not in the book.
-Chapter seven is the person trying to understand it.
-
-Two options remain.`,
-          ctx
-        )}
-        </pre>
+        <pre>{resolveTokens(t("finaleChoiceTerminal"), ctx)}</pre>
       </div>
       <div className="finale-actions">
         <button
@@ -104,14 +67,14 @@ Two options remain.`,
           type="button"
           onClick={handleRestore}
         >
-          RESTORE SARAH
+          {t("restoreSarahLabel")}
         </button>
         <button
           className="button btn-lg"
           type="button"
           onClick={handleShutdown}
         >
-          SHUT DOWN
+          {t("shutDownChoiceLabel")}
         </button>
       </div>
     </div>

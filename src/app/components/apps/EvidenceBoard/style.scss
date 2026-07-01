@@ -63,12 +63,19 @@
   }
 }
 
-.evidence-board__reset {
+.evidence-board__toolbar .button {
   width: auto;
   height: 27px;
   flex: 0 0 auto;
   padding: 0 8px;
   font-size: 10px;
+}
+
+.evidence-board__notes-link {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: auto;
 }
 
 .evidence-board__workspace {
@@ -137,6 +144,7 @@
 
 .evidence-board__string-shadow,
 .evidence-board__string {
+  fill: none;
   stroke-linecap: round;
 }
 
@@ -149,6 +157,66 @@
 .evidence-board__string {
   stroke: #b5141d;
   stroke-width: 2.5;
+}
+
+.evidence-board__string--confirmed {
+  stroke: #d1a12e;
+  stroke-width: 3;
+  filter: drop-shadow(0 0 2px rgba(255, 199, 84, 0.55));
+}
+
+.evidence-board__confirmed-seal {
+  fill: #2a1607;
+  stroke: #d1a12e;
+  stroke-width: 1.5;
+  pointer-events: auto;
+}
+
+.evidence-board__confirmed-group {
+  .evidence-board__string--confirmed {
+    stroke-dasharray: 620;
+    stroke-dashoffset: 0;
+  }
+
+  .evidence-board__confirmed-seal {
+    r: 5;
+  }
+}
+
+.evidence-board__confirmed-group--reveal {
+  .evidence-board__string--confirmed {
+    animation: evidence-thread-draw 1s ease-out;
+  }
+
+  .evidence-board__confirmed-seal {
+    animation: evidence-seal-pop 1s ease-out;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+}
+
+@keyframes evidence-thread-draw {
+  from {
+    stroke-dashoffset: 620;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes evidence-seal-pop {
+  0% {
+    r: 0;
+    opacity: 0;
+  }
+  55% {
+    r: 8;
+    opacity: 1;
+  }
+  100% {
+    r: 5;
+    opacity: 1;
+  }
 }
 
 .evidence-card {
@@ -284,6 +352,57 @@
     3px 5px 0 rgba(0, 0, 0, 0.4);
 }
 
+.evidence-card--theory {
+  z-index: 5;
+  outline: 3px solid #1e6c88;
+  outline-offset: 2px;
+
+  &::after {
+    content: "THEORY";
+    position: absolute;
+    right: 7px;
+    bottom: 5px;
+    padding: 2px 4px;
+    color: #fff;
+    background: #1e6c88;
+    font: bold 8px "Courier New", monospace;
+    letter-spacing: 0.08em;
+  }
+}
+
+.evidence-card--confirmed {
+  box-shadow:
+    0 0 0 2px #d1a12e,
+    2px 3px 0 rgba(0, 0, 0, 0.36),
+    0 0 10px rgba(209, 161, 46, 0.45);
+}
+
+.evidence-card__seal {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  z-index: 4;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 32% 28%, rgba(255, 220, 140, 0.9), transparent 55%),
+    #7a1414;
+  box-shadow:
+    0 0 0 2px #d1a12e,
+    1px 2px 3px rgba(0, 0, 0, 0.5);
+
+  &::after {
+    content: "✦";
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    color: #ffe9b0;
+    font-size: 10px;
+  }
+}
+
 .evidence-card--person { --card-accent: #8b2424; background-color: #f4dfc1; }
 .evidence-card--photo { --card-accent: #b28b00; }
 .evidence-card--document { --card-accent: #286aa5; }
@@ -369,6 +488,92 @@
   }
 }
 
+.evidence-board__theory {
+  padding: 9px;
+  border: 1px solid #8d846b;
+  background: #fffdf0;
+
+  > span {
+    display: block;
+    margin-bottom: 5px;
+    color: #6d1c22;
+    font: bold 9px "Courier New", monospace;
+    letter-spacing: 0.12em;
+  }
+
+  > strong {
+    display: block;
+    line-height: 1.35;
+  }
+}
+
+.evidence-board__theory-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 30px;
+  margin: 8px 0;
+
+  button {
+    padding: 4px 5px;
+    border: 1px solid #b0a78e;
+    text-align: left;
+    color: #322819;
+    background: #f2ead0;
+    cursor: pointer;
+  }
+}
+
+.evidence-board__theory-actions {
+  display: flex;
+  gap: 5px;
+}
+
+.evidence-board__theory-feedback {
+  margin: 9px 0 0;
+  padding: 7px;
+  border-left: 3px solid #1e6c88;
+  color: #263e45;
+  background: #e2f1f3;
+  line-height: 1.35;
+}
+
+.evidence-board__insights {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed #8d846b;
+
+  > strong {
+    font: bold 9px "Courier New", monospace;
+  }
+
+  p {
+    margin: 6px 0;
+    font-size: 10px;
+    line-height: 1.35;
+  }
+}
+
+.evidence-board__insight-row {
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+  border-bottom: 1px dotted #b5ab8c;
+
+  &:last-child {
+    margin-bottom: 0;
+    border-bottom: 0;
+  }
+}
+
+.button.evidence-board__add-note {
+  width: auto;
+  height: 22px;
+  margin-top: 2px;
+  padding: 0 6px;
+  font-size: 9px;
+  white-space: nowrap;
+}
+
 .evidence-board__connection-list {
   margin-top: 13px;
 
@@ -410,6 +615,24 @@
       line-height: 15px;
     }
   }
+
+  > div.evidence-board__thread--confirmed {
+    grid-template-columns: 1fr auto 1fr auto;
+
+    i {
+      color: #a87a10;
+    }
+  }
+}
+
+.evidence-board__thread-confirmed-tag {
+  padding: 2px 5px;
+  border: 1px solid #a87a10;
+  color: #fff;
+  background: #a87a10;
+  font: bold 8px "Courier New", monospace;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
 }
 
 .evidence-board__legend {

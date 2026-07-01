@@ -9,10 +9,12 @@ import { useWindowManager, AppType } from "../context/WindowManagerContext";
 import { useProgress } from "../context/ProgressContext";
 import { useSound } from "../context/SoundContext";
 import { useSubliminalGlitch } from "../hooks/useSubliminalGlitch";
+import { useI18n, TranslationKey } from "../i18n";
 
 interface DesktopApp {
   id: string;
   label: string;
+  labelKey?: TranslationKey;
   appType: AppType;
   icon: string;
   props?: Record<string, any>;
@@ -22,6 +24,7 @@ const desktopApps: DesktopApp[] = [
   {
     id: "my-computer",
     label: "My Computer",
+    labelKey: "myComputerLabel",
     appType: "explorer",
     icon: "/icons/my-computer.png",
     props: { folderId: "my-computer" },
@@ -29,6 +32,7 @@ const desktopApps: DesktopApp[] = [
   {
     id: "my-documents",
     label: "My Documents",
+    labelKey: "myDocumentsLabel",
     appType: "explorer",
     icon: "/icons/my-documents.png",
     props: { folderId: "sarah" },
@@ -36,8 +40,16 @@ const desktopApps: DesktopApp[] = [
   {
     id: "case-notes",
     label: "Case Notes",
+    labelKey: "caseNotesLabel",
     appType: "case-notes",
     icon: "/icons/notepad.png",
+  },
+  {
+    id: "evidence-board",
+    label: "Evidence Board",
+    labelKey: "evidenceBoardLabel",
+    appType: "evidence-board",
+    icon: "/icons/folder-special.png",
   },
   {
     id: "internet-explorer",
@@ -60,6 +72,7 @@ const desktopApps: DesktopApp[] = [
   {
     id: "recycle-bin",
     label: "Recycle Bin",
+    labelKey: "recycleBinLabel",
     appType: "recycle-bin",
     icon: "/icons/recycle-bin.png",
   },
@@ -92,6 +105,15 @@ const Desktop = () => {
     playerName,
   } = useProgress();
   const { play, setAmbientActive, muted, toggleMuted } = useSound();
+  const { t } = useI18n();
+  const appLabel = (app: DesktopApp) => (app.labelKey ? t(app.labelKey) : app.label);
+  const SAVE_STATUS_LABELS: Record<string, TranslationKey> = {
+    loading: "statusLoading",
+    saving: "statusSaving",
+    saved: "statusSaved",
+    error: "statusError",
+    readonly: "statusReadonly",
+  };
   const [warningDismissed, setWarningDismissed] = useState(false);
   const [caseCodeCopied, setCaseCodeCopied] = useState(false);
   const [booted, setBooted] = useState(false);
@@ -102,8 +124,8 @@ const Desktop = () => {
   );
 
   useEffect(() => {
-    const t = setTimeout(() => setBooted(true), 1700);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setBooted(true), 1700);
+    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
@@ -130,23 +152,20 @@ const Desktop = () => {
     if (!isHydrated) return;
     if (!flags.sarah_email_arrived || flags.sarah_email_notice_shown) return;
 
-    const t = setTimeout(() => {
+    const timer = setTimeout(() => {
       setFlag("sarah_email_notice_shown");
       play("chime");
       openWindow({
         id: "new-mail-alert",
         appType: "generic",
-        title: "New Mail",
+        title: t("newMailTitle"),
         props: {
           windowClassName: "corrupted",
           children: (
             <div className="new-mail-alert">
-              <p className="new-mail-alert__kicker">Message received</p>
+              <p className="new-mail-alert__kicker">{t("messageReceivedKicker")}</p>
               <h2>sarah.bishop@miskatonic-research.org</h2>
-              <p>
-                This message is dated tomorrow. Outlook Express recommends
-                treating this as a clock synchronization error.
-              </p>
+              <p>{t("clockSyncWarning")}</p>
               <button
                 className="button"
                 type="button"
@@ -158,7 +177,7 @@ const Desktop = () => {
                   })
                 }
               >
-                Open Inbox
+                {t("openInboxLabel")}
               </button>
             </div>
           ),
@@ -166,7 +185,7 @@ const Desktop = () => {
       });
     }, 900);
 
-    return () => clearTimeout(t);
+    return () => clearTimeout(timer);
   }, [
     flags.sarah_email_arrived,
     flags.sarah_email_notice_shown,
@@ -180,19 +199,19 @@ const Desktop = () => {
     if (!isHydrated) return;
     if (!flags.puzzle_lot_114_solved || flags.restricted_folder_notice_shown) return;
 
-    const t = setTimeout(() => {
+    const timer = setTimeout(() => {
       setFlag("restricted_folder_notice_shown");
       play("chime");
       openWindow({
         id: "restricted-folder-alert",
         appType: "generic",
-        title: "New Folder Recovered",
+        title: t("newFolderRecoveredTitle"),
         props: {
           children: (
             <div className="new-mail-alert">
-              <p className="new-mail-alert__kicker">File system change</p>
-              <h2>A new folder has appeared in this account.</h2>
-              <p>RECOVERED — Sarah Bishop&apos;s My Documents.</p>
+              <p className="new-mail-alert__kicker">{t("fileSystemChangeKicker")}</p>
+              <h2>{t("newFolderAppearedAccount")}</h2>
+              <p>{t("recoveredMyDocumentsLine")}</p>
               <button
                 className="button"
                 type="button"
@@ -205,7 +224,7 @@ const Desktop = () => {
                   })
                 }
               >
-                Open Folder
+                {t("openFolderLabel")}
               </button>
             </div>
           ),
@@ -213,7 +232,7 @@ const Desktop = () => {
       });
     }, 900);
 
-    return () => clearTimeout(t);
+    return () => clearTimeout(timer);
   }, [
     flags.puzzle_lot_114_solved,
     flags.restricted_folder_notice_shown,
@@ -227,18 +246,18 @@ const Desktop = () => {
     if (!isHydrated) return;
     if (!flags.puzzle_counting_audio_solved || flags.chapter_seven_notice_shown) return;
 
-    const t = setTimeout(() => {
+    const timer = setTimeout(() => {
       setFlag("chapter_seven_notice_shown");
       play("chime");
       openWindow({
         id: "chapter-seven-alert",
         appType: "generic",
-        title: "New Folder Recovered",
+        title: t("newFolderRecoveredTitle"),
         props: {
           children: (
             <div className="new-mail-alert">
-              <p className="new-mail-alert__kicker">File system change</p>
-              <h2>A new folder has appeared inside RECOVERED.</h2>
+              <p className="new-mail-alert__kicker">{t("fileSystemChangeKicker")}</p>
+              <h2>{t("newFolderAppearedInside")}</h2>
               <p>CHAPTER_SEVEN.</p>
               <button
                 className="button"
@@ -252,7 +271,7 @@ const Desktop = () => {
                   })
                 }
               >
-                Open Folder
+                {t("openFolderLabel")}
               </button>
             </div>
           ),
@@ -260,7 +279,7 @@ const Desktop = () => {
       });
     }, 900);
 
-    return () => clearTimeout(t);
+    return () => clearTimeout(timer);
   }, [
     flags.puzzle_counting_audio_solved,
     flags.chapter_seven_notice_shown,
@@ -274,23 +293,20 @@ const Desktop = () => {
     if (!isHydrated) return;
     if (!flags.endgame_available || flags.endgame_notice_shown) return;
 
-    const t = setTimeout(() => {
+    const timer = setTimeout(() => {
       setFlag("endgame_notice_shown");
       play("chime");
       openWindow({
         id: "recovered-program-alert",
         appType: "generic",
-        title: "Recovered Program Installed",
+        title: t("recoveredProgramInstalledTitle"),
         props: {
           windowClassName: "corrupted",
           children: (
             <div className="new-mail-alert recovered-program-alert">
-              <p className="new-mail-alert__kicker">Recovered executable</p>
-              <h2>Chapter Seven has finished indexing.</h2>
-              <p>
-                A recovered program is now available from the Start menu. It
-                has no publisher and no creation date before tomorrow.
-              </p>
+              <p className="new-mail-alert__kicker">{t("recoveredExecutableKicker")}</p>
+              <h2>{t("chapterSevenFinishedIndexing")}</h2>
+              <p>{t("recoveredProgramAvailable")}</p>
               <button
                 className="button"
                 type="button"
@@ -302,7 +318,7 @@ const Desktop = () => {
                   })
                 }
               >
-                Run Program
+                {t("runProgramLabel")}
               </button>
             </div>
           ),
@@ -310,7 +326,7 @@ const Desktop = () => {
       });
     }, 900);
 
-    return () => clearTimeout(t);
+    return () => clearTimeout(timer);
   }, [
     flags.endgame_available,
     flags.endgame_notice_shown,
@@ -351,7 +367,7 @@ const Desktop = () => {
         openWindow({
           id: app.id,
           appType: app.appType,
-          title: app.label,
+          title: appLabel(app),
           props: app.props,
         });
       }
@@ -371,7 +387,7 @@ const Desktop = () => {
           <span />
           <span />
         </div>
-        <p>MOUNTING DISK IMAGE — VOL_114</p>
+        <p>{t("mountingDiskImage")} — VOL_114</p>
       </main>
     );
   }
@@ -421,19 +437,19 @@ const Desktop = () => {
             className={`save-indicator save-indicator--${saveStatus}`}
             title={
               isReadOnly
-                ? "Case open in another tab"
+                ? t("caseOpenAnotherTab")
                 : persistenceAvailable
-                  ? "Archive changes retained"
-                  : "Archive is not retaining changes"
+                  ? t("archiveChangesRetained")
+                  : t("archiveNotRetaining")
             }
           >
-            {isReadOnly ? "READ ONLY" : saveStatus.toUpperCase()}
+            {t(isReadOnly ? "statusReadonly" : SAVE_STATUS_LABELS[saveStatus])}
           </span>
           <button
             className="taskbar-sound-toggle"
             type="button"
             onClick={toggleMuted}
-            title={muted ? "Unmute" : "Mute"}
+            title={muted ? t("unmuteLabel") : t("muteLabel")}
             aria-pressed={muted}
           >
             <Image src="/icons/sound-recorder.png" alt="" width={16} height={16} />
@@ -448,11 +464,11 @@ const Desktop = () => {
             key={app.id}
             className="desktop-icon"
             data-app-id={app.id}
-            title="Double-click to open"
+            title={t("doubleClickToOpen")}
             onClick={(ev) => handleClickIcon(ev)}
           >
-            <Image src={app.icon} alt={app.label} width={46} height={46} />
-            <p>{app.label}</p>
+            <Image src={app.icon} alt={appLabel(app)} width={46} height={46} />
+            <p>{appLabel(app)}</p>
           </div>
         ))}
       </div>
@@ -464,15 +480,15 @@ const Desktop = () => {
             <div>
               <strong>
                 {isReadOnly
-                  ? "This case is already open in another window."
+                  ? t("caseOpenAnotherWindow")
                   : recoveredFromCheckpoint
-                    ? "Archive consistency check recovered an earlier checkpoint."
-                    : "Archive is not retaining changes."}
+                    ? t("checkpointRecovered")
+                    : t("archiveNotRetaining")}
               </strong>
               <p>
                 {isReadOnly
-                  ? "This copy is read-only. Close the other tab before continuing."
-                  : "Export a Case Code if you want a portable copy of your notes and progress."}
+                  ? t("readOnlyCopyWarning")
+                  : t("exportCaseCodeHint")}
               </p>
             </div>
             {!isReadOnly && (
@@ -484,12 +500,12 @@ const Desktop = () => {
                   setCaseCodeCopied(true);
                 }}
               >
-                {caseCodeCopied ? "Copied" : "Copy Case Code"}
+                {caseCodeCopied ? t("copiedLabel") : t("copyCaseCodeLabel")}
               </button>
             )}
             <button
               className="button archive-warning__close"
-              aria-label="Dismiss"
+              aria-label={t("dismissLabel")}
               onClick={() => setWarningDismissed(true)}
             >
               ×

@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import React, { FormEvent, useEffect, useReducer } from "react";
+import React, { FormEvent, useEffect, useReducer, useState } from "react";
 import { useProgress } from "@/app/context/ProgressContext";
 import { chats } from "@/app/data/chats";
 import { isUnlocked } from "@/app/data/filesystem";
@@ -12,6 +12,16 @@ import {
   reduceMessenger,
 } from "@/app/game/chat";
 import "./style.scss";
+import { resolveTokens } from "@/app/utils/narrative";
+import { useI18n } from "@/app/i18n";
+import { localizedChatMessage } from "@/app/data/localizedNarrative";
+
+const PRESENCE_LABELS = {
+  online: "presenceOnline",
+  away: "presenceAway",
+  offline: "presenceOffline",
+  busy: "presenceBusy",
+} as const;
 
 const Messenger = () => {
   const {
@@ -19,7 +29,12 @@ const Messenger = () => {
     discoveredEvidenceIds,
     state: progress,
     discoverEvidence,
+    corruptionStage,
   } = useProgress();
+  const { t } = useI18n();
+  const presenceLabel = (presence: keyof typeof PRESENCE_LABELS | undefined) =>
+    t(PRESENCE_LABELS[presence ?? "offline"]);
+  const [presencePulse, setPresencePulse] = useState(false);
   const solvedPuzzleIds = Object.entries(progress.puzzles)
     .filter(([, puzzle]) => Boolean(puzzle.solvedAt))
     .map(([id]) => id as keyof typeof progress.puzzles);
@@ -45,15 +60,72 @@ const Messenger = () => {
     }
   }, [discoverEvidence, selected]);
 
+  useEffect(() => {
+    if (corruptionStage < 2) {
+      setPresencePulse(false);
+      return;
+    }
+    let pulseTimer: ReturnType<typeof setTimeout> | null = null;
+    const pulse = () => {
+      setPresencePulse(true);
+      pulseTimer = setTimeout(() => setPresencePulse(false), 1100);
+    };
+    pulse();
+    const interval = setInterval(pulse, 11_000);
+    return () => {
+      clearInterval(interval);
+      if (pulseTimer) clearTimeout(pulseTimer);
+    };
+  }, [corruptionStage]);
+
   if (!selected) {
-    return <div className="messenger">No archived conversations.</div>;
+    return <div className="messenger">{t("noArchivedConversations")}</div>;
   }
 
   const contact = selected.participants.find(
     (participant) => participant.id === selected.contactId
   );
+  const derivedMessages = [
+    ...(progress.puzzles.palimpsest.solvedAt && selected.id === "chat-tom"
+      ? [
+          {
+            id: "dynamic-sarah-presence",
+            senderId: "tom",
+            timestamp: resolveTokens("{TOMORROW} 03:12"),
+            body: t("sysSarahOnlineBlip"),
+            kind: "system" as const,
+          },
+        ]
+      : []),
+    ...(progress.puzzles.lineage.solvedAt && selected.id === "chat-library"
+      ? [
+          {
+            id: "dynamic-miriam-receipt",
+            senderId: "staff",
+            timestamp: resolveTokens("{TOMORROW} 03:13"),
+            body: t("sysMiriamReceipt"),
+            kind: "system" as const,
+          },
+        ]
+      : []),
+    ...(progress.puzzles.future_log.solvedAt && selected.id === "chat-tom"
+      ? [
+          {
+            id: "dynamic-tom-receipt",
+            senderId: "tom",
+            timestamp: resolveTokens("{TOMORROW} 03:14"),
+            body: t("sysTomReceipt"),
+            kind: "system" as const,
+          },
+        ]
+      : []),
+  ];
   const messages = [
-    ...selected.messages,
+    ...selected.messages.map((message) => ({
+      ...message,
+      body: localizedChatMessage(message.id, message.body, progress.locale),
+    })),
+    ...derivedMessages,
     ...(runtime.localMessages[selected.id] ?? []),
   ];
   const draft = runtime.drafts[selected.id] ?? "";
@@ -65,26 +137,32 @@ const Messenger = () => {
   return (
     <div className="messenger">
       <div className="messenger__menubar">
-        <span>File</span><span>Actions</span><span>Tools</span><span>Help</span>
+        <span>{t("menuFile")}</span><span>{t("menuActions")}</span><span>{t("menuTools")}</span><span>{t("help")}</span>
       </div>
       <div className="messenger__identity">
         <Image src="/icons/msn-messenger.png" alt="" width={38} height={38} />
         <div>
-          <strong>Sarah Bishop (Away)</strong>
+          <strong>
+            Sarah Bishop ({presencePulse ? t("presenceOnline") : t("presenceAway")})
+          </strong>
           <span>sarah.bishop@miskatonic-research.org</span>
         </div>
-        <button className="button" disabled>My Status</button>
+        <button className="button" disabled>{t("myStatus")}</button>
       </div>
 
       <div className="messenger__workspace">
         <aside className="messenger__contacts">
           <div className="messenger__contact-heading">
-            Archived Conversations ({visibleThreads.length})
+            {t("archivedConversations")} ({visibleThreads.length})
           </div>
           {visibleThreads.map((thread) => {
             const threadContact = thread.participants.find(
               (participant) => participant.id === thread.contactId
             );
+            const isPulsingOnline =
+              presencePulse &&
+              corruptionStage >= 3 &&
+              thread.id === "chat-tom";
             return (
               <button
                 key={thread.id}
@@ -93,17 +171,26 @@ const Messenger = () => {
                   dispatch({ type: "OPEN_THREAD", threadId: thread.id })
                 }
               >
-                <i className={`presence presence--${threadContact?.presence ?? "offline"}`} />
+                <i
+                  className={`presence presence--${
+                    isPulsingOnline
+                      ? "online"
+                      : threadContact?.presence ?? "offline"
+                  }`}
+                />
                 <span>
                   <strong>{thread.title}</strong>
-                  <small>{threadContact?.presence ?? "offline"}</small>
+                  <small>
+                    {isPulsingOnline
+                      ? t("presenceOnline")
+                      : presenceLabel(threadContact?.presence)}
+                  </small>
                 </span>
               </button>
             );
           })}
           <div className="messenger__contact-note">
-            Buddy list restored from local cache.
-            Presence data may be stale.
+            {t("buddyListNote")}
           </div>
         </aside>
 
@@ -113,16 +200,15 @@ const Messenger = () => {
               {contact?.displayName.slice(0, 1) ?? "?"}
             </div>
             <div>
-              <strong>Conversation with {selected.title}</strong>
+              <strong>{t("conversationWith")} {selected.title}</strong>
               <span>{contact?.address}</span>
             </div>
-            <small>{contact?.presence ?? "offline"}</small>
+            <small>{presenceLabel(contact?.presence)}</small>
           </header>
 
           <div className="messenger__history">
             <div className="messenger__archive-banner">
-              This conversation was recovered from Sarah Bishop&apos;s local
-              message history. Messages cannot currently be delivered.
+              {t("archiveBanner")}
             </div>
             {messages.map((message) => {
               const sender = selected.participants.find(
@@ -174,10 +260,10 @@ const Messenger = () => {
               <button type="button" disabled>☺</button>
               <span>
                 {selected.mode === "readonly"
-                  ? "Archive mode"
+                  ? t("archiveModeLabel")
                   : selected.mode === "choices"
-                    ? "Suggested replies"
-                    : "Live composer"}
+                    ? t("suggestedRepliesLabel")
+                    : t("liveComposerLabel")}
               </span>
             </div>
             <textarea
@@ -193,8 +279,8 @@ const Messenger = () => {
               }
               placeholder={
                 selected.mode === "readonly"
-                  ? "This recovered conversation is read-only."
-                  : "Type a message..."
+                  ? t("readonlyComposerPlaceholder")
+                  : t("typeMessagePlaceholder")
               }
             />
             <button
@@ -202,15 +288,15 @@ const Messenger = () => {
               type="submit"
               disabled={selected.mode !== "freeform" || !draft.trim()}
             >
-              Send
+              {t("sendLabel")}
             </button>
           </form>
         </section>
       </div>
 
       <div className="messenger__statusbar">
-        <span>Offline — local archive only</span>
-        <span>{messages.length} messages recovered</span>
+        <span>{t("offlineArchiveOnly")}</span>
+        <span>{messages.length} {t("messagesRecoveredSuffix")}</span>
       </div>
     </div>
   );

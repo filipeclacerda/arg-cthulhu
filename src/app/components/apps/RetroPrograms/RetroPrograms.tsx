@@ -3,6 +3,12 @@
 import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react";
 import { useWindowManager } from "@/app/context/WindowManagerContext";
+import { useI18n } from "@/app/i18n";
+import {
+  getTelemetryConsent,
+  setTelemetryConsent,
+  TelemetryConsent,
+} from "@/app/game/telemetry";
 import "../ArgTools/style.scss";
 import "./style.scss";
 
@@ -146,7 +152,21 @@ export const Paint = () => {
   );
 };
 
-export const SystemProperties = () => (
+export const SystemProperties = () => {
+  const { locale, setLocale, t } = useI18n();
+  const [telemetry, setTelemetry] =
+    useState<TelemetryConsent>("unknown");
+
+  useEffect(() => {
+    setTelemetry(getTelemetryConsent());
+  }, []);
+
+  const updateTelemetry = (next: "granted" | "denied") => {
+    setTelemetryConsent(next);
+    setTelemetry(next);
+  };
+
+  return (
   <div className="system-properties">
     <div className="system-properties__hero">
       <Image src="/windows-98-logo.png" alt="Windows 98" width={122} height={86} />
@@ -164,13 +184,51 @@ export const SystemProperties = () => (
       <dt>Network:</dt><dd>3Com EtherLink — cable disconnected</dd>
       <dt>System clock:</dt><dd>CMOS checksum invalid; tomorrow retained</dd>
     </dl>
+    <div className="system-properties__rule" />
+    <section className="system-properties__preferences">
+      <label>
+        <strong>{t("language")}</strong>
+        <select
+          value={locale}
+          onChange={(event) =>
+            setLocale(event.target.value as "en" | "pt-BR")
+          }
+        >
+          <option value="en">{t("english")}</option>
+          <option value="pt-BR">{t("portuguese")}</option>
+        </select>
+      </label>
+      <div>
+        <strong>{t("telemetryTitle")}</strong>
+        <p>{t("telemetryBody")}</p>
+        <label>
+          <input
+            type="radio"
+            name="telemetry"
+            checked={telemetry === "granted"}
+            onChange={() => updateTelemetry("granted")}
+          />
+          {t("diagnosticsOn")}
+        </label>
+        <label>
+          <input
+            type="radio"
+            name="telemetry"
+            checked={telemetry !== "granted"}
+            onChange={() => updateTelemetry("denied")}
+          />
+          {t("diagnosticsOff")}
+        </label>
+      </div>
+    </section>
     <div className="system-properties__buttons">
       <button className="button">OK</button>
       <button className="button">Cancel</button>
       <button className="button" disabled>Apply</button>
     </div>
   </div>
-);
+  );
+};
 
 export const RecycleBin = () => {
   const { openWindow } = useWindowManager();
@@ -192,4 +250,3 @@ export const RecycleBin = () => {
     </div>
   );
 };
-

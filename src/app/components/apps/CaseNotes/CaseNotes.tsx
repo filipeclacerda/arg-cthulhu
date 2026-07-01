@@ -2,6 +2,7 @@
 
 import React, { useMemo, useRef } from "react";
 import { useProgress } from "@/app/context/ProgressContext";
+import { useWindowManager } from "@/app/context/WindowManagerContext";
 import { PuzzleId, PUZZLE_IDS } from "@/app/game/progress";
 import "../ArgTools/style.scss";
 import "./style.scss";
@@ -48,6 +49,7 @@ const CaseNotes = () => {
     state,
     activePuzzle,
   } = useProgress();
+  const { openWindow } = useWindowManager();
   const editorRef = useRef<HTMLTextAreaElement>(null);
   const solvedCount = PUZZLE_IDS.filter(
     (id) => Boolean(state.puzzles[id].solvedAt)
@@ -116,6 +118,19 @@ const CaseNotes = () => {
             + {label}
           </button>
         ))}
+        <button
+          className="button case-notes__board-link"
+          type="button"
+          onClick={() =>
+            openWindow({
+              id: "evidence-board",
+              appType: "evidence-board",
+              title: "Evidence Board",
+            })
+          }
+        >
+          Evidence Board
+        </button>
       </div>
 
       <div className="case-notes__workspace">

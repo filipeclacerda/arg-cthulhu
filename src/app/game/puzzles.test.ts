@@ -139,6 +139,61 @@ describe("ARG progression reducer", () => {
     expect(reset.boardPositions).toEqual({});
     expect(reset.boardConnections).toEqual(["diary|person-sarah"]);
   });
+
+  it("unlocks adaptive hints after repeated meaningful near misses", () => {
+    let state = createInitialProgress(1_700_000_000_000, "near-miss");
+    state = reduceGameEvent(state, {
+      type: "RECORD_NEAR_MISS",
+      puzzleId: "lot_114",
+      kind: "catalog_partial",
+    }).state;
+    expect(state.puzzles.lot_114.hintsUnlocked).toBe(0);
+
+    const result = reduceGameEvent(state, {
+      type: "RECORD_NEAR_MISS",
+      puzzleId: "lot_114",
+      kind: "catalog_partial",
+    });
+    expect(result.state.puzzles.lot_114.hintsUnlocked).toBe(1);
+    expect(result.hintUnlocked?.trigger).toBe("near_miss");
+  });
+
+  it("records optional theories without gating puzzle progression", () => {
+    const initial = createInitialProgress(1_700_000_000_000, "theory");
+    const result = reduceGameEvent(initial, {
+      type: "TEST_THEORY",
+      evidenceIds: ["lot_114_order", "diary", "miriam_1998"],
+    });
+
+    expect(result.theoryResult?.insightId).toBe("second_volume");
+    expect(result.state.insightsUnlocked).toContain("second_volume");
+    expect(result.state.puzzles.lot_114.solvedAt).toBeNull();
+  });
+
+  it("pins a confirmed thread between every card behind a validated theory", () => {
+    const initial = createInitialProgress(1_700_000_000_000, "theory-thread");
+    const result = reduceGameEvent(initial, {
+      type: "TEST_THEORY",
+      evidenceIds: ["lot_114_order", "diary", "miriam_1998"],
+    });
+
+    expect(result.state.confirmedConnections).toEqual(
+      expect.arrayContaining([
+        "diary|lot_114_order",
+        "diary|miriam_1998",
+        "lot_114_order|miriam_1998",
+      ])
+    );
+
+    const unmatched = reduceGameEvent(result.state, {
+      type: "TEST_THEORY",
+      evidenceIds: ["person-sarah", "person-tom"],
+    });
+    expect(unmatched.theoryResult?.insightId).toBeNull();
+    expect(unmatched.state.confirmedConnections).toBe(
+      result.state.confirmedConnections
+    );
+  });
 });
 
 describe("compound unlock conditions", () => {

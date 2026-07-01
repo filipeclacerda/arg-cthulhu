@@ -5,6 +5,9 @@ import { files } from "@/app/data/filesystem";
 import { useProgress } from "@/app/context/ProgressContext";
 import { useWindowManager } from "@/app/context/WindowManagerContext";
 import { resolveTokens } from "@/app/utils/narrative";
+import { puzzleHintsFor } from "@/app/game/puzzles";
+import { localizedFileContent } from "@/app/data/localizedNarrative";
+import { useI18n } from "@/app/i18n";
 
 interface NotepadProps {
   fileId: string;
@@ -19,8 +22,10 @@ const Notepad = ({ fileId }: NotepadProps) => {
     discoverEvidence,
     recordSequenceAction,
     isPuzzleSolved,
+    state,
   } = useProgress();
   const { openWindow } = useWindowManager();
+  const { t } = useI18n();
   const file = files.find((f) => f.id === fileId);
   const [answer, setAnswer] = useState("");
   const [wrongAttempt, setWrongAttempt] = useState(false);
@@ -43,10 +48,44 @@ const Notepad = ({ fileId }: NotepadProps) => {
 
   const solved = file.unlocksFlag ? hasFlag(file.unlocksFlag) : false;
 
-  const resolvedContent = resolveTokens(file.content, {
+  const baseContent = resolveTokens(
+    localizedFileContent(file.id, file.content, state.locale),
+    {
     playerName,
     absenceHours: absenceMs > 0 ? absenceMs / (1000 * 60 * 60) : undefined,
-  });
+    }
+  );
+  const sequenceEcho =
+    file.id === "access_log" && state.futureSequenceStep > 0
+      ? `\n\n--- LIVE VERIFICATION ---\n${[
+          "03:12  114VER~1.TIF /MIRROR ........ OBSERVED",
+          "03:13  COUNTI~1.WAV /LEFT /REVERSE  OBSERVED",
+          "03:14  THENAM~1.TXT /OPEN ........... OBSERVED",
+        ]
+          .slice(0, state.futureSequenceStep)
+          .join("\n")}${
+          state.futureSequenceFaults > 0
+            ? `\nSEQUENCE REWRITTEN ${state.futureSequenceFaults} TIME(S)`
+            : ""
+        }`
+      : file.id === "access_log" && state.futureSequenceFaults > 0
+        ? `\n\n--- LIVE VERIFICATION ---\nSEQUENCE REWRITTEN ${state.futureSequenceFaults} TIME(S)\nWAITING FOR 03:12`
+        : "";
+  const hintPuzzle =
+    file.id === "access_log"
+      ? "future_log"
+      : file.id === "index_help"
+        ? "index_name"
+        : null;
+  const hintEcho =
+    hintPuzzle && state.puzzles[hintPuzzle].hintsUnlocked > 0
+      ? `\n\n[RECOVERED FRAGMENT]\n${
+          puzzleHintsFor(state.locale, hintPuzzle)[
+            state.puzzles[hintPuzzle].hintsUnlocked - 1
+          ]
+        }`
+      : "";
+  const resolvedContent = `${baseContent}${sequenceEcho}${hintEcho}`;
 
   const handleCheck = () => {
     if (file.untypeable) return; // the name cannot be submitted
@@ -94,10 +133,10 @@ const Notepad = ({ fileId }: NotepadProps) => {
   return (
     <div className="notepad">
       <div className="notepad-menubar">
-        <span>File</span>
-        <span>Edit</span>
-        <span>Search</span>
-        <span>Help</span>
+        <span>{t("menuFile")}</span>
+        <span>{t("menuEdit")}</span>
+        <span>{t("menuSearch")}</span>
+        <span>{t("help")}</span>
       </div>
       <div className="notepad-meta">
         <span>{file.name}</span>
@@ -108,7 +147,7 @@ const Notepad = ({ fileId }: NotepadProps) => {
           className="notepad-properties"
           onClick={openProperties}
         >
-          Properties
+          {t("propertiesLabel")}
         </button>
       </div>
       <div className="notepad-textarea">
@@ -119,7 +158,7 @@ const Notepad = ({ fileId }: NotepadProps) => {
           <input
             type="text"
             value={answer}
-            placeholder={isUntypeable ? "…" : "decoded word"}
+            placeholder={isUntypeable ? "…" : t("decodedWordPlaceholder")}
             onChange={
               isUntypeable
                 ? handleUntypeableChange
@@ -131,31 +170,31 @@ const Notepad = ({ fileId }: NotepadProps) => {
           />
           {!isUntypeable && (
             <button type="button" onClick={handleCheck}>
-              Submit
+              {t("submitLabel")}
             </button>
           )}
           {wrongAttempt && (
-            <p className="notepad-feedback">That&apos;s not it.</p>
+            <p className="notepad-feedback">{t("notThatAnswer")}</p>
           )}
           {isUntypeable && (
             <p className="notepad-feedback">
-              The name will not be written down.
+              {t("nameWontWrite")}
             </p>
           )}
         </div>
       )}
       {file.kind === "cipher" && solved && (
-        <p className="notepad-feedback notepad-feedback--solved">Decoded.</p>
+        <p className="notepad-feedback notepad-feedback--solved">{t("decodedLabel")}</p>
       )}
       <div className="notepad-statusbar">
         <span>
           {file.kind === "cipher"
             ? solved
-              ? "Cipher accepted"
+              ? t("cipherAccepted")
               : isUntypeable
-              ? "Input buffer unstable"
-              : "Awaiting decoded word"
-            : "Plain text"}
+              ? t("inputBufferUnstable")
+              : t("awaitingDecodedWord")
+            : t("plainText")}
         </span>
         <span>
           {file.raisesCorruptionTo != null
@@ -164,7 +203,7 @@ const Notepad = ({ fileId }: NotepadProps) => {
                 absenceHours:
                   absenceMs > 0 ? absenceMs / (1000 * 60 * 60) : undefined,
               })
-            : "Ready"}
+            : t("readyLabel")}
         </span>
       </div>
     </div>

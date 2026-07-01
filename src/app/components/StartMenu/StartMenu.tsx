@@ -1,16 +1,18 @@
 "use client";
 
 import Image from "next/image";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import "./style.scss";
 import { AppType, useWindowManager } from "@/app/context/WindowManagerContext";
 import { useProgress } from "@/app/context/ProgressContext";
 import { useSound } from "@/app/context/SoundContext";
+import { useI18n, TranslationKey } from "@/app/i18n";
 
 type MenuView = "root" | "programs" | "accessories";
 
 interface ProgramEntry {
   label: string;
+  labelKey?: TranslationKey;
   icon: string;
   appType: AppType;
   id: string;
@@ -51,24 +53,28 @@ const ACCESSORIES: ProgramEntry[] = [
   {
     id: "case-notes",
     label: "Case Notes",
+    labelKey: "caseNotesLabel",
     icon: "/icons/notepad.png",
     appType: "case-notes",
   },
   {
     id: "cipher-lab",
     label: "Cipher Lab",
+    labelKey: "cipherLabLabel",
     icon: "/icons/internet-options.png",
     appType: "cipher-lab",
   },
   {
     id: "evidence-board",
     label: "Evidence Board",
+    labelKey: "evidenceBoardLabel",
     icon: "/icons/folder-special.png",
     appType: "evidence-board",
   },
   {
     id: "calculator",
     label: "Calculator",
+    labelKey: "calculatorLabel",
     icon: "/icons/internet-options.png",
     appType: "calculator",
   },
@@ -80,6 +86,54 @@ const ACCESSORIES: ProgramEntry[] = [
   },
 ];
 
+const INDEX_FRAGMENTS = ["E7", "A1", "C4", "B9"];
+
+const IndexerResult = ({ locale }: { locale: "en" | "pt-BR" }) => {
+  const [visible, setVisible] = useState(0);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setVisible((count) => {
+        if (count >= INDEX_FRAGMENTS.length) {
+          window.clearInterval(timer);
+          return count;
+        }
+        return count + 1;
+      });
+    }, 420);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  return (
+    <div className="indexer-result">
+      <p>
+        {locale === "pt-BR"
+          ? "UNINDO REFERÊNCIAS DE OBJETO"
+          : "JOINING OBJECT REFERENCES"}
+      </p>
+      <ol>
+        {INDEX_FRAGMENTS.map((fragment, index) => (
+          <li key={fragment} className={index < visible ? "visible" : ""}>
+            {fragment} {index < visible ? "ACKNOWLEDGED" : "WAITING"}
+          </li>
+        ))}
+      </ol>
+      {visible === INDEX_FRAGMENTS.length && (
+        <>
+          <div aria-label="The assembled name cannot be displayed">
+            ᚱᛚᛇ·ᚦᛟᚾ·ᚷᚨᛏ·ᛞᛉ
+          </div>
+          <strong>
+            {locale === "pt-BR"
+              ? "O índice contém seu leitor atual."
+              : "The index contains its current reader."}
+          </strong>
+        </>
+      )}
+    </div>
+  );
+};
+
 const StartMenu = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [view, setView] = useState<MenuView>("root");
@@ -88,6 +142,7 @@ const StartMenu = () => {
   const { openWindow } = useWindowManager();
   const { hasFlag, runCommand } = useProgress();
   const { play } = useSound();
+  const { locale, t } = useI18n();
 
   const endgameAvailable = hasFlag("endgame_available");
 
@@ -101,11 +156,14 @@ const StartMenu = () => {
     setView("root");
   };
 
+  const entryLabel = (entry: ProgramEntry) =>
+    entry.labelKey ? t(entry.labelKey) : entry.label;
+
   const launch = (entry: ProgramEntry) => {
     openWindow({
       id: entry.id,
       appType: entry.appType,
-      title: entry.title ?? entry.label,
+      title: entry.title ?? entryLabel(entry),
       props: entry.props,
     });
     closeMenu();
@@ -125,29 +183,31 @@ const StartMenu = () => {
         title: "Miskatonic Recovery Indexer",
         props: {
           windowClassName: "corrupted",
-          children: (
-            <div className="indexer-result">
-              <p>JOIN COMPLETE / 4 OBJECT REFERENCES</p>
-              <div aria-label="The assembled name cannot be displayed">
-                ᚷᛚᛁ·ᚦᛟᚱ·ᚾᚨᛗ·ᛖᛋ
-              </div>
-              <strong>The index contains its current reader.</strong>
-            </div>
-          ),
+          children: <IndexerResult locale={locale} />,
         },
       });
       return;
     }
 
     play("error");
+    const errorMessage =
+      result.commandError === "missing_references"
+        ? t("missingReferences")
+        : result.commandError === "wrong_order"
+          ? t("wrongOrder")
+          : t("invalidCommand");
     openWindow({
       appType: "generic",
       title: "Run",
       props: {
         children: (
           <div className="run-error">
-            <strong>Cannot find the file (or one of its components).</strong>
-            <p>Check that the path and filename are correct.</p>
+            <strong>
+              {result.commandError === "wrong_order"
+                ? "INDEX: TIMESTAMP ORDER CONFLICT"
+                : "INDEX: REFERENCE LOOKUP FAILED"}
+            </strong>
+            <p>{errorMessage}</p>
           </div>
         ),
       },
@@ -161,7 +221,7 @@ const StartMenu = () => {
       onClick={() => launch(entry)}
     >
       <Image src={entry.icon} alt="" width={30} height={30} />
-      <span>{entry.label}</span>
+      <span>{entryLabel(entry)}</span>
     </button>
   );
 
@@ -180,7 +240,7 @@ const StartMenu = () => {
           height={28}
           priority
         />
-        Start
+        {t("start")}
       </button>
 
       {isOpen && (
@@ -201,7 +261,7 @@ const StartMenu = () => {
                   className="startMenuButton button startMenuBack"
                   onClick={() => setView(view === "accessories" ? "programs" : "root")}
                 >
-                  ‹ Back
+                  ‹ {t("back")}
                 </button>
               )}
 
@@ -209,36 +269,37 @@ const StartMenu = () => {
                 <>
                   <button className="startMenuButton button" onClick={() => setView("programs")}>
                     <Image src="/icons/my-computer.png" alt="" width={30} height={30} />
-                    <span>Programs</span><b>▶</b>
+                    <span>{t("programs")}</span><b>▶</b>
                   </button>
                   <button className="startMenuButton button" onClick={() => launch(ACCESSORIES[0])}>
                     <Image src="/icons/my-documents.png" alt="" width={30} height={30} />
-                    <span>Documents</span>
+                    <span>{t("documents")}</span>
                   </button>
                   <button
                     className="startMenuButton button"
                     onClick={() => launch({
                       id: "system-properties",
                       label: "System Properties",
-                      title: "System Properties",
+                      labelKey: "systemPropertiesLabel",
                       icon: "/icons/internet-options.png",
                       appType: "system-properties",
                     })}
                   >
                     <Image src="/icons/internet-options.png" alt="" width={30} height={30} />
-                    <span>Settings</span>
+                    <span>{t("settings")}</span>
                   </button>
                   <button
                     className="startMenuButton button"
                     onClick={() => launch({
                       id: "help-center",
                       label: "Windows Help",
+                      labelKey: "windowsHelpLabel",
                       icon: "/icons/help.png",
                       appType: "help",
                     })}
                   >
                     <Image src="/icons/help.png" alt="" width={30} height={30} />
-                    <span>Help</span>
+                    <span>{t("help")}</span>
                   </button>
                   <div className="startMenuDivider" />
                   <button className="startMenuButton button" onClick={() => {
@@ -246,7 +307,7 @@ const StartMenu = () => {
                     setShowRun(true);
                   }}>
                     <Image src="/icons/file.png" alt="" width={30} height={30} />
-                    <span>Run...</span>
+                    <span>{t("run")}</span>
                   </button>
                   <button
                     className={`startMenuButton button ${endgameAvailable ? "startMenuButton--danger" : ""}`}
@@ -272,7 +333,11 @@ const StartMenu = () => {
                     }}
                   >
                     <Image src="/icons/sound-recorder.png" alt="" width={30} height={30} />
-                    <span>{endgameAvailable ? "RECOVERED PROGRAM" : "Shut Down..."}</span>
+                    <span>
+                      {endgameAvailable
+                        ? t("recoveredProgram")
+                        : t("shutdown")}
+                    </span>
                   </button>
                 </>
               )}
@@ -282,7 +347,7 @@ const StartMenu = () => {
                   {PROGRAMS.map(renderProgramEntry)}
                   <button className="startMenuButton button" onClick={() => setView("accessories")}>
                     <Image src="/icons/favorites.png" alt="" width={30} height={30} />
-                    <span>Accessories</span><b>▶</b>
+                    <span>{t("accessoriesLabel")}</span><b>▶</b>
                   </button>
                 </>
               )}

@@ -5,6 +5,8 @@ import { useProgress } from "@/app/context/ProgressContext";
 import { files } from "@/app/data/filesystem";
 import "../ArgTools/style.scss";
 import "./style.scss";
+import { puzzleHintsFor } from "@/app/game/puzzles";
+import { useI18n } from "@/app/i18n";
 
 type Channel = "stereo" | "left" | "right";
 
@@ -15,21 +17,38 @@ const MediaPlayer = ({ fileId }: { fileId: string }) => {
     isPuzzleSolved,
     recordSequenceAction,
     collectReference,
+    recordNearMiss,
+    state,
   } = useProgress();
   const [channel, setChannel] = useState<Channel>("stereo");
   const [reverse, setReverse] = useState(false);
   const [recovered, setRecovered] = useState(false);
   const [properties, setProperties] = useState(false);
+  const [nearMissKind, setNearMissKind] = useState<"channel" | "reverse" | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const { t } = useI18n();
 
   useEffect(() => {
     if (file?.evidenceId) discoverEvidence(file.evidenceId, file.id);
   }, [discoverEvidence, file]);
 
-  if (!file) return <div className="arg-tool">Audio not found.</div>;
+  if (!file) return <div className="arg-tool">{t("audioNotFound")}</div>;
 
   const play = async () => {
     const correct = channel === "left" && reverse;
+    if (!correct) {
+      if (channel === "left") {
+        recordNearMiss("counting_audio", "audio_channel");
+        setNearMissKind("channel");
+      } else if (reverse) {
+        recordNearMiss("counting_audio", "audio_reverse");
+        setNearMissKind("reverse");
+      } else {
+        setNearMissKind(null);
+      }
+    } else {
+      setNearMissKind(null);
+    }
     setRecovered(correct);
     if (audioRef.current) {
       audioRef.current.src = correct
@@ -57,7 +76,7 @@ const MediaPlayer = ({ fileId }: { fileId: string }) => {
   return (
     <div className="arg-tool media-player">
       <div className="arg-tool__menubar">
-        <span>File</span><span>View</span><span>Playback</span><span>Help</span>
+        <span>{t("menuFile")}</span><span>{t("menuView")}</span><span>{t("menuPlayback")}</span><span>{t("help")}</span>
       </div>
       <div className="arg-tool__toolbar">
         <label>Channel</label>
@@ -71,8 +90,29 @@ const MediaPlayer = ({ fileId }: { fileId: string }) => {
           Reverse buffer
         </label>
         <button className="button" onClick={play}>Play</button>
-        <button className="button" onClick={showProperties}>Properties</button>
+        <button className="button" onClick={showProperties}>{t("propertiesLabel")}</button>
       </div>
+      {!recovered && nearMissKind && (
+        <p className="arg-tool__result arg-tool__warning">
+          {nearMissKind === "channel"
+            ? state.locale === "pt-BR"
+              ? "O canal esquerdo está certo. O buffer ainda precisa ser revertido."
+              : "The left channel is right. The buffer still needs to reverse."
+            : state.locale === "pt-BR"
+              ? "O reverso está certo. Falta escolher o canal esquerdo."
+              : "The reverse is right. The channel still needs to be left."}
+        </p>
+      )}
+      {state.puzzles.counting_audio.hintsUnlocked > 0 && (
+        <div className="media-player__cue-note">
+          RECOVERED .CUE NOTE:{" "}
+          {
+            puzzleHintsFor(state.locale, "counting_audio")[
+              state.puzzles.counting_audio.hintsUnlocked - 1
+            ]
+          }
+        </div>
+      )}
       <div className="arg-tool__content media-player__screen">
         <div className="media-player__display">
           <p>counting.wav</p>
@@ -84,12 +124,26 @@ const MediaPlayer = ({ fileId }: { fileId: string }) => {
         </div>
         {recovered && (
           <div className="media-player__transcript">
-            <p>SECOND VOICE / BUFFER RECONSTRUCTED</p>
+            <p>
+              {state.locale === "pt-BR"
+                ? "SEGUNDA VOZ / BUFFER RECONSTRUÍDO"
+                : "SECOND VOICE / BUFFER RECONSTRUCTED"}
+            </p>
             <code>
-              ONE-TWO / TWO-TWO / THREE-ONE / FOUR-SIX / FIVE-FOUR /
-              SIX-FIVE / SEVEN-TWO / EIGHT-TWO / NINE-TWO
+              {state.locale === "pt-BR"
+                ? "UM-DOIS / DOIS-DOIS / TRÊS-UM / QUATRO-SEIS / CINCO-QUATRO / SEIS-CINCO / SETE-DOIS / OITO-DOIS / NOVE-DOIS"
+                : "ONE-TWO / TWO-TWO / THREE-ONE / FOUR-SIX / FIVE-FOUR / SIX-FIVE / SEVEN-TWO / EIGHT-TWO / NINE-TWO"}
             </code>
-            <p>count names. not days.</p>
+            <p>
+              {state.locale === "pt-BR"
+                ? "conte nomes. não dias."
+                : "count names. not days."}
+            </p>
+            <small>
+              {state.locale === "pt-BR"
+                ? "O medidor ainda registra uma resposta curta no canal direito."
+                : "The meter still records a brief answer in the right channel."}
+            </small>
           </div>
         )}
         {properties && (
@@ -115,4 +169,3 @@ const MediaPlayer = ({ fileId }: { fileId: string }) => {
 };
 
 export default MediaPlayer;
-

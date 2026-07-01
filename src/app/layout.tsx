@@ -8,6 +8,7 @@ import { WindowLayer } from "./components/WindowFrame/WindowFrame";
 import NavigationGuard from "./components/NavigationGuard/NavigationGuard";
 import SystemContextMenu from "./components/SystemContextMenu/SystemContextMenu";
 import SystemToast from "./components/SystemToast/SystemToast";
+import { PHProvider } from "./components/PHProvider/PHProvider";
 
 export const metadata: Metadata = {
   title: "O Arquivo de Amanhã",
@@ -22,6 +23,7 @@ export default function RootLayout({
   return (
     <html lang="en" id="root">
       <body>
+        <PHProvider>
         <ZoomProvider>
           <SoundProvider>
             <ProgressProvider>
@@ -35,6 +37,7 @@ export default function RootLayout({
             </ProgressProvider>
           </SoundProvider>
         </ZoomProvider>
+        </PHProvider>
       </body>
     </html>
   );

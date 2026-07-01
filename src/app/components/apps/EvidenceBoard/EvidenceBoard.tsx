@@ -1,8 +1,10 @@
 "use client";
 
 import Image from "next/image";
-import React, { useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useProgress } from "@/app/context/ProgressContext";
+import { useWindowManager } from "@/app/context/WindowManagerContext";
+import { useSound } from "@/app/context/SoundContext";
 import {
   BOARD_WIDTH,
   BoardCard,
@@ -15,6 +17,9 @@ import {
   boardCanvasHeight,
   defaultEvidencePosition,
 } from "@/app/data/evidenceBoard";
+import { localizedBoardCard } from "@/app/data/localizedNarrative";
+import { InsightId } from "@/app/game/progress";
+import { useI18n } from "@/app/i18n";
 import "./style.scss";
 
 interface PositionedCard {
@@ -37,6 +42,21 @@ const CATEGORY_META: Record<
 
 const DRAG_THRESHOLD = 4;
 
+/** A string pinned taut has a little weight to it — never a perfectly straight line. */
+const sagPath = (x1: number, y1: number, x2: number, y2: number): string => {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const distance = Math.hypot(dx, dy) || 1;
+  const midX = (x1 + x2) / 2;
+  const midY = (y1 + y2) / 2;
+  const sag = Math.min(38, distance * 0.14);
+  const normalX = -dy / distance;
+  const normalY = dx / distance;
+  const controlX = midX + normalX * sag;
+  const controlY = midY + normalY * sag;
+  return `M ${x1} ${y1} Q ${controlX} ${controlY} ${x2} ${y2}`;
+};
+
 const initials = (title: string) =>
   title
     .split(/\s+/)
@@ -50,29 +70,69 @@ const EvidenceBoard = () => {
     discoveredEvidenceIds,
     boardPositions,
     boardConnections,
+    confirmedConnections,
     moveBoardCard,
     toggleBoardConnection,
     resetBoardLayout,
+    testTheory,
+    insightsUnlocked,
+    caseNotes,
+    setCaseNotes,
   } = useProgress();
+  const { t, locale } = useI18n();
+  const { openWindow } = useWindowManager();
+  const { play } = useSound();
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [theoryMode, setTheoryMode] = useState(false);
+  const [theoryIds, setTheoryIds] = useState<string[]>([]);
+  const [theoryFeedback, setTheoryFeedback] = useState("");
   const [filter, setFilter] = useState<"all" | BoardCategory>("all");
   const [query, setQuery] = useState("");
   const [dragPreview, setDragPreview] = useState<
     { id: string; x: number; y: number } | null
   >(null);
+  const [justAddedKey, setJustAddedKey] = useState<string | null>(null);
+  const addedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const openCaseNotes = () => {
+    openWindow({ id: "case-notes", appType: "case-notes", title: t("caseNotesLabel") });
+  };
+
+  const addToCaseNotes = (key: string, text: string) => {
+    const separator = caseNotes.trim() ? "\n" : "";
+    setCaseNotes(`${caseNotes}${separator}- ${text}`);
+    setJustAddedKey(key);
+    if (addedTimer.current) clearTimeout(addedTimer.current);
+    addedTimer.current = setTimeout(() => setJustAddedKey(null), 1600);
+  };
   const canvasRef = useRef<HTMLDivElement>(null);
+  const categoryLabel = (category: BoardCategory): string => {
+    if (category === "person") return t("people");
+    if (category === "photo") return t("images");
+    if (category === "document") return t("documentsCategory");
+    if (category === "audio") return t("audio");
+    if (category === "email") return t("mail");
+    if (category === "conversation") return t("chats");
+    return t("webRecords");
+  };
+
+  const localizeCard = (card: BoardCard): BoardCard => ({
+    ...card,
+    ...localizedBoardCard(card.id, card, locale),
+  });
 
   const evidenceCards = useMemo(
     () =>
       discoveredEvidenceIds
         .map((id) => EVIDENCE_CARDS[id])
-        .filter((card): card is BoardCard => Boolean(card)),
-    [discoveredEvidenceIds]
+        .filter((card): card is BoardCard => Boolean(card))
+        .map(localizeCard),
+    [discoveredEvidenceIds, locale]
   );
 
   const allPositioned: PositionedCard[] = useMemo(() => {
     const people = PERSON_CARDS.map((card) => ({
-      card,
+      card: localizeCard(card),
       position: boardPositions[card.id] ?? PERSON_POSITIONS[card.id],
     }));
     const evidence = evidenceCards.map((card, index) => ({
@@ -80,7 +140,7 @@ const EvidenceBoard = () => {
       position: boardPositions[card.id] ?? defaultEvidencePosition(index),
     }));
     return [...people, ...evidence];
-  }, [boardPositions, evidenceCards]);
+  }, [boardPositions, evidenceCards, locale]);
 
   const normalizedQuery = query.trim().toLowerCase();
   const positioned = useMemo(
@@ -120,6 +180,43 @@ const EvidenceBoard = () => {
     [positioned]
   );
   const selectedCard = selectedId ? cardsById[selectedId] : undefined;
+  const confirmedSet = useMemo(
+    () => new Set(confirmedConnections),
+    [confirmedConnections]
+  );
+  const confirmedCardIds = useMemo(() => {
+    const ids = new Set<string>();
+    confirmedConnections.forEach((key) =>
+      key.split("|").forEach((id) => ids.add(id))
+    );
+    return ids;
+  }, [confirmedConnections]);
+  const [justRevealed, setJustRevealed] = useState<Set<string>>(new Set());
+  const previousConfirmedRef = useRef<Set<string>>(new Set(confirmedConnections));
+
+  useEffect(() => {
+    const previous = previousConfirmedRef.current;
+    const fresh = confirmedConnections.filter((key) => !previous.has(key));
+    previousConfirmedRef.current = new Set(confirmedConnections);
+    if (fresh.length === 0) return;
+    setJustRevealed(
+      (current) => new Set([...Array.from(current), ...fresh])
+    );
+    const timer = setTimeout(() => {
+      setJustRevealed((current) => {
+        const next = new Set(current);
+        fresh.forEach((key) => next.delete(key));
+        return next;
+      });
+    }, 1400);
+    return () => clearTimeout(timer);
+  }, [confirmedConnections]);
+
+  const allThreadKeys = useMemo(
+    () =>
+      Array.from(new Set([...confirmedConnections, ...boardConnections])),
+    [confirmedConnections, boardConnections]
+  );
   const canvasHeight = boardCanvasHeight(evidenceCards.length);
   const categoryCounts = useMemo(
     () =>
@@ -142,12 +239,44 @@ const EvidenceBoard = () => {
   );
 
   const handleCardClick = (cardId: string) => {
-    setSelectedId((previous) => {
-      if (!previous) return cardId;
-      if (previous === cardId) return null;
-      toggleBoardConnection(previous, cardId);
-      return null;
-    });
+    if (theoryMode) {
+      setTheoryFeedback("");
+      setTheoryIds((current) =>
+        current.includes(cardId)
+          ? current.filter((id) => id !== cardId)
+          : current.length < 4
+            ? [...current, cardId]
+            : [...current.slice(1), cardId]
+      );
+      return;
+    }
+    if (selectedId && selectedId !== cardId) {
+      toggleBoardConnection(selectedId, cardId);
+      setSelectedId(null);
+      return;
+    }
+    setSelectedId((previous) => (previous === cardId ? null : cardId));
+  };
+
+  const insightMessage = (insightId: InsightId): string => {
+    if (insightId === "second_volume") return t("insightSecondVolume");
+    if (insightId === "cataloguer_lineage") return t("insightLineage");
+    return t("insightRelay");
+  };
+
+  const submitTheory = () => {
+    if (theoryIds.length === 0) {
+      setTheoryFeedback(t("theoryEmpty"));
+      return;
+    }
+    const result = testTheory(theoryIds);
+    const insightId = result.theoryResult?.insightId as InsightId | null;
+    setTheoryFeedback(
+      insightId ? insightMessage(insightId) : t("theoryFailed")
+    );
+    if (insightId && !result.theoryResult?.alreadyKnown) {
+      play("chime");
+    }
   };
 
   const startDrag = (
@@ -213,20 +342,20 @@ const EvidenceBoard = () => {
   return (
     <div className="arg-tool evidence-board">
       <div className="arg-tool__menubar">
-        <span>File</span>
-        <span>View</span>
-        <span>Connections</span>
-        <span>Help</span>
+        <span>{t("menuFile")}</span>
+        <span>{t("menuView")}</span>
+        <span>{t("menuConnections")}</span>
+        <span>{t("help")}</span>
       </div>
 
       <div className="evidence-board__toolbar">
         <label>
-          Find
+          {t("find")}
           <input
             type="search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="name, file or clue"
+            placeholder={t("findPlaceholder")}
           />
         </label>
         <div className="evidence-board__filters" aria-label="Evidence filters">
@@ -247,7 +376,7 @@ const EvidenceBoard = () => {
               disabled={categoryCounts[category] === 0}
               onClick={() => setFilter(category)}
             >
-              {CATEGORY_META[category].label}{" "}
+              {categoryLabel(category)}{" "}
               <small>{categoryCounts[category]}</small>
             </button>
           ))}
@@ -261,7 +390,28 @@ const EvidenceBoard = () => {
             setSelectedId(null);
           }}
         >
-          Reset layout
+          {t("resetLayout")}
+        </button>
+        <button
+          type="button"
+          className={`button evidence-board__mode ${
+            theoryMode ? "active" : ""
+          }`}
+          onClick={() => {
+            setTheoryMode((value) => !value);
+            setSelectedId(null);
+            setTheoryFeedback("");
+          }}
+        >
+          {theoryMode ? t("linkMode") : t("theoryMode")}
+        </button>
+        <button
+          type="button"
+          className="button evidence-board__notes-link"
+          onClick={openCaseNotes}
+        >
+          <Image src="/icons/notepad.png" alt="" width={16} height={16} />
+          {t("caseNotesLabel")}
         </button>
       </div>
 
@@ -273,10 +423,10 @@ const EvidenceBoard = () => {
             style={{ width: BOARD_WIDTH, height: canvasHeight }}
           >
             <div className="evidence-board__zone evidence-board__zone--people">
-              PEOPLE / ANCHORS
+              {t("peopleAnchors")}
             </div>
             <div className="evidence-board__zone evidence-board__zone--evidence">
-              DISCOVERED EVIDENCE
+              {t("discoveredEvidenceZone")}
             </div>
 
             <svg
@@ -285,7 +435,34 @@ const EvidenceBoard = () => {
               height={canvasHeight}
               aria-hidden="true"
             >
-              {boardConnections.map((key) => {
+              {boardConnections
+                .filter((key) => !confirmedSet.has(key))
+                .map((key) => {
+                  const [fromId, toId] = key.split("|");
+                  const from = positionsById[fromId];
+                  const to = positionsById[toId];
+                  if (
+                    !from ||
+                    !to ||
+                    !visibleIds.has(fromId) ||
+                    !visibleIds.has(toId)
+                  ) {
+                    return null;
+                  }
+                  const x1 = from.x + CARD_WIDTH / 2;
+                  const y1 = from.y + CARD_HEIGHT / 2;
+                  const x2 = to.x + CARD_WIDTH / 2;
+                  const y2 = to.y + CARD_HEIGHT / 2;
+                  const d = sagPath(x1, y1, x2, y2);
+                  return (
+                    <g key={key}>
+                      <path d={d} className="evidence-board__string-shadow" />
+                      <path d={d} className="evidence-board__string" />
+                    </g>
+                  );
+                })}
+
+              {confirmedConnections.map((key) => {
                 const [fromId, toId] = key.split("|");
                 const from = positionsById[fromId];
                 const to = positionsById[toId];
@@ -297,22 +474,31 @@ const EvidenceBoard = () => {
                 ) {
                   return null;
                 }
+                const x1 = from.x + CARD_WIDTH / 2;
+                const y1 = from.y + CARD_HEIGHT / 2;
+                const x2 = to.x + CARD_WIDTH / 2;
+                const y2 = to.y + CARD_HEIGHT / 2;
+                const d = sagPath(x1, y1, x2, y2);
+                const revealing = justRevealed.has(key);
                 return (
-                  <g key={key}>
-                    <line
-                      x1={from.x + CARD_WIDTH / 2}
-                      y1={from.y + CARD_HEIGHT / 2}
-                      x2={to.x + CARD_WIDTH / 2}
-                      y2={to.y + CARD_HEIGHT / 2}
-                      className="evidence-board__string-shadow"
-                    />
-                    <line
-                      x1={from.x + CARD_WIDTH / 2}
-                      y1={from.y + CARD_HEIGHT / 2}
-                      x2={to.x + CARD_WIDTH / 2}
-                      y2={to.y + CARD_HEIGHT / 2}
-                      className="evidence-board__string"
-                    />
+                  <g
+                    key={key}
+                    className={`evidence-board__confirmed-group ${
+                      revealing ? "evidence-board__confirmed-group--reveal" : ""
+                    }`}
+                  >
+                    <path d={d} className="evidence-board__string-shadow" />
+                    <path d={d} className="evidence-board__string evidence-board__string--confirmed">
+                      <title>{t("confirmedCorrelation")}</title>
+                    </path>
+                    <circle
+                      cx={(x1 + x2) / 2}
+                      cy={(y1 + y2) / 2}
+                      r={5}
+                      className="evidence-board__confirmed-seal"
+                    >
+                      <title>{t("confirmedCorrelation")}</title>
+                    </circle>
                   </g>
                 );
               })}
@@ -327,13 +513,28 @@ const EvidenceBoard = () => {
                   type="button"
                   className={`evidence-card evidence-card--${card.category} ${
                     selectedId === card.id ? "evidence-card--selected" : ""
+                  } ${
+                    theoryIds.includes(card.id)
+                      ? "evidence-card--theory"
+                      : ""
+                  } ${
+                    confirmedCardIds.has(card.id)
+                      ? "evidence-card--confirmed"
+                      : ""
                   }`}
                   style={{ left: position.x, top: position.y }}
                   onMouseDown={(event) => startDrag(event, card.id)}
                   aria-label={`${card.title}. ${card.summary}`}
-                  title="Click to select a connection endpoint; drag to move"
+                  title={t("clickSelectEndpointHint")}
                 >
                   <span className="evidence-card__pin" aria-hidden="true" />
+                  {confirmedCardIds.has(card.id) && (
+                    <span
+                      className="evidence-card__seal"
+                      aria-hidden="true"
+                      title={t("confirmedCorrelation")}
+                    />
+                  )}
                   <span className="evidence-card__lead">
                     {card.preview ? (
                       <span className="evidence-card__preview">
@@ -352,7 +553,7 @@ const EvidenceBoard = () => {
                       </span>
                     )}
                     <span>
-                      <small>{meta.label}</small>
+                      <small>{categoryLabel(card.category)}</small>
                       <strong>{card.title}</strong>
                     </span>
                   </span>
@@ -363,65 +564,160 @@ const EvidenceBoard = () => {
 
             {positioned.length === 0 && (
               <div className="evidence-board__empty">
-                No discovered evidence matches this view.
+                {t("noEvidenceMatch")}
               </div>
             )}
           </div>
         </div>
 
         <aside className="evidence-board__inspector">
-          <p className="arg-tool__kicker">CONNECTION DESK</p>
-          {selectedCard ? (
+          <p className="arg-tool__kicker">{t("connectionDesk")}</p>
+          {theoryMode ? (
+            <div className="evidence-board__theory">
+              <span>{t("hypothesisTray")}</span>
+              <strong>{t("theoryPrompt")}</strong>
+              <div className="evidence-board__theory-cards">
+                {theoryIds.length === 0 ? (
+                  <em>—</em>
+                ) : (
+                  theoryIds.map((id) => (
+                    <button
+                      type="button"
+                      key={id}
+                      onClick={() =>
+                        setTheoryIds((current) =>
+                          current.filter((item) => item !== id)
+                        )
+                      }
+                    >
+                      {cardsById[id]?.title ?? id} ×
+                    </button>
+                  ))
+                )}
+              </div>
+              <div className="evidence-board__theory-actions">
+                <button type="button" className="button" onClick={submitTheory}>
+                  {t("testTheory")}
+                </button>
+                <button
+                  type="button"
+                  className="button"
+                  disabled={theoryIds.length === 0}
+                  onClick={() => {
+                    setTheoryIds([]);
+                    setTheoryFeedback("");
+                  }}
+                >
+                  {t("clearTheory")}
+                </button>
+              </div>
+              {theoryFeedback && (
+                <p className="evidence-board__theory-feedback">
+                  {theoryFeedback}
+                </p>
+              )}
+              {insightsUnlocked.length > 0 && (
+                <div className="evidence-board__insights">
+                  <strong>RECOVERED CORRELATIONS</strong>
+                  {insightsUnlocked.map((insightId) => (
+                    <div className="evidence-board__insight-row" key={insightId}>
+                      <p>{insightMessage(insightId)}</p>
+                      <button
+                        type="button"
+                        className="button evidence-board__add-note"
+                        onClick={() =>
+                          addToCaseNotes(insightId, insightMessage(insightId))
+                        }
+                      >
+                        {justAddedKey === insightId
+                          ? t("addedConfirmation")
+                          : t("addToCaseNotes")}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : selectedCard ? (
             <div className="evidence-board__selection">
-              <span>FIRST ENDPOINT SELECTED</span>
+              <span>{t("firstEndpointSelected")}</span>
               <strong>{selectedCard.title}</strong>
               <p>{selectedCard.summary}</p>
-              <em>Choose a second card to add or remove a red thread.</em>
+              <em>{t("chooseSecondCard")}</em>
+              <button
+                type="button"
+                className="button evidence-board__add-note"
+                onClick={() =>
+                  addToCaseNotes(
+                    selectedCard.id,
+                    `${selectedCard.title}: ${selectedCard.summary}`
+                  )
+                }
+              >
+                {justAddedKey === selectedCard.id
+                  ? t("addedConfirmation")
+                  : t("addToCaseNotes")}
+              </button>
               <button
                 type="button"
                 className="button"
                 onClick={() => setSelectedId(null)}
               >
-                Cancel link
+                {t("cancelLink")}
               </button>
             </div>
           ) : (
             <div className="evidence-board__instructions">
-              <strong>Build your own theory.</strong>
+              <strong>{t("buildTheory")}</strong>
               <ol>
-                <li>Click one card.</li>
-                <li>Click a second card.</li>
-                <li>A red thread records the connection.</li>
+                <li>{t("instructionStep1")}</li>
+                <li>{t("instructionStep2")}</li>
+                <li>{t("instructionStep3")}</li>
               </ol>
-              <p>Drag cards into groups. New evidence is pinned automatically.</p>
+              <p>{t("dragGroupsHint")}</p>
             </div>
           )}
 
           <div className="evidence-board__connection-list">
             <header>
-              <strong>Recorded threads</strong>
-              <span>{boardConnections.length}</span>
+              <strong>{t("recordedThreads")}</strong>
+              <span>{allThreadKeys.length}</span>
             </header>
-            {boardConnections.length === 0 ? (
-              <p>No theory has been recorded yet.</p>
+            {allThreadKeys.length === 0 ? (
+              <p>{t("noTheory")}</p>
             ) : (
-              boardConnections.map((key) => {
+              allThreadKeys.map((key) => {
                 const [fromId, toId] = key.split("|");
                 const from = cardsById[fromId];
                 const to = cardsById[toId];
                 if (!from || !to) return null;
+                const confirmed = confirmedSet.has(key);
                 return (
-                  <div key={key}>
+                  <div
+                    key={key}
+                    className={
+                      confirmed ? "evidence-board__thread--confirmed" : ""
+                    }
+                  >
                     <span>{from.title}</span>
-                    <i>↔</i>
+                    <i>{confirmed ? "✦" : "↔"}</i>
                     <span>{to.title}</span>
-                    <button
-                      type="button"
-                      aria-label={`Remove connection between ${from.title} and ${to.title}`}
-                      onClick={() => toggleBoardConnection(fromId, toId)}
-                    >
-                      ×
-                    </button>
+                    {confirmed ? (
+                      <span
+                        className="evidence-board__thread-confirmed-tag"
+                        title={t("confirmedCorrelation")}
+                      >
+                        {t("confirmedTag")}
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        aria-label={`${t("removeConnectionPrefix")} ${from.title} ${t("andWord")} ${to.title}`}
+                        onClick={() => toggleBoardConnection(fromId, toId)}
+                      >
+                        ×
+                      </button>
+                    )}
                   </div>
                 );
               })
@@ -432,7 +728,7 @@ const EvidenceBoard = () => {
             {(Object.keys(CATEGORY_META) as BoardCategory[]).map((category) => (
               <span key={category}>
                 <i className={`legend-${category}`} />
-                {CATEGORY_META[category].label}
+                {categoryLabel(category)}
               </span>
             ))}
           </div>
@@ -441,12 +737,14 @@ const EvidenceBoard = () => {
 
       <div className="arg-tool__status">
         <span>
-          Showing {positioned.length} of {allPositioned.length} pinned cards
+          {t("showingPrefix")} {positioned.length} {t("ofLabel")} {allPositioned.length} {t("pinnedCardsSuffix")}
         </span>
         <span>
-          {selectedCard
-            ? "Choose another card to complete the thread"
-            : "Click to link · drag to rearrange"}
+          {theoryMode
+            ? `${theoryIds.length}/4 ${t("cardsInTraySuffix")}`
+            : selectedCard
+              ? t("chooseAnotherCard")
+              : t("clickToLinkHint")}
         </span>
       </div>
     </div>

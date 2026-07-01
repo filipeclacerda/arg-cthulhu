@@ -1,12 +1,14 @@
 "use client";
 
 import Image from "next/image";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useProgress } from "@/app/context/ProgressContext";
 import { files } from "@/app/data/filesystem";
 import { resolveTokens } from "@/app/utils/narrative";
 import "../ArgTools/style.scss";
 import "./style.scss";
+import { puzzleHintsFor } from "@/app/game/puzzles";
+import { useI18n } from "@/app/i18n";
 
 const ImageViewer = ({ fileId }: { fileId: string }) => {
   const [currentFileId, setCurrentFileId] = useState(fileId);
@@ -18,12 +20,15 @@ const ImageViewer = ({ fileId }: { fileId: string }) => {
     state: progress,
     recordSequenceAction,
     collectReference,
+    recordNearMiss,
   } = useProgress();
   const [mirrored, setMirrored] = useState(false);
   const [inverted, setInverted] = useState(false);
   const [contrast, setContrast] = useState(50);
   const [zoom, setZoom] = useState(100);
   const [properties, setProperties] = useState(false);
+  const partialRecorded = useRef(false);
+  const { t } = useI18n();
 
   const gallery = useMemo(
     () =>
@@ -45,6 +50,9 @@ const ImageViewer = ({ fileId }: { fileId: string }) => {
   const recovered =
     Boolean(isPalimpsest) && mirrored && inverted && contrast >= 90;
   const palimpsestSolved = Boolean(progress.puzzles.palimpsest.solvedAt);
+  const correctParts = isPalimpsest
+    ? [mirrored, inverted, contrast >= 90].filter(Boolean).length
+    : 0;
 
   useEffect(() => {
     setCurrentFileId(fileId);
@@ -67,7 +75,17 @@ const ImageViewer = ({ fileId }: { fileId: string }) => {
     solvePuzzle("palimpsest");
   }, [isPalimpsest, palimpsestSolved, recovered, solvePuzzle]);
 
-  if (!file) return <div className="arg-tool">Image not found.</div>;
+  useEffect(() => {
+    if (!isPalimpsest || palimpsestSolved) return;
+    if (correctParts === 2 && !partialRecorded.current) {
+      partialRecorded.current = true;
+      recordNearMiss("palimpsest", "palimpsest_partial");
+    } else if (correctParts < 2) {
+      partialRecorded.current = false;
+    }
+  }, [correctParts, isPalimpsest, palimpsestSolved, recordNearMiss]);
+
+  if (!file) return <div className="arg-tool">{t("imageNotFound")}</div>;
 
   const mirror = () => {
     const next = !mirrored;
@@ -94,7 +112,7 @@ const ImageViewer = ({ fileId }: { fileId: string }) => {
   return (
     <div className="arg-tool image-viewer">
       <div className="arg-tool__menubar">
-        <span>File</span><span>Edit</span><span>View</span><span>Image</span><span>Help</span>
+        <span>{t("menuFile")}</span><span>{t("menuEdit")}</span><span>{t("menuView")}</span><span>{t("menuImage")}</span><span>{t("help")}</span>
       </div>
 
       {isPalimpsest ? (
@@ -110,7 +128,7 @@ const ImageViewer = ({ fileId }: { fileId: string }) => {
             value={contrast}
             onChange={(event) => setContrast(Number(event.target.value))}
           />
-          <button className="button" onClick={showProperties}>Properties</button>
+          <button className="button" onClick={showProperties}>{t("propertiesLabel")}</button>
         </div>
       ) : (
         <div className="arg-tool__toolbar image-viewer__photo-toolbar">
@@ -121,7 +139,27 @@ const ImageViewer = ({ fileId }: { fileId: string }) => {
           <span>{zoom}%</span>
           <button className="button" onClick={() => setZoom((value) => Math.min(200, value + 25))}>+</button>
           <button className="button" onClick={() => setZoom(100)}>Actual Size</button>
-          <button className="button" onClick={showProperties}>Properties</button>
+          <button className="button" onClick={showProperties}>{t("propertiesLabel")}</button>
+        </div>
+      )}
+
+      {isPalimpsest &&
+        progress.puzzles.palimpsest.hintsUnlocked > 0 && (
+          <div className="image-viewer__calibration-note">
+            SCANNER CALIBRATION RECOVERED:{" "}
+            {
+              puzzleHintsFor(progress.locale, "palimpsest")[
+                progress.puzzles.palimpsest.hintsUnlocked - 1
+              ]
+            }
+          </div>
+        )}
+
+      {isPalimpsest && !recovered && !palimpsestSolved && correctParts === 2 && (
+        <div className="arg-tool__result arg-tool__warning">
+          {progress.locale === "pt-BR"
+            ? "Dois ajustes já revelam alguma coisa por baixo. Um terceiro ainda resiste."
+            : "Two adjustments already reveal something underneath. A third still resists."}
         </div>
       )}
 
@@ -175,7 +213,12 @@ const ImageViewer = ({ fileId }: { fileId: string }) => {
             <dl className="arg-tool__properties">
               <dt>DOS alias</dt><dd>{file.alias}</dd>
               <dt>Size</dt><dd>{file.size}</dd>
-              <dt>Modified</dt><dd>{resolveTokens(file.modified ?? "")}</dd>
+              <dt>Modified</dt>
+              <dd>
+                {recovered
+                  ? resolveTokens("{TOMORROW} 03:12")
+                  : resolveTokens(file.modified ?? "")}
+              </dd>
               {isPalimpsest ? (
                 <>
                   <dt>Orientation</dt><dd>back-facing / tonal range rejected</dd>

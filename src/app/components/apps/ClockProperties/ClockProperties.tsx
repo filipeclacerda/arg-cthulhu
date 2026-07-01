@@ -5,9 +5,11 @@ import { useProgress } from "@/app/context/ProgressContext";
 import { formatGameDate, tomorrow } from "@/app/utils/narrative";
 import "../ArgTools/style.scss";
 import "./style.scss";
+import { useI18n } from "@/app/i18n";
 
 const ClockProperties = () => {
   const { corruptionStage, isPuzzleSolved, collectReference } = useProgress();
+  const { t } = useI18n();
   const [now, setNow] = useState<Date | null>(null);
   const referenceVisible = isPuzzleSolved("future_log");
 
@@ -36,7 +38,7 @@ const ClockProperties = () => {
             <b />
           </div>
           <div>
-            <p className="arg-tool__kicker">DATE/TIME CONTROL PANEL</p>
+            <p className="arg-tool__kicker">{t("dateTimeControlPanel")}</p>
             <h2>{displayedDate?.toLocaleTimeString() ?? "--:--:--"}</h2>
             <span>
               {displayedDate ? formatGameDate(displayedDate) : "--/--/----"}
@@ -45,13 +47,13 @@ const ClockProperties = () => {
         </div>
 
         <dl className="arg-tool__properties">
-          <dt>Time zone</dt>
+          <dt>{t("timeZoneLabel")}</dt>
           <dd>{Intl.DateTimeFormat().resolvedOptions().timeZone}</dd>
-          <dt>Clock source</dt>
+          <dt>{t("clockSourceLabel")}</dt>
           <dd>SB-ARCHIVE-02 / CMOS registry</dd>
-          <dt>Synchronization</dt>
-          <dd>{corruptionStage >= 2 ? "drift exceeds tolerance" : "not available"}</dd>
-          <dt>Registry key</dt>
+          <dt>{t("synchronizationLabel")}</dt>
+          <dd>{corruptionStage >= 2 ? t("driftExceedsTolerance") : t("notAvailable")}</dd>
+          <dt>{t("registryKeyLabel")}</dt>
           <dd>HKLM\System\CurrentControlSet\Control\TimeZoneInformation</dd>
         </dl>
 
@@ -59,13 +61,13 @@ const ClockProperties = () => {
           <div className="arg-tool__reference">OBJECT REF: B9</div>
         ) : (
           <p className="clock-properties__locked">
-            Additional registry index data is unavailable.
+            {t("registryDataUnavailable")}
           </p>
         )}
       </div>
       <div className="arg-tool__status">
-        <span>System clock</span>
-        <span>{referenceVisible ? "indexed object" : "registry data"}</span>
+        <span>{t("systemClockLabel")}</span>
+        <span>{referenceVisible ? t("indexedObjectLabel") : t("registryDataLabel")}</span>
       </div>
     </div>
   );

@@ -10,6 +10,52 @@ export const PUZZLE_IDS = [
 
 export type PuzzleId = (typeof PUZZLE_IDS)[number];
 export type EndingId = "restore" | "shutdown";
+export type Locale = "en" | "pt-BR";
+export type InsightId =
+  | "second_volume"
+  | "cataloguer_lineage"
+  | "observer_relay";
+export type AttemptKind =
+  | "catalog_partial"
+  | "palimpsest_partial"
+  | "cipher_method"
+  | "cipher_key"
+  | "audio_channel"
+  | "audio_reverse"
+  | "lineage_near_year"
+  | "future_sequence_fault"
+  | "index_missing_references"
+  | "index_wrong_order";
+export type HintTrigger = "time" | "near_miss" | "manual";
+export type HintChannel =
+  | "help"
+  | "search"
+  | "metadata"
+  | "draft"
+  | "log"
+  | "system";
+export type TelemetryEventName =
+  | "session_start"
+  | "session_end"
+  | "resource_open"
+  | "puzzle_attempt"
+  | "puzzle_near_miss"
+  | "hint_unlocked"
+  | "puzzle_solved"
+  | "theory_tested"
+  | "ending_chosen";
+
+export interface TelemetryEvent {
+  name: TelemetryEventName;
+  properties?: Record<string, string | number | boolean | null>;
+}
+
+export interface HintHistoryEntry {
+  level: number;
+  trigger: HintTrigger;
+  channel: HintChannel;
+  unlockedAt: number;
+}
 
 export interface PuzzleProgress {
   attempts: number;
@@ -17,10 +63,19 @@ export interface PuzzleProgress {
   hintsUnlocked: number;
   availableAt: number | null;
   solvedAt: number | null;
+  nearMisses: Partial<Record<AttemptKind, number>>;
+  lastMeaningfulProgressAt: number | null;
+  hintHistory: HintHistoryEntry[];
 }
 
-export interface ProgressStateV3 {
-  version: 3;
+export interface TheoryAttempt {
+  evidenceIds: string[];
+  attemptedAt: number;
+  insightId: InsightId | null;
+}
+
+export interface ProgressStateV4 {
+  version: 4;
   caseId: string;
   revision: number;
   createdAt: number;
@@ -44,7 +99,14 @@ export interface ProgressStateV3 {
   ending: EndingId | null;
   boardPositions: Record<string, { x: number; y: number }>;
   boardConnections: string[];
+  confirmedConnections: string[];
+  locale: Locale;
+  insightsUnlocked: InsightId[];
+  theoryAttempts: TheoryAttempt[];
 }
+
+/** Kept as a source-compatible alias while older components migrate. */
+export type ProgressStateV3 = ProgressStateV4;
 
 export type GameEvent =
   | { type: "SET_FLAG"; flag: string }
@@ -53,8 +115,20 @@ export type GameEvent =
   | { type: "DISCOVER_EVIDENCE"; evidenceId: string; resourceId?: string }
   | { type: "VISIT_PAGE"; pageId: string }
   | { type: "ATTEMPT_PUZZLE"; puzzleId: PuzzleId }
+  | {
+      type: "RECORD_NEAR_MISS";
+      puzzleId: PuzzleId;
+      kind: AttemptKind;
+      channel?: HintChannel;
+    }
   | { type: "SOLVE_PUZZLE"; puzzleId: PuzzleId; solvedAt?: number }
-  | { type: "UNLOCK_HINT"; puzzleId: PuzzleId; level?: number }
+  | {
+      type: "UNLOCK_HINT";
+      puzzleId: PuzzleId;
+      level?: number;
+      trigger?: HintTrigger;
+      channel?: HintChannel;
+    }
   | { type: "ADD_ACTIVE_TIME"; puzzleId: PuzzleId; elapsedMs: number }
   | { type: "COLLECT_REFERENCE"; reference: string }
   | { type: "SET_PLAYER_NAME"; name: string | null }
@@ -65,7 +139,9 @@ export type GameEvent =
   | { type: "CHOOSE_ENDING"; ending: EndingId }
   | { type: "MOVE_BOARD_CARD"; cardId: string; x: number; y: number }
   | { type: "TOGGLE_BOARD_CONNECTION"; fromId: string; toId: string }
+  | { type: "TEST_THEORY"; evidenceIds: string[] }
   | { type: "RESET_BOARD_LAYOUT" }
+  | { type: "SET_LOCALE"; locale: Locale }
   | { type: "TOUCH_SEEN"; now: number }
   | { type: "HYDRATE"; state: ProgressStateV3 }
   | { type: "RESET"; state: ProgressStateV3 };
@@ -84,9 +160,12 @@ export const createPuzzleState = (
         hintsUnlocked: 0,
         availableAt: index === 0 ? now : null,
         solvedAt: null,
+        nearMisses: {},
+        lastMeaningfulProgressAt: index === 0 ? now : null,
+        hintHistory: [],
       },
     ])
-  ) as Record<PuzzleId, PuzzleProgress>;
+  ) as unknown as Record<PuzzleId, PuzzleProgress>;
 
 export const createInitialProgress = (
   now = Date.now(),
@@ -94,8 +173,8 @@ export const createInitialProgress = (
     typeof crypto !== "undefined" && "randomUUID" in crypto
       ? crypto.randomUUID()
       : `case-${now}-${Math.random().toString(36).slice(2)}`
-): ProgressStateV3 => ({
-  version: 3,
+): ProgressStateV4 => ({
+  version: 4,
   caseId,
   revision: 0,
   createdAt: now,
@@ -119,6 +198,10 @@ export const createInitialProgress = (
   ending: null,
   boardPositions: {},
   boardConnections: [],
+  confirmedConnections: [],
+  locale: "en",
+  insightsUnlocked: [],
+  theoryAttempts: [],
 });
 
 export const puzzleCorruptionStage = (

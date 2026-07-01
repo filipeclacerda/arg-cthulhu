@@ -6,6 +6,7 @@ import { folders, files, isUnlocked, VFile } from "@/app/data/filesystem";
 import { useProgress } from "@/app/context/ProgressContext";
 import { useWindowManager } from "@/app/context/WindowManagerContext";
 import { IDENTITY_REVEAL_STAGE } from "@/app/utils/narrative";
+import { useI18n } from "@/app/i18n";
 
 interface ExplorerProps {
   folderId?: string;
@@ -42,6 +43,7 @@ const Explorer = ({ folderId = "my-computer" }: ExplorerProps) => {
     state,
   } = useProgress();
   const { openWindow } = useWindowManager();
+  const { t } = useI18n();
   const [currentFolderId, setCurrentFolderId] = useState(folderId);
   const [selectedFileId, setSelectedFileId] = useState<string | null>(null);
 
@@ -121,10 +123,10 @@ const Explorer = ({ folderId = "my-computer" }: ExplorerProps) => {
   return (
     <div className="explorer">
       <div className="explorer-menubar">
-        <span>File</span>
-        <span>Edit</span>
-        <span>View</span>
-        <span>Help</span>
+        <span>{t("menuFile")}</span>
+        <span>{t("menuEdit")}</span>
+        <span>{t("menuView")}</span>
+        <span>{t("help")}</span>
       </div>
       <div className="explorer-toolbar">
         <button
@@ -133,13 +135,13 @@ const Explorer = ({ folderId = "my-computer" }: ExplorerProps) => {
           disabled={!currentFolder?.parentId}
           onClick={goUp}
         >
-          Up
+          {t("upLabel")}
         </button>
         <button type="button" className="explorer-tool-button" disabled>
-          Search
+          {t("menuSearch")}
         </button>
         <button type="button" className="explorer-tool-button" disabled>
-          Folders
+          {t("foldersLabel")}
         </button>
         <button
           type="button"
@@ -147,12 +149,12 @@ const Explorer = ({ folderId = "my-computer" }: ExplorerProps) => {
           disabled={!selectedFileId}
           onClick={openProperties}
         >
-          Properties
+          {t("propertiesLabel")}
         </button>
-        <span className="explorer-hint">Double-click to open</span>
+        <span className="explorer-hint">{t("doubleClickToOpen")}</span>
       </div>
       <div className="explorer-address">
-        <span className="explorer-address-label">Address</span>
+        <span className="explorer-address-label">{t("addressLabel")}</span>
         <div className="explorer-address-field">
           <Image src={DEFAULT_FOLDER_ICON} alt="" width={22} height={22} />
           <span>{currentFolder ? getFolderPath() : currentFolderId}</span>
@@ -177,7 +179,7 @@ const Explorer = ({ folderId = "my-computer" }: ExplorerProps) => {
                 setSelectedFileId(null);
                 setCurrentFolderId(folder.id);
               }}
-              title="Double-click to open"
+              title={t("doubleClickToOpen")}
             >
               <Image
                 className="explorer-icon"
@@ -197,7 +199,7 @@ const Explorer = ({ folderId = "my-computer" }: ExplorerProps) => {
               }`}
               onClick={() => setSelectedFileId(file.id)}
               onDoubleClick={() => openFile(file.id)}
-              title="Double-click to open"
+              title={t("doubleClickToOpen")}
             >
               {file.kind === "image" ? (
                 <span
@@ -229,11 +231,11 @@ const Explorer = ({ folderId = "my-computer" }: ExplorerProps) => {
         </div>
       </div>
       <div className="explorer-statusbar">
-        <span>{itemCount} object(s)</span>
+        <span>{itemCount} {t("objectsSuffix")}</span>
         <span>
           {selectedFileId
-            ? "File selected. Properties may contain information not shown in the filename."
-            : "Read-only forensic image"}
+            ? t("fileSelectedHint")
+            : t("readOnlyForensicImage")}
         </span>
       </div>
     </div>

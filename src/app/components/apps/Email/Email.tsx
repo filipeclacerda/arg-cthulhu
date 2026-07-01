@@ -5,6 +5,7 @@ import { emails } from "@/app/data/emails";
 import { isUnlocked } from "@/app/data/filesystem";
 import { useProgress } from "@/app/context/ProgressContext";
 import { resolveTokens } from "@/app/utils/narrative";
+import { localizedEmail } from "@/app/data/localizedNarrative";
 
 const Email = () => {
   const {
@@ -23,9 +24,18 @@ const Email = () => {
   const solvedPuzzleIds = Object.entries(state.puzzles)
     .filter(([, progress]) => Boolean(progress.solvedAt))
     .map(([id]) => id as keyof typeof state.puzzles);
-  const visibleEmails = emails.filter((e) =>
-    isUnlocked(e.unlock, { flags, discoveredEvidenceIds, solvedPuzzleIds })
-  );
+  const visibleEmails = emails
+    .filter((e) =>
+      isUnlocked(e.unlock, { flags, discoveredEvidenceIds, solvedPuzzleIds })
+    )
+    .map((email) => ({
+      ...email,
+      ...localizedEmail(
+        email.id,
+        { subject: email.subject, body: email.body },
+        state.locale
+      ),
+    }));
   const visibleEmailIds = visibleEmails.map((email) => email.id).join("|");
 
   const [selectedId, setSelectedId] = useState<string | null>(
@@ -66,25 +76,27 @@ const Email = () => {
   return (
     <div className="email">
       <div className="email-menubar">
-        <span>File</span>
-        <span>Edit</span>
-        <span>View</span>
-        <span>Tools</span>
-        <span>Help</span>
+        <span>{state.locale === "pt-BR" ? "Arquivo" : "File"}</span>
+        <span>{state.locale === "pt-BR" ? "Editar" : "Edit"}</span>
+        <span>{state.locale === "pt-BR" ? "Exibir" : "View"}</span>
+        <span>{state.locale === "pt-BR" ? "Ferramentas" : "Tools"}</span>
+        <span>{state.locale === "pt-BR" ? "Ajuda" : "Help"}</span>
       </div>
       <div className="email-toolbar">
-        <button className="email-toolbar-button">New</button>
-        <button className="email-toolbar-button">Reply</button>
-        <button className="email-toolbar-button">Forward</button>
-        <button className="email-toolbar-button">Delete</button>
+        <button className="email-toolbar-button">{state.locale === "pt-BR" ? "Novo" : "New"}</button>
+        <button className="email-toolbar-button">{state.locale === "pt-BR" ? "Responder" : "Reply"}</button>
+        <button className="email-toolbar-button">{state.locale === "pt-BR" ? "Encaminhar" : "Forward"}</button>
+        <button className="email-toolbar-button">{state.locale === "pt-BR" ? "Excluir" : "Delete"}</button>
         <span className="email-toolbar-status">
-          {unreadCount} unread / {visibleEmails.length} total
+          {unreadCount} {state.locale === "pt-BR" ? "não lidas" : "unread"} / {visibleEmails.length} total
         </span>
       </div>
       <div className="email-panes">
         <div className="email-list">
           {visibleEmails.length === 0 && (
-            <div className="email-empty">No messages recovered.</div>
+            <div className="email-empty">
+              {state.locale === "pt-BR" ? "Nenhuma mensagem recuperada." : "No messages recovered."}
+            </div>
           )}
           {visibleEmails.map((email) => (
             <div
@@ -110,13 +122,13 @@ const Email = () => {
             <>
               <div className="email-detail-header">
                 <p>
-                  <strong>From:</strong> {selected.sender}
+                  <strong>{state.locale === "pt-BR" ? "De:" : "From:"}</strong> {selected.sender}
                 </p>
                 <p>
-                  <strong>Date:</strong> {resolveTokens(selected.date, ctx)}
+                  <strong>{state.locale === "pt-BR" ? "Data:" : "Date:"}</strong> {resolveTokens(selected.date, ctx)}
                 </p>
                 <p>
-                  <strong>Subject:</strong> {selected.subject}
+                  <strong>{state.locale === "pt-BR" ? "Assunto:" : "Subject:"}</strong> {selected.subject}
                 </p>
                 {selected.messageId && isPuzzleSolved("future_log") && (
                   <p className="email-message-id">
@@ -130,7 +142,9 @@ const Email = () => {
             </>
           ) : (
             <p className="email-empty-detail">
-              Select a recovered message from the list.
+              {state.locale === "pt-BR"
+                ? "Selecione uma mensagem recuperada da lista."
+                : "Select a recovered message from the list."}
             </p>
           )}
         </div>
@@ -139,8 +153,10 @@ const Email = () => {
         <span>Outlook Express</span>
         <span>
           {selected
-            ? `Recovered message: ${selected.id}`
-            : "No message selected"}
+            ? `${state.locale === "pt-BR" ? "Mensagem recuperada" : "Recovered message"}: ${selected.id}`
+            : state.locale === "pt-BR"
+              ? "Nenhuma mensagem selecionada"
+              : "No message selected"}
         </span>
       </div>
     </div>

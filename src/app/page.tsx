@@ -2,22 +2,41 @@
 
 import { useEffect, useState } from "react";
 import { useProgress } from "./context/ProgressContext";
-import { ProgressStateV3, puzzleAct } from "./game/progress";
+import { Locale, ProgressStateV4, puzzleAct } from "./game/progress";
+import posthog from "posthog-js";
+import {
+  captureTelemetry,
+  getTelemetryConsent,
+  setTelemetryConsent,
+  TelemetryConsent,
+} from "./game/telemetry";
+import { useI18n } from "./i18n";
 import { resolveTokens } from "./utils/narrative";
 import "./page.scss";
 
 const SARAH_USERNAME = "sarah.bishop";
 const SARAH_PASSWORD = "password";
 
-const BOOT_LINES = [
-  "ORNE LIBRARY DARK ARCHIVE // RELAY 07",
-  "HANDSHAKE ACCEPTED FROM UNLISTED OBSERVER",
-  "CHECKING CHAIN OF CUSTODY ........ FAILED",
-  "CHECKING SOURCE SIGNATURE .... T. ALVAREZ",
-  "CHECKING RECIPIENT FIELD ......... [BLANK]",
-  "COMPARING SYSTEM CLOCK ........... +24:00:00",
-  "SEALED IMAGE SB-0316 FOUND",
-];
+const BOOT_LINES: Record<Locale, string[]> = {
+  en: [
+    "ORNE LIBRARY DARK ARCHIVE // RELAY 07",
+    "HANDSHAKE ACCEPTED FROM UNLISTED OBSERVER",
+    "CHECKING CHAIN OF CUSTODY ........ FAILED",
+    "CHECKING SOURCE SIGNATURE .... T. ALVAREZ",
+    "CHECKING RECIPIENT FIELD ......... [BLANK]",
+    "COMPARING SYSTEM CLOCK ........... +24:00:00",
+    "SEALED IMAGE SB-0316 FOUND",
+  ],
+  "pt-BR": [
+    "ARQUIVO ESCURO DA BIBLIOTECA ORNE // RELÉ 07",
+    "CONEXÃO ACEITA DE OBSERVADOR NÃO LISTADO",
+    "VERIFICANDO CADEIA DE CUSTÓDIA .... FALHOU",
+    "VERIFICANDO ASSINATURA DE ORIGEM .. T. ALVAREZ",
+    "VERIFICANDO DESTINATÁRIO .......... [VAZIO]",
+    "COMPARANDO RELÓGIO DO SISTEMA ..... +24:00:00",
+    "IMAGEM SELADA SB-0316 ENCONTRADA",
+  ],
+};
 
 export default function Home() {
   const {
@@ -29,6 +48,8 @@ export default function Home() {
     setPlayerName,
     setFlag,
   } = useProgress();
+  const { locale, setLocale, t } = useI18n();
+  const isPt = locale === "pt-BR";
   const [phase, setPhase] = useState<"sealed" | "mount">("sealed");
   const [visibleLines, setVisibleLines] = useState(0);
   const [observerName, setObserverName] = useState("");
@@ -38,14 +59,17 @@ export default function Home() {
   const [tomorrowStamp, setTomorrowStamp] = useState("--/--/----");
   const [showImport, setShowImport] = useState(false);
   const [caseCode, setCaseCode] = useState("");
-  const [casePreview, setCasePreview] = useState<ProgressStateV3 | null>(null);
+  const [casePreview, setCasePreview] = useState<ProgressStateV4 | null>(null);
   const [caseError, setCaseError] = useState("");
+  const [telemetryChoice, setTelemetryChoice] =
+    useState<TelemetryConsent>("unknown");
+  const [preferencesReady, setPreferencesReady] = useState(false);
 
   useEffect(() => {
     setTomorrowStamp(resolveTokens("{TOMORROW}"));
     const timer = window.setInterval(() => {
       setVisibleLines((count) => {
-        if (count >= BOOT_LINES.length) {
+        if (count >= BOOT_LINES.en.length) {
           window.clearInterval(timer);
           return count;
         }
@@ -58,6 +82,13 @@ export default function Home() {
   useEffect(() => {
     if (isHydrated) setObserverName(state.playerName ?? "");
   }, [isHydrated, state.playerName]);
+
+  useEffect(() => {
+    if (!isHydrated) return;
+    const consent = getTelemetryConsent();
+    setTelemetryChoice(consent);
+    if (consent !== "unknown") setPreferencesReady(true);
+  }, [isHydrated]);
 
   const hasExistingCase =
     Boolean(state.playerName) ||
@@ -74,8 +105,78 @@ export default function Home() {
     }
     setPlayerName(observerName.trim() || null);
     setFlag("relay_envelope_opened");
+    posthog.capture("image_mounted", {
+      has_observer_name: Boolean(observerName.trim()),
+      is_returning: hasExistingCase,
+      act: puzzleAct(state),
+    });
     window.location.href = "/desktop";
   };
+
+  const chooseDiagnostics = (consent: "granted" | "denied") => {
+    setTelemetryConsent(consent);
+    setTelemetryChoice(consent);
+    setPreferencesReady(true);
+    if (consent === "granted") {
+      posthog.opt_in_capturing();
+      captureTelemetry({
+        name: "session_start",
+        properties: { act: puzzleAct(state), locale },
+      });
+    } else {
+      posthog.opt_out_capturing();
+    }
+  };
+
+  if (!isHydrated || !preferencesReady) {
+    return (
+      <main className="relay-preflight">
+        <section className="relay-preflight__panel">
+          <p className="relay-label">RELAY DISPLAY CONFIGURATION</p>
+          <h1>{t("language")}</h1>
+          <div className="relay-preflight__languages">
+            <button
+              type="button"
+              className={locale === "en" ? "active" : ""}
+              onClick={() => setLocale("en")}
+            >
+              {t("english")}
+            </button>
+            <button
+              type="button"
+              className={locale === "pt-BR" ? "active" : ""}
+              onClick={() => setLocale("pt-BR")}
+            >
+              {t("portuguese")}
+            </button>
+          </div>
+          <div className="relay-preflight__privacy">
+            <strong>{t("telemetryTitle")}</strong>
+            <p>{t("telemetryBody")}</p>
+            <small>{t("consentCanChange")}</small>
+          </div>
+          <div className="relay-preflight__actions">
+            <button
+              type="button"
+              onClick={() => chooseDiagnostics("denied")}
+            >
+              {t("telemetryDecline")}
+            </button>
+            <button
+              type="button"
+              onClick={() => chooseDiagnostics("granted")}
+            >
+              {t("telemetryAccept")}
+            </button>
+          </div>
+          {!isHydrated && <p>CHECKING LOCAL ARCHIVE...</p>}
+          {telemetryChoice !== "unknown" && (
+            <small>{telemetryChoice}</small>
+          )}
+        </section>
+      </main>
+    );
+  }
 
   return (
     <main className="relay-shell">
@@ -90,33 +191,44 @@ export default function Home() {
             <span /><span /><span />
           </div>
           <div>
-            <strong>MISKATONIC UNIVERSITY // DIGITAL FORENSICS</strong>
-            <small>UNAUTHORIZED RELAY NODE 07</small>
+            <strong>
+              {isPt
+                ? "UNIVERSIDADE MISKATONIC // PERÍCIA DIGITAL"
+                : "MISKATONIC UNIVERSITY // DIGITAL FORENSICS"}
+            </strong>
+            <small>
+              {isPt
+                ? "NÓ DE RELÉ NÃO AUTORIZADO 07"
+                : "UNAUTHORIZED RELAY NODE 07"}
+            </small>
           </div>
           <span className="relay-terminal__date">QUEUE DATE {tomorrowStamp}</span>
         </header>
 
         <div className="relay-terminal__body">
           <aside className="relay-manifest">
-            <p className="relay-label">SEALED EVIDENCE</p>
+            <p className="relay-label">
+              {isPt ? "EVIDÊNCIA SELADA" : "SEALED EVIDENCE"}
+            </p>
             <h1>SB-0316</h1>
             <dl>
-              <dt>Subject</dt><dd>BISHOP, SARAH</dd>
-              <dt>Medium</dt><dd>DISK IMAGE</dd>
-              <dt>Source</dt><dd>T. ALVAREZ</dd>
-              <dt>Status</dt><dd>UNRESOLVED</dd>
-              <dt>Recipient</dt><dd className="relay-unstable">GENERATED AT OPEN</dd>
-              <dt>Timestamp</dt><dd>{tomorrowStamp}</dd>
+              <dt>{isPt ? "Sujeito" : "Subject"}</dt><dd>BISHOP, SARAH</dd>
+              <dt>{isPt ? "Mídia" : "Medium"}</dt><dd>{isPt ? "IMAGEM DE DISCO" : "DISK IMAGE"}</dd>
+              <dt>{isPt ? "Origem" : "Source"}</dt><dd>T. ALVAREZ</dd>
+              <dt>Status</dt><dd>{isPt ? "NÃO RESOLVIDO" : "UNRESOLVED"}</dd>
+              <dt>{isPt ? "Destinatário" : "Recipient"}</dt><dd className="relay-unstable">{isPt ? "GERADO AO ABRIR" : "GENERATED AT OPEN"}</dd>
+              <dt>{isPt ? "Horário" : "Timestamp"}</dt><dd>{tomorrowStamp}</dd>
             </dl>
             <div className="relay-boundary">
-              Everything shown here belongs to the relay envelope.
-              The Windows system beyond the mount belongs to Sarah Bishop.
+              {isPt
+                ? "Tudo exibido aqui pertence ao envelope do relé. O sistema Windows depois da montagem pertence a Sarah Bishop."
+                : "Everything shown here belongs to the relay envelope. The Windows system beyond the mount belongs to Sarah Bishop."}
             </div>
           </aside>
 
           <div className="relay-console">
             <div className="relay-console__output" aria-live="polite">
-              {BOOT_LINES.slice(0, visibleLines).map((line, index) => (
+              {BOOT_LINES[locale].slice(0, visibleLines).map((line, index) => (
                 <p key={line}>
                   <span>{String(index + 1).padStart(2, "0")}</span>
                   {line}
@@ -125,19 +237,28 @@ export default function Home() {
               <b className="relay-cursor" aria-hidden="true">█</b>
             </div>
 
-            {visibleLines >= BOOT_LINES.length && phase === "sealed" && (
+            {visibleLines >= BOOT_LINES.en.length && phase === "sealed" && (
               <div className="relay-envelope">
-                <p className="relay-label">UPLOAD ENVELOPE // OUTSIDE DISK IMAGE</p>
+                <p className="relay-label">
+                  {isPt
+                    ? "ENVELOPE DE UPLOAD // FORA DA IMAGEM"
+                    : "UPLOAD ENVELOPE // OUTSIDE DISK IMAGE"}
+                </p>
                 <blockquote>
-                  <p>I found the computer that belonged to Sarah Bishop.</p>
                   <p>
-                    I made a forensic copy before the archive took it. I queued
-                    it for three colleagues. There is a fourth recipient now.
-                    I did not add one.
+                    {isPt
+                      ? "Encontrei o computador que pertencia a Sarah Bishop."
+                      : "I found the computer that belonged to Sarah Bishop."}
                   </p>
                   <p>
-                    The field is blank on my screen. Maybe it will not be blank
-                    when somebody opens this.
+                    {isPt
+                      ? "Fiz uma cópia forense antes que o arquivo o recolhesse. Coloquei três colegas na fila. Agora existe um quarto destinatário. Não fui eu que o adicionei."
+                      : "I made a forensic copy before the archive took it. I queued it for three colleagues. There is a fourth recipient now. I did not add one."}
+                  </p>
+                  <p>
+                    {isPt
+                      ? "O campo está vazio na minha tela. Talvez não esteja vazio quando alguém abrir isto."
+                      : "The field is blank on my screen. Maybe it will not be blank when somebody opens this."}
                   </p>
                   <footer>— Tom Alvarez</footer>
                 </blockquote>
@@ -146,7 +267,7 @@ export default function Home() {
                   type="button"
                   onClick={() => setPhase("mount")}
                 >
-                  [ OPEN SEALED ATTACHMENT ]
+                  [ {isPt ? "ABRIR ANEXO SELADO" : "OPEN SEALED ATTACHMENT"} ]
                 </button>
               </div>
             )}
@@ -154,10 +275,15 @@ export default function Home() {
             {phase === "mount" && (
               <div className="relay-mount">
                 <div className="relay-warning">
-                  <strong>OBSERVER SESSION CREATED</strong>
+                  <strong>
+                    {isPt
+                      ? "SESSÃO DE OBSERVADOR CRIADA"
+                      : "OBSERVER SESSION CREATED"}
+                  </strong>
                   <span>
-                    The relay has no record of inviting you. Opening the image
-                    is the only credential it has for you.
+                    {isPt
+                      ? "O relé não possui registro de ter convidado você. Abrir a imagem é a única credencial que ele possui."
+                      : "The relay has no record of inviting you. Opening the image is the only credential it has for you."}
                   </span>
                 </div>
 
@@ -168,16 +294,16 @@ export default function Home() {
                   }}
                 >
                   <label>
-                    Observer designation
+                    {isPt ? "Designação do observador" : "Observer designation"}
                     <input
                       value={observerName}
                       onChange={(event) => setObserverName(event.target.value)}
-                      placeholder="optional / stored in access log"
+                      placeholder={isPt ? "opcional / armazenado no log" : "optional / stored in access log"}
                     />
                   </label>
                   <div className="relay-credentials">
                     <label>
-                      Image username
+                      {isPt ? "Usuário da imagem" : "Image username"}
                       <input
                         value={username}
                         onChange={(event) => setUsername(event.target.value)}
@@ -185,7 +311,7 @@ export default function Home() {
                       />
                     </label>
                     <label>
-                      Recovered password
+                      {isPt ? "Senha recuperada" : "Recovered password"}
                       <input
                         type="password"
                         value={password}
@@ -195,12 +321,16 @@ export default function Home() {
                     </label>
                   </div>
                   <p className="relay-credential-source">
-                    Credentials recovered from Alvarez upload manifest:
+                    {isPt
+                      ? "Credenciais recuperadas do manifesto de Alvarez:"
+                      : "Credentials recovered from Alvarez upload manifest:"}
                     <code>sarah.bishop / password</code>
                   </p>
                   {authError && <p className="relay-error">{authError}</p>}
                   <button className="relay-command" type="submit">
-                    [ {hasExistingCase ? "CONTINUE MOUNTED CASE" : "MOUNT READ-ONLY IMAGE"} ]
+                    [ {hasExistingCase
+                      ? isPt ? "CONTINUAR CASO MONTADO" : "CONTINUE MOUNTED CASE"
+                      : isPt ? "MONTAR IMAGEM SOMENTE LEITURA" : "MOUNT READ-ONLY IMAGE"} ]
                   </button>
                 </form>
 
@@ -223,11 +353,15 @@ export default function Home() {
                           ) {
                             return;
                           }
+                          posthog.capture("new_session_started", {
+                            had_existing_case: hasExistingCase,
+                            prior_act: puzzleAct(state),
+                          });
                           await newCase();
                           setObserverName("");
                         }}
                       >
-                        New session
+                        {isPt ? "Nova sessão" : "New session"}
                       </button>
                       <button
                         type="button"
@@ -237,7 +371,7 @@ export default function Home() {
                           setCaseError("");
                         }}
                       >
-                        Import MISK3
+                        {isPt ? "Importar MISK4 / MISK3" : "Import MISK4 / MISK3"}
                       </button>
                     </div>
                   </div>
@@ -254,7 +388,7 @@ export default function Home() {
                         setCasePreview(null);
                         setCaseError("");
                       }}
-                      placeholder="MISK3.payload.checksum"
+                      placeholder="MISK4.payload.checksum"
                     />
                     {caseError && <p className="relay-error">{caseError}</p>}
                     {casePreview && (
@@ -286,7 +420,10 @@ export default function Home() {
                         <button
                           type="button"
                           onClick={async () => {
-                            await importCode(caseCode);
+                            const imported = await importCode(caseCode);
+                            posthog.capture("case_code_imported", {
+                              act: puzzleAct(imported),
+                            });
                             window.location.href = "/desktop";
                           }}
                         >
@@ -302,9 +439,9 @@ export default function Home() {
         </div>
 
         <footer className="relay-terminal__footer">
-          <span>NO RETURN PATH</span>
-          <span>OBSERVER ADDRESS: CURIOSITY</span>
-          <span>LINK INTEGRITY 07%</span>
+          <span>{isPt ? "SEM CAMINHO DE RETORNO" : "NO RETURN PATH"}</span>
+          <span>{isPt ? "ENDEREÇO DO OBSERVADOR: CURIOSIDADE" : "OBSERVER ADDRESS: CURIOSITY"}</span>
+          <span>{isPt ? "INTEGRIDADE DO LINK 07%" : "LINK INTEGRITY 07%"}</span>
         </footer>
       </section>
     </main>

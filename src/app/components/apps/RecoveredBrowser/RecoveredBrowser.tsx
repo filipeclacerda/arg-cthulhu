@@ -3,6 +3,13 @@
 import React, { FormEvent, useMemo, useState } from "react";
 import { useProgress } from "@/app/context/ProgressContext";
 import { resolveTokens } from "@/app/utils/narrative";
+import {
+  validateCoastQuery,
+  validateLineageYear,
+  validateLotQuery,
+} from "@/app/game/validators";
+import { puzzleHintsFor } from "@/app/game/puzzles";
+import { useI18n } from "@/app/i18n";
 import "../ArgTools/style.scss";
 import "./style.scss";
 
@@ -67,7 +74,10 @@ const RecoveredBrowser = ({
     visitPage,
     isPuzzleSolved,
     discoverEvidence,
+    recordNearMiss,
+    activePuzzle,
   } = useProgress();
+  const { t } = useI18n();
   const initialPage: BrowserPage = initialAddress?.includes("danforth")
     ? "danforth"
     : "home";
@@ -80,13 +90,22 @@ const RecoveredBrowser = ({
   const [favoritesOpen, setFavoritesOpen] = useState(false);
   const [searchInput, setSearchInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const [nearMissMessage, setNearMissMessage] = useState("");
+  const browserHint =
+    activePuzzle &&
+    ["lot_114", "lineage"].includes(activePuzzle) &&
+    state.puzzles[activePuzzle].hintsUnlocked > 0
+      ? puzzleHintsFor(state.locale, activePuzzle)[
+          state.puzzles[activePuzzle].hintsUnlocked - 1
+        ]
+      : null;
 
   const secure = address.startsWith("cache://");
   const statusText = useMemo(() => {
-    if (page === "not-found") return "Cannot find server";
-    if (page === "home" || page === "results") return "Cached web search";
-    return secure ? "Recovered cache" : "Internet zone";
-  }, [page, secure]);
+    if (page === "not-found") return t("cannotFindServer");
+    if (page === "home" || page === "results") return t("cachedWebSearch");
+    return secure ? t("recoveredCache") : t("internetZone");
+  }, [page, secure, t]);
 
   const navigate = (
     next: BrowserPage,
@@ -127,13 +146,10 @@ const RecoveredBrowser = ({
 
     setSearchInput(query);
     setSearchTerm(query);
+    setNearMissMessage("");
 
-    const lotMatch =
-      value.includes("WHATELEY") &&
-      value.includes("1998") &&
-      value.includes("114") &&
-      (value.includes("II") || value.includes("VOLUME 2"));
-    if (lotMatch) {
+    const lotValidation = validateLotQuery(query);
+    if (lotValidation.accepted) {
       attemptPuzzle("lot_114");
       solvePuzzle("lot_114");
       discoverEvidence("catalogue_lot_114", "catalogue-lot-114");
@@ -141,9 +157,17 @@ const RecoveredBrowser = ({
       navigate("lot");
       return;
     }
+    if (!isPuzzleSolved("lot_114") && lotValidation.nearMiss) {
+      recordNearMiss("lot_114", lotValidation.nearMiss);
+      setNearMissMessage(
+        state.locale === "pt-BR"
+          ? "O catálogo encontrou quase todos os campos. Um identificador bibliográfico ainda está incompleto."
+          : "The catalogue matched most fields. One bibliographic identifier is still incomplete."
+      );
+    }
 
     if (
-      compact.includes("YHANTHLEI") &&
+      validateCoastQuery(query) &&
       isPuzzleSolved("margin_cipher")
     ) {
       attemptPuzzle("counting_audio");
@@ -154,13 +178,29 @@ const RecoveredBrowser = ({
       return;
     }
 
-    if (value === "2026" && state.visitedPageIds.includes("coastline-yhanthlei")) {
+    const lineageValidation = validateLineageYear(query);
+    if (
+      lineageValidation.accepted &&
+      state.visitedPageIds.includes("coastline-yhanthlei")
+    ) {
       attemptPuzzle("lineage");
       solvePuzzle("lineage");
       discoverEvidence("sarah_future_record", "catalogue-2026");
       visitPage("catalogue-2026");
       navigate("sarah");
       return;
+    }
+    if (
+      state.visitedPageIds.includes("coastline-yhanthlei") &&
+      lineageValidation.nearMiss &&
+      !isPuzzleSolved("lineage")
+    ) {
+      recordNearMiss("lineage", lineageValidation.nearMiss);
+      setNearMissMessage(
+        state.locale === "pt-BR"
+          ? "O índice reconhece o intervalo, mas não esse ponto final."
+          : "The index recognizes the interval, but not that endpoint."
+      );
     }
 
     if (compact === "SHEKNOWS") {
@@ -257,24 +297,24 @@ const RecoveredBrowser = ({
   return (
     <div className="arg-tool recovered-browser">
       <div className="arg-tool__menubar">
-        <span>File</span><span>Edit</span><span>View</span><span>Favorites</span><span>Tools</span><span>Help</span>
+        <span>{t("menuFile")}</span><span>{t("menuEdit")}</span><span>{t("menuView")}</span><span>{t("menuFavorites")}</span><span>{t("menuTools")}</span><span>{t("help")}</span>
       </div>
       <div className="browser-buttonbar">
         <button className="browser-tool button" type="button" disabled={backStack.length === 0} onClick={goBack}>
-          <span>←</span>Back
+          <span>←</span>{t("back")}
         </button>
         <button className="browser-tool button" type="button" disabled={forwardStack.length === 0} onClick={goForward}>
-          <span>→</span>Forward
+          <span>→</span>{t("forwardLabel")}
         </button>
         <button className="browser-tool button" type="button" onClick={() => navigate("home")}>
-          <span>⌂</span>Home
+          <span>⌂</span>{t("homeLabel")}
         </button>
         <button className={`browser-tool button ${favoritesOpen ? "active" : ""}`} type="button" onClick={() => setFavoritesOpen((value) => !value)}>
-          <span>★</span>Favorites
+          <span>★</span>{t("menuFavorites")}
         </button>
       </div>
       <form className="arg-tool__toolbar browser-address" onSubmit={submit}>
-        <label htmlFor="archive-address">Address</label>
+        <label htmlFor="archive-address">{t("addressLabel")}</label>
         <input
           id="archive-address"
           value={address}
@@ -282,13 +322,13 @@ const RecoveredBrowser = ({
           onChange={(event) => setAddress(event.target.value)}
           aria-label="Internet address or catalogue search"
         />
-        <button className="button" type="submit">Go</button>
+        <button className="button" type="submit">{t("goLabel")}</button>
       </form>
 
       <div className="browser-body">
         {favoritesOpen && (
           <aside className="browser-favorites">
-            <strong>Favorites</strong>
+            <strong>{t("menuFavorites")}</strong>
             <button onClick={() => visitAtmospherePage("library", "miskatonic-library-home")}>Miskatonic Library</button>
             <button onClick={() => visitAtmospherePage("gazette", "arkham-gazette")}>Arkham Gazette</button>
             <button onClick={() => visitAtmospherePage("expedition", "pabodie-expedition")}>1930 Expedition</button>
@@ -296,7 +336,7 @@ const RecoveredBrowser = ({
             <button onClick={() => visitAtmospherePage("families", "families-registry")}>Old Families of the Coast</button>
             <button onClick={() => visitAtmospherePage("forum", "miskanet-forum")}>MiskaNet Research Forum</button>
             <div />
-            <small>Links imported from Sarah&apos;s Favorites folder.</small>
+            <small>{t("linksImportedNote")}</small>
           </aside>
         )}
 
@@ -317,7 +357,7 @@ const RecoveredBrowser = ({
                   runQuery(searchInput);
                 }}
               >
-                <label htmlFor="miskatonic-search">Search the cached web:</label>
+                <label htmlFor="miskatonic-search">{t("searchCachedWebLabel")}</label>
                 <input
                   id="miskatonic-search"
                   autoFocus
@@ -325,7 +365,7 @@ const RecoveredBrowser = ({
                   onChange={(event) => setSearchInput(event.target.value)}
                 />
                 <div>
-                  <button type="submit">Miskatonic Search</button>
+                  <button type="submit">{t("miskatonicSearchButton")}</button>
                   <button
                     type="button"
                     onClick={() =>
@@ -336,16 +376,18 @@ const RecoveredBrowser = ({
                       )
                     }
                   >
-                    I&apos;m Feeling Unlucky
+                    {t("feelingUnlucky")}
                   </button>
                 </div>
               </form>
-              <p className="retro-search-tip">
-                Search tip: combine names, dates, lot numbers and volume
-                information to narrow catalogue records.
-              </p>
+              <p className="retro-search-tip">{t("searchTip")}</p>
+              {browserHint && (
+                <div className="retro-search-index-note">
+                  <strong>RECOVERED AUTOCOMPLETE:</strong> {browserHint}
+                </div>
+              )}
               <div className="retro-search-directory">
-                <strong>Cached pages:</strong>
+                <strong>{t("cachedPagesLabel")}</strong>
                 <button onClick={() => visitAtmospherePage("library", "miskatonic-library-home")}>University</button>
                 <span> - </span>
                 <button onClick={() => visitAtmospherePage("gazette", "arkham-gazette")}>News</button>
@@ -389,6 +431,11 @@ const RecoveredBrowser = ({
               <div className="retro-search-summary">
                 Cached web results for <strong>{searchTerm}</strong>
               </div>
+              {nearMissMessage && (
+                <div className="retro-search-index-note">
+                  <strong>CATALOGUE INDEX:</strong> {nearMissMessage}
+                </div>
+              )}
               <div className="retro-result-list">
                 <button onClick={() => visitAtmospherePage("library", "miskatonic-library-home")}>
                   <strong>Miskatonic University — Orne Library</strong>

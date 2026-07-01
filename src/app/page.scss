@@ -433,3 +433,72 @@
     grid-template-columns: 1fr;
   }
 }
+.relay-preflight {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  color: #c8ddc5;
+  background:
+    radial-gradient(circle at 50% 45%, rgba(31, 75, 62, 0.22), transparent 42%),
+    #020807;
+  font-family: "Courier New", monospace;
+}
+
+.relay-preflight__panel {
+  width: min(620px, 92vw);
+  padding: 24px;
+  border: 1px solid #5c8b76;
+  box-shadow:
+    0 0 0 3px #07130f,
+    0 0 45px rgba(73, 146, 115, 0.14);
+  background: rgba(3, 15, 12, 0.96);
+
+  h1 {
+    margin: 7px 0 14px;
+    font-size: 20px;
+    letter-spacing: 0.08em;
+  }
+
+  button {
+    min-height: 34px;
+    padding: 6px 12px;
+    border: 1px solid #6e9f88;
+    color: #c8ddc5;
+    background: #0c211a;
+    font: inherit;
+    cursor: pointer;
+
+    &:hover,
+    &.active {
+      color: #03100c;
+      background: #91c7a8;
+    }
+  }
+}
+
+.relay-preflight__languages,
+.relay-preflight__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.relay-preflight__privacy {
+  margin: 20px 0;
+  padding: 14px;
+  border-left: 3px solid #6e9f88;
+  background: rgba(104, 154, 130, 0.08);
+
+  p {
+    line-height: 1.55;
+  }
+
+  small {
+    color: #7fa28f;
+  }
+}
+
+.relay-preflight__actions {
+  justify-content: flex-end;
+}
