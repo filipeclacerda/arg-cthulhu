@@ -67,6 +67,46 @@
   }
 }
 
+.image-viewer__canvas--compare {
+  outline: 2px solid #f2e7a2;
+
+  &::after {
+    content: "FRAME 12 / CURRENT";
+    position: absolute;
+    left: 6px;
+    top: 6px;
+    z-index: 3;
+    padding: 3px 5px;
+    color: white;
+    background: rgba(0, 0, 0, .72);
+    font: 9px "Courier New", monospace;
+  }
+}
+
+.image-viewer__comparison {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 50%;
+  overflow: hidden;
+  border-left: 3px solid #f2e7a2;
+  background: #111;
+
+  img { object-fit: cover; }
+  span {
+    position: absolute;
+    right: 6px;
+    top: 6px;
+    z-index: 2;
+    padding: 3px 5px;
+    color: white;
+    background: rgba(0, 0, 0, .72);
+    font: 9px "Courier New", monospace;
+  }
+}
+
 .image-viewer__caption {
   position: absolute;
   left: 12px;

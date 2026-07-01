@@ -6,11 +6,14 @@ import { formatGameDate, tomorrow } from "@/app/utils/narrative";
 import "./style.scss";
 
 const Clock = () => {
-  const { corruptionStage, isPuzzleSolved } = useProgress();
+  const { corruptionStage, isPuzzleSolved, state } = useProgress();
   const { openWindow } = useWindowManager();
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
+  const [skipping, setSkipping] = useState(false);
   // Accumulated "wrongness" the clock has remembered into the future.
   const skewRef = useRef(0);
+  const hasLostSecond = state.worldReactionsSeen.includes("clock_lost_second");
+  const secondSkipped = useRef(false);
 
   useEffect(() => {
     setCurrentTime(new Date());
@@ -19,11 +22,20 @@ const Clock = () => {
       // more time than has actually passed.
       const skewPerTick = corruptionStage >= 2 ? corruptionStage - 1 : 0;
       skewRef.current += skewPerTick * 1000;
+      // Once the pattern names Sarah's displacement, the clock re-enacts it once:
+      // one real second passes but the display silently keeps the previous reading,
+      // then jumps two seconds at once to stay "correct" in total.
+      if (hasLostSecond && !secondSkipped.current) {
+        secondSkipped.current = true;
+        setSkipping(true);
+        window.setTimeout(() => setSkipping(false), 900);
+        return;
+      }
       setCurrentTime(new Date(Date.now() + skewRef.current));
     }, 1000);
 
     return () => clearInterval(intervalId);
-  }, [corruptionStage]);
+  }, [corruptionStage, hasLostSecond]);
 
   const formatTime = (date: Date) => {
     const hours = date.getHours() % 12 || 12;
@@ -52,7 +64,7 @@ const Clock = () => {
   return (
     <button
       type="button"
-      className="clock"
+      className={`clock ${skipping ? "clock--skipping" : ""}`}
       title={
         referenceVisible
           ? "Open Date/Time Properties — indexed registry data available"

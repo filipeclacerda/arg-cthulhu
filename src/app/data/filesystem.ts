@@ -161,10 +161,28 @@ export const folders: VFolder[] = [
     icon: "/icons/folder-special.png",
   },
   {
+    id: "work",
+    name: "Work",
+    parentId: "sarah",
+    unlock: { type: "always" },
+  },
+  {
+    id: "downloads",
+    name: "Downloads",
+    parentId: "sarah",
+    unlock: { type: "always" },
+  },
+  {
     id: "restricted",
     name: "RECOVERED",
     parentId: "sarah",
-    unlock: { type: "puzzleSolved", puzzleId: "lot_114" },
+    unlock: {
+      type: "anyOf",
+      conditions: [
+        { type: "puzzleSolved", puzzleId: "lot_114" },
+        { type: "flag", flag: "act1_recovered_partial" },
+      ],
+    },
   },
   {
     id: "chapter-seven",
@@ -274,6 +292,191 @@ export const files: VFile[] = [
 
   // --- Act 1: the person (always visible in Sarah's home folder) ------------
   {
+    id: "paint_doodles",
+    name: "meeting_notes.bmp",
+    folderId: "pictures",
+    kind: "image",
+    unlock: { type: "always" },
+    evidenceId: "paint_doodles",
+    alias: "MEETIN~1.BMP",
+    size: "812 KB",
+    modified: "2026-02-06 14:22",
+    caption: "Sarah's extremely serious notes from the quarterly collections meeting.",
+    comment:
+      "Three sea monsters, a coffee cup and a caricature labeled PROFESSOR A. None of them are evidence.",
+    content: "/photos/sarah_meeting_doodles.png",
+  },
+  {
+    id: "photo_sarah_bus",
+    name: "groceries_on_the_7.png",
+    folderId: "pictures",
+    kind: "image",
+    unlock: { type: "always" },
+    evidenceId: "photo_sarah_bus_2025",
+    alias: "GROCER~1.PNG",
+    size: "2.1 MB",
+    modified: "2025-03-08 18:41",
+    taken: "2025-03-08 18:37",
+    dimensions: "1456 × 1092",
+    camera: "Em's compact camera / auto",
+    location: "Arkham route 7 bus",
+    caption: "Em: “She did occasionally leave the archive.”",
+    comment:
+      "Sarah bought ingredients for Dad's chowder and still forgot the thyme.",
+    content: "/photos/sarah_bus_2025.png",
+  },
+  {
+    id: "whateley_accession_card",
+    name: "whateley_card_1998.png",
+    folderId: "work",
+    kind: "image",
+    unlock: { type: "always" },
+    evidenceId: "whateley_accession_card",
+    alias: "WHATEC~1.PNG",
+    size: "2.1 MB",
+    modified: "2026-02-02 01:20",
+    taken: "1998-08-29 / scanned 2026-02-02",
+    dimensions: "1536 × 1024",
+    camera: "Orne Library flatbed scanner",
+    location: "Whateley accession drawer",
+    caption: "The original accession card. The Volume II field was never completed.",
+    comment:
+      "Blue pencil and the handwritten arrow are both attributed to Miriam Bishop.",
+    content: "/artifacts/whateley_accession_card_1998.png",
+  },
+  {
+    id: "miriam_notebook_scan",
+    name: "miriam_working_notes_1998.png",
+    folderId: "work",
+    kind: "image",
+    unlock: { type: "always" },
+    evidenceId: "miriam_notebook",
+    alias: "MIRIAM~2.PNG",
+    size: "2.0 MB",
+    modified: "2026-02-02 01:22",
+    taken: "1998-09-03 / scanned 2026-02-02",
+    dimensions: "1536 × 1024",
+    camera: "Orne Library flatbed scanner",
+    location: "Miriam Bishop accession notebook",
+    caption: "Working notes ending on September 3, 1998.",
+    comment:
+      "The final catalog field says LEAVE BLANK. Sarah kept the tomato drawing with the scan.",
+    content: "/artifacts/miriam_working_notebook_1998.png",
+  },
+  {
+    id: "dad_recipe",
+    name: "dads_chowder.txt",
+    folderId: "sarah",
+    kind: "text",
+    unlock: { type: "always" },
+    evidenceId: "dad_recipe",
+    alias: "DADSCH~1.TXT",
+    content: `DAD'S CHOWDER — version Sarah can actually follow
+
+2 potatoes, not "some potatoes"
+1 onion
+milk
+thyme
+NO clams from the gas station, regardless of what Tom says
+
+Dad's note: call me while it simmers. Twenty minutes is enough time to return a phone call.
+
+Sarah added underneath:
+Sunday. I mean it this time.`,
+  },
+  {
+    id: "lecture_draft",
+    name: "lecture_draft.txt",
+    folderId: "work",
+    kind: "text",
+    unlock: { type: "always" },
+    evidenceId: "lecture_draft",
+    alias: "LECTUR~1.TXT",
+    content: `SPECIAL COLLECTIONS 204 — draft
+
+The catalogue is not the object. It is an argument about where the object belongs.
+
+[add less boring example here]
+[ask Tom for projector cable]
+[leave by 6:30. call Em from the bus.]
+
+Closing question:
+When a description survives longer than the thing it describes, which one becomes the original?`,
+  },
+  {
+    id: "solitaire_save",
+    name: "SOLITAIRE.SAV",
+    folderId: "sarah",
+    kind: "text",
+    unlock: { type: "always" },
+    evidenceId: "solitaire_save",
+    alias: "SOLITA~1.SAV",
+    content: `[Windows Solitaire saved game]
+
+Games played: 412
+Games won: 17
+Current game: hopeless
+
+Tom's comment, appended in an invalid save field:
+"At some point this stops being persistence and becomes a cry for help."
+
+Sarah's reply:
+"Says the man who keeps opening the same disk image."`,
+  },
+  {
+    id: "midi_collection",
+    name: "playlist.m3u",
+    folderId: "downloads",
+    kind: "text",
+    unlock: { type: "always" },
+    evidenceId: "midi_collection",
+    alias: "PLAYLI~1.M3U",
+    content: `C:\\WINDOWS\\MEDIA\\passport.mid
+C:\\WINDOWS\\MEDIA\\museum_after_dark.mid
+C:\\WINDOWS\\MEDIA\\em_sent_this_one.mid
+C:\\WINDOWS\\MEDIA\\track_07.mid
+
+[track_07 has no file on disk. Its duration is listed as 24:00:00.]`,
+  },
+  {
+    id: "maintenance_record",
+    name: "facilities_ticket_0311.txt",
+    folderId: "work",
+    kind: "text",
+    unlock: { type: "always" },
+    evidenceId: "maintenance_record",
+    alias: "FACILI~1.TXT",
+    content: `MISKATONIC FACILITIES / TICKET F-2026-0311-88
+
+Location: Orne Library B2 / Bishop office
+Complaint: damp carpet beneath archival workstation
+
+Ceiling, wall, radiator and window inspected. No active supply or drainage line enters the room. Moisture boundary was circular and centered beneath SB-ARCHIVE-02.
+
+Sample conductivity exceeded building water. Ticket reassigned to Special Collections after supervisor instruction.
+
+Status: CLOSED — ADMINISTRATIVE`,
+  },
+  {
+    id: "office_frames",
+    name: "office_frames_11_13.png",
+    folderId: "work",
+    kind: "image",
+    unlock: { type: "always" },
+    evidenceId: "office_frames_11_13",
+    alias: "FRAME1~1.PNG",
+    size: "2.4 MB",
+    modified: "2026-03-19 08:16",
+    taken: "2026-03-19 08:13 / 08:15",
+    dimensions: "1536 × 1024 contact sheet",
+    camera: "Miskatonic Campus Security / evidence camera 04",
+    location: "Orne Library, basement archive B2",
+    caption: "Frames 11 and 13. The monitor is dark and the chair is empty in both.",
+    comment:
+      "Frame 12, taken between these photographs, contains the seated reflection.",
+    content: "/photos/office_frames_11_13.png",
+  },
+  {
     id: "diary",
     name: "diary.txt",
     folderId: "sarah",
@@ -331,7 +534,7 @@ If anyone reads this after me: the counting is not a countdown. Do not finish th
   },
   {
     id: "miriam_letter",
-    name: "to_richard_1998.txt",
+    name: "to_robert_1998.txt",
     folderId: "sarah",
     kind: "text",
     unlock: { type: "always" },
@@ -439,6 +642,25 @@ The key is not mine. It belongs to the first cataloguer."`,
     modified: "{TOMORROW} 03:13",
     reference: "C4",
     content: "/artifacts/counting.wav",
+  },
+  {
+    id: "hydrographic_chart",
+    name: "coastline_overlay.png",
+    folderId: "restricted",
+    kind: "image",
+    unlock: { type: "puzzleSolved", puzzleId: "counting_audio" },
+    evidenceId: "hydrographic_chart",
+    alias: "COASTL~1.PNG",
+    size: "3.1 MB",
+    modified: "2026-03-15 02:08",
+    taken: "1951 chart / annotations 1798–2014 / scanned 2026",
+    dimensions: "1536 × 1024",
+    camera: "Miskatonic map scanner",
+    location: "Hydrographic restricted drawer",
+    caption: "Seven dates converge on a location scraped from the chart.",
+    comment:
+      "Each annotation uses a different hand. The 1998 mark matches Miriam's accession pencil.",
+    content: "/artifacts/innsmouth_hydrographic_chart.png",
   },
   {
     id: "manuscript",
@@ -646,6 +868,104 @@ I'll watch for you. The way you watched for me.
 — S.`,
   },
   {
+    id: "miriam_draft",
+    name: "MIRIAM_DRAFT.PRN",
+    folderId: "restricted",
+    kind: "text",
+    unlock: { type: "flag", flag: "miriam_draft_arrived" },
+    evidenceId: "miriam_draft",
+    alias: "MIRIAM~1.PRN",
+    modified: "{TOMORROW} 03:09",
+    content: `[Recovered printer spool / author field M. BISHOP]
+
+Robert —
+
+The missing volume is not missing. Missing is how it prevents the next entry from being made.
+I left the shelfmark incomplete because every complete description becomes an instruction.
+
+If Sarah ever finds this, tell her I was trying to leave one blank space that did not ask to be filled.
+
+[The print job is dated {TOMORROW}. The printer connected to this workstation was disposed of in 2004.]`,
+  },
+  {
+    id: "record_2014",
+    name: "2014_RECORD.DAT",
+    folderId: "chapter-seven",
+    kind: "text",
+    unlock: { type: "puzzleSolved", puzzleId: "future_log" },
+    evidenceId: "record_2014",
+    alias: "2014RE~1.DAT",
+    content: `RECOVERY INDEX / DAMAGED ENTRY
+
+INTERVAL: 2014
+SOURCE: unresolved
+OWNER: unresolved
+WITNESS: ARCHIVE
+
+The field does not contain a person.
+The field contains the checksum of this record.
+
+Validation result:
+RECORD HAS READ ITSELF 1 TIME(S)`,
+  },
+  {
+    id: "containment_utility",
+    name: "LOOPBACK.EXE.txt",
+    folderId: "downloads",
+    kind: "text",
+    unlock: { type: "puzzleSolved", puzzleId: "future_log" },
+    evidenceId: "containment_utility",
+    alias: "LOOPBA~1.TXT",
+    content: `LOOPBACK 0.3 — orphaned archive utility
+
+Registers a mounted index as its own verification witness.
+
+This program cannot name a target. It only provides the final INDEX switch:
+
+  /WITNESS ARCHIVE
+
+The archive identifier and operation remain the responsibility of the operator.`,
+  },
+  {
+    id: "contain_help",
+    name: "CONTAIN.HLP",
+    folderId: "chapter-seven",
+    kind: "help",
+    unlock: { type: "flag", flag: "postgame_lore_ready" },
+    alias: "CONTAI~1.HLP",
+    content: `RELAY CONTAINMENT ADDENDUM
+
+An occupied relay may be sealed only after its source index recognizes a nonhuman witness.
+
+Syntax fragment:
+  INDEX /SEAL <RELAY-ID> <WITNESS-SWITCH>
+
+The relay identifier is preserved outside the mounted image.
+The witness switch may exist in an obsolete download.
+
+Containment is not recovery. No source will be returned.`,
+  },
+  {
+    id: "seal_after",
+    name: "RELAY_07.SEALED",
+    folderId: "sarah",
+    kind: "text",
+    unlock: { type: "flag", flag: "ending_seal" },
+    content: `RELAY 07 / LOOPBACK STATUS
+
+SOURCE: unresolved
+ARCHIVE: SB-0316
+WITNESS: SB-0316
+RECIPIENTS: 3
+
+The fourth field is empty again.
+
+CHECKSUM BEFORE SEAL: 7A:11:07
+CHECKSUM AFTER SEAL:  7A:11:08
+
+No write operation was recorded.`,
+  },
+  {
     id: "case_correlations",
     name: "case_correlations.txt",
     folderId: "sarah",
@@ -659,6 +979,7 @@ I'll watch for you. The way you watched for me.
           conditions: [
             { type: "flag", flag: "ending_restore" },
             { type: "flag", flag: "ending_shutdown" },
+            { type: "flag", flag: "ending_seal" },
           ],
         },
       ],

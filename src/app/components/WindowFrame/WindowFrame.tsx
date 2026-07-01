@@ -16,6 +16,9 @@ import MediaPlayer from "../apps/MediaPlayer/MediaPlayer";
 import CipherLab from "../apps/CipherLab/CipherLab";
 import EvidenceBoard from "../apps/EvidenceBoard/EvidenceBoard";
 import CaseNotes from "../apps/CaseNotes/CaseNotes";
+import CaseReconstruction from "../apps/CaseReconstruction/CaseReconstruction";
+import Timeline from "../apps/Timeline/Timeline";
+import ArchiveViewer from "../apps/ArchiveViewer/ArchiveViewer";
 import ClockProperties from "../apps/ClockProperties/ClockProperties";
 import FileProperties from "../apps/FileProperties/FileProperties";
 import HelpCenter from "../apps/HelpCenter/HelpCenter";
@@ -50,6 +53,12 @@ const renderAppContent = (win: WindowInstance) => {
       return <EvidenceBoard />;
     case "case-notes":
       return <CaseNotes />;
+    case "case-reconstruction":
+      return <CaseReconstruction />;
+    case "timeline":
+      return <Timeline />;
+    case "archive-viewer":
+      return <ArchiveViewer />;
     case "clock-properties":
       return <ClockProperties />;
     case "properties":

@@ -1,6 +1,7 @@
 import { strFromU8, strToU8, zlibSync, unzlibSync } from "fflate";
 import {
   createInitialProgress,
+  puzzleAct,
   ProgressStateV4,
   PuzzleId,
   PUZZLE_IDS,
@@ -12,7 +13,8 @@ const STORE = "saves";
 const CURRENT_KEY = "current";
 const CHECKPOINT_PREFIX = "checkpoint-";
 const LEGACY_STORAGE_KEY = "arg-cthulhu-progress";
-const FALLBACK_STORAGE_KEY = "arg-cthulhu-progress-v4";
+const FALLBACK_STORAGE_KEY = "arg-cthulhu-progress-v5";
+const V4_FALLBACK_STORAGE_KEY = "arg-cthulhu-progress-v4";
 const V3_FALLBACK_STORAGE_KEY = "arg-cthulhu-progress-v3";
 const HEADER_STORAGE_KEY = "arg-cthulhu-progress-header";
 const MAX_CHECKPOINTS = 3;
@@ -68,11 +70,11 @@ const idbPut = async (key: string, value: unknown): Promise<void> => {
   });
 };
 
-const isProgressV4 = (value: unknown): value is ProgressStateV4 => {
+const isProgressV5 = (value: unknown): value is ProgressStateV4 => {
   if (!value || typeof value !== "object") return false;
   const parsed = value as Partial<ProgressStateV4>;
   return (
-    parsed.version === 4 &&
+    parsed.version === 5 &&
     typeof parsed.caseId === "string" &&
     typeof parsed.updatedAt === "number" &&
     Boolean(parsed.puzzles) &&
@@ -95,12 +97,12 @@ const markSolved = (
 };
 
 export const migrateProgress = (value: unknown): ProgressStateV4 | null => {
-  if (isProgressV4(value)) {
+  if (isProgressV5(value)) {
     const initial = createInitialProgress(value.createdAt, value.caseId);
     return {
       ...initial,
       ...value,
-      version: 4,
+      version: 5,
       puzzles: Object.fromEntries(
         PUZZLE_IDS.map((id) => [
           id,
@@ -111,7 +113,7 @@ export const migrateProgress = (value: unknown): ProgressStateV4 | null => {
   }
   if (!value || typeof value !== "object") return null;
   const legacy = value as Record<string, any>;
-  if (legacy.version === 3) {
+  if (legacy.version === 3 || legacy.version === 4) {
     const initial = createInitialProgress(
       typeof legacy.createdAt === "number" ? legacy.createdAt : Date.now(),
       typeof legacy.caseId === "string" ? legacy.caseId : undefined
@@ -134,7 +136,7 @@ export const migrateProgress = (value: unknown): ProgressStateV4 | null => {
     return {
       ...initial,
       ...legacy,
-      version: 4,
+      version: 5,
       locale: legacy.locale === "pt-BR" ? "pt-BR" : "en",
       puzzles,
       insightsUnlocked: Array.isArray(legacy.insightsUnlocked)
@@ -142,6 +144,32 @@ export const migrateProgress = (value: unknown): ProgressStateV4 | null => {
         : [],
       theoryAttempts: Array.isArray(legacy.theoryAttempts)
         ? legacy.theoryAttempts
+        : [],
+      leadsUnlocked: Array.isArray(legacy.leadsUnlocked)
+        ? legacy.leadsUnlocked
+        : initial.leadsUnlocked,
+      caseAnswers:
+        legacy.caseAnswers && typeof legacy.caseAnswers === "object"
+          ? legacy.caseAnswers
+          : {},
+      hypotheses:
+        legacy.hypotheses && typeof legacy.hypotheses === "object"
+          ? legacy.hypotheses
+          : {},
+      narrativeBeatsSeen: Array.isArray(legacy.narrativeBeatsSeen)
+        ? legacy.narrativeBeatsSeen
+        : [],
+      worldReactionsSeen: Array.isArray(legacy.worldReactionsSeen)
+        ? legacy.worldReactionsSeen
+        : [],
+      playerChoices: Array.isArray(legacy.playerChoices)
+        ? legacy.playerChoices
+        : [],
+      optionalDiscoveries: Array.isArray(legacy.optionalDiscoveries)
+        ? legacy.optionalDiscoveries
+        : [],
+      assetVariantsSeen: Array.isArray(legacy.assetVariantsSeen)
+        ? legacy.assetVariantsSeen
         : [],
     };
   }
@@ -216,6 +244,7 @@ const safeParse = (raw: string | null): unknown => {
 const readLocalFallback = (): ProgressStateV4 | null =>
   migrateProgress(
     safeParse(localStorage.getItem(FALLBACK_STORAGE_KEY)) ??
+      safeParse(localStorage.getItem(V4_FALLBACK_STORAGE_KEY)) ??
       safeParse(localStorage.getItem(V3_FALLBACK_STORAGE_KEY)) ??
       safeParse(localStorage.getItem(LEGACY_STORAGE_KEY))
   );
@@ -280,12 +309,11 @@ export const loadProgress = async (): Promise<LoadResult> => {
 };
 
 const writeHeader = (state: ProgressStateV4) => {
-  const solved = PUZZLE_IDS.filter((id) => state.puzzles[id].solvedAt).length;
   const header: SaveHeader = {
     caseId: state.caseId,
     updatedAt: state.updatedAt,
     playerName: state.playerName,
-    act: state.ending ? 4 : solved >= 6 ? 3 : solved >= 3 ? 2 : 1,
+    act: puzzleAct(state),
   };
   localStorage.setItem(HEADER_STORAGE_KEY, JSON.stringify(header));
 };
@@ -323,6 +351,7 @@ export const clearCurrentProgress = async (): Promise<void> => {
     // IndexedDB may be unavailable; the local fallback is cleared below.
   }
   localStorage.removeItem(FALLBACK_STORAGE_KEY);
+  localStorage.removeItem(V4_FALLBACK_STORAGE_KEY);
   localStorage.removeItem(V3_FALLBACK_STORAGE_KEY);
   localStorage.removeItem(LEGACY_STORAGE_KEY);
   localStorage.removeItem(HEADER_STORAGE_KEY);
@@ -375,15 +404,15 @@ export const exportCaseCode = async (
   state: ProgressStateV4
 ): Promise<string> => {
   const compressed = zlibSync(strToU8(canonicalize(state)), { level: 9 });
-  return `MISK4.${toBase64Url(compressed)}.${await checksum(compressed)}`;
+  return `MISK5.${toBase64Url(compressed)}.${await checksum(compressed)}`;
 };
 
 export const importCaseCode = async (
   code: string
 ): Promise<ProgressStateV4> => {
   const [prefix, payload, expectedChecksum] = code.trim().split(".");
-  if (!["MISK3", "MISK4"].includes(prefix) || !payload || !expectedChecksum) {
-    throw new Error("This is not a MISK3 or MISK4 case code.");
+  if (!["MISK3", "MISK4", "MISK5"].includes(prefix) || !payload || !expectedChecksum) {
+    throw new Error("This is not a MISK3, MISK4 or MISK5 case code.");
   }
   const compressed = fromBase64Url(payload);
   const actualChecksum = await checksum(compressed);

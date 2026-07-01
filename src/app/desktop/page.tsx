@@ -18,6 +18,7 @@ interface DesktopApp {
   appType: AppType;
   icon: string;
   props?: Record<string, any>;
+  maximized?: boolean;
 }
 
 const desktopApps: DesktopApp[] = [
@@ -50,6 +51,14 @@ const desktopApps: DesktopApp[] = [
     labelKey: "evidenceBoardLabel",
     appType: "evidence-board",
     icon: "/icons/folder-special.png",
+    maximized: true,
+  },
+  {
+    id: "case-reconstruction",
+    label: "Case Reconstruction",
+    appType: "case-reconstruction",
+    icon: "/icons/folder-special.png",
+    maximized: true,
   },
   {
     id: "internet-explorer",
@@ -87,6 +96,7 @@ const appIcon = (appType: AppType) => {
   if (appType === "help") return "/icons/help.png";
   if (appType === "recycle-bin") return "/icons/recycle-bin.png";
   if (appType === "evidence-board") return "/icons/folder-special.png";
+  if (appType === "case-reconstruction" || appType === "timeline") return "/icons/folder-special.png";
   return "/icons/file.png";
 };
 
@@ -103,6 +113,7 @@ const Desktop = () => {
     exportCode,
     corruptionStage,
     playerName,
+    state,
   } = useProgress();
   const { play, setAmbientActive, muted, toggleMuted } = useSound();
   const { t } = useI18n();
@@ -197,7 +208,64 @@ const Desktop = () => {
 
   useEffect(() => {
     if (!isHydrated) return;
-    if (!flags.puzzle_lot_114_solved || flags.restricted_folder_notice_shown) return;
+    if (
+      !state.worldReactionsSeen.includes("printer_wake") ||
+      flags.printer_reaction_shown
+    ) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      setFlag("printer_reaction_shown");
+      play("chime");
+      openWindow({
+        id: "printer-recovery-alert",
+        appType: "generic",
+        title: "EPSON Stylus COLOR 600",
+        props: {
+          children: (
+            <div className="new-mail-alert printer-recovery-alert">
+              <p className="new-mail-alert__kicker">PRINT SPOOLER / DEVICE NOT FOUND</p>
+              <h2>MIRIAM_DRAFT.PRN</h2>
+              <p>
+                {state.locale === "pt-BR"
+                  ? "Uma impressora removida em 2004 confirmou o trabalho. Uma página foi recuperada em RECOVERED."
+                  : "A printer removed in 2004 acknowledged the job. One page was recovered to RECOVERED."}
+              </p>
+              <button
+                className="button"
+                onClick={() =>
+                  openWindow({
+                    id: "miriam-draft",
+                    appType: "notepad",
+                    title: "MIRIAM_DRAFT.PRN - Notepad",
+                    props: { fileId: "miriam_draft" },
+                  })
+                }
+              >
+                {state.locale === "pt-BR" ? "Ver página" : "View page"}
+              </button>
+            </div>
+          ),
+        },
+      });
+    }, 1100);
+    return () => clearTimeout(timer);
+  }, [
+    flags.printer_reaction_shown,
+    isHydrated,
+    openWindow,
+    play,
+    setFlag,
+    state.locale,
+    state.worldReactionsSeen,
+  ]);
+
+  useEffect(() => {
+    if (!isHydrated) return;
+    if (
+      (!flags.puzzle_lot_114_solved && !flags.act1_recovered_partial) ||
+      flags.restricted_folder_notice_shown
+    ) return;
 
     const timer = setTimeout(() => {
       setFlag("restricted_folder_notice_shown");
@@ -235,6 +303,7 @@ const Desktop = () => {
     return () => clearTimeout(timer);
   }, [
     flags.puzzle_lot_114_solved,
+    flags.act1_recovered_partial,
     flags.restricted_folder_notice_shown,
     isHydrated,
     openWindow,
@@ -369,6 +438,7 @@ const Desktop = () => {
           appType: app.appType,
           title: appLabel(app),
           props: app.props,
+          maximized: app.maximized,
         });
       }
       deselectIcons();
@@ -393,7 +463,14 @@ const Desktop = () => {
   }
 
   return (
-    <main id="desktop-root">
+    <main
+      id="desktop-root"
+      className={
+        state.worldReactionsSeen.includes("monitor_condensation")
+          ? "desktop--condensation"
+          : ""
+      }
+    >
       <div className="desktop-atmosphere" aria-hidden="true" />
       <div className="desktop-case-label" aria-hidden="true">
         {labelGlitch ? (

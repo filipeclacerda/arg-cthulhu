@@ -21,12 +21,14 @@ const ImageViewer = ({ fileId }: { fileId: string }) => {
     recordSequenceAction,
     collectReference,
     recordNearMiss,
+    dispatchGameEvent,
   } = useProgress();
   const [mirrored, setMirrored] = useState(false);
   const [inverted, setInverted] = useState(false);
   const [contrast, setContrast] = useState(50);
   const [zoom, setZoom] = useState(100);
   const [properties, setProperties] = useState(false);
+  const [compareMode, setCompareMode] = useState(false);
   const partialRecorded = useRef(false);
   const { t } = useI18n();
 
@@ -60,7 +62,25 @@ const ImageViewer = ({ fileId }: { fileId: string }) => {
 
   useEffect(() => {
     if (file?.evidenceId) discoverEvidence(file.evidenceId, file.id);
-  }, [discoverEvidence, file]);
+    if (
+      file?.id === "office_after_photo" &&
+      progress.puzzles.future_log.solvedAt
+    ) {
+      dispatchGameEvent({
+        type: "TRIGGER_WORLD_REACTION",
+        reactionId: "photo_changed",
+      });
+      dispatchGameEvent({
+        type: "SEE_ASSET_VARIANT",
+        variantId: "office-after-reflection-shift",
+      });
+    }
+  }, [
+    discoverEvidence,
+    dispatchGameEvent,
+    file,
+    progress.puzzles.future_log.solvedAt,
+  ]);
 
   useEffect(() => {
     setMirrored(false);
@@ -68,6 +88,7 @@ const ImageViewer = ({ fileId }: { fileId: string }) => {
     setContrast(50);
     setZoom(100);
     setProperties(false);
+    setCompareMode(false);
   }, [currentFileId]);
 
   useEffect(() => {
@@ -108,6 +129,21 @@ const ImageViewer = ({ fileId }: { fileId: string }) => {
       (galleryIndex + direction + gallery.length) % gallery.length;
     setCurrentFileId(gallery[nextIndex].id);
   };
+  const canCompare =
+    file.id === "office_after_photo" || file.id === "office_frames";
+  const comparisonFile = files.find((candidate) =>
+    file.id === "office_after_photo"
+      ? candidate.id === "office_frames"
+      : candidate.id === "office_after_photo"
+  );
+  const displayedSource =
+    file.id === "office_after_photo" &&
+    progress.assetVariantsSeen.includes("office-after-reflection-shift")
+      ? "/photos/office_after_changed_2026.png"
+      : file.id === "photo_bishop_birthday" &&
+          progress.puzzles.lineage.solvedAt
+        ? "/photos/bishop_birthday_empty_chair_2025.png"
+        : file.content;
 
   return (
     <div className="arg-tool image-viewer">
@@ -139,6 +175,14 @@ const ImageViewer = ({ fileId }: { fileId: string }) => {
           <span>{zoom}%</span>
           <button className="button" onClick={() => setZoom((value) => Math.min(200, value + 25))}>+</button>
           <button className="button" onClick={() => setZoom(100)}>Actual Size</button>
+          {canCompare && (
+            <button
+              className={`button ${compareMode ? "active" : ""}`}
+              onClick={() => setCompareMode((value) => !value)}
+            >
+              Compare frames
+            </button>
+          )}
           <button className="button" onClick={showProperties}>{t("propertiesLabel")}</button>
         </div>
       )}
@@ -170,7 +214,9 @@ const ImageViewer = ({ fileId }: { fileId: string }) => {
       >
         <div
           className={`image-viewer__canvas ${
-            isPalimpsest ? "" : "image-viewer__canvas--photo"
+            isPalimpsest ? "" : `image-viewer__canvas--photo ${
+              compareMode ? "image-viewer__canvas--compare" : ""
+            }`
           }`}
           style={
             isPalimpsest
@@ -186,12 +232,23 @@ const ImageViewer = ({ fileId }: { fileId: string }) => {
           }
         >
           <Image
-            src={file.content}
+            src={displayedSource}
             alt={file.caption ?? file.name}
             fill
             sizes="900px"
             priority
           />
+          {compareMode && comparisonFile && (
+            <div className="image-viewer__comparison">
+              <Image
+                src={comparisonFile.content}
+                alt={comparisonFile.caption ?? comparisonFile.name}
+                fill
+                sizes="450px"
+              />
+              <span>{comparisonFile.name}</span>
+            </div>
+          )}
           {recovered && (
             <div className="image-viewer__reveal">
               <strong>BELLASO</strong>

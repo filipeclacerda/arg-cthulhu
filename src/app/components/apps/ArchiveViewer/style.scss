@@ -1,0 +1,78 @@
+.archive-viewer {
+  width: min(780px, 90vw);
+  height: min(560px, 75vh);
+  display: flex;
+  flex-direction: column;
+  background: #c0c0c0;
+
+  .arg-tool__toolbar {
+    span { margin-left: auto; font: 9px monospace; }
+    .active { color: white; background: #000080; }
+  }
+}
+
+.archive-viewer__table {
+  flex: 1;
+  margin: 5px;
+  overflow: auto;
+  border: 2px inset white;
+  background: white;
+
+  > div, > button {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 105px 1fr 100px 130px;
+    gap: 6px;
+    padding: 5px 7px;
+    border: 0;
+    border-bottom: 1px dotted #aaa;
+    text-align: left;
+    font: 11px "Courier New", monospace;
+  }
+  > button {
+    color: #111;
+    background: white;
+    &.selected { color: white; background: #000080; }
+  }
+  .archive-viewer__head {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    font-weight: bold;
+    background: #d4d0c8;
+    border-bottom: 2px outset white;
+  }
+}
+
+.archive-viewer__hex {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 70px 1fr 170px;
+  gap: 10px;
+  margin: 5px;
+  padding: 10px;
+  overflow: auto;
+  color: #bdf9d0;
+  background: #06100b;
+  border: 2px inset #fff;
+  font: 11px/1.55 "Courier New", monospace;
+  aside span { display: block; color: #5f9670; }
+  pre { margin: 0; white-space: pre-wrap; }
+}
+
+.archive-viewer__ascii {
+  color: #f2eaa8;
+  border-left: 1px solid #47604f;
+  padding-left: 10px;
+}
+
+.archive-viewer__detail {
+  display: flex;
+  gap: 12px;
+  padding: 8px 10px;
+  margin: 0 5px 5px;
+  border: 2px inset white;
+  background: #e7e4d7;
+  strong { font-family: "Courier New", monospace; }
+}

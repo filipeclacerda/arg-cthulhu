@@ -19,6 +19,7 @@
 }
 
 .media-player__wave {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -44,6 +45,43 @@
   }
 }
 
+.media-player__channel-label {
+  position: absolute;
+  left: 3px;
+  top: 2px;
+  color: #81e6ff;
+  font: bold 9px monospace;
+}
+
+.media-player__cue-marker {
+  position: absolute;
+  right: 3px;
+  bottom: 2px;
+  padding: 1px 3px;
+  color: #ffec8a;
+  border-left: 1px solid #ffec8a;
+  font: 8px monospace;
+}
+
+.media-player__channel-meter {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  margin-top: 4px;
+  font: 8px monospace;
+
+  span {
+    padding: 2px 4px;
+    color: #6a766e;
+    border: 1px solid #334239;
+    &.active {
+      color: #caffd5;
+      background: #174622;
+      box-shadow: 0 0 5px rgba(69, 255, 102, .35);
+    }
+  }
+}
+
 .media-player__transcript,
 .media-player__properties {
   margin: 14px auto;
@@ -66,4 +104,3 @@
   background: #e6f0c9;
   font: 10px "Courier New", monospace;
 }
-

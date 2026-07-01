@@ -53,6 +53,26 @@ body.desktop-mode {
     overflow: hidden;
 }
 
+#desktop-root.desktop--condensation::after {
+  content: "";
+  position: fixed;
+  z-index: 8;
+  inset: 0;
+  pointer-events: none;
+  opacity: .22;
+  background:
+    radial-gradient(ellipse at 15% 10%, rgba(235, 255, 255, .8) 0 1px, transparent 2px),
+    radial-gradient(ellipse at 81% 22%, rgba(235, 255, 255, .7) 0 2px, transparent 3px),
+    linear-gradient(180deg, rgba(220, 250, 255, .22), transparent 24%);
+  background-size: 37px 41px, 53px 59px, 100% 100%;
+  animation: condensation-fade 7s ease-out forwards;
+}
+
+@keyframes condensation-fade {
+  0%, 28% { opacity: .28; filter: blur(.4px); }
+  100% { opacity: 0; filter: blur(2px); }
+}
+
 .desktop-atmosphere {
     position: fixed;
     inset: 0;

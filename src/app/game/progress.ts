@@ -9,12 +9,64 @@ export const PUZZLE_IDS = [
 ] as const;
 
 export type PuzzleId = (typeof PUZZLE_IDS)[number];
-export type EndingId = "restore" | "shutdown";
+export type EndingId = "restore" | "shutdown" | "seal";
 export type Locale = "en" | "pt-BR";
+export type LeadId =
+  | "sarah_last_day"
+  | "lot_provenance"
+  | "locked_room"
+  | "manuscript"
+  | "historical"
+  | "acoustic"
+  | "observer";
+export type CaseQuestionId =
+  | "sarah_intent"
+  | "volume_return"
+  | "locked_room_source"
+  | "future_displacement"
+  | "relay_observer"
+  | "chapter_ritual";
+export type HypothesisId =
+  | "tom_forged_image"
+  | "sarah_fled"
+  | "innsmouth_theft";
+export type NarrativeBeatId =
+  | "relay_referrer_lost"
+  | "act1_partial_recovery"
+  | "act1_reconstructed"
+  | "miriam_draft_printed"
+  | "sarah_msn_live"
+  | "observer_reconstructed"
+  | "relay_sealed";
+export type WorldReactionId =
+  | "printer_wake"
+  | "monitor_condensation"
+  | "clock_lost_second"
+  | "future_search"
+  | "photo_changed"
+  | "minimized_audio"
+  | "cursor_hesitation"
+  | "empty_chair"
+  | "contact_typing"
+  | "tom_page_changed"
+  | "case_code_drift"
+  | "self_indexed";
+export type OptionalDiscoveryId =
+  | "paint_doodles"
+  | "dad_recipe"
+  | "midi_collection"
+  | "lecture_draft"
+  | "library_humor"
+  | "solitaire_save"
+  | "tom_homepage"
+  | "containment_utility";
 export type InsightId =
   | "second_volume"
   | "cataloguer_lineage"
-  | "observer_relay";
+  | "observer_relay"
+  | "institutional_suppression"
+  | "miriam_break"
+  | "self_index";
 export type AttemptKind =
   | "catalog_partial"
   | "palimpsest_partial"
@@ -74,8 +126,27 @@ export interface TheoryAttempt {
   insightId: InsightId | null;
 }
 
-export interface ProgressStateV4 {
-  version: 4;
+export interface CaseAnswer {
+  answerId: string;
+  evidenceIds: string[];
+  attempts: number;
+  solvedAt: number;
+}
+
+export interface HypothesisRecord {
+  status: "open" | "supported" | "refuted";
+  evidenceIds: string[];
+  updatedAt: number;
+}
+
+export interface PlayerChoice {
+  choiceId: string;
+  optionId: string;
+  chosenAt: number;
+}
+
+export interface ProgressStateV5 {
+  version: 5;
   caseId: string;
   revision: number;
   createdAt: number;
@@ -103,10 +174,19 @@ export interface ProgressStateV4 {
   locale: Locale;
   insightsUnlocked: InsightId[];
   theoryAttempts: TheoryAttempt[];
+  leadsUnlocked: LeadId[];
+  caseAnswers: Partial<Record<CaseQuestionId, CaseAnswer>>;
+  hypotheses: Partial<Record<HypothesisId, HypothesisRecord>>;
+  narrativeBeatsSeen: NarrativeBeatId[];
+  worldReactionsSeen: WorldReactionId[];
+  playerChoices: PlayerChoice[];
+  optionalDiscoveries: OptionalDiscoveryId[];
+  assetVariantsSeen: string[];
 }
 
-/** Kept as a source-compatible alias while older components migrate. */
-export type ProgressStateV3 = ProgressStateV4;
+/** Source-compatible aliases keep the existing UI incremental while saves move to v5. */
+export type ProgressStateV4 = ProgressStateV5;
+export type ProgressStateV3 = ProgressStateV5;
 
 export type GameEvent =
   | { type: "SET_FLAG"; flag: string }
@@ -140,6 +220,24 @@ export type GameEvent =
   | { type: "MOVE_BOARD_CARD"; cardId: string; x: number; y: number }
   | { type: "TOGGLE_BOARD_CONNECTION"; fromId: string; toId: string }
   | { type: "TEST_THEORY"; evidenceIds: string[] }
+  | {
+      type: "SUBMIT_CASE_ANSWER";
+      questionId: CaseQuestionId;
+      answerId: string;
+      evidenceIds: string[];
+    }
+  | {
+      type: "SET_HYPOTHESIS";
+      hypothesisId: HypothesisId;
+      status: HypothesisRecord["status"];
+      evidenceIds: string[];
+    }
+  | { type: "UNLOCK_LEAD"; leadId: LeadId }
+  | { type: "SEE_NARRATIVE_BEAT"; beatId: NarrativeBeatId }
+  | { type: "TRIGGER_WORLD_REACTION"; reactionId: WorldReactionId }
+  | { type: "RECORD_CHOICE"; choiceId: string; optionId: string }
+  | { type: "DISCOVER_OPTIONAL"; discoveryId: OptionalDiscoveryId }
+  | { type: "SEE_ASSET_VARIANT"; variantId: string }
   | { type: "RESET_BOARD_LAYOUT" }
   | { type: "SET_LOCALE"; locale: Locale }
   | { type: "TOUCH_SEEN"; now: number }
@@ -173,8 +271,8 @@ export const createInitialProgress = (
     typeof crypto !== "undefined" && "randomUUID" in crypto
       ? crypto.randomUUID()
       : `case-${now}-${Math.random().toString(36).slice(2)}`
-): ProgressStateV4 => ({
-  version: 4,
+): ProgressStateV5 => ({
+  version: 5,
   caseId,
   revision: 0,
   createdAt: now,
@@ -202,6 +300,14 @@ export const createInitialProgress = (
   locale: "en",
   insightsUnlocked: [],
   theoryAttempts: [],
+  leadsUnlocked: ["sarah_last_day", "lot_provenance", "locked_room"],
+  caseAnswers: {},
+  hypotheses: {},
+  narrativeBeatsSeen: [],
+  worldReactionsSeen: [],
+  playerChoices: [],
+  optionalDiscoveries: [],
+  assetVariantsSeen: [],
 });
 
 export const puzzleCorruptionStage = (
@@ -226,7 +332,13 @@ export const firstUnsolvedPuzzle = (
 
 export const puzzleAct = (state: ProgressStateV3): number => {
   if (state.ending) return 4;
-  if (isPuzzleSolved(state, "future_log")) return 3;
-  if (isPuzzleSolved(state, "counting_audio")) return 2;
+  if (
+    state.leadsUnlocked.includes("observer") ||
+    isPuzzleSolved(state, "future_log")
+  ) return 3;
+  if (
+    state.flags.act1_reconstruction_complete ||
+    isPuzzleSolved(state, "counting_audio")
+  ) return 2;
   return 1;
 };

@@ -26,4 +26,8 @@
     display: block;
     white-space: nowrap;
   }
+
+  &--skipping span:first-child {
+    opacity: 0.35;
+  }
 }

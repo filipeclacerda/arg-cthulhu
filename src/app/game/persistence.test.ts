@@ -6,8 +6,8 @@ import {
   migrateProgress,
 } from "./persistence";
 
-describe("save v4", () => {
-  it("round-trips a portable MISK4 case code with notes, locale and insights", async () => {
+describe("save v5", () => {
+  it("round-trips a portable MISK5 case code with campaign state", async () => {
     const state = createInitialProgress(1_700_000_000_000, "case-round-trip");
     state.playerName = "Ada";
     state.caseNotes = "Lot 114; count names, not days.";
@@ -15,11 +15,18 @@ describe("save v4", () => {
     state.puzzles.lot_114.solvedAt = 1_700_000_000_500;
     state.locale = "pt-BR";
     state.insightsUnlocked = ["second_volume"];
+    state.caseAnswers.sarah_intent = {
+      answerId: "planned_return",
+      evidenceIds: ["chat_em_archive", "todo"],
+      attempts: 1,
+      solvedAt: 1_700_000_000_600,
+    };
+    state.optionalDiscoveries = ["dad_recipe"];
 
     const code = await exportCaseCode(state);
     const imported = await importCaseCode(code);
 
-    expect(code.startsWith("MISK4.")).toBe(true);
+    expect(code.startsWith("MISK5.")).toBe(true);
     expect(imported.caseId).toBe(state.caseId);
     expect(imported.playerName).toBe("Ada");
     expect(imported.caseNotes).toBe(state.caseNotes);
@@ -31,6 +38,8 @@ describe("save v4", () => {
     );
     expect(imported.locale).toBe("pt-BR");
     expect(imported.insightsUnlocked).toEqual(["second_volume"]);
+    expect(imported.caseAnswers.sarah_intent?.answerId).toBe("planned_return");
+    expect(imported.optionalDiscoveries).toEqual(["dad_recipe"]);
   });
 
   it("rejects a modified checksum", async () => {
@@ -62,7 +71,7 @@ describe("save v4", () => {
     expect(migrated?.puzzles.future_log.solvedAt).toBeNull();
   });
 
-  it("migrates a v3 puzzle state into v4 adaptive fields", () => {
+  it("migrates a v3 puzzle state into v5 campaign fields", () => {
     const legacy = {
       ...createInitialProgress(1_700_000_000_000, "legacy-v3"),
       version: 3,
@@ -77,18 +86,25 @@ describe("save v4", () => {
     }
 
     const migrated = migrateProgress(legacy);
-    expect(migrated?.version).toBe(4);
+    expect(migrated?.version).toBe(5);
     expect(migrated?.locale).toBe("en");
     expect(migrated?.puzzles.lot_114.nearMisses).toEqual({});
     expect(migrated?.puzzles.lot_114.hintHistory).toEqual([]);
+    expect(migrated?.leadsUnlocked).toEqual([
+      "sarah_last_day",
+      "lot_provenance",
+      "locked_room",
+    ]);
+    expect(migrated?.caseAnswers).toEqual({});
   });
 
-  it("continues to accept MISK3-prefixed portable codes", async () => {
+  it("continues to accept MISK3 and MISK4 portable prefixes", async () => {
     const code = await exportCaseCode(
       createInitialProgress(1_700_000_000_000, "compatible-prefix")
     );
-    const legacyPrefix = code.replace(/^MISK4\./, "MISK3.");
-    const imported = await importCaseCode(legacyPrefix);
-    expect(imported.caseId).toBe("compatible-prefix");
+    const misk3 = await importCaseCode(code.replace(/^MISK5\./, "MISK3."));
+    const misk4 = await importCaseCode(code.replace(/^MISK5\./, "MISK4."));
+    expect(misk3.caseId).toBe("compatible-prefix");
+    expect(misk4.caseId).toBe("compatible-prefix");
   });
 });

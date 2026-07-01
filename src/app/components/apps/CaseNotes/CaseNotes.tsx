@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useRef } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { useProgress } from "@/app/context/ProgressContext";
 import { useWindowManager } from "@/app/context/WindowManagerContext";
 import { PuzzleId, PUZZLE_IDS } from "@/app/game/progress";
@@ -51,6 +51,7 @@ const CaseNotes = () => {
   } = useProgress();
   const { openWindow } = useWindowManager();
   const editorRef = useRef<HTMLTextAreaElement>(null);
+  const [tab, setTab] = useState<"notes" | "names" | "dates" | "codes">("notes");
   const solvedCount = PUZZLE_IDS.filter(
     (id) => Boolean(state.puzzles[id].solvedAt)
   ).length;
@@ -91,6 +92,34 @@ const CaseNotes = () => {
     });
   };
 
+  const autoEntries = {
+    notes: [] as string[][],
+    names: [
+      ["Sarah Bishop", "Special Collections cataloguer; missing 2026-03-16."],
+      ["Miriam Bishop", "First cataloguer; missing 1998-09-14."],
+      ["Tom Alvarez", "Created and opened the forensic image."],
+      ["Em Bishop", "Sarah's sister; preserved the last ordinary messages."],
+      ["Robert Armitage", "Reviewed the 1998 accession with Miriam."],
+    ],
+    dates: [
+      ["1998-09-03", "Miriam's final accession note."],
+      ["1998-09-14", "Miriam reported missing."],
+      ["2026-03-14", "counting.wav recorded."],
+      ["2026-03-16", "Sarah disappears."],
+      ["2026-03-23", "Tom mounts Relay 07 image."],
+      ["{TOMORROW}", "Moving timestamp attached to the observer."],
+    ],
+    codes: [
+      ["MS-WHA-1998-114/II", "Restricted shelfmark."],
+      ["YHANTHLEI", "Name extracted from surname coordinates."],
+      ...state.collectedReferences.map((reference) => [
+        reference,
+        "Recovered object reference.",
+      ]),
+      ["RELAY-07", "External delivery relay."],
+    ],
+  };
+
   return (
     <div className="arg-tool case-notes">
       <div className="arg-tool__menubar">
@@ -106,6 +135,20 @@ const CaseNotes = () => {
         >
           Investigation Template
         </button>
+        <div className="case-notes__toolbar-separator" />
+        <div className="case-notes__tabs">
+          {(["notes", "names", "dates", "codes"] as const).map((id) => (
+            <button
+              key={id}
+              className={`button ${tab === id ? "active" : ""}`}
+              onClick={() => setTab(id)}
+            >
+              {id === "notes"
+                ? "My Notes"
+                : id[0].toUpperCase() + id.slice(1)}
+            </button>
+          ))}
+        </div>
         <div className="case-notes__toolbar-separator" />
         <span>Add section:</span>
         {NOTE_SECTIONS.map(([label, block]) => (
@@ -126,6 +169,7 @@ const CaseNotes = () => {
               id: "evidence-board",
               appType: "evidence-board",
               title: "Evidence Board",
+              maximized: true,
             })
           }
         >
@@ -176,21 +220,46 @@ const CaseNotes = () => {
         <section className="case-notes__editor">
           <header>
             <div>
-              <strong>Working Notes</strong>
-              <span>Plain text · autosaved</span>
+              <strong>{tab === "notes" ? "Working Notes" : `Recovered ${tab}`}</strong>
+              <span>{tab === "notes" ? "Plain text · autosaved" : "Automatic index · read only"}</span>
             </div>
-            <small>{wordCount} words</small>
+            <small>{tab === "notes" ? `${wordCount} words` : "from opened evidence"}</small>
           </header>
-          <textarea
-            ref={editorRef}
-            aria-label="Case notes"
-            value={caseNotes}
-            onChange={(event) => setCaseNotes(event.target.value)}
-            placeholder={`Start with the investigation template, or write freely.\n\nUseful things to track:\n- people and relationships\n- dates that repeat or converge\n- filenames, aliases and coordinates\n- theories you have not proved yet`}
-            spellCheck={false}
-          />
+          {tab === "notes" ? (
+            <textarea
+              ref={editorRef}
+              aria-label="Case notes"
+              value={caseNotes}
+              onChange={(event) => setCaseNotes(event.target.value)}
+              placeholder={`Start with the investigation template, or write freely.\n\nUseful things to track:\n- people and relationships\n- dates that repeat or converge\n- filenames, aliases and coordinates\n- theories you have not proved yet`}
+              spellCheck={false}
+            />
+          ) : (
+            <div className="case-notes__auto-index">
+              {autoEntries[tab].map(([label, description]) => (
+                <button
+                  className="button"
+                  key={`${label}-${description}`}
+                  onClick={() => {
+                    setTab("notes");
+                    requestAnimationFrame(() =>
+                      insertAtCursor(`- ${label}: ${description}`)
+                    );
+                  }}
+                >
+                  <strong>{label}</strong>
+                  <span>{description}</span>
+                  <i>+ note</i>
+                </button>
+              ))}
+            </div>
+          )}
           <footer>
-            <span>Tip: right-click selected evidence to send it here.</span>
+            <span>
+              {tab === "notes"
+                ? "Tip: right-click selected evidence to send it here."
+                : "Click an indexed item to copy it into your own notes."}
+            </span>
             <span>{caseNotes.length} characters</span>
           </footer>
         </section>

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { useProgress } from "@/app/context/ProgressContext";
+import { useSound } from "@/app/context/SoundContext";
 import { files } from "@/app/data/filesystem";
 import "../ArgTools/style.scss";
 import "./style.scss";
@@ -19,7 +20,9 @@ const MediaPlayer = ({ fileId }: { fileId: string }) => {
     collectReference,
     recordNearMiss,
     state,
+    dispatchGameEvent,
   } = useProgress();
+  const { playHauntedLoop } = useSound();
   const [channel, setChannel] = useState<Channel>("stereo");
   const [reverse, setReverse] = useState(false);
   const [recovered, setRecovered] = useState(false);
@@ -118,9 +121,28 @@ const MediaPlayer = ({ fileId }: { fileId: string }) => {
           <p>counting.wav</p>
           <strong>04:11</strong>
           <div className={`media-player__wave ${recovered ? "recovered" : ""}`}>
+            <span className="media-player__channel-label">L</span>
             {Array.from({ length: 42 }).map((_, index) => <i key={index} />)}
+            <span className="media-player__cue-marker">4:11</span>
           </div>
-          <audio ref={audioRef} controls preload="metadata" src={file.content} />
+          <div className="media-player__channel-meter">
+            <span className={channel === "left" ? "active" : ""}>LEFT / VOICE</span>
+            <span className={channel === "right" ? "active" : ""}>RIGHT / ANSWER</span>
+          </div>
+          <audio
+            ref={audioRef}
+            controls
+            preload="metadata"
+            src={file.content}
+            onEnded={() => {
+              if (!recovered || state.worldReactionsSeen.includes("minimized_audio")) return;
+              dispatchGameEvent({ type: "TRIGGER_WORLD_REACTION", reactionId: "minimized_audio" });
+              // Whether the window stays open or gets minimized, the recovered
+              // buffer keeps looping quietly for a while — it does not belong to
+              // this window anymore.
+              playHauntedLoop("counting-echo", "/artifacts/counting-recovered.wav", 45_000);
+            }}
+          />
         </div>
         {recovered && (
           <div className="media-player__transcript">

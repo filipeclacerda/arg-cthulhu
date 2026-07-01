@@ -30,6 +30,8 @@ interface SoundContextValue {
   toggleMuted: () => void;
   play: (name: SoundName) => void;
   setAmbientActive: (active: boolean) => void;
+  playHauntedLoop: (id: string, src: string, durationMs: number) => void;
+  stopHauntedLoop: (id: string) => void;
 }
 
 const SoundContext = createContext<SoundContextValue | null>(null);
@@ -40,6 +42,9 @@ export const SoundProvider = ({ children }: { children: React.ReactNode }) => {
   const poolRef = useRef<Partial<Record<SoundName, HTMLAudioElement>>>({});
   const ambientRef = useRef<HTMLAudioElement | null>(null);
   const ambientWantedRef = useRef(false);
+  const hauntedLoopsRef = useRef<
+    Partial<Record<string, { audio: HTMLAudioElement; timer: ReturnType<typeof setTimeout> }>>
+  >({});
 
   // Mount-only: reading localStorage during initial render would mismatch
   // the server-rendered HTML (App Router renders this tree on the server first).
@@ -61,8 +66,12 @@ export const SoundProvider = ({ children }: { children: React.ReactNode }) => {
     }
     if (muted) {
       ambientRef.current?.pause();
-    } else if (ambientWantedRef.current) {
-      ambientRef.current?.play().catch(() => {});
+      Object.values(hauntedLoopsRef.current).forEach((entry) => entry?.audio.pause());
+    } else {
+      if (ambientWantedRef.current) ambientRef.current?.play().catch(() => {});
+      Object.values(hauntedLoopsRef.current).forEach((entry) =>
+        entry?.audio.play().catch(() => {})
+      );
     }
   }, [muted]);
 
@@ -97,11 +106,37 @@ export const SoundProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  // A window the player minimized keeps producing sound for a while after it is
+  // gone from the taskbar view — it stops on its own; there is no button for it.
+  const stopHauntedLoop = (id: string) => {
+    const entry = hauntedLoopsRef.current[id];
+    if (!entry) return;
+    entry.audio.pause();
+    clearTimeout(entry.timer);
+    delete hauntedLoopsRef.current[id];
+  };
+
+  const playHauntedLoop = (id: string, src: string, durationMs: number) => {
+    if (hauntedLoopsRef.current[id]) return;
+    try {
+      const audio = new Audio(src);
+      audio.loop = true;
+      audio.volume = 0.22;
+      if (!mutedRef.current) audio.play().catch(() => {});
+      const timer = setTimeout(() => stopHauntedLoop(id), durationMs);
+      hauntedLoopsRef.current[id] = { audio, timer };
+    } catch {
+      // Audio unavailable in this environment — fail silently.
+    }
+  };
+
   const value: SoundContextValue = {
     muted,
     toggleMuted: () => setMuted((m) => !m),
     play,
     setAmbientActive,
+    playHauntedLoop,
+    stopHauntedLoop,
   };
 
   return (

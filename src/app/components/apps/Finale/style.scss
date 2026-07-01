@@ -88,6 +88,26 @@
   animation: shutdown-fade 700ms ease-in;
 }
 
+.finale--seal {
+  background:
+    repeating-linear-gradient(90deg, rgba(20, 70, 74, .12) 0 1px, transparent 1px 6px),
+    #020b0c;
+
+  .finale-terminal {
+    color: #90fff2;
+    text-shadow: 0 0 7px rgba(64, 255, 235, .6);
+    border-color: #316d68;
+  }
+
+  .finale-caption { color: #bfe8e2; }
+}
+
+.finale-seal-button {
+  color: #d7ffff;
+  background: #17484d;
+  border-color: #85b9b9 #071a1b #071a1b #85b9b9;
+}
+
 .finale--shutdown .finale-terminal {
   width: min(640px, 90vw);
   min-height: calc(var(--ui-scale, 1) * 290px);

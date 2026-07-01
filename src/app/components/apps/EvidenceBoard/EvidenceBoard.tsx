@@ -19,6 +19,11 @@ import {
 } from "@/app/data/evidenceBoard";
 import { localizedBoardCard } from "@/app/data/localizedNarrative";
 import { InsightId } from "@/app/game/progress";
+import {
+  HYPOTHESES,
+  INSIGHT_LABELS,
+  localized,
+} from "@/app/game/campaign";
 import { useI18n } from "@/app/i18n";
 import "./style.scss";
 
@@ -41,6 +46,11 @@ const CATEGORY_META: Record<
 };
 
 const DRAG_THRESHOLD = 4;
+const HYPOTHESIS_REQUIREMENTS = {
+  tom_forged_image: ["tom_last_message", "future_access_log"],
+  sarah_fled: ["incident_report", "chat_em_archive"],
+  innsmouth_theft: ["lot_114_order", "catalogue_lot_114"],
+} as const;
 
 /** A string pinned taut has a little weight to it — never a perfectly straight line. */
 const sagPath = (x1: number, y1: number, x2: number, y2: number): string => {
@@ -78,6 +88,8 @@ const EvidenceBoard = () => {
     insightsUnlocked,
     caseNotes,
     setCaseNotes,
+    state,
+    dispatchGameEvent,
   } = useProgress();
   const { t, locale } = useI18n();
   const { openWindow } = useWindowManager();
@@ -87,6 +99,8 @@ const EvidenceBoard = () => {
   const [theoryIds, setTheoryIds] = useState<string[]>([]);
   const [theoryFeedback, setTheoryFeedback] = useState("");
   const [filter, setFilter] = useState<"all" | BoardCategory>("all");
+  const [showUnexplainedOnly, setShowUnexplainedOnly] = useState(false);
+  const [timelineOpen, setTimelineOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [dragPreview, setDragPreview] = useState<
     { id: string; x: number; y: number } | null
@@ -143,6 +157,13 @@ const EvidenceBoard = () => {
   }, [boardPositions, evidenceCards, locale]);
 
   const normalizedQuery = query.trim().toLowerCase();
+  const explainedIds = useMemo(() => {
+    const ids = new Set<string>();
+    confirmedConnections.forEach((key) =>
+      key.split("|").forEach((id) => ids.add(id))
+    );
+    return ids;
+  }, [confirmedConnections]);
   const positioned = useMemo(
     () =>
       allPositioned.filter(({ card }) => {
@@ -152,9 +173,11 @@ const EvidenceBoard = () => {
           !normalizedQuery ||
           card.title.toLowerCase().includes(normalizedQuery) ||
           card.summary.toLowerCase().includes(normalizedQuery);
-        return matchesCategory && matchesQuery;
+        const matchesExplanation =
+          !showUnexplainedOnly || !explainedIds.has(card.id);
+        return matchesCategory && matchesQuery && matchesExplanation;
       }),
-    [allPositioned, filter, normalizedQuery]
+    [allPositioned, explainedIds, filter, normalizedQuery, showUnexplainedOnly]
   );
 
   const positionsById = useMemo(() => {
@@ -259,9 +282,7 @@ const EvidenceBoard = () => {
   };
 
   const insightMessage = (insightId: InsightId): string => {
-    if (insightId === "second_volume") return t("insightSecondVolume");
-    if (insightId === "cataloguer_lineage") return t("insightLineage");
-    return t("insightRelay");
+    return localized(INSIGHT_LABELS[insightId], locale);
   };
 
   const submitTheory = () => {
@@ -277,6 +298,29 @@ const EvidenceBoard = () => {
     if (insightId && !result.theoryResult?.alreadyKnown) {
       play("chime");
     }
+  };
+
+  const refuteHypothesis = (
+    hypothesisId: keyof typeof HYPOTHESIS_REQUIREMENTS
+  ) => {
+    const evidenceIds = [...HYPOTHESIS_REQUIREMENTS[hypothesisId]];
+    if (!evidenceIds.every((id) => discoveredEvidenceIds.includes(id))) {
+      setTheoryFeedback(
+        locale === "pt-BR"
+          ? "Ainda faltam dois registros independentes para testar essa hipótese."
+          : "Two independent records are still required to test that hypothesis."
+      );
+      play("error");
+      return;
+    }
+    dispatchGameEvent({
+      type: "SET_HYPOTHESIS",
+      hypothesisId,
+      status: "refuted",
+      evidenceIds,
+    });
+    setTheoryFeedback(localized(HYPOTHESES[hypothesisId].truth, locale));
+    play("chime");
   };
 
   const startDrag = (
@@ -383,6 +427,22 @@ const EvidenceBoard = () => {
         </div>
         <button
           type="button"
+          className={`button ${showUnexplainedOnly ? "active" : ""}`}
+          aria-pressed={showUnexplainedOnly}
+          onClick={() => setShowUnexplainedOnly((value) => !value)}
+        >
+          {locale === "pt-BR" ? "Sem explicação" : "Unexplained"}
+        </button>
+        <button
+          type="button"
+          className={`button ${timelineOpen ? "active" : ""}`}
+          aria-pressed={timelineOpen}
+          onClick={() => setTimelineOpen((value) => !value)}
+        >
+          {locale === "pt-BR" ? "Linha do tempo" : "Timeline"}
+        </button>
+        <button
+          type="button"
           className="button evidence-board__reset"
           disabled={Object.keys(boardPositions).length === 0}
           onClick={() => {
@@ -416,6 +476,35 @@ const EvidenceBoard = () => {
       </div>
 
       <div className="evidence-board__workspace">
+        {timelineOpen && (
+          <div className="evidence-board__timeline-strip">
+            {[
+              ["1998-09-03", "Miriam / accession"],
+              ["1998-09-14", "Miriam / missing"],
+              ["2026-03-16", "Sarah / missing"],
+              ["2026-03-23", "Tom / relay image"],
+              ["{TOMORROW}", state.playerName || "NEXT USER"],
+            ].map(([date, label]) => (
+              <div key={`${date}-${label}`}>
+                <time>{date}</time>
+                <span>{label}</span>
+              </div>
+            ))}
+            <button
+              className="button"
+              onClick={() =>
+                openWindow({
+                  id: "case-timeline",
+                  appType: "timeline",
+                  title:
+                    locale === "pt-BR" ? "Linha do Tempo" : "Case Timeline",
+                })
+              }
+            >
+              {locale === "pt-BR" ? "Organizar eventos…" : "Arrange events…"}
+            </button>
+          </div>
+        )}
         <div className="evidence-board__scroll">
           <div
             ref={canvasRef}
@@ -637,6 +726,32 @@ const EvidenceBoard = () => {
                   ))}
                 </div>
               )}
+              <div className="evidence-board__hypotheses">
+                <strong>
+                  {locale === "pt-BR"
+                    ? "HIPÓTESES CONCORRENTES"
+                    : "COMPETING HYPOTHESES"}
+                </strong>
+                {(Object.keys(HYPOTHESES) as Array<keyof typeof HYPOTHESES>).map(
+                  (hypothesisId) => {
+                    const record = state.hypotheses[hypothesisId];
+                    return (
+                      <div key={hypothesisId}>
+                        <span>{localized(HYPOTHESES[hypothesisId].title, locale)}</span>
+                        <button
+                          className="button"
+                          disabled={record?.status === "refuted"}
+                          onClick={() => refuteHypothesis(hypothesisId)}
+                        >
+                          {record?.status === "refuted"
+                            ? locale === "pt-BR" ? "REFUTADA" : "REFUTED"
+                            : locale === "pt-BR" ? "Testar" : "Test"}
+                        </button>
+                      </div>
+                    );
+                  }
+                )}
+              </div>
             </div>
           ) : selectedCard ? (
             <div className="evidence-board__selection">

@@ -20,6 +20,21 @@ export const THEORY_DEFINITIONS: TheoryDefinition[] = [
     required: ["person-sarah", "person-tom"],
     anyOf: ["future_access_log", "sarah_live_email"],
   },
+  {
+    insightId: "institutional_suppression",
+    required: ["incident_report", "maintenance_record"],
+    anyOf: ["whitfield_memo", "coastline_archive"],
+  },
+  {
+    insightId: "miriam_break",
+    required: ["miriam_1998", "miriam_letter_1998"],
+    anyOf: ["catalogue_lot_114", "margin_ciphertext", "miriam_notebook"],
+  },
+  {
+    insightId: "self_index",
+    required: ["future_access_log", "index_help"],
+    anyOf: ["containment_utility", "record_2014"],
+  },
 ];
 
 export const evaluateTheory = (evidenceIds: string[]): InsightId | null => {
@@ -56,4 +71,3 @@ export const theoryConnectionKeys = (
   }
   return keys;
 };
-

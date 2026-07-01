@@ -1,6 +1,110 @@
 import { Locale } from "../game/progress";
 
 const FILES_PT: Record<string, string> = {
+  dad_recipe: `CALDEIRADA DO PAI — versão que Sarah consegue seguir
+
+2 batatas, não "algumas batatas"
+1 cebola
+leite
+tomilho
+NADA de mariscos do posto, não importa o que Tom diga
+
+Nota do pai: me liga enquanto cozinha. Vinte minutos bastam para retornar uma ligação.
+
+Sarah acrescentou:
+Domingo. Agora é sério.`,
+  lecture_draft: `COLEÇÕES ESPECIAIS 204 — rascunho
+
+O catálogo não é o objeto. É um argumento sobre onde o objeto pertence.
+
+[colocar exemplo menos chato]
+[pedir cabo do projetor ao Tom]
+[sair às 18:30. ligar para Em do ônibus.]
+
+Pergunta final:
+Quando uma descrição sobrevive por mais tempo que aquilo que descreve, qual dos dois se torna o original?`,
+  solitaire_save: `[Jogo salvo do Paciência]
+
+Partidas: 412
+Vitórias: 17
+Jogo atual: sem esperança
+
+Comentário de Tom anexado em um campo inválido:
+"Em algum momento isso deixa de ser persistência e vira pedido de socorro."
+
+Resposta de Sarah:
+"Diz o homem que continua abrindo a mesma imagem de disco."`,
+  midi_collection: `C:\\WINDOWS\\MEDIA\\passport.mid
+C:\\WINDOWS\\MEDIA\\museum_after_dark.mid
+C:\\WINDOWS\\MEDIA\\em_sent_this_one.mid
+C:\\WINDOWS\\MEDIA\\track_07.mid
+
+[track_07 não existe no disco. Sua duração consta como 24:00:00.]`,
+  maintenance_record: `MISKATONIC FACILITIES / CHAMADO F-2026-0311-88
+
+Local: Biblioteca Orne B2 / escritório Bishop
+Reclamação: carpete úmido sob a workstation
+
+Teto, parede, radiador e janela inspecionados. Nenhuma linha de água ou drenagem entra na sala. O limite da umidade era circular e centralizado sob SB-ARCHIVE-02.
+
+A condutividade da amostra excedia a água do prédio. O chamado foi transferido para Coleções Especiais por ordem da supervisão.
+
+Status: ENCERRADO — ADMINISTRATIVO`,
+  miriam_draft: `[Spool de impressão recuperado / autoria M. BISHOP]
+
+Robert —
+
+O volume ausente não está ausente. Ausente é como ele impede que a próxima entrada seja criada.
+Deixei a cota incompleta porque toda descrição completa se torna uma instrução.
+
+Se Sarah encontrar isto, diga que tentei deixar um espaço vazio que não pedisse para ser preenchido.
+
+[O trabalho está datado de {TOMORROW}. A impressora foi descartada em 2004.]`,
+  record_2014: `ÍNDICE DE RECUPERAÇÃO / ENTRADA DANIFICADA
+
+INTERVALO: 2014
+ORIGEM: não resolvida
+PROPRIETÁRIO: não resolvido
+TESTEMUNHA: ARQUIVO
+
+O campo não contém uma pessoa.
+O campo contém o checksum deste registro.
+
+Resultado:
+REGISTRO LEU A SI MESMO 1 VEZ`,
+  containment_utility: `LOOPBACK 0.3 — utilitário órfão
+
+Registra um índice montado como sua própria testemunha de verificação.
+
+Este programa não pode nomear um alvo. Ele fornece apenas o último parâmetro:
+
+  /WITNESS ARCHIVE
+
+O identificador do arquivo e a operação são responsabilidade do operador.`,
+  contain_help: `ADENDO DE CONTENÇÃO DO RELAY
+
+Um relay ocupado só pode ser selado depois que seu índice reconhecer uma testemunha não humana.
+
+Fragmento da sintaxe:
+  INDEX /SEAL <RELAY-ID> <WITNESS-SWITCH>
+
+O identificador do relay foi preservado fora da imagem montada.
+O parâmetro da testemunha pode existir em um download obsoleto.
+
+Contenção não é recuperação. Nenhuma origem retornará.`,
+  seal_after: `RELAY 07 / STATUS DO LOOPBACK
+
+ORIGEM: não resolvida
+ARQUIVO: SB-0316
+TESTEMUNHA: SB-0316
+DESTINATÁRIOS: 3
+
+O quarto campo está vazio outra vez.
+
+CHECKSUM ANTES: 7A:11:07
+CHECKSUM DEPOIS: 7A:11:08
+
+Nenhuma escrita foi registrada.`,
   diary: `DIÁRIO DE PESQUISA — SARAH BISHOP
 
 02/03/2026
@@ -295,12 +399,36 @@ const BOARD_CARDS_PT: Record<string, { title: string; summary: string }> = {
     summary: "Notas de incorporação de Miriam em 1998. Inacabadas.",
   },
   miriam_letter_1998: {
-    title: "to_richard_1998.txt",
+    title: "to_robert_1998.txt",
     summary: "Carta de Miriam para Armitage. Ela queria uma segunda opinião.",
   },
   incident_report: {
     title: "Relatório da segurança do campus",
     summary: "Sala trancada. Água salgada. Uma data um dia errada.",
+  },
+  maintenance_record: {
+    title: "Chamado F-2026-0311-88",
+    summary: "Nenhum cano entra na sala. A umidade estava centrada sob a workstation.",
+  },
+  office_frames_11_13: {
+    title: "office_frames_11_13.png",
+    summary: "Os frames antes e depois do 12 não contêm reflexo.",
+  },
+  paint_doodles: {
+    title: "meeting_notes.bmp",
+    summary: "Rabiscos de Sarah: três monstros e um péssimo desenho de Armitage.",
+  },
+  photo_sarah_bus_2025: {
+    title: "groceries_on_the_7.png",
+    summary: "Sarah voltando para casa com compras. Uma noite comum antes do caso.",
+  },
+  whateley_accession_card: {
+    title: "Cartão de incorporação Whateley, 1998",
+    summary: "Miriam deixou em branco o campo do Volume II.",
+  },
+  miriam_notebook: {
+    title: "Caderno de trabalho de Miriam",
+    summary: "Cotas riscadas terminam numa instrução explícita: DEIXE EM BRANCO.",
   },
   borrower_index: {
     title: "Índice restrito de leitores",
@@ -318,6 +446,10 @@ const BOARD_CARDS_PT: Record<string, { title: string; summary: string }> = {
   counting_audio: {
     title: "counting.wav",
     summary: "Sarah gravando uma prova. Algo responde a ela.",
+  },
+  hydrographic_chart: {
+    title: "Carta hidrográfica anotada",
+    summary: "Sete datas convergem para um local raspado do mapa.",
   },
   do_not_open: {
     title: "DO_NOT_OPEN.txt",
@@ -363,6 +495,30 @@ const BOARD_CARDS_PT: Record<string, { title: string; summary: string }> = {
   index_help: {
     title: "INDEX.HLP",
     summary: "A sintaxe para unir o que resta de alguém.",
+  },
+  miriam_draft: {
+    title: "MIRIAM_DRAFT.PRN",
+    summary: "Miriam diz que a cota incompleta foi deliberada.",
+  },
+  record_2014: {
+    title: "2014_RECORD.DAT",
+    summary: "O campo TESTEMUNHA contém o checksum do próprio registro.",
+  },
+  containment_utility: {
+    title: "LOOPBACK.EXE",
+    summary: "Utilitário obsoleto que registra um arquivo como sua própria testemunha.",
+  },
+  whitfield_memo: {
+    title: "Memorando administrativo de Whitfield",
+    summary: "Anomalias foram recategorizadas como incidentes de manutenção.",
+  },
+  tom_homepage: {
+    title: "Página pessoal de Tom",
+    summary: "HTML ruim e uma atualização feita depois do desaparecimento.",
+  },
+  sarah_live_chat: {
+    title: "Conversa com Sarah (amanhã)",
+    summary: "Sarah consegue responder uma pergunta antes do canal fechar.",
   },
   deleted_expedition_fragment: {
     title: "EXPEDITION.TMP",
@@ -448,4 +604,3 @@ export const localizedChatMessage = (
   original: string,
   locale: Locale
 ): string => (locale === "pt-BR" ? CHATS_PT[messageId] ?? original : original);
-

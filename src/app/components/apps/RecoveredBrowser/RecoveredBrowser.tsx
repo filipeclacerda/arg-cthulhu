@@ -13,7 +13,7 @@ import { useI18n } from "@/app/i18n";
 import "../ArgTools/style.scss";
 import "./style.scss";
 
-type BrowserPage =
+export type BrowserPage =
   | "home"
   | "results"
   | "library"
@@ -30,6 +30,10 @@ type BrowserPage =
   | "graymoor"
   | "families"
   | "forum"
+  | "em"
+  | "tom"
+  | "maintenance"
+  | "downloads"
   | "false-lead"
   | "not-found";
 
@@ -38,7 +42,7 @@ interface HistoryEntry {
   address: string;
 }
 
-const PAGE_ADDRESS: Record<BrowserPage, string> = {
+export const PAGE_ADDRESS: Record<BrowserPage, string> = {
   home: "http://search.miskatonic.net/",
   results: "http://search.miskatonic.net/search",
   library: "http://www.miskatonic.edu/library/",
@@ -55,6 +59,10 @@ const PAGE_ADDRESS: Record<BrowserPage, string> = {
   graymoor: "http://www.graymoor-antiquarian.com/about/",
   families: "http://www.innsmouth-historical.org/registry/",
   forum: "http://www.miskanet-forums.org/board/folklore/",
+  em: "http://www.geocities.com/em_bishop/photos/",
+  tom: "http://www.geocities.com/tomalvarez_archive/",
+  maintenance: "cache://miskatonic/facilities/B2/",
+  downloads: "http://www.miskanet-files.org/archive-tools/",
   "false-lead": "http://search.miskatonic.net/search",
   "not-found": "res://shdoclc/dnserror.htm",
 };
@@ -76,10 +84,14 @@ const RecoveredBrowser = ({
     discoverEvidence,
     recordNearMiss,
     activePuzzle,
+    dispatchGameEvent,
   } = useProgress();
   const { t } = useI18n();
-  const initialPage: BrowserPage = initialAddress?.includes("danforth")
-    ? "danforth"
+  const initialPage: BrowserPage = initialAddress
+    ? ((Object.entries(PAGE_ADDRESS) as [BrowserPage, string][]).find(
+        ([, addr]) => addr === initialAddress
+      )?.[0] ??
+      (initialAddress.includes("danforth") ? "danforth" : "home"))
     : "home";
   const [page, setPage] = useState<BrowserPage>(initialPage);
   const [address, setAddress] = useState(
@@ -88,6 +100,9 @@ const RecoveredBrowser = ({
   const [backStack, setBackStack] = useState<HistoryEntry[]>([]);
   const [forwardStack, setForwardStack] = useState<HistoryEntry[]>([]);
   const [favoritesOpen, setFavoritesOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [sourceOpen, setSourceOpen] = useState(false);
+  const [snapshot, setSnapshot] = useState<"1998" | "2014" | "2026">("2026");
   const [searchInput, setSearchInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [nearMissMessage, setNearMissMessage] = useState("");
@@ -118,6 +133,7 @@ const RecoveredBrowser = ({
     }
     setPage(next);
     setAddress(nextAddress);
+    setSourceOpen(false);
   };
 
   const visitAtmospherePage = (
@@ -127,6 +143,9 @@ const RecoveredBrowser = ({
   ) => {
     visitPage(pageId);
     if (evidenceId) discoverEvidence(evidenceId, pageId);
+    if (next === "tom" && state.puzzles.future_log.solvedAt) {
+      dispatchGameEvent({ type: "TRIGGER_WORLD_REACTION", reactionId: "tom_page_changed" });
+    }
     navigate(next);
   };
 
@@ -226,7 +245,23 @@ const RecoveredBrowser = ({
       return;
     }
     if (compact.includes("WHITFIELD") || compact.includes("MEMO")) {
-      visitAtmospherePage("memo", "library-memo-b2");
+      visitAtmospherePage("memo", "library-memo-b2", "whitfield_memo");
+      return;
+    }
+    if (compact.includes("FACILITIES") || compact.includes("MAINTENANCE") || compact.includes("HUMIDITY")) {
+      visitAtmospherePage("maintenance", "facilities-b2", "maintenance_record");
+      return;
+    }
+    if (compact.includes("EMBISHOP") || compact.includes("EMSPAGE")) {
+      visitAtmospherePage("em", "em-personal-page");
+      return;
+    }
+    if (compact.includes("TOMALVAREZ") || compact.includes("TOMSHOMEPAGE")) {
+      visitAtmospherePage("tom", "tom-personal-page", "tom_homepage");
+      return;
+    }
+    if (compact.includes("LOOPBACK") || compact.includes("ARCHIVETOOLS") || compact.includes("DOWNLOADS")) {
+      visitAtmospherePage("downloads", "miskanet-downloads");
       return;
     }
     if (compact.includes("ARMITAGE")) {
@@ -312,6 +347,12 @@ const RecoveredBrowser = ({
         <button className={`browser-tool button ${favoritesOpen ? "active" : ""}`} type="button" onClick={() => setFavoritesOpen((value) => !value)}>
           <span>★</span>{t("menuFavorites")}
         </button>
+        <button className={`browser-tool button ${historyOpen ? "active" : ""}`} type="button" onClick={() => setHistoryOpen((value) => !value)}>
+          <span>▤</span>History
+        </button>
+        <button className={`browser-tool button ${sourceOpen ? "active" : ""}`} type="button" onClick={() => setSourceOpen((value) => !value)}>
+          <span>&lt;/&gt;</span>Source
+        </button>
       </div>
       <form className="arg-tool__toolbar browser-address" onSubmit={submit}>
         <label htmlFor="archive-address">{t("addressLabel")}</label>
@@ -335,12 +376,48 @@ const RecoveredBrowser = ({
             <button onClick={() => visitAtmospherePage("weather", "antarctic-weather")}>Lake Weather</button>
             <button onClick={() => visitAtmospherePage("families", "families-registry")}>Old Families of the Coast</button>
             <button onClick={() => visitAtmospherePage("forum", "miskanet-forum")}>MiskaNet Research Forum</button>
+            <button onClick={() => visitAtmospherePage("em", "em-personal-page")}>Em&apos;s Photos</button>
+            <button onClick={() => visitAtmospherePage("tom", "tom-personal-page", "tom_homepage")}>Tom&apos;s Homepage</button>
             <div />
             <small>{t("linksImportedNote")}</small>
           </aside>
         )}
+        {historyOpen && (
+          <aside className="browser-favorites browser-history">
+            <strong>History</strong>
+            {state.visitedPageIds.length === 0 && <small>No cached pages opened.</small>}
+            {state.visitedPageIds.slice().reverse().slice(0, 14).map((id) => (
+              <button key={id} onClick={() => setSearchInput(id)}>
+                {id}
+              </button>
+            ))}
+            {state.puzzles.lineage.solvedAt && (
+              <button className="browser-history__future" onClick={() => {
+                setSearchInput("2026");
+                dispatchGameEvent({ type: "TRIGGER_WORLD_REACTION", reactionId: "future_search" });
+              }}>
+                {resolveTokens("{TOMORROW}")} — search not performed
+              </button>
+            )}
+          </aside>
+        )}
 
         <div className="arg-tool__content">
+          {sourceOpen && (
+            <div className="browser-source">
+              <header>
+                <strong>Source: {address}</strong>
+                <button className="button" onClick={() => setSourceOpen(false)}>×</button>
+              </header>
+              <pre>{`<!-- RECOVERED CACHE COPY -->
+<meta name="archived" content="${snapshot}" />
+<meta name="reader" content="${state.playerName || "NEXT USER"}" />
+<meta name="next-read" content="${resolveTokens("{TOMORROW}")}" />
+<body data-page="${page}">
+  <!-- The source contains one more visitor than the counter. -->
+</body>`}</pre>
+            </div>
+          )}
           {page === "home" && (
             <div className="retro-search-home">
               <div className="retro-search-logo" aria-label="Miskatonic Search">
@@ -485,6 +562,25 @@ const RecoveredBrowser = ({
                 HOME | CATALOGUE | COLLECTIONS | READER SERVICES |{" "}
                 <button className="web-link web-link--inline" onClick={() => visitAtmospherePage("staff", "library-staff-armitage")}>STAFF</button>
               </nav>
+              <div className="browser-snapshots">
+                <strong>Wayback copies:</strong>
+                {(["1998", "2014", "2026"] as const).map((year) => (
+                  <button
+                    className={snapshot === year ? "active" : ""}
+                    key={year}
+                    onClick={() => setSnapshot(year)}
+                  >
+                    {year}
+                  </button>
+                ))}
+                <span>
+                  {snapshot === "1998"
+                    ? "Whateley accession pending. Volume II field left blank."
+                    : snapshot === "2014"
+                      ? "One restricted incident exists without an owner."
+                      : "Current cache. Three staff records hidden by administrative order."}
+                </span>
+              </div>
               <div className="site-columns">
                 <section>
                   <h2>Special Collections Gateway</h2>
@@ -938,6 +1034,100 @@ const RecoveredBrowser = ({
                   </div>
                 </div>
               </div>
+            </article>
+          )}
+
+          {page === "em" && (
+            <article className="site-geocities site-em">
+              <div className="stars">✿　★　EM&apos;S CORNER OF THE WEB　★　✿</div>
+              <h1>photos / family / things Sarah says I imagined</h1>
+              <p className="blink">BEST VIEWED WITH NETSCAPE AND PATIENCE</p>
+              <div className="geocities-boxes">
+                <section>
+                  <h2>Dad&apos;s 65th</h2>
+                  <p>Sarah arrived before the candles went out. Evidence that miracles were possible before all this.</p>
+                </section>
+                <section>
+                  <h2>North shore trip</h2>
+                  <p>The shape behind us is a piling. Sarah circled it on the printout anyway. She always needed the ordinary explanation and the impossible one beside each other.</p>
+                </section>
+                <section>
+                  <h2>Last voicemail</h2>
+                  <p>“Leaving the archive at six-thirty. If I forget to call, be annoying.” Saved 03/16, 17:42. The office was found empty before six.</p>
+                </section>
+              </div>
+              <footer>Last updated 2001. Cached revision appended 2026-03-16 by S. Bishop.</footer>
+            </article>
+          )}
+
+          {page === "tom" && (
+            <article className="site-geocities site-tom">
+              <h1>TOM ALVAREZ&apos;S EXTREMELY PROFESSIONAL HOMEPAGE</h1>
+              <p>Library systems, terrible coffee, and one photograph where I do not look surprised.</p>
+              <hr />
+              <h2>Current projects</h2>
+              <ul>
+                <li>DBX mailbox recovery utility</li>
+                <li>Convincing Sarah that “backup” is not a personality trait</li>
+                <li>Never volunteering to image another undocumented workstation</li>
+              </ul>
+              {state.puzzles.future_log.solvedAt && (
+                <>
+                  <div className="browser-redaction">
+                    PAGE SOURCE NOTE: this list was edited on {resolveTokens("{TOMORROW}")}. The archived author account was disabled on 2026-03-23.
+                  </div>
+                  <p className="tom-counter">YOU ARE VISITOR 0004. TOM EXPECTED 0003.</p>
+                </>
+              )}
+            </article>
+          )}
+
+          {page === "maintenance" && (
+            <article className="arg-tool__paper site-maintenance">
+              <p className="arg-tool__kicker">FACILITIES WORK ORDER ARCHIVE / B2</p>
+              <h2>Ticket sequence: moisture complaints</h2>
+              <table className="browser-table"><tbody>
+                <tr><th>Date</th><th>Location</th><th>Disposition</th></tr>
+                <tr><td>1998-09-02</td><td>Orne B2 / M. Bishop</td><td>ADMINISTRATIVE</td></tr>
+                <tr><td>2014-05-18</td><td>Off-site archive mirror</td><td>OWNER REDACTED</td></tr>
+                <tr><td>2026-03-11</td><td>Orne B2 / S. Bishop</td><td>ADMINISTRATIVE</td></tr>
+              </tbody></table>
+              <p>No active water line entered any affected room. Conductivity in all retained samples matched seawater within test tolerance.</p>
+              <p className="browser-redaction">
+                DIRECTOR&apos;S ORDER: recategorize all matching reports as facilities incidents. Do not link staff names in the public index.
+              </p>
+              <button className="web-link" onClick={() => visitAtmospherePage("memo", "library-memo-b2", "whitfield_memo")}>Open Whitfield memo</button>
+            </article>
+          )}
+
+          {page === "downloads" && (
+            <article className="site-downloads">
+              <header><h1>MiskaNet Shareware Vault</h1><p>Archive utilities, MIDI players and things your administrator told you not to run.</p></header>
+              <div className="download-row">
+                <strong>LOOPBACK 0.3</strong>
+                <span>Register a mounted index as its own verification witness.</span>
+                <button
+                  className="button"
+                  disabled={!state.puzzles.future_log.solvedAt}
+                  onClick={() => {
+                    discoverEvidence("containment_utility", "miskanet-downloads");
+                    dispatchGameEvent({ type: "DISCOVER_OPTIONAL", discoveryId: "containment_utility" });
+                  }}
+                >
+                  {state.puzzles.future_log.solvedAt ? "Download" : "CRC locked"}
+                </button>
+              </div>
+              <div className="download-row">
+                <strong>MUSEUM_AFTER_DARK.MID</strong>
+                <span>4 KB · uploaded by sarah_b · “less depressing than the title”</span>
+                <button className="button" onClick={() => dispatchGameEvent({ type: "DISCOVER_OPTIONAL", discoveryId: "midi_collection" })}>Download</button>
+              </div>
+              <div className="download-row">
+                <strong>DEEPSEA.SCR</strong>
+                <span>Screensaver · monitor may fail to wake</span>
+                <button className="button" onClick={() => dispatchGameEvent({ type: "SEE_ASSET_VARIANT", variantId: "deepsea-screensaver" })}>Download</button>
+              </div>
+              <small>Files in this cache were scanned in 2001. Virus definitions expired 9,131 days ago.</small>
             </article>
           )}
 

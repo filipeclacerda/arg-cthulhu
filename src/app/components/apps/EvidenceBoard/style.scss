@@ -69,6 +69,12 @@
   flex: 0 0 auto;
   padding: 0 8px;
   font-size: 10px;
+
+  &.active {
+    color: #fff;
+    background: #000080;
+    box-shadow: inset 1px 1px #000;
+  }
 }
 
 .evidence-board__notes-link {
@@ -85,6 +91,40 @@
   grid-template-columns: minmax(0, 1fr) 238px;
   gap: 6px;
   margin: 6px;
+}
+
+.evidence-board__timeline-strip {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: stretch;
+  gap: 5px;
+  min-height: 58px;
+  padding: 5px;
+  overflow-x: auto;
+  border: 2px inset #fff;
+  background: #e9e4d2;
+
+  > div {
+    min-width: 122px;
+    position: relative;
+    padding: 5px 8px 5px 13px;
+    border-left: 3px solid #253b78;
+    background: #fffdf4;
+    &::before {
+      content: "";
+      position: absolute;
+      left: -6px;
+      top: 18px;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #7d1212;
+    }
+  }
+  time, span { display: block; }
+  time { font: bold 9px monospace; color: #7d1212; }
+  span { margin-top: 3px; font-size: 10px; }
+  > button { margin-left: auto; min-width: max-content; }
 }
 
 .evidence-board__scroll {
@@ -551,6 +591,31 @@
     margin: 6px 0;
     font-size: 10px;
     line-height: 1.35;
+  }
+}
+
+.evidence-board__hypotheses {
+  display: grid;
+  gap: 4px;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dotted #777;
+
+  > strong {
+    font: bold 9px "Courier New", monospace;
+    color: #5d1717;
+  }
+
+  > div {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 5px;
+    align-items: center;
+    padding: 4px;
+    background: #f4ead2;
+    border: 1px solid #b7a982;
+    span { font-size: 10px; }
+    button { font-size: 9px; }
   }
 }
 

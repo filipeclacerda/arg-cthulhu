@@ -20,6 +20,9 @@ export type AppType =
   | "cipher-lab"
   | "evidence-board"
   | "case-notes"
+  | "case-reconstruction"
+  | "timeline"
+  | "archive-viewer"
   | "clock-properties"
   | "properties"
   | "help"
@@ -48,7 +51,9 @@ interface WindowManagerState {
 type Action =
   | {
       type: "OPEN_WINDOW";
-      window: Omit<WindowInstance, "zIndex" | "minimized" | "maximized">;
+      window: Omit<WindowInstance, "zIndex" | "minimized" | "maximized"> & {
+        maximized?: boolean;
+      };
     }
   | { type: "CLOSE_WINDOW"; id: string }
   | { type: "FOCUS_WINDOW"; id: string }
@@ -83,7 +88,7 @@ function reducer(
           {
             ...action.window,
             minimized: false,
-            maximized: false,
+            maximized: action.window.maximized ?? false,
             zIndex: state.nextZIndex,
           },
         ],
@@ -140,6 +145,7 @@ interface OpenWindowOptions {
   appType: AppType;
   title: string;
   props?: Record<string, any>;
+  maximized?: boolean;
 }
 
 interface WindowManagerContextValue {
@@ -188,6 +194,7 @@ export const WindowManagerProvider = ({
           title: options.title,
           props: options.props ?? {},
           position: randomPosition(),
+          maximized: options.maximized,
         },
       });
     },

@@ -43,6 +43,11 @@ interface DispatchResult {
   commandError?: RunCommandError;
   hintUnlocked?: { puzzleId: PuzzleId; level: number };
   theoryResult?: { insightId: string | null; alreadyKnown: boolean };
+  caseAnswerResult?: {
+    questionId: string;
+    accepted: boolean;
+    reason: string;
+  };
 }
 
 interface ProgressContextValue {
@@ -107,7 +112,9 @@ const reducer = (state: ProgressStateV4, event: GameEvent): ProgressStateV4 =>
 const milestoneSignature = (state: ProgressStateV4): string =>
   `${Object.values(state.puzzles)
     .map((puzzle) => puzzle.solvedAt ?? 0)
-    .join(":")}:${state.ending ?? ""}:${state.caseId}`;
+    .join(":")}:${Object.keys(state.caseAnswers).sort().join(",")}:${
+    state.insightsUnlocked.length
+  }:${state.ending ?? ""}:${state.caseId}`;
 
 const SOLUTION_REACTIONS: Record<PuzzleId, { en: string; pt: string }> = {
   lot_114: {
@@ -461,6 +468,7 @@ export const ProgressProvider = ({
             }
           : undefined,
         theoryResult: result.theoryResult,
+        caseAnswerResult: result.caseAnswerResult,
       };
     },
     [isReadOnly]

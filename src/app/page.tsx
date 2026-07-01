@@ -47,6 +47,7 @@ export default function Home() {
     importCode,
     setPlayerName,
     setFlag,
+    dispatchGameEvent,
   } = useProgress();
   const { locale, setLocale, t } = useI18n();
   const isPt = locale === "pt-BR";
@@ -67,6 +68,8 @@ export default function Home() {
 
   useEffect(() => {
     setTomorrowStamp(resolveTokens("{TOMORROW}"));
+    if (!preferencesReady) return;
+    setVisibleLines(0);
     const timer = window.setInterval(() => {
       setVisibleLines((count) => {
         if (count >= BOOT_LINES.en.length) {
@@ -77,7 +80,7 @@ export default function Home() {
       });
     }, 125);
     return () => window.clearInterval(timer);
-  }, []);
+  }, [preferencesReady]);
 
   useEffect(() => {
     if (isHydrated) setObserverName(state.playerName ?? "");
@@ -138,6 +141,7 @@ export default function Home() {
             <button
               type="button"
               className={locale === "en" ? "active" : ""}
+              disabled={!isHydrated}
               onClick={() => setLocale("en")}
             >
               {t("english")}
@@ -145,6 +149,7 @@ export default function Home() {
             <button
               type="button"
               className={locale === "pt-BR" ? "active" : ""}
+              disabled={!isHydrated}
               onClick={() => setLocale("pt-BR")}
             >
               {t("portuguese")}
@@ -158,12 +163,14 @@ export default function Home() {
           <div className="relay-preflight__actions">
             <button
               type="button"
+              disabled={!isHydrated}
               onClick={() => chooseDiagnostics("denied")}
             >
               {t("telemetryDecline")}
             </button>
             <button
               type="button"
+              disabled={!isHydrated}
               onClick={() => chooseDiagnostics("granted")}
             >
               {t("telemetryAccept")}
@@ -218,6 +225,14 @@ export default function Home() {
               <dt>Status</dt><dd>{isPt ? "NÃO RESOLVIDO" : "UNRESOLVED"}</dd>
               <dt>{isPt ? "Destinatário" : "Recipient"}</dt><dd className="relay-unstable">{isPt ? "GERADO AO ABRIR" : "GENERATED AT OPEN"}</dd>
               <dt>{isPt ? "Horário" : "Timestamp"}</dt><dd>{tomorrowStamp}</dd>
+              <dt>Referrer</dt>
+              <dd className={phase === "mount" ? "relay-unstable" : ""}>
+                {phase === "sealed"
+                  ? "miskanet-forums.org/thread/7411"
+                  : isPt
+                    ? "[REMOVIDO APÓS SOLICITAÇÃO]"
+                    : "[PURGED AFTER MOUNT REQUEST]"}
+              </dd>
             </dl>
             <div className="relay-boundary">
               {isPt
@@ -265,7 +280,13 @@ export default function Home() {
                 <button
                   className="relay-command"
                   type="button"
-                  onClick={() => setPhase("mount")}
+                  onClick={() => {
+                    setPhase("mount");
+                    dispatchGameEvent({
+                      type: "SEE_NARRATIVE_BEAT",
+                      beatId: "relay_referrer_lost",
+                    });
+                  }}
                 >
                   [ {isPt ? "ABRIR ANEXO SELADO" : "OPEN SEALED ATTACHMENT"} ]
                 </button>
@@ -371,7 +392,7 @@ export default function Home() {
                           setCaseError("");
                         }}
                       >
-                        {isPt ? "Importar MISK4 / MISK3" : "Import MISK4 / MISK3"}
+                        {isPt ? "Importar MISK5 / MISK4 / MISK3" : "Import MISK5 / MISK4 / MISK3"}
                       </button>
                     </div>
                   </div>
@@ -388,7 +409,7 @@ export default function Home() {
                         setCasePreview(null);
                         setCaseError("");
                       }}
-                      placeholder="MISK4.payload.checksum"
+                      placeholder="MISK5.payload.checksum"
                     />
                     {caseError && <p className="relay-error">{caseError}</p>}
                     {casePreview && (

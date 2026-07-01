@@ -69,9 +69,137 @@
 }
 
 .browser-body {
+  position: relative;
   min-height: 0;
   flex: 1;
   display: flex;
+}
+
+.browser-history {
+  border-left: 1px solid #777;
+  border-right: 0;
+
+  .browser-history__future {
+    color: #8a1111;
+    font-family: "Courier New", monospace;
+  }
+}
+
+.browser-source {
+  position: absolute;
+  z-index: 8;
+  inset: 8px;
+  padding: 4px;
+  color: #d7f7d2;
+  background: #061106;
+  border: 2px outset #bbb;
+  box-shadow: 5px 5px 0 rgba(0, 0, 0, .35);
+
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 6px;
+    color: #fff;
+    background: #000080;
+  }
+  pre {
+    margin: 0;
+    padding: 12px;
+    white-space: pre-wrap;
+    font: 12px/1.6 "Courier New", monospace;
+  }
+}
+
+.browser-snapshots {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 8px;
+  border-bottom: 1px solid #aaa;
+  background: #eee9d7;
+  font-size: 10px;
+
+  button {
+    border: 1px solid #777;
+    background: white;
+    cursor: pointer;
+    &.active { color: white; background: #000080; }
+  }
+  span { flex-basis: 100%; font-family: "Courier New", monospace; }
+}
+
+.site-geocities {
+  min-height: 100%;
+  padding: 20px;
+  text-align: center;
+  color: #fff;
+  background-color: #12104e;
+  background-image: radial-gradient(#f8e769 1px, transparent 1px);
+  background-size: 24px 24px;
+  font-family: "Comic Sans MS", cursive;
+
+  h1 { color: #ffdc4f; text-shadow: 2px 2px #8b1b8b; }
+  a, .web-link { color: #68ffff; }
+  footer { margin-top: 20px; color: #a9f2ff; }
+}
+
+.geocities-boxes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+
+  section {
+    padding: 8px;
+    color: #17113e;
+    background: #f8eacf;
+    border: 5px ridge #a0a0d8;
+    text-align: left;
+  }
+}
+
+.site-tom {
+  text-align: left;
+  color: #00ff8a;
+  background: #050505;
+  font-family: "Courier New", monospace;
+  h1 { color: #ffae00; }
+  .tom-counter {
+    display: inline-block;
+    padding: 4px;
+    color: #fff;
+    border: 1px dashed #ffae00;
+  }
+}
+
+.site-maintenance {
+  max-width: 720px;
+  margin: 14px auto;
+}
+
+.site-downloads {
+  padding: 14px;
+  background: #f7f7f7;
+  min-height: 100%;
+
+  > header {
+    padding: 10px;
+    color: white;
+    background: linear-gradient(90deg, #213591, #1d7199);
+    h1, p { margin: 0; }
+  }
+  > small { display: block; margin: 12px; color: #555; }
+}
+
+.download-row {
+  display: grid;
+  grid-template-columns: 155px 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px;
+  border-bottom: 1px solid #aaa;
+  strong { color: #000080; font-family: "Courier New", monospace; }
 }
 
 .browser-favorites {

@@ -21,6 +21,36 @@ const solveThroughFutureLog = () => {
   return state;
 };
 
+const retainObserverFindings = (
+  state: ReturnType<typeof createInitialProgress>
+) => {
+  const answers = [
+    {
+      questionId: "future_displacement" as const,
+      answerId: "tomorrow_state",
+      evidenceIds: ["sarah_live_email", "future_access_log"],
+    },
+    {
+      questionId: "relay_observer" as const,
+      answerId: "occupied_observer",
+      evidenceIds: ["tom_last_message", "index_help"],
+    },
+    {
+      questionId: "chapter_ritual" as const,
+      answerId: "act_of_reconstruction",
+      evidenceIds: ["the_name", "margin_ciphertext"],
+    },
+  ];
+  return answers.reduce(
+    (current, answer) =>
+      reduceGameEvent(current, {
+        type: "SUBMIT_CASE_ANSWER",
+        ...answer,
+      }).state,
+    state
+  );
+};
+
 describe("ARG progression reducer", () => {
   it("derives corruption only from solved investigation milestones", () => {
     let state = createInitialProgress(1_700_000_000_000, "test-case");
@@ -75,6 +105,13 @@ describe("ARG progression reducer", () => {
         reference,
       }).state;
     }
+    const withoutFindings = reduceGameEvent(state, {
+      type: "RUN_COMMAND",
+      command: "INDEX /JOIN E7-A1-C4-B9",
+    });
+    expect(withoutFindings.commandError).toBe("case_incomplete");
+
+    state = retainObserverFindings(state);
     const accepted = reduceGameEvent(state, {
       type: "RUN_COMMAND",
       command: "  index   /join e7-a1-c4-b9 ",
@@ -170,6 +207,42 @@ describe("ARG progression reducer", () => {
     expect(result.state.puzzles.lot_114.solvedAt).toBeNull();
   });
 
+  it("unlocks the recovered folder after two corroborated act-one findings", () => {
+    let state = createInitialProgress(1_700_000_000_000, "reconstruction");
+    state = reduceGameEvent(state, {
+      type: "SUBMIT_CASE_ANSWER",
+      questionId: "sarah_intent",
+      answerId: "planned_return",
+      evidenceIds: ["chat_em_archive", "todo"],
+    }).state;
+    expect(state.flags.act1_recovered_partial).toBeUndefined();
+
+    const second = reduceGameEvent(state, {
+      type: "SUBMIT_CASE_ANSWER",
+      questionId: "volume_return",
+      answerId: "deliberate_return",
+      evidenceIds: ["miriam_1998", "lot_114_order"],
+    });
+    expect(second.caseAnswerResult?.accepted).toBe(true);
+    expect(second.state.flags.act1_recovered_partial).toBe(true);
+    expect(second.state.leadsUnlocked).toContain("manuscript");
+  });
+
+  it("rejects a plausible conclusion without corroborating evidence", () => {
+    const initial = createInitialProgress(1_700_000_000_000, "weak-case");
+    const result = reduceGameEvent(initial, {
+      type: "SUBMIT_CASE_ANSWER",
+      questionId: "sarah_intent",
+      answerId: "planned_return",
+      evidenceIds: ["todo"],
+    });
+    expect(result.caseAnswerResult).toMatchObject({
+      accepted: false,
+      reason: "not_enough_evidence",
+    });
+    expect(result.state).toBe(initial);
+  });
+
   it("pins a confirmed thread between every card behind a validated theory", () => {
     const initial = createInitialProgress(1_700_000_000_000, "theory-thread");
     const result = reduceGameEvent(initial, {
@@ -193,6 +266,35 @@ describe("ARG progression reducer", () => {
     expect(unmatched.state.confirmedConnections).toBe(
       result.state.confirmedConnections
     );
+  });
+
+  it("requires all six correlations before enabling relay containment", () => {
+    let state = retainObserverFindings(solveThroughFutureLog());
+    state = reduceGameEvent(state, {
+      type: "SOLVE_PUZZLE",
+      puzzleId: "index_name",
+    }).state;
+    const theorySets = [
+      ["miriam_1998", "diary", "lot_114_order"],
+      ["person-miriam", "person-sarah", "lineage_pattern"],
+      ["person-sarah", "person-tom", "future_access_log"],
+      ["incident_report", "maintenance_record", "whitfield_memo"],
+      ["miriam_1998", "miriam_letter_1998", "miriam_notebook"],
+      ["future_access_log", "index_help", "record_2014"],
+    ];
+    for (const evidenceIds of theorySets) {
+      state = reduceGameEvent(state, {
+        type: "TEST_THEORY",
+        evidenceIds,
+      }).state;
+    }
+    expect(state.insightsUnlocked).toHaveLength(6);
+    const result = reduceGameEvent(state, {
+      type: "RUN_COMMAND",
+      command: "INDEX /SEAL RELAY-07 /WITNESS ARCHIVE",
+    });
+    expect(result.commandAccepted).toBe(true);
+    expect(result.state.flags.secret_ending_available).toBe(true);
   });
 });
 

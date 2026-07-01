@@ -6,6 +6,13 @@ import {
   ProgressStateV3,
   PuzzleId,
 } from "./progress";
+import {
+  actOneAnswerCount,
+  canRunFinalIndex,
+  hasAllInsights,
+  observerAnswerCount,
+  validateCaseAnswer,
+} from "./campaign";
 import { evaluateTheory, theoryConnectionKeys } from "./theories";
 import { RunCommandError, validateIndexCommand } from "./validators";
 
@@ -111,6 +118,11 @@ export interface EventResult {
   commandError?: RunCommandError;
   hintUnlocked?: { puzzleId: PuzzleId; level: number; trigger: HintTrigger };
   theoryResult?: { insightId: string | null; alreadyKnown: boolean };
+  caseAnswerResult?: {
+    questionId: string;
+    accepted: boolean;
+    reason: string;
+  };
 }
 
 const touch = (state: ProgressStateV3): ProgressStateV3 => ({
@@ -121,6 +133,19 @@ const touch = (state: ProgressStateV3): ProgressStateV3 => ({
 
 const uniquePush = (values: string[], value: string): string[] =>
   values.includes(value) ? values : [...values, value];
+
+const uniquePushTyped = <T extends string>(values: T[], value: T): T[] =>
+  values.includes(value) ? values : [...values, value];
+
+const OPTIONAL_EVIDENCE_IDS = new Set([
+  "paint_doodles",
+  "dad_recipe",
+  "midi_collection",
+  "lecture_draft",
+  "solitaire_save",
+  "tom_homepage",
+  "containment_utility",
+]);
 
 const DEFAULT_HINT_CHANNEL: Record<PuzzleId, HintChannel> = {
   lot_114: "search",
@@ -225,10 +250,27 @@ const solve = (
   return {
     ...state,
     puzzles,
+    leadsUnlocked:
+      puzzleId === "lineage"
+        ? uniquePushTyped(state.leadsUnlocked, "observer")
+        : state.leadsUnlocked,
+    narrativeBeatsSeen:
+      puzzleId === "lineage"
+        ? uniquePushTyped(state.narrativeBeatsSeen, "sarah_msn_live")
+        : state.narrativeBeatsSeen,
+    worldReactionsSeen:
+      puzzleId === "lineage"
+        ? uniquePushTyped(
+            uniquePushTyped(state.worldReactionsSeen, "clock_lost_second"),
+            "contact_typing"
+          )
+        : state.worldReactionsSeen,
     flags: {
       ...state.flags,
       [`puzzle_${puzzleId}_solved`]: true,
-      ...(puzzleId === "lineage" ? { sarah_email_arrived: true } : {}),
+      ...(puzzleId === "lineage"
+        ? { sarah_email_arrived: true, sarah_msn_live: true }
+        : {}),
       ...(puzzleId === "index_name" ? { endgame_available: true } : {}),
     },
   };
@@ -290,6 +332,12 @@ export const reduceGameEvent = (
           event.evidenceId
         ),
         lastResourceId: nextResourceId,
+        optionalDiscoveries: OPTIONAL_EVIDENCE_IDS.has(event.evidenceId)
+          ? uniquePushTyped(
+              state.optionalDiscoveries,
+              event.evidenceId as (typeof state.optionalDiscoveries)[number]
+            )
+          : state.optionalDiscoveries,
       };
       break;
     }
@@ -469,16 +517,62 @@ export const reduceGameEvent = (
     }
     case "RUN_COMMAND": {
       const command = normalizeCommand(event.command);
+      const sealCommand = "INDEX /SEAL RELAY-07 /WITNESS ARCHIVE";
+      if (command === sealCommand) {
+        if (
+          state.puzzles.index_name.solvedAt &&
+          hasAllInsights(state) &&
+          observerAnswerCount(state) === 3
+        ) {
+          state = {
+            ...state,
+            flags: {
+              ...state.flags,
+              secret_ending_available: true,
+            },
+            narrativeBeatsSeen: uniquePushTyped(
+              state.narrativeBeatsSeen,
+              "observer_reconstructed"
+            ),
+            worldReactionsSeen: uniquePushTyped(
+              state.worldReactionsSeen,
+              "self_indexed"
+            ),
+          };
+          return {
+            state: touch(state),
+            commandAccepted: true,
+          };
+        }
+        return {
+          state: current,
+          commandError: "seal_unavailable",
+        };
+      }
       const validation = validateIndexCommand(
         command,
         state.collectedReferences
       );
-      if (validation.accepted && state.puzzles.future_log.solvedAt) {
+      if (
+        validation.accepted &&
+        state.puzzles.future_log.solvedAt &&
+        canRunFinalIndex(state)
+      ) {
         state = solve(state, "index_name");
         return {
           state: touch(state),
           solvedPuzzle: "index_name",
           commandAccepted: true,
+        };
+      }
+      if (
+        validation.accepted &&
+        state.puzzles.future_log.solvedAt &&
+        !canRunFinalIndex(state)
+      ) {
+        return {
+          state: current,
+          commandError: "case_incomplete",
         };
       }
       if (state.puzzles.future_log.solvedAt) {
@@ -501,10 +595,24 @@ export const reduceGameEvent = (
       };
     }
     case "CHOOSE_ENDING":
+      if (
+        event.ending === "seal" &&
+        (!state.flags.secret_ending_available || !hasAllInsights(state))
+      ) {
+        break;
+      }
       if (state.ending === event.ending) break;
       state = {
         ...state,
         ending: event.ending,
+        narrativeBeatsSeen:
+          event.ending === "seal"
+            ? uniquePushTyped(state.narrativeBeatsSeen, "relay_sealed")
+            : state.narrativeBeatsSeen,
+        worldReactionsSeen:
+          event.ending === "seal"
+            ? uniquePushTyped(state.worldReactionsSeen, "case_code_drift")
+            : state.worldReactionsSeen,
         flags: {
           ...state.flags,
           [`ending_${event.ending}`]: true,
@@ -559,7 +667,7 @@ export const reduceGameEvent = (
         flags: {
           ...state.flags,
           ...(insightId ? { [`insight_${insightId}`]: true } : {}),
-          ...(insightsUnlocked.length === 3
+          ...(insightsUnlocked.length === 6
             ? { postgame_lore_ready: true }
             : {}),
         },
@@ -569,6 +677,182 @@ export const reduceGameEvent = (
         theoryResult: { insightId, alreadyKnown },
       };
     }
+    case "SUBMIT_CASE_ANSWER": {
+      const evidenceIds = Array.from(new Set(event.evidenceIds)).sort();
+      const validation = validateCaseAnswer(
+        event.questionId,
+        event.answerId,
+        evidenceIds
+      );
+      if (!validation.accepted) {
+        return {
+          state: current,
+          caseAnswerResult: {
+            questionId: event.questionId,
+            accepted: false,
+            reason: validation.reason,
+          },
+        };
+      }
+      const existing = state.caseAnswers[event.questionId];
+      if (existing) {
+        return {
+          state: current,
+          caseAnswerResult: {
+            questionId: event.questionId,
+            accepted: true,
+            reason: "already_solved",
+          },
+        };
+      }
+      const now = Date.now();
+      state = {
+        ...state,
+        caseAnswers: {
+          ...state.caseAnswers,
+          [event.questionId]: {
+            answerId: event.answerId,
+            evidenceIds,
+            attempts: 1,
+            solvedAt: now,
+          },
+        },
+      };
+      const actOneCount = actOneAnswerCount(state);
+      const observerCount = observerAnswerCount(state);
+      if (actOneCount >= 2) {
+        state = {
+          ...state,
+          flags: {
+            ...state.flags,
+            act1_recovered_partial: true,
+          },
+          narrativeBeatsSeen: uniquePushTyped(
+            state.narrativeBeatsSeen,
+            "act1_partial_recovery"
+          ),
+          worldReactionsSeen: uniquePushTyped(
+            state.worldReactionsSeen,
+            "monitor_condensation"
+          ),
+          leadsUnlocked: uniquePushTyped(state.leadsUnlocked, "manuscript"),
+        };
+      }
+      if (actOneCount === 3) {
+        state = {
+          ...state,
+          flags: {
+            ...state.flags,
+            act1_reconstruction_complete: true,
+            miriam_draft_arrived: true,
+          },
+          narrativeBeatsSeen: uniquePushTyped(
+            uniquePushTyped(state.narrativeBeatsSeen, "act1_reconstructed"),
+            "miriam_draft_printed"
+          ),
+          worldReactionsSeen: uniquePushTyped(
+            uniquePushTyped(state.worldReactionsSeen, "printer_wake"),
+            "empty_chair"
+          ),
+          leadsUnlocked: uniquePushTyped(
+            uniquePushTyped(state.leadsUnlocked, "historical"),
+            "acoustic"
+          ),
+        };
+      }
+      if (observerCount === 3) {
+        state = {
+          ...state,
+          flags: {
+            ...state.flags,
+            observer_reconstruction_complete: true,
+          },
+          narrativeBeatsSeen: uniquePushTyped(
+            state.narrativeBeatsSeen,
+            "observer_reconstructed"
+          ),
+        };
+      }
+      return {
+        state: touch(state),
+        caseAnswerResult: {
+          questionId: event.questionId,
+          accepted: true,
+          reason: "accepted",
+        },
+      };
+    }
+    case "SET_HYPOTHESIS":
+      state = {
+        ...state,
+        hypotheses: {
+          ...state.hypotheses,
+          [event.hypothesisId]: {
+            status: event.status,
+            evidenceIds: Array.from(new Set(event.evidenceIds)).sort(),
+            updatedAt: Date.now(),
+          },
+        },
+      };
+      break;
+    case "UNLOCK_LEAD":
+      if (state.leadsUnlocked.includes(event.leadId)) break;
+      state = {
+        ...state,
+        leadsUnlocked: [...state.leadsUnlocked, event.leadId],
+      };
+      break;
+    case "SEE_NARRATIVE_BEAT":
+      if (state.narrativeBeatsSeen.includes(event.beatId)) break;
+      state = {
+        ...state,
+        narrativeBeatsSeen: [...state.narrativeBeatsSeen, event.beatId],
+      };
+      break;
+    case "TRIGGER_WORLD_REACTION":
+      if (state.worldReactionsSeen.includes(event.reactionId)) break;
+      state = {
+        ...state,
+        worldReactionsSeen: [...state.worldReactionsSeen, event.reactionId],
+      };
+      break;
+    case "RECORD_CHOICE":
+      if (
+        state.playerChoices.some(
+          (choice) => choice.choiceId === event.choiceId
+        )
+      ) {
+        break;
+      }
+      state = {
+        ...state,
+        playerChoices: [
+          ...state.playerChoices,
+          {
+            choiceId: event.choiceId,
+            optionId: event.optionId,
+            chosenAt: Date.now(),
+          },
+        ],
+      };
+      break;
+    case "DISCOVER_OPTIONAL":
+      if (state.optionalDiscoveries.includes(event.discoveryId)) break;
+      state = {
+        ...state,
+        optionalDiscoveries: [
+          ...state.optionalDiscoveries,
+          event.discoveryId,
+        ],
+      };
+      break;
+    case "SEE_ASSET_VARIANT":
+      if (state.assetVariantsSeen.includes(event.variantId)) break;
+      state = {
+        ...state,
+        assetVariantsSeen: [...state.assetVariantsSeen, event.variantId],
+      };
+      break;
     case "RESET_BOARD_LAYOUT":
       if (Object.keys(state.boardPositions).length === 0) break;
       state = { ...state, boardPositions: {} };

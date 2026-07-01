@@ -55,6 +55,8 @@ export const validateLineageYear = (query: string): ValidationResult => {
 export type RunCommandError =
   | "missing_references"
   | "wrong_order"
+  | "case_incomplete"
+  | "seal_unavailable"
   | "invalid_command";
 
 export interface RunCommandResult {

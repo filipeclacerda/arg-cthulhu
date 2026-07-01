@@ -133,6 +133,7 @@ const en = {
   presenceAway: "Away",
   presenceOffline: "Offline",
   presenceBusy: "Busy",
+  isTypingLabel: "is typing...",
   sysSarahOnlineBlip: "SYSTEM: Sarah Bishop changed status to Online for 1 second.",
   sysMiriamReceipt:
     "SYSTEM: M.BISHOP acknowledged a message sent after account closure.",
@@ -403,6 +404,7 @@ const pt: Record<keyof typeof en, string> = {
   presenceAway: "Ausente",
   presenceOffline: "Offline",
   presenceBusy: "Ocupado",
+  isTypingLabel: "está digitando...",
   sysSarahOnlineBlip:
     "SISTEMA: Sarah Bishop mudou o status para Online por 1 segundo.",
   sysMiriamReceipt:

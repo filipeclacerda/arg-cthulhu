@@ -1,9 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import React, { FormEvent, useEffect, useReducer, useState } from "react";
+import React, { FormEvent, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { useProgress } from "@/app/context/ProgressContext";
-import { chats } from "@/app/data/chats";
+import { ChatThread, chats } from "@/app/data/chats";
 import { isUnlocked } from "@/app/data/filesystem";
 import {
   createMessengerState,
@@ -30,15 +30,88 @@ const Messenger = () => {
     state: progress,
     discoverEvidence,
     corruptionStage,
+    dispatchGameEvent,
   } = useProgress();
   const { t } = useI18n();
   const presenceLabel = (presence: keyof typeof PRESENCE_LABELS | undefined) =>
     t(PRESENCE_LABELS[presence ?? "offline"]);
   const [presencePulse, setPresencePulse] = useState(false);
+  const [ghostTyping, setGhostTyping] = useState(false);
+  const [hesitating, setHesitating] = useState(false);
+  const ghostTypingShown = useRef(false);
   const solvedPuzzleIds = Object.entries(progress.puzzles)
     .filter(([, puzzle]) => Boolean(puzzle.solvedAt))
     .map(([id]) => id as keyof typeof progress.puzzles);
-  const visibleThreads = chats.filter((thread) =>
+  const liveThread = useMemo<ChatThread | null>(
+    () =>
+      flags.sarah_msn_live
+        ? {
+            id: "chat-sarah-live",
+            title: "Sarah Bishop (tomorrow)",
+            contactId: "future-sarah",
+            mode: "choices",
+            unlock: { type: "flag", flag: "sarah_msn_live" },
+            evidenceId: "sarah_live_chat",
+            participants: [
+              {
+                id: "sarah",
+                displayName: progress.playerName || "Observer",
+                address: "relay07@local",
+                presence: "online",
+              },
+              {
+                id: "future-sarah",
+                displayName: "Sarah Bishop",
+                address: "sarah.bishop@tomorrow",
+                presence: "online",
+              },
+            ],
+            messages: [
+              {
+                id: "sarah-live-1",
+                senderId: "future-sarah",
+                timestamp: resolveTokens("{TOMORROW} 03:14"),
+                body:
+                  progress.locale === "pt-BR"
+                    ? "Não feche ainda. Quando a janela some, eu continuo vendo o lugar onde ela estava."
+                    : "Don't close this yet. When the window disappears, I can still see where it was.",
+              },
+              {
+                id: "sarah-live-2",
+                senderId: "future-sarah",
+                timestamp: resolveTokens("{TOMORROW} 03:14"),
+                body:
+                  progress.locale === "pt-BR"
+                    ? "Faça uma pergunta. Acho que ele só permite uma."
+                    : "Ask one question. I think it only allows one.",
+              },
+            ],
+            suggestedReplies: [
+              {
+                id: "alive",
+                label: progress.locale === "pt-BR" ? "Você está viva?" : "Are you alive?",
+                body: progress.locale === "pt-BR" ? "Você está viva?" : "Are you alive?",
+              },
+              {
+                id: "restore",
+                label: progress.locale === "pt-BR" ? "O que RESTORE faz?" : "What does RESTORE do?",
+                body: progress.locale === "pt-BR" ? "O que RESTORE faz?" : "What does RESTORE do?",
+              },
+              {
+                id: "break",
+                label: progress.locale === "pt-BR" ? "Como quebramos isso?" : "How do we break it?",
+                body: progress.locale === "pt-BR" ? "Como quebramos isso?" : "How do we break it?",
+              },
+            ],
+          }
+        : null,
+    [flags.sarah_msn_live, progress.locale, progress.playerName]
+  );
+  const allThreads = useMemo(
+    () => (liveThread ? [...chats, liveThread] : chats),
+    [liveThread]
+  );
+  const visibleThreads = allThreads.filter((thread) =>
     isUnlocked(thread.unlock, {
       flags,
       discoveredEvidenceIds,
@@ -47,18 +120,55 @@ const Messenger = () => {
   );
   const [runtime, dispatch] = useReducer(
     (state: MessengerRuntimeState, event: MessengerEvent) =>
-      reduceMessenger(state, event, chats),
-    createMessengerState(chats)
+      reduceMessenger(state, event, allThreads),
+    createMessengerState(allThreads)
   );
   const selected =
     visibleThreads.find((thread) => thread.id === runtime.selectedThreadId) ??
     visibleThreads[0];
 
   useEffect(() => {
+    if (liveThread && !progress.playerChoices.some((choice) => choice.choiceId === "sarah_live_seen")) {
+      dispatch({ type: "OPEN_THREAD", threadId: liveThread.id });
+      dispatchGameEvent({
+        type: "RECORD_CHOICE",
+        choiceId: "sarah_live_seen",
+        optionId: "opened",
+      });
+    }
+  }, [dispatchGameEvent, liveThread, progress.playerChoices]);
+
+  useEffect(() => {
     if (selected?.evidenceId) {
       discoverEvidence(selected.evidenceId, selected.id);
     }
   }, [discoverEvidence, selected]);
+
+  // Tom's account was disabled in-fiction, so this "typing" flicker never resolves
+  // into a message — it happens once, the first time the archived thread is opened
+  // after the pattern is named, and then never again.
+  useEffect(() => {
+    if (
+      selected?.id !== "chat-tom" ||
+      !progress.puzzles.lineage.solvedAt ||
+      ghostTypingShown.current
+    ) {
+      return;
+    }
+    ghostTypingShown.current = true;
+    dispatchGameEvent({ type: "TRIGGER_WORLD_REACTION", reactionId: "contact_typing" });
+    const showTimer = window.setTimeout(() => setGhostTyping(true), 700);
+    const hideTimer = window.setTimeout(() => setGhostTyping(false), 4200);
+    return () => {
+      clearTimeout(showTimer);
+      clearTimeout(hideTimer);
+    };
+  }, [dispatchGameEvent, progress.puzzles.lineage.solvedAt, selected]);
+
+  useEffect(() => {
+    if (!liveThread || selected?.id !== liveThread.id) return;
+    dispatchGameEvent({ type: "TRIGGER_WORLD_REACTION", reactionId: "cursor_hesitation" });
+  }, [dispatchGameEvent, liveThread, selected]);
 
   useEffect(() => {
     if (corruptionStage < 2) {
@@ -132,6 +242,59 @@ const Messenger = () => {
   const send = (event: FormEvent) => {
     event.preventDefault();
     dispatch({ type: "SEND_MESSAGE", threadId: selected.id });
+  };
+
+  const chooseLiveReply = (replyId: string, body: string) => {
+    if (
+      progress.playerChoices.some(
+        (choice) => choice.choiceId === "sarah_live_question"
+      )
+    ) {
+      return;
+    }
+    // The pointer visibly stalls before the click registers — the one moment the
+    // interface admits something is reading the choice before it is made.
+    setHesitating(true);
+    window.setTimeout(() => setHesitating(false), 550);
+    dispatch({
+      type: "SEND_MESSAGE",
+      threadId: selected.id,
+      body,
+    });
+    dispatchGameEvent({
+      type: "RECORD_CHOICE",
+      choiceId: "sarah_live_question",
+      optionId: replyId,
+    });
+    const response: Record<string, { en: string; pt: string }> = {
+      alive: {
+        en: "Not in the same tense as you. I still remember having a body.",
+        pt: "Não no mesmo tempo verbal que você. Ainda lembro de ter um corpo.",
+      },
+      restore: {
+        en: "It changes which name is in SOURCE and which one is in ARCHIVE. I did not understand that until your field appeared.",
+        pt: "Ele troca qual nome fica em SOURCE e qual fica em ARCHIVE. Eu não entendi isso até seu campo aparecer.",
+      },
+      break: {
+        en: "Mom tried leaving a blank. Tom tried stopping the copy. Maybe the archive has to become the thing that watches.",
+        pt: "Mamãe tentou deixar um espaço vazio. Tom tentou parar a cópia. Talvez o arquivo precise se tornar aquilo que observa.",
+      },
+    };
+    window.setTimeout(() => {
+      dispatch({
+        type: "RECEIVE_MESSAGE",
+        threadId: selected.id,
+        message: {
+          id: `sarah-live-response-${replyId}`,
+          senderId: "future-sarah",
+          timestamp: resolveTokens("{TOMORROW} 03:15"),
+          body:
+            progress.locale === "pt-BR"
+              ? response[replyId].pt
+              : response[replyId].en,
+        },
+      });
+    }, 850);
   };
 
   return (
@@ -231,21 +394,33 @@ const Messenger = () => {
                 </div>
               );
             })}
+            {ghostTyping && selected.id === "chat-tom" && (
+              <div className="messenger__message messenger__message--ghost-typing">
+                <div>
+                  <strong>{contact?.displayName ?? "Tom Alvarez"}</strong>
+                  <time>{presenceLabel("offline")}</time>
+                </div>
+                <p>
+                  <i>{t("isTypingLabel")}</i>
+                </p>
+              </div>
+            )}
           </div>
 
           {selected.mode === "choices" && (
-            <div className="messenger__suggested-replies">
+            <div
+              className={`messenger__suggested-replies ${
+                hesitating ? "messenger__suggested-replies--hesitating" : ""
+              }`}
+            >
               {selected.suggestedReplies?.map((reply) => (
                 <button
                   key={reply.id}
                   className="button"
-                  onClick={() =>
-                    dispatch({
-                      type: "SEND_MESSAGE",
-                      threadId: selected.id,
-                      body: reply.body,
-                    })
-                  }
+                  disabled={progress.playerChoices.some(
+                    (choice) => choice.choiceId === "sarah_live_question"
+                  )}
+                  onClick={() => chooseLiveReply(reply.id, reply.body)}
                 >
                   {reply.label}
                 </button>

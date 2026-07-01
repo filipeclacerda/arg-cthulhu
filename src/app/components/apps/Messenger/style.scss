@@ -274,6 +274,28 @@
     padding: 0 8px;
     font-size: 10px;
   }
+
+  &--hesitating {
+    cursor: wait;
+
+    .button {
+      cursor: wait;
+      pointer-events: none;
+    }
+  }
+}
+
+.messenger__message--ghost-typing {
+  opacity: 0.6;
+
+  strong {
+    color: #8a97a6;
+  }
+
+  p {
+    color: #8a97a6;
+    font-style: italic;
+  }
 }
 
 .messenger__composer {

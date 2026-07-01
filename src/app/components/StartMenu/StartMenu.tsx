@@ -18,6 +18,7 @@ interface ProgramEntry {
   id: string;
   title?: string;
   props?: Record<string, unknown>;
+  maximized?: boolean;
 }
 
 const PROGRAMS: ProgramEntry[] = [
@@ -51,6 +52,25 @@ const PROGRAMS: ProgramEntry[] = [
 
 const ACCESSORIES: ProgramEntry[] = [
   {
+    id: "case-reconstruction",
+    label: "Case Reconstruction",
+    icon: "/icons/folder-special.png",
+    appType: "case-reconstruction",
+    maximized: true,
+  },
+  {
+    id: "case-timeline",
+    label: "Case Timeline",
+    icon: "/icons/favorites.png",
+    appType: "timeline",
+  },
+  {
+    id: "archive-viewer",
+    label: "Archive Viewer",
+    icon: "/icons/drive.png",
+    appType: "archive-viewer",
+  },
+  {
     id: "case-notes",
     label: "Case Notes",
     labelKey: "caseNotesLabel",
@@ -70,6 +90,7 @@ const ACCESSORIES: ProgramEntry[] = [
     labelKey: "evidenceBoardLabel",
     icon: "/icons/folder-special.png",
     appType: "evidence-board",
+    maximized: true,
   },
   {
     id: "calculator",
@@ -165,18 +186,31 @@ const StartMenu = () => {
       appType: entry.appType,
       title: entry.title ?? entryLabel(entry),
       props: entry.props,
+      maximized: entry.maximized,
     });
     closeMenu();
   };
 
   const executeRunCommand = () => {
     const command = runInput.trim();
+    const sealCommand =
+      command.toUpperCase().replace(/\s+/g, " ") ===
+      "INDEX /SEAL RELAY-07 /WITNESS ARCHIVE";
     setRunInput("");
     setShowRun(false);
     const result = runCommand(command);
 
     if (result.commandAccepted) {
       play("chime");
+      if (sealCommand) {
+        openWindow({
+          id: "finale",
+          appType: "finale",
+          title: "RECOVERED PROGRAM / LOOPBACK",
+          props: { windowClassName: "corrupted" },
+        });
+        return;
+      }
       openWindow({
         id: "indexer-result",
         appType: "generic",
@@ -195,6 +229,14 @@ const StartMenu = () => {
         ? t("missingReferences")
         : result.commandError === "wrong_order"
           ? t("wrongOrder")
+          : result.commandError === "case_incomplete"
+            ? locale === "pt-BR"
+              ? "O índice recusou a operação. Três conclusões sobre o observador ainda não foram retidas em Case Reconstruction."
+              : "The index refused the operation. Three observer findings have not been retained in Case Reconstruction."
+            : result.commandError === "seal_unavailable"
+              ? locale === "pt-BR"
+                ? "O arquivo não reconhece a si mesmo como testemunha. Seis correlações independentes são necessárias."
+                : "The archive does not recognize itself as a witness. Six independent correlations are required."
           : t("invalidCommand");
     openWindow({
       appType: "generic",
