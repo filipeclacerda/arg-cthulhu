@@ -102,6 +102,18 @@ sempre tem a data do dia seguinte — e por isso, no jogo, essa data é **comput
 real do jogador**: vale para todos, para sempre. Sarah está perpetuamente próxima, nunca no
 presente.
 
+## Miriam no amanhã (regra interna do twist)
+
+Miriam também permanece no intervalo de “amanhã”. Desde 1998, a conta `M.BISHOP`, a segunda
+voz de `counting.wav`, a anotação marginal datada de amanhã e a sessão de 10.227 dias são
+manifestações da mesma presença. Sarah gravou um dueto com a mãe sem reconhecê-la.
+
+Isso não transforma Miriam numa guardiã benevolente. A equipe nunca decide se sua contagem
+retarda o fechamento da sequência ou ajuda a completá-la. A regra dramática é absoluta:
+Miriam nunca fala em prosa in-game. Ela só aparece em números, campos de formulário,
+metadados, marginália e traços interrompidos. Até quando Sarah reconhece a presença, o jogo
+mostra apenas campos fragmentados; nenhuma fala completa é atribuída a Miriam.
+
 ## A linhagem (o padrão)
 
 Desaparecimentos ligados ao mesmo texto recorrem: 1798, 1863, 1912, 1949, 1977, 1998… e agora.
@@ -112,7 +124,8 @@ no **presente do caso** (2014 + ~12 = 2026). O padrão não é uma lista de trag
 imprima a conclusão.
 
 A "contagem" que Sarah ouve nos sonhos não é regressiva: é o número de pessoas que ainda
-precisam observar o padrão para torná-lo real.
+precisam observar o padrão para torná-lo real. A voz que conduz essa contagem corresponde a
+Miriam, mas permanece impossível saber se ela conta a favor do total ou contra ele.
 
 ## Estrutura em três atos
 
@@ -151,17 +164,20 @@ O último programa oferece **RESTORE SARAH** e **SHUT DOWN**.
 - **RESTORE SARAH** — chega uma comunicação fragmentada dela; Sarah retorna ao presente. O
   computador reinicia, mas agora a conta se chama `sarah.bishop` e contém arquivos **recentes
   do jogador**, datados de amanhã. Ninguém explica a troca; o jogador sente o chão sumir
-  sozinho. (Sarah escapou trocando de lugar com quem a observava — isto **não** se diz.)
+  sozinho. O terminal retém uma segunda sessão identificada apenas como `M.B.`; Sarah sai,
+  Miriam permanece. (Sarah escapou trocando de lugar com quem a observava — isto **não** se
+  diz.)
 - **SHUT DOWN** — o ritual fica incompleto. Após os créditos, um último e-mail de Sarah:
   > Obrigada por parar.
   > Sinto muito por precisar tentar de novo.
   Data: amanhã. Destinatário: outra pessoa. Recusar não derrota a entidade — só faz o
-  computador procurar o próximo observador.
+  computador procurar o próximo observador. A contagem pausa por uma respiração e recomeça.
 - **SEAL RELAY** — final secreto. Depois de seis correlações opcionais, o jogador pode
   registrar o arquivo como sua própria testemunha e selar o Relay 07 num loop. Sarah não
   retorna e ninguém ocupa o lugar dela. O checksum muda sem operação de escrita, deixando
-  incerto se houve contenção ou apenas uma nova forma de propagação. Este não é o “final
-  correto”; é uma terceira consequência.
+  incerto se houve contenção ou apenas uma nova forma de propagação. `COUNT: HELD` não
+  esclarece se Miriam foi contida junto com a sequência. Este não é o “final correto”; é uma
+  terceira consequência.
 
 ## Regras de contenção (tom)
 

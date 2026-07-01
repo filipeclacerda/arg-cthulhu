@@ -94,9 +94,7 @@ CHECKSUM: 7A:11:08
 NO WRITE OPERATION WAS RECORDED.`}</pre>
         </div>
         <p className="finale-caption">
-          {locale === "pt-BR"
-            ? "O arquivo está observando a si mesmo. Sarah não voltou. Você ainda está aqui — provavelmente."
-            : "The archive is watching itself. Sarah did not return. You are still here — probably."}
+          {t("finaleSealCaption")}
         </p>
       </div>
     );

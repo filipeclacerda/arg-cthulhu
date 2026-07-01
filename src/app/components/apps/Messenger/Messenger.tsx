@@ -230,6 +230,17 @@ const Messenger = () => {
           },
         ]
       : []),
+    ...(progress.puzzles.future_log.solvedAt && selected.id === "chat-library"
+      ? [
+          {
+            id: "dynamic-miriam-session",
+            senderId: "staff",
+            timestamp: resolveTokens("{TOMORROW} 03:14"),
+            body: t("sysMiriamSession"),
+            kind: "system" as const,
+          },
+        ]
+      : []),
   ];
   const messages = [
     ...selected.messages.map((message) => ({

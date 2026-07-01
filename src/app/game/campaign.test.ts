@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { chats } from "../data/chats";
 import { emails } from "../data/emails";
+import { EVIDENCE_CARDS } from "../data/evidenceBoard";
 import { files } from "../data/filesystem";
 import {
   localizedChatMessage,
@@ -8,6 +9,7 @@ import {
   localizedEmail,
   localizedFileContent,
 } from "../data/localizedNarrative";
+import { translate } from "../i18n";
 import {
   CASE_STATEMENTS,
   TOKEN_SOURCE_EVIDENCE,
@@ -139,5 +141,47 @@ describe("campaign graph", () => {
     expect(
       localizedBrowserText("forum_7411_meta", "fallback", "pt-BR")
     ).toContain("Thread #7411");
+  });
+
+  it("plants Miriam's second-voice identity only through fields and metadata", () => {
+    const marginMatch = files.find(
+      (file) => file.id === "miriam_margin_match"
+    );
+    const transcript = files.find((file) => file.id === "counting");
+    const todo = files.find((file) => file.id === "todo");
+    const shutdownEmail = emails.find(
+      (email) => email.id === "email-finale-shutdown"
+    );
+
+    expect(marginMatch).toMatchObject({
+      folderId: "lineage-dossiers",
+      evidenceId: "miriam_margin_match",
+      unlock: { type: "flag", flag: "act1_reconstruction_complete" },
+    });
+    expect(marginMatch?.content).toContain("ATTRIBUTED HAND: M. BISHOP");
+    expect(marginMatch?.content).not.toMatch(/M\. BISHOP:\s+[A-Za-z]/);
+    expect(EVIDENCE_CARDS.miriam_margin_match).toBeDefined();
+    expect(transcript?.content).toContain(
+      "Closest match withheld by administrative order"
+    );
+    expect(todo?.content).toContain("did Mom count UP or DOWN?");
+    expect(shutdownEmail?.body).toContain(
+      "The counting paused when you chose"
+    );
+    expect(
+      localizedFileContent(
+        marginMatch?.id ?? "",
+        marginMatch?.content ?? "",
+        "pt-BR"
+      )
+    ).toContain("MÃO ATRIBUÍDA: M. BISHOP");
+    expect(translate("en", "voiceTwoMiriamMatch")).toContain("M. BISHOP");
+    expect(translate("pt-BR", "sysMiriamSession")).toContain("10.227 dias");
+    expect(translate("en", "finaleRestoreTerminal")).toContain(
+      "SECOND SESSION RETAINED — M.B."
+    );
+    expect(translate("pt-BR", "finaleSealCaption")).toContain(
+      "mudou de direção"
+    );
   });
 });

@@ -99,7 +99,9 @@ Duas frases completas fazem `RECOVERED` reaparecer. As três acordam a impressor
 criam `MIRIAM_DRAFT.PRN` e abrem `RECOVERED/LINEAGE`.
 
 Dentro de `LINEAGE`, leia os dossiês de 1863, 1912, 1949 e 1977, o registro de Eleanor
-Vale em 2014 e o rastro particular da Em. O achado histórico opcional é:
+Vale em 2014, `miriam_margin_match.txt` e o rastro particular da Em. O laudo compara uma
+anotação de 1998 a outra datada de amanhã e atribui ambas à mão de Miriam. O achado histórico
+opcional é:
 
 ```text
 1977 → Bishop → an intentionally incomplete ledger
@@ -231,6 +233,9 @@ YHANTHLEI
 
 Isso abre o registro hidrográfico e libera `CHAPTER_SEVEN`.
 
+Neste momento, o transcript só informa que a segunda voz corresponde ao arquivo de ditados
+da equipe; a identidade mais próxima foi retida administrativamente.
+
 ## 6. A linhagem
 
 A página de Y'ha-nthlei mostra:
@@ -295,6 +300,20 @@ Ao completar a ordem:
 - a corrupção chega ao estágio 3;
 - `INDEX.HLP` aparece em `CHAPTER_SEVEN`;
 - quatro referências passam a ser reveladas nos metadados.
+
+Abra novamente **Properties** de `counting.wav`. Depois de `future_log`, surgem:
+
+```text
+VOICE 1: S. BISHOP
+VOICE 2: M. BISHOP (LEGACY DICTATION MATCH, ACCOUNT CLOSED 1998)
+```
+
+No MSN, a conversa da biblioteca também recebe:
+
+```text
+SYSTEM: Legacy account M.BISHOP is still authenticated.
+Session duration: 10,227 days.
+```
 
 ## 8. As quatro referências
 
@@ -400,6 +419,9 @@ Escolha **RESTORE SARAH**.
 
 Sarah envia um sinal e reaparece no presente. O computador reinicia como `sarah.bishop`, mas
 agora encontra documentos recentes pertencentes ao jogador, todos datados de amanhã.
+Entre a perda do sinal e o reboot, o terminal registra
+`SECOND SESSION RETAINED — M.B.`. Em `welcome_back.txt`, a segunda sessão continua aberta e
+restam apenas os campos `TOMATO / SARAH / FINISH —`.
 
 **Significado:** Sarah só consegue sair trocando de posição com o observador. O jogo não
 declara isso diretamente, mas o jogador ocupa o lugar temporal em que ela estava presa.
@@ -415,6 +437,7 @@ e-mail de Sarah:
 Thank you for stopping.
 I'm sorry I have to try again.
 Tom asked me to say: the coffee was never that bad.
+The counting paused when you chose. One breath. That's how I know she heard it too.
 ```
 
 **Significado:** o jogador não é substituído, mas Sarah continua presa. O arquivo procura
@@ -442,7 +465,8 @@ INDEX /SEAL RELAY-07 /WITNESS ARCHIVE
 
 O arquivo passa a ocupar simultaneamente os campos de arquivo e testemunha. Sarah não é
 restaurada, mas nenhum novo observador humano parece ser exigido. Depois, o checksum muda
-sem operação de escrita.
+sem operação de escrita. `RELAY_07.SEALED` acrescenta `COUNT: HELD`; a legenda informa que
+a contagem não parou, apenas mudou de direção.
 
 **Significado:** a contenção pode ter formado um circuito fechado — ou ensinado o arquivo a
 se reproduzir sem pessoas. O jogo deliberadamente não confirma qual leitura é correta.
@@ -523,8 +547,10 @@ O jogador não é amigo de Tom, colega de Sarah ou destinatário de um e-mail de
 É a pessoa que abriu um link anônimo para o relay. Nesse instante, o quarto destinatário é
 gerado retroativamente e a sessão recebe a designação do observador.
 
-Sarah, agindo a partir de amanhã, contaminou a fila do relay. Tom nunca escolheu pessoalmente
-o jogador. A imagem chega a qualquer pessoa que demonstre a disposição de abri-la. Por isso:
+O jogo não confirma se Sarah, agindo a partir de amanhã, contaminou a fila do relay ou se o
+próprio arquivo fabricou essa explicação depois de ser observado. Tom nunca escolheu
+pessoalmente o jogador. A imagem chega a qualquer pessoa que demonstre a disposição de
+abri-la. Por isso:
 
 > A curiosidade é o endereço.
 
@@ -572,6 +598,16 @@ Sarah percebe que a voz não conta dias. Ela conta pessoas: observadores necess�
 tornar a lembrança da entidade estável.
 
 É por isso que o puzzle manda contar nomes, e não datas.
+
+### Quem é a segunda voz?
+
+Depois do `future_log`, as Properties identificam a segunda voz como Miriam Bishop por
+correspondência com ditados antigos. O login de `M.BISHOP`, o laudo das margens de 1998 e
+amanhã, o spool de impressão e a sessão de 10.227 dias apontam para a mesma conclusão:
+Miriam continua ativa no intervalo temporal em que Sarah e Tom foram retidos.
+
+O jogo não determina se Miriam conta para completar a sequência ou para atrasá-la. Ela nunca
+fala em frases: aparece somente em números, campos, metadados e traços interrompidos.
 
 ### Relação com At the Mountains of Madness
 

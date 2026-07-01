@@ -1,6 +1,23 @@
 import { Locale } from "../game/progress";
 
 const FILES_PT: Record<string, string> = {
+  todo: `- ligar para Em (ligar de verdade)
+- café, lâmpadas, mais papel-toalha
+- pedir ao Tom que cubra o seminário de quinta
+- trocar o tapete sob a mesa?? segunda vez esta semana que fica úmido. manutenção diz que não há vazamento acima.
+- o carpete cheira a praia. cresci a três horas da praia mais próxima.
+- perguntar à Em: mamãe contava UP ou DOWN? não lembro. isso importa.
+- terminar a transcrição do cap. 7
+- dormir`,
+  counting: `[Áudio recuperado do escritório. 4 min 11 s. Transcrição automática; a segunda voz não pôde ser convertida em texto.]
+
+[VOICE 2: correspondência com o arquivo de ditados da equipe. Correspondência mais próxima retida por ordem administrativa.]
+
+S. BISHOP: ...certo. É dia catorze. Estou gravando isto para provar que não estou — [pausa] — está fazendo de novo. Escute.
+
+[Uma contagem. A voz de Sarah acompanha, meio segundo atrasada, como se lesse junto com algo que consegue ouvir, mas o microfone não.]
+
+S. BISHOP (sussurro): ...não é quantos dias. É quantas pessoas.`,
   police_report: `SEGURANÇA DO CAMPUS MISKATONIC — INCIDENTE 2026-0318-2
 ASSUNTO: Bishop, S. (Coleções Especiais)
 ÚLTIMA CONFIRMAÇÃO DA PESSOA NO LOCAL: 16/03/2026
@@ -42,6 +59,15 @@ M. Bishop recusou-se a assinar a última linha. O supervisor escreveu "supersti�
 O voluntário desaparecido naquela noite era Daniel Carter, o Carter citado no registro costeiro.
 
 Em 1998, Miriam solicitou a mesma caixa usando uma cota nunca atribuída.`,
+  miriam_margin_match: `COMPARAÇÃO DE CALIGRAFIA / GAVETA HIDROGRÁFICA
+
+FONTE A: anotação de incorporação / 03/09/1998
+FONTE B: anotação marginal / {TOMORROW} 03:10
+MÃO ATRIBUÍDA: M. BISHOP
+CORRESPONDÊNCIA: 98,7%
+
+TRAÇO FINAL: interrompido no mesmo ângulo
+STATUS ADMINISTRATIVO: REVISÃO RETIDA`,
   victim_2014: `ESPELHO EXTERNO / CORRELAÇÃO DE PESSOAL / 18 DE MAIO DE 2014
 
 O crachá 14-EV pertencia a Eleanor Vale, técnica noturna de digitalização. Vale desapareceu durante uma falha de checksum às 03:14 e foi considerada presumida morta.
@@ -159,6 +185,7 @@ ORIGEM: não resolvida
 ARQUIVO: SB-0316
 TESTEMUNHA: SB-0316
 DESTINATÁRIOS: 3
+CONTAGEM: RETIDA
 
 O quarto campo está vazio outra vez.
 
@@ -262,7 +289,27 @@ Agora estes são os seus arquivos. Eles estão datados de amanhã porque é de l
 
 Vou observar você. Do mesmo modo que você me observou.
 
-— S.`,
+— S.
+
+P.S. Uma segunda sessão continua aberta: M.BISHOP. Os únicos campos legíveis são TOMATE / SARAH / TERMINAR —`,
+  case_correlations: `[Gerado pelo Indexador de Recuperação após seis correlações independentes serem retidas.]
+
+LOTE 114:
+O segundo volume não retornou para a família Bishop. Retornou através dela.
+
+CATALOGADORAS:
+Miriam e Sarah ocupam o mesmo campo em registros separados por vinte e oito anos.
+O campo não é "proprietário". O rótulo danificado pode dizer "testemunha".
+
+RELAY:
+Alvarez criou a cópia, mas a cópia criou o destinatário. A cadeia de custódia começa depois que cada pessoa a abre.
+
+Nenhuma conclusão foi registrada para o intervalo de 2014.
+Nenhuma recuperação física de Thomas Alvarez foi registrada.
+Nenhum sistema externo confirmou que Sarah Bishop retornou.
+Não foi determinado se a segunda voz conta a favor do total ou contra ele.
+
+O arquivo marcou estas omissões como intencionais.`,
 };
 
 const EMAILS_PT: Record<string, { subject: string; body: string }> = {
@@ -372,6 +419,8 @@ O arquivo irá para outra pessoa — alguém curioso, gentil ou assustado o bast
 
 Tom pediu que eu dissesse: o café nunca foi tão ruim assim.
 
+A contagem parou quando você escolheu. Uma respiração. Foi assim que soube que ela também ouviu.
+
 — S.
 
 P.S. O nome do novo destinatário já está no log. Você não quer saber qual é.
@@ -449,6 +498,10 @@ const BOARD_CARDS_PT: Record<string, { title: string; summary: string }> = {
   lineage_1977: {
     title: "Transferência Bishop, 1977",
     summary: "Miriam herdou um livro-razão incompleto da mesa Akeley.",
+  },
+  miriam_margin_match: {
+    title: "Comparação das margens de Miriam",
+    summary: "Anotações datadas de 1998 e de amanhã pertencem à mesma mão.",
   },
   victim_2014: {
     title: "Correlação externa, 2014",

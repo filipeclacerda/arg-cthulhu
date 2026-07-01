@@ -557,6 +557,7 @@ March 16 —`,
 - ask Tom to cover Thursday seminar
 - replace the rug under the desk?? second time this week it's damp. building says no leaks above me.
 - the carpet smells like the beach. I grew up three hours from the nearest beach.
+- ask Em: did Mom count UP or DOWN? can't remember. it matters.
 - finish ch. 7 transcription
 - sleep`,
   },
@@ -742,6 +743,8 @@ If you are reading this, the desktop is already starting to remember things that
     unlock: { type: "puzzleSolved", puzzleId: "margin_cipher" },
     evidenceId: "counting_transcript",
     content: `[Audio recovered from the office. 4 min 11 sec. Auto-transcribed; the second voice could not be rendered to text.]
+
+[VOICE 2: pattern-matched against staff dictation archive. Closest match withheld by administrative order.]
 
 S. BISHOP: ...okay. It's the fourteenth. I'm recording this so there's proof I'm not — [pause] — it's doing it again. Listen.
 
@@ -1037,6 +1040,25 @@ The library volunteer reported missing that evening was Daniel Carter, the Carte
 In 1998, Miriam requested this exact box by a shelfmark that had never been assigned.`,
   },
   {
+    id: "miriam_margin_match",
+    name: "miriam_margin_match.txt",
+    folderId: "lineage-dossiers",
+    kind: "text",
+    unlock: { type: "flag", flag: "act1_reconstruction_complete" },
+    evidenceId: "miriam_margin_match",
+    alias: "MIRIAM~2.TXT",
+    modified: "{TOMORROW} 03:10",
+    content: `HANDWRITING COMPARISON / HYDROGRAPHIC DRAWER
+
+SOURCE A: accession annotation / 1998-09-03
+SOURCE B: margin annotation / {TOMORROW} 03:10
+ATTRIBUTED HAND: M. BISHOP
+MATCH: 98.7%
+
+FINAL STROKE: interrupted at identical angle
+ADMINISTRATIVE STATUS: REVIEW WITHHELD`,
+  },
+  {
     id: "victim_2014",
     name: "2014_offsite_personnel_match.txt",
     folderId: "lineage-dossiers",
@@ -1112,7 +1134,9 @@ These are your files now. They're dated {TOMORROW}, because that's where you are
 
 I'll watch for you. The way you watched for me.
 
-— S.`,
+— S.
+
+P.S. A second session is still open: M.BISHOP. The only readable fields are TOMATO / SARAH / FINISH —`,
   },
   {
     id: "miriam_draft",
@@ -1210,6 +1234,7 @@ SOURCE: unresolved
 ARCHIVE: SB-0316
 WITNESS: SB-0316
 RECIPIENTS: 3
+COUNT: HELD
 
 The fourth field is empty again.
 
@@ -1253,6 +1278,7 @@ custody begins after each person opens it.
 No conclusion was recorded for the 2014 interval.
 No physical recovery of Thomas Alvarez was recorded.
 No external system has confirmed that Sarah Bishop returned.
+No determination was made whether the second voice counts toward the total or against it.
 
 The archive has marked these omissions as intentional.`,
   },

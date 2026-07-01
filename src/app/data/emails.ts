@@ -239,6 +239,8 @@ Maybe this time someone will stop sooner.
 
 Tom asked me to say: the coffee was never that bad.
 
+The counting paused when you chose. One breath. That's how I know she heard it too.
+
 — S.
 
 P.S. The new recipient's name is already in the access log. I won't tell you who it is. You don't want to know.
