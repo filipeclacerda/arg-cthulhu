@@ -7,6 +7,7 @@ import { useWindowManager } from "@/app/context/WindowManagerContext";
 import { resolveTokens } from "@/app/utils/narrative";
 import { puzzleHintsFor } from "@/app/game/puzzles";
 import { localizedFileContent } from "@/app/data/localizedNarrative";
+import ClueText from "@/app/components/ClueText/ClueText";
 import { useI18n } from "@/app/i18n";
 
 interface NotepadProps {
@@ -151,7 +152,12 @@ const Notepad = ({ fileId }: NotepadProps) => {
         </button>
       </div>
       <div className="notepad-textarea">
-        <pre className="notepad-content">{resolvedContent}</pre>
+        <ClueText
+          as="pre"
+          className="notepad-content"
+          text={resolvedContent}
+          clues={file.clues}
+        />
       </div>
       {file.kind === "cipher" && !solved && (
         <div className="notepad-answer">

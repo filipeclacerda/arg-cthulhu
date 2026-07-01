@@ -1,4 +1,5 @@
 import { UnlockCondition } from "./filesystem";
+import { ClueMarker } from "../game/campaign";
 
 export type MessengerPresence = "online" | "away" | "busy" | "offline";
 export type MessengerThreadMode = "readonly" | "choices" | "freeform";
@@ -16,6 +17,8 @@ export interface ChatMessage {
   timestamp: string;
   body: string;
   kind?: "message" | "system";
+  /** Collectable clue phrases inside this message (Case Reconstruction tokens). */
+  clues?: ClueMarker[];
 }
 
 export interface SuggestedReply {
@@ -82,6 +85,15 @@ export const chats: ChatThread[] = [
         senderId: "tom",
         timestamp: "03/02/2026 09:24 PM",
         body: "Lunch tomorrow. No archive, no Whateleys, no dead languages. I am putting this in writing.",
+        clues: [
+          {
+            tokenId: "intent-meet-tom",
+            snippet: {
+              en: "Lunch tomorrow",
+              "pt-BR": "Almoço amanhã",
+            },
+          },
+        ],
       },
       {
         id: "tom-5",
@@ -269,4 +281,3 @@ export const chats: ChatThread[] = [
     ],
   },
 ];
-

@@ -5,6 +5,7 @@ import {
   LeadId,
   Locale,
   ProgressStateV5,
+  TokenType,
 } from "./progress";
 
 export interface LocalizedCopy {
@@ -12,10 +13,124 @@ export interface LocalizedCopy {
   "pt-BR": string;
 }
 
-export interface CaseAnswerOption {
+/**
+ * A collectable "fact" the player extracts by clicking a highlighted phrase
+ * inside a document. Tokens fill the blanks of Case Reconstruction statements.
+ * Several tokens of the same type act as plausible decoys for one another.
+ */
+export interface TokenDefinition {
   id: string;
+  type: TokenType;
   label: LocalizedCopy;
+  sourceEvidenceId: string;
 }
+
+/** Public name used by save/tools code that treats extracted facts as clues. */
+export type ClueToken = TokenDefinition;
+
+/**
+ * Marks an exact phrase inside a document body as a collectable clue. The
+ * snippet is per-locale because the rendered body is localized. Attach these to
+ * VFile / VEmail / chat messages via an optional `clues` array.
+ */
+export interface ClueMarker {
+  tokenId: string;
+  snippet: LocalizedCopy;
+}
+
+type RawTokenDefinition = Omit<TokenDefinition, "sourceEvidenceId"> &
+  Partial<Pick<TokenDefinition, "sourceEvidenceId">>;
+
+const RAW_TOKENS: RawTokenDefinition[] = [
+  // time -------------------------------------------------------------------
+  { id: "time-six-thirty", type: "time", label: { en: "6:30 in the evening", "pt-BR": "6:30 da tarde" } },
+  { id: "time-one-day", type: "time", label: { en: "one day ahead", "pt-BR": "um dia à frente" } },
+  { id: "time-0314", type: "time", label: { en: "03:14", "pt-BR": "03:14" } },
+  { id: "time-1742", type: "time", label: { en: "17:42", "pt-BR": "17:42" } },
+  // intent -----------------------------------------------------------------
+  { id: "intent-go-home", type: "intent", label: { en: "go home to her family", "pt-BR": "voltar para casa e a família" } },
+  { id: "intent-flee-arkham", type: "intent", label: { en: "leave Arkham unannounced", "pt-BR": "deixar Arkham sem avisar" } },
+  { id: "intent-meet-tom", type: "intent", label: { en: "meet Tom at the archive", "pt-BR": "encontrar Tom no arquivo" } },
+  // cause ------------------------------------------------------------------
+  { id: "cause-deliberately-sent", type: "cause", label: { en: "deliberately re-sent", "pt-BR": "reenviado de propósito" } },
+  { id: "cause-act-of-reconstruction", type: "cause", label: { en: "act of reconstruction", "pt-BR": "ato de reconstrução" } },
+  { id: "cause-clerical-error", type: "cause", label: { en: "a clerical mix-up", "pt-BR": "um engano de catalogação" } },
+  // family -----------------------------------------------------------------
+  { id: "family-bishop", type: "family", label: { en: "Bishop", "pt-BR": "Bishop" } },
+  { id: "family-whateley", type: "family", label: { en: "Whateley", "pt-BR": "Whateley" } },
+  { id: "family-marsh", type: "family", label: { en: "Marsh", "pt-BR": "Marsh" } },
+  // place ------------------------------------------------------------------
+  { id: "place-under-workstation", type: "place", label: { en: "beneath the workstation", "pt-BR": "sob a workstation" } },
+  { id: "place-ceiling", type: "place", label: { en: "from the ceiling", "pt-BR": "pelo teto" } },
+  { id: "place-window", type: "place", label: { en: "through the window", "pt-BR": "pela janela" } },
+  // object -----------------------------------------------------------------
+  { id: "object-pipe", type: "object", label: { en: "water pipe", "pt-BR": "cano d'água" } },
+  { id: "object-archive-field", type: "object", label: { en: "archive field", "pt-BR": "campo de arquivo" } },
+  { id: "object-hvac", type: "object", label: { en: "air handler", "pt-BR": "ar-condicionado" } },
+  // status -----------------------------------------------------------------
+  { id: "status-tomorrow", type: "status", label: { en: "tomorrow", "pt-BR": "amanhã" } },
+  { id: "status-deceased", type: "status", label: { en: "deceased", "pt-BR": "morta" } },
+  { id: "status-inside-volume", type: "status", label: { en: "sealed inside Volume II", "pt-BR": "presa no Volume II" } },
+  // person -----------------------------------------------------------------
+  { id: "person-observer", type: "person", label: { en: "the observer", "pt-BR": "o observador" } },
+  { id: "person-sarah-tok", type: "person", label: { en: "Sarah Bishop", "pt-BR": "Sarah Bishop" } },
+  { id: "person-tom-tok", type: "person", label: { en: "Tom Alvarez", "pt-BR": "Tom Alvarez" } },
+  // lineage ledger ---------------------------------------------------------
+  { id: "year-1977", type: "year", sourceEvidenceId: "lineage_1977", label: { en: "1977", "pt-BR": "1977" } },
+  { id: "year-1949", type: "year", sourceEvidenceId: "lineage_1949", label: { en: "1949", "pt-BR": "1949" } },
+  { id: "year-1912", type: "year", sourceEvidenceId: "lineage_1912", label: { en: "1912", "pt-BR": "1912" } },
+  { id: "detail-incomplete-ledger", type: "detail", sourceEvidenceId: "lineage_1977", label: { en: "an intentionally incomplete ledger", "pt-BR": "um livro-razão incompleto de propósito" } },
+  { id: "detail-water-damage", type: "detail", sourceEvidenceId: "lineage_1863", label: { en: "ordinary water damage", "pt-BR": "um dano comum por água" } },
+  { id: "detail-stolen-volume", type: "detail", sourceEvidenceId: "lineage_1912", label: { en: "a stolen volume", "pt-BR": "um volume roubado" } },
+];
+
+/** Authored evidence source for the older tokens, kept separate for compact data. */
+export const TOKEN_SOURCE_EVIDENCE: Record<string, string> = {
+  "time-six-thirty": "lecture_draft",
+  "time-one-day": "sarah_live_email",
+  "time-0314": "future_access_log",
+  "time-1742": "lineage_1977",
+  "intent-go-home": "lecture_draft",
+  "intent-flee-arkham": "em_investigation",
+  "intent-meet-tom": "chat_tom_archive",
+  "cause-deliberately-sent": "diary",
+  "cause-act-of-reconstruction": "the_name",
+  "cause-clerical-error": "lineage_1912",
+  "family-bishop": "borrower_index",
+  "family-whateley": "borrower_index",
+  "family-marsh": "borrower_index",
+  "place-under-workstation": "maintenance_record",
+  "place-ceiling": "maintenance_record",
+  "place-window": "incident_report",
+  "object-pipe": "maintenance_record",
+  "object-archive-field": "record_2014",
+  "object-hvac": "maintenance_record",
+  "status-tomorrow": "sarah_live_email",
+  "status-deceased": "victim_2014",
+  "status-inside-volume": "em_investigation",
+  "person-observer": "tom_last_message",
+  "person-sarah-tok": "sarah_live_email",
+  "person-tom-tok": "tom_last_message",
+};
+
+export const TOKENS: TokenDefinition[] = RAW_TOKENS.map((token) => ({
+  ...token,
+  sourceEvidenceId:
+    token.sourceEvidenceId ?? TOKEN_SOURCE_EVIDENCE[token.id] ?? "",
+}));
+
+export const TOKENS_BY_ID: Record<string, TokenDefinition> = Object.fromEntries(
+  TOKENS.map((token) => [token.id, token])
+);
+
+/** Collected tokens of a given type — the candidate pool for a statement slot. */
+export const collectedTokensOfType = (
+  type: TokenType,
+  collectedTokenIds: string[]
+): TokenDefinition[] =>
+  collectedTokenIds
+    .map((id) => TOKENS_BY_ID[id])
+    .filter((token): token is TokenDefinition => Boolean(token) && token.type === type);
 
 export interface EvidenceRequirement {
   allOf?: string[];
@@ -23,66 +138,71 @@ export interface EvidenceRequirement {
   minimum?: number;
 }
 
-export interface CaseQuestionDefinition {
+/** One blank in a reconstruction statement, filled by a collected token. */
+export interface SlotDefinition {
+  /** Matches a `{key}` placeholder in the statement template. */
+  key: string;
+  type: TokenType;
+  correctTokenId: string;
+}
+
+/**
+ * A Golden-Idol-style fill-in-the-blank finding. The player drops collected
+ * tokens into the blanks; correct blanks lock, wrong blanks clear. A statement
+ * only counts toward act progress once every slot is locked and the evidence
+ * requirement is met.
+ */
+export interface CaseStatementDefinition {
   id: CaseQuestionId;
-  act: 1 | 3;
+  act: 1 | 2 | 3;
   leadId: LeadId;
-  prompt: LocalizedCopy;
   context: LocalizedCopy;
-  options: CaseAnswerOption[];
-  correctAnswerId: string;
+  /** Template text with `{slotKey}` placeholders, one per slot. */
+  template: LocalizedCopy;
+  slots: SlotDefinition[];
   evidence: EvidenceRequirement;
 }
 
-export interface CaseAnswerValidation {
+export type EvidenceReason =
+  | "ok"
+  | "not_enough_evidence"
+  | "missing_required_evidence";
+
+export interface StatementValidation {
+  /** Per-slot correctness for the tokens the player proposed. */
+  slots: Record<string, boolean>;
+  allSlotsCorrect: boolean;
+  evidence: EvidenceReason;
   accepted: boolean;
-  reason:
-    | "accepted"
-    | "wrong_conclusion"
-    | "not_enough_evidence"
-    | "missing_required_evidence";
 }
 
-export const CASE_QUESTIONS: CaseQuestionDefinition[] = [
+export const CASE_STATEMENTS: CaseStatementDefinition[] = [
   {
     id: "sarah_intent",
     act: 1,
     leadId: "sarah_last_day",
-    prompt: {
-      en: "What did Sarah intend to do after leaving the archive?",
-      "pt-BR": "O que Sarah pretendia fazer depois de sair do arquivo?",
-    },
     context: {
       en: "Reconstruct intent from ordinary commitments, not from the supernatural material.",
       "pt-BR":
         "Reconstrua a intenção a partir de compromissos comuns, não do material sobrenatural.",
     },
-    options: [
-      {
-        id: "planned_return",
-        label: {
-          en: "Return home and contact her family",
-          "pt-BR": "Voltar para casa e falar com a família",
-        },
-      },
-      {
-        id: "planned_escape",
-        label: {
-          en: "Leave Arkham without telling anyone",
-          "pt-BR": "Deixar Arkham sem avisar ninguém",
-        },
-      },
-      {
-        id: "unknown",
-        label: {
-          en: "Her plans cannot be reconstructed",
-          "pt-BR": "Os planos dela não podem ser reconstruídos",
-        },
-      },
+    template: {
+      en: "On her last day, Sarah meant to leave the archive around {time} and {intent}.",
+      "pt-BR":
+        "No último dia, Sarah pretendia sair do arquivo por volta das {time} e {intent}.",
+    },
+    slots: [
+      { key: "time", type: "time", correctTokenId: "time-six-thirty" },
+      { key: "intent", type: "intent", correctTokenId: "intent-go-home" },
     ],
-    correctAnswerId: "planned_return",
     evidence: {
-      anyOf: ["chat_em_archive", "dad_email", "todo", "photo_bishop_birthday_2025"],
+      anyOf: [
+        "lecture_draft",
+        "chat_em_archive",
+        "dad_email",
+        "todo",
+        "photo_bishop_birthday_2025",
+      ],
       minimum: 2,
     },
   },
@@ -90,38 +210,19 @@ export const CASE_QUESTIONS: CaseQuestionDefinition[] = [
     id: "volume_return",
     act: 1,
     leadId: "lot_provenance",
-    prompt: {
-      en: "Why is the arrival of Volume II unlikely to be accidental?",
-      "pt-BR": "Por que a chegada do Volume II dificilmente foi acidental?",
-    },
     context: {
       en: "Compare the 1998 accession trail with the 2026 shipment.",
       "pt-BR": "Compare a incorporação de 1998 com o envio de 2026.",
     },
-    options: [
-      {
-        id: "deliberate_return",
-        label: {
-          en: "It was routed back through the Bishop family",
-          "pt-BR": "Ele foi direcionado de volta pela família Bishop",
-        },
-      },
-      {
-        id: "bookseller_error",
-        label: {
-          en: "The bookseller confused two unrelated lots",
-          "pt-BR": "O livreiro confundiu dois lotes sem relação",
-        },
-      },
-      {
-        id: "tom_purchase",
-        label: {
-          en: "Tom purchased it under Sarah's name",
-          "pt-BR": "Tom o comprou usando o nome de Sarah",
-        },
-      },
+    template: {
+      en: "Volume II resurfaced because it was {cause}, routed back through the {family} line.",
+      "pt-BR":
+        "O Volume II reapareceu porque foi {cause}, direcionado de volta pela linhagem {family}.",
+    },
+    slots: [
+      { key: "cause", type: "cause", correctTokenId: "cause-deliberately-sent" },
+      { key: "family", type: "family", correctTokenId: "family-bishop" },
     ],
-    correctAnswerId: "deliberate_return",
     evidence: {
       allOf: ["miriam_1998"],
       anyOf: [
@@ -138,39 +239,20 @@ export const CASE_QUESTIONS: CaseQuestionDefinition[] = [
     id: "locked_room_source",
     act: 1,
     leadId: "locked_room",
-    prompt: {
-      en: "Where did the salt water first appear?",
-      "pt-BR": "Onde a água salgada apareceu primeiro?",
-    },
     context: {
       en: "The security report and adjacent evidence frames disagree with the maintenance record.",
       "pt-BR":
         "O relatório de segurança e os frames vizinhos contradizem o registro de manutenção.",
     },
-    options: [
-      {
-        id: "workstation_source",
-        label: {
-          en: "Beneath the archival workstation",
-          "pt-BR": "Sob a workstation do arquivo",
-        },
-      },
-      {
-        id: "ceiling_leak",
-        label: {
-          en: "From a pipe above the office",
-          "pt-BR": "De um cano acima do escritório",
-        },
-      },
-      {
-        id: "window_entry",
-        label: {
-          en: "Through the painted-shut window",
-          "pt-BR": "Pela janela lacrada com tinta",
-        },
-      },
+    template: {
+      en: "In the sealed office the seawater surfaced {place}, and no {object} could account for it.",
+      "pt-BR":
+        "No escritório trancado, a água salgada surgiu {place}, e nenhum {object} podia explicá-la.",
+    },
+    slots: [
+      { key: "place", type: "place", correctTokenId: "place-under-workstation" },
+      { key: "object", type: "object", correctTokenId: "object-pipe" },
     ],
-    correctAnswerId: "workstation_source",
     evidence: {
       allOf: ["incident_report"],
       anyOf: ["office_after_photo", "maintenance_record", "office_frames_11_13"],
@@ -178,42 +260,57 @@ export const CASE_QUESTIONS: CaseQuestionDefinition[] = [
     },
   },
   {
+    id: "lineage_ledger",
+    act: 2,
+    leadId: "historical",
+    context: {
+      en: "The period dossiers disagree about ownership, but agree on what the next custodian inherited.",
+      "pt-BR":
+        "Os dossiês discordam sobre a posse, mas concordam sobre o que a próxima guardiã herdou.",
+    },
+    template: {
+      en: "In {year}, the {family} line inherited {detail}, turning an omission into a family warning.",
+      "pt-BR":
+        "Em {year}, a linhagem {family} herdou {detail}, transformando uma omissão num aviso familiar.",
+    },
+    slots: [
+      { key: "year", type: "year", correctTokenId: "year-1977" },
+      { key: "family", type: "family", correctTokenId: "family-bishop" },
+      {
+        key: "detail",
+        type: "detail",
+        correctTokenId: "detail-incomplete-ledger",
+      },
+    ],
+    evidence: {
+      allOf: ["lineage_1977"],
+      anyOf: [
+        "lineage_1863",
+        "lineage_1912",
+        "lineage_1949",
+        "em_investigation",
+      ],
+      minimum: 3,
+    },
+  },
+  {
     id: "future_displacement",
     act: 3,
     leadId: "observer",
-    prompt: {
-      en: "Where is Sarah relative to the observer?",
-      "pt-BR": "Onde Sarah está em relação ao observador?",
-    },
     context: {
       en: "Use the moving date, her live message and the files that predate your actions.",
       "pt-BR":
         "Use a data móvel, a mensagem ao vivo e os arquivos anteriores às suas ações.",
     },
-    options: [
-      {
-        id: "tomorrow_state",
-        label: {
-          en: "In a state that remains one day ahead",
-          "pt-BR": "Em um estado que permanece um dia à frente",
-        },
-      },
-      {
-        id: "inside_volume",
-        label: {
-          en: "Physically sealed inside Volume II",
-          "pt-BR": "Fisicamente presa dentro do Volume II",
-        },
-      },
-      {
-        id: "dead_archive",
-        label: {
-          en: "Dead, with the archive impersonating her",
-          "pt-BR": "Morta, com o arquivo imitando sua identidade",
-        },
-      },
+    template: {
+      en: "Sarah is not gone: she is held in {status}, always {time} of whoever observes.",
+      "pt-BR":
+        "Sarah não se foi: ela está retida em {status}, sempre {time} de quem observa.",
+    },
+    slots: [
+      { key: "status", type: "status", correctTokenId: "status-tomorrow" },
+      { key: "time", type: "time", correctTokenId: "time-one-day" },
     ],
-    correctAnswerId: "tomorrow_state",
     evidence: {
       allOf: ["sarah_live_email"],
       anyOf: ["future_access_log", "do_not_open", "absence_note"],
@@ -224,38 +321,19 @@ export const CASE_QUESTIONS: CaseQuestionDefinition[] = [
     id: "relay_observer",
     act: 3,
     leadId: "observer",
-    prompt: {
-      en: "What does the Relay 07 require to remain stable?",
-      "pt-BR": "Do que o Relay 07 precisa para permanecer estável?",
-    },
     context: {
       en: "Tom describes delivery; Sarah describes the cost of recovery.",
       "pt-BR": "Tom descreve a entrega; Sarah descreve o custo da recuperação.",
     },
-    options: [
-      {
-        id: "occupied_observer",
-        label: {
-          en: "A current observer occupying the archive field",
-          "pt-BR": "Um observador atual ocupando o campo de arquivo",
-        },
-      },
-      {
-        id: "university_server",
-        label: {
-          en: "A permanent connection to Miskatonic",
-          "pt-BR": "Uma conexão permanente com a Miskatonic",
-        },
-      },
-      {
-        id: "bishop_bloodline",
-        label: {
-          en: "A living member of the Bishop bloodline",
-          "pt-BR": "Um membro vivo da linhagem Bishop",
-        },
-      },
+    template: {
+      en: "The Relay 07 stays open only while a living {person} occupies the {object}.",
+      "pt-BR":
+        "O Relay 07 permanece aberto só enquanto um {person} vivo ocupa o {object}.",
+    },
+    slots: [
+      { key: "person", type: "person", correctTokenId: "person-observer" },
+      { key: "object", type: "object", correctTokenId: "object-archive-field" },
     ],
-    correctAnswerId: "occupied_observer",
     evidence: {
       allOf: ["tom_last_message"],
       anyOf: ["sarah_live_email", "future_access_log", "index_help"],
@@ -266,39 +344,20 @@ export const CASE_QUESTIONS: CaseQuestionDefinition[] = [
     id: "chapter_ritual",
     act: 3,
     leadId: "observer",
-    prompt: {
-      en: "What is Chapter Seven?",
-      "pt-BR": "O que é o Capítulo Sete?",
-    },
     context: {
       en: "The book contains components. The completed chapter exists somewhere else.",
       "pt-BR":
         "O livro contém componentes. O capítulo completo existe em outro lugar.",
     },
-    options: [
-      {
-        id: "act_of_reconstruction",
-        label: {
-          en: "The observer's act of reconstructing the evidence",
-          "pt-BR": "O ato do observador de reconstruir as evidências",
-        },
-      },
-      {
-        id: "missing_pages",
-        label: {
-          en: "Pages physically removed from Volume II",
-          "pt-BR": "Páginas removidas fisicamente do Volume II",
-        },
-      },
-      {
-        id: "translation",
-        label: {
-          en: "Sarah's unfinished academic translation",
-          "pt-BR": "A tradução acadêmica inacabada de Sarah",
-        },
-      },
+    template: {
+      en: "Chapter Seven is not in the book — it is the {cause} carried out by the {person} who reconstructs it.",
+      "pt-BR":
+        "O Capítulo Sete não está no livro — é o {cause} realizado pelo {person} que o reconstrói.",
+    },
+    slots: [
+      { key: "cause", type: "cause", correctTokenId: "cause-act-of-reconstruction" },
+      { key: "person", type: "person", correctTokenId: "person-observer" },
     ],
-    correctAnswerId: "act_of_reconstruction",
     evidence: {
       allOf: ["the_name"],
       anyOf: ["margin_ciphertext", "counting_audio", "lineage_pattern", "future_access_log"],
@@ -376,40 +435,75 @@ export const INSIGHT_LABELS: Record<InsightId, LocalizedCopy> = {
 export const localized = (copy: LocalizedCopy, locale: Locale): string =>
   copy[locale];
 
-export const validateCaseAnswer = (
-  questionId: CaseQuestionId,
-  answerId: string,
+export const findStatement = (
+  id: CaseQuestionId
+): CaseStatementDefinition | undefined =>
+  CASE_STATEMENTS.find((statement) => statement.id === id);
+
+/** Checks the evidence requirement independently of the slot answers. */
+export const checkEvidence = (
+  requirement: EvidenceRequirement,
   evidenceIds: string[]
-): CaseAnswerValidation => {
-  const question = CASE_QUESTIONS.find((candidate) => candidate.id === questionId);
-  if (!question || question.correctAnswerId !== answerId) {
-    return { accepted: false, reason: "wrong_conclusion" };
-  }
+): EvidenceReason => {
   const selected = new Set(evidenceIds);
-  const allOf = question.evidence.allOf ?? [];
+  const allOf = requirement.allOf ?? [];
   if (!allOf.every((id) => selected.has(id))) {
-    return { accepted: false, reason: "missing_required_evidence" };
+    return "missing_required_evidence";
   }
-  const anyOf = question.evidence.anyOf ?? [];
+  const anyOf = requirement.anyOf ?? [];
   const relevant = new Set([...allOf, ...anyOf]);
   const relevantCount = evidenceIds.filter((id) => relevant.has(id)).length;
-  if (relevantCount < (question.evidence.minimum ?? 1)) {
-    return { accepted: false, reason: "not_enough_evidence" };
+  if (relevantCount < (requirement.minimum ?? 1)) {
+    return "not_enough_evidence";
   }
   if (anyOf.length > 0 && !anyOf.some((id) => selected.has(id))) {
-    return { accepted: false, reason: "missing_required_evidence" };
+    return "missing_required_evidence";
   }
-  return { accepted: true, reason: "accepted" };
+  return "ok";
 };
 
+/**
+ * Validates a proposed set of slot tokens + attached evidence. Returns per-slot
+ * correctness (so the UI can lock the right blanks and clear the wrong ones) and
+ * an evidence verdict. `accepted` is true only when every slot is correct and
+ * the evidence holds.
+ */
+export const validateStatement = (
+  statementId: CaseQuestionId,
+  slotSelections: Record<string, string>,
+  evidenceIds: string[]
+): StatementValidation => {
+  const statement = findStatement(statementId);
+  if (!statement) {
+    return { slots: {}, allSlotsCorrect: false, evidence: "not_enough_evidence", accepted: false };
+  }
+  const slots: Record<string, boolean> = {};
+  let allSlotsCorrect = true;
+  statement.slots.forEach((slot) => {
+    const correct = slotSelections[slot.key] === slot.correctTokenId;
+    slots[slot.key] = correct;
+    if (!correct) allSlotsCorrect = false;
+  });
+  const evidence = checkEvidence(statement.evidence, evidenceIds);
+  return {
+    slots,
+    allSlotsCorrect,
+    evidence,
+    accepted: allSlotsCorrect && evidence === "ok",
+  };
+};
+
+const isStatementSolved = (state: ProgressStateV5, id: CaseQuestionId): boolean =>
+  Boolean(state.caseAnswers[id]?.solvedAt);
+
 export const actOneAnswerCount = (state: ProgressStateV5): number =>
-  CASE_QUESTIONS.filter(
-    (question) => question.act === 1 && state.caseAnswers[question.id]
+  CASE_STATEMENTS.filter(
+    (statement) => statement.act === 1 && isStatementSolved(state, statement.id)
   ).length;
 
 export const observerAnswerCount = (state: ProgressStateV5): number =>
-  CASE_QUESTIONS.filter(
-    (question) => question.act === 3 && state.caseAnswers[question.id]
+  CASE_STATEMENTS.filter(
+    (statement) => statement.act === 3 && isStatementSolved(state, statement.id)
   ).length;
 
 export const canRunFinalIndex = (state: ProgressStateV5): boolean =>
@@ -420,19 +514,59 @@ export const hasAllInsights = (state: ProgressStateV5): boolean =>
     state.insightsUnlocked.includes(id as InsightId)
   );
 
+/**
+ * Static campaign-solvability audit. Guarantees every statement is reconstructable
+ * and every mandatory conclusion depends on at least two evidence sources.
+ */
 export const validateCampaignGraph = (): string[] => {
   const errors: string[] = [];
-  const ids = new Set(CASE_QUESTIONS.map((question) => question.id));
-  if (ids.size !== CASE_QUESTIONS.length) errors.push("Duplicate case question id.");
-  CASE_QUESTIONS.forEach((question) => {
-    if (question.options.filter((option) => option.id === question.correctAnswerId).length !== 1) {
-      errors.push(`${question.id}: correct answer is not represented exactly once.`);
-    }
+  const ids = new Set(CASE_STATEMENTS.map((statement) => statement.id));
+  if (ids.size !== CASE_STATEMENTS.length) errors.push("Duplicate statement id.");
+  CASE_STATEMENTS.forEach((statement) => {
+    // Every placeholder in the template must have a matching slot and vice versa.
+    const placeholders = (statement.template.en.match(/\{(\w+)\}/g) ?? []).map((m) =>
+      m.slice(1, -1)
+    );
+    const slotKeys = statement.slots.map((slot) => slot.key);
+    placeholders.forEach((key) => {
+      if (!slotKeys.includes(key)) {
+        errors.push(`${statement.id}: template placeholder {${key}} has no slot.`);
+      }
+    });
+    slotKeys.forEach((key) => {
+      if (!placeholders.includes(key)) {
+        errors.push(`${statement.id}: slot ${key} has no template placeholder.`);
+      }
+      if (!statement.template["pt-BR"].includes(`{${key}}`)) {
+        errors.push(`${statement.id}: pt-BR template is missing {${key}}.`);
+      }
+    });
+    statement.slots.forEach((slot) => {
+      const token = TOKENS_BY_ID[slot.correctTokenId];
+      if (!token) {
+        errors.push(`${statement.id}.${slot.key}: unknown token ${slot.correctTokenId}.`);
+      } else if (token.type !== slot.type) {
+        errors.push(`${statement.id}.${slot.key}: token type ${token.type} ≠ slot type ${slot.type}.`);
+      }
+      // At least one same-type decoy must exist so the blank is not trivial.
+      const decoys = TOKENS.filter(
+        (candidate) => candidate.type === slot.type && candidate.id !== slot.correctTokenId
+      );
+      if (decoys.length === 0) {
+        errors.push(`${statement.id}.${slot.key}: no same-type decoy token exists.`);
+      }
+      const sourceEvidenceId = token?.sourceEvidenceId;
+      if (!sourceEvidenceId) {
+        errors.push(
+          `${statement.id}.${slot.key}: correct token has no collectable source.`
+        );
+      }
+    });
     const sources = new Set([
-      ...(question.evidence.allOf ?? []),
-      ...(question.evidence.anyOf ?? []),
+      ...(statement.evidence.allOf ?? []),
+      ...(statement.evidence.anyOf ?? []),
     ]);
-    if (sources.size < 2) errors.push(`${question.id}: fewer than two evidence sources.`);
+    if (sources.size < 2) errors.push(`${statement.id}: fewer than two evidence sources.`);
   });
   return errors;
 };

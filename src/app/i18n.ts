@@ -134,6 +134,8 @@ const en = {
   presenceOffline: "Offline",
   presenceBusy: "Busy",
   isTypingLabel: "is typing...",
+  collectClue: "Collect this detail",
+  clueCollected: "Detail collected — filed to your clue bank",
   sysSarahOnlineBlip: "SYSTEM: Sarah Bishop changed status to Online for 1 second.",
   sysMiriamReceipt:
     "SYSTEM: M.BISHOP acknowledged a message sent after account closure.",
@@ -405,6 +407,8 @@ const pt: Record<keyof typeof en, string> = {
   presenceOffline: "Offline",
   presenceBusy: "Ocupado",
   isTypingLabel: "está digitando...",
+  collectClue: "Coletar este detalhe",
+  clueCollected: "Detalhe coletado — arquivado no seu banco de pistas",
   sysSarahOnlineBlip:
     "SISTEMA: Sarah Bishop mudou o status para Online por 1 segundo.",
   sysMiriamReceipt:

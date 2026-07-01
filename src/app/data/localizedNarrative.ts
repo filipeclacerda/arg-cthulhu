@@ -1,6 +1,60 @@
 import { Locale } from "../game/progress";
 
 const FILES_PT: Record<string, string> = {
+  police_report: `SEGURANÇA DO CAMPUS MISKATONIC — INCIDENTE 2026-0316-4
+ASSUNTO: Bishop, S. (Coleções Especiais)
+
+Porta trancada por dentro; nenhuma outra saída. Janela lacrada por tinta, intacta. Sarah não estava presente.
+
+Água salgada sob a mesa, aproximadamente 2 cm, sem origem visível. Costa mais próxima a mais de 180 km.
+
+O arquivo na tela tinha data de modificação no dia seguinte à entrada.`,
+  lineage_1863: `ARKHAM GAZETTE / 14 DE OUTUBRO DE 1863 / RECORTE 7B
+
+Eliza Marsh foi encontrada na sala oeste do catálogo depois do sino noturno. A sala estava trancada. Água salgada cobria o piso sob sua escrivaninha.
+
+O tesoureiro registrou "dano comum por água". Marsh riscou as palavras e escreveu: VEIO DA ENTRADA, NÃO DA SALA.
+
+Na manhã seguinte, um fólio e a escriturária haviam desaparecido.`,
+  lineage_1912: `CARTA / R. WHATELEY ÀS COLEÇÕES ESPECIAIS ORNE / 1912
+
+Podem chamar o segundo livro ausente de engano de catalogação ou volume roubado. Nenhuma descrição explica por que a ficha de meu pai traz o nome de uma leitora ainda não nascida.
+
+Não completem a linha vazia. Ela espera quem descrever o livro.`,
+  lineage_1949: `BIBLIOTECA ORNE / LOG NOTURNO / 1949
+
+H. Akeley devolveu o livro-razão costeiro sem registrá-lo na custódia. Pediu que as entradas continuassem ordenadas por sobrenome, não por data.
+
+Às 02:11, o tubo pneumático entregou uma ficha com a letra de Akeley. Ela estava ao meu lado.
+
+A ficha nomeava a próxima guardiã apenas como BISHOP.`,
+  lineage_1977: `TRANSFERÊNCIA INTERNA / 7 DE NOVEMBRO DE 1977 / 17:42
+
+A catalogadora assistente Miriam Bishop aceitou uma caixa da mesa Akeley. Conteúdo: três fichas, um mapa manchado de sal e um livro-razão incompleto de propósito.
+
+M. Bishop recusou-se a assinar a última linha. O supervisor escreveu "superstição familiar".
+
+Em 1998, Miriam solicitou a mesma caixa usando uma cota nunca atribuída.`,
+  victim_2014: `ESPELHO EXTERNO / CORRELAÇÃO DE PESSOAL / 18 DE MAIO DE 2014
+
+O crachá 14-EV pertencia a Eleanor Vale, técnica noturna de digitalização. Vale desapareceu durante uma falha de checksum às 03:14 e foi considerada presumida morta.
+
+O mesmo crachá autenticou novamente no dia 19 — um dia depois do desaparecimento.
+
+O arquivo só confirma que alguma coisa respondeu com a credencial dela.`,
+  em_investigation: `EM BISHOP / RASTRO PARTICULAR / NÃO ENVIADO
+
+Explicações ruins que tentei porque doíam menos:
+
+1. Sarah pretendia deixar Arkham sem avisar.
+2. Tom encenou o escritório.
+3. Sarah está presa no Volume II.
+
+Nenhuma sobrevive aos registros. Sarah comprou mantimentos, prometeu o domingo ao pai e marcou a aula de segunda.
+
+Quando crianças, Sarah perguntou por que mamãe contava sobrenomes dormindo. Semana passada, fez a mesma pergunta com as mesmas palavras.
+
+A forma na fotografia costeira não é uma estaca. Eu a encontrei no mapa de 1977 de mamãe.`,
   dad_recipe: `CALDEIRADA DO PAI — versão que Sarah consegue seguir
 
 2 batatas, não "algumas batatas"
@@ -45,7 +99,7 @@ C:\\WINDOWS\\MEDIA\\track_07.mid
 Local: Biblioteca Orne B2 / escritório Bishop
 Reclamação: carpete úmido sob a workstation
 
-Teto, parede, radiador e janela inspecionados. Nenhuma linha de água ou drenagem entra na sala. O limite da umidade era circular e centralizado sob SB-ARCHIVE-02.
+Teto, parede, radiador, janela e ar-condicionado inspecionados. Nenhuma linha de água ou drenagem entra na sala. O limite da umidade era circular e centralizado sob SB-ARCHIVE-02.
 
 A condutividade da amostra excedia a água do prédio. O chamado foi transferido para Coleções Especiais por ordem da supervisão.
 
@@ -108,7 +162,7 @@ Nenhuma escrita foi registrada.`,
   diary: `DIÁRIO DE PESQUISA — SARAH BISHOP
 
 02/03/2026
-Comprei o segundo volume. É o que mamãe registrou nas notas de 1998, o volume que nunca chegou junto com o restante do depósito Whateley. A casa de leilões o chamou de Lote 114.
+Comprei o segundo volume. É o que mamãe registrou nas notas de 1998, o volume que nunca chegou junto com o restante do depósito Whateley. A casa de leilões o chamou de Lote 114. O espólio já tinha meu nome e endereço antes de eu perguntar qualquer coisa — alguém fez questão de que ele voltasse para uma Bishop.
 
 09/03/2026
 O capítulo sete não está escrito como os outros. As margens parecem instruções técnicas disfarçadas de tradução.
@@ -131,7 +185,7 @@ O verso do último fólio preserva escrita espelhada sob uma camada de correçã
 Solicitar nova digitalização com contraste máximo.
 
 Não arquivar sob o meu nome.`,
-  borrower_index: `ÍNDICE RESTRITO DE LEITORES — ORDEM ORIGINAL
+  notes: `ÍNDICE RESTRITO DE LEITORES — ORDEM ORIGINAL
 
 1. DYER
 2. WHATELEY
@@ -205,6 +259,30 @@ Vou observar você. Do mesmo modo que você me observou.
 };
 
 const EMAILS_PT: Record<string, { subject: string; body: string }> = {
+  "email-em-moms-box": {
+    subject: "A caixa da mamãe (eu abri)",
+    body: `Sarah,
+
+Abri a caixa da garagem. Não é ocultismo; é quase toda composta por recibos, três canetas secas e o mapa costeiro de 1977 da mamãe.
+
+Ao lado do nosso endereço de infância está escrito: "a próxima guardiã herda o espaço vazio".
+
+Antes de decidir que isso prova alguma coisa, me liga. Quero ouvir sua voz decidindo fazer algo imprudente.
+
+— Em`,
+  },
+  "email-em-seawall": {
+    subject: "A estaca já estava lá em 1977",
+    body: `Sarah,
+
+Comparei nossa foto da costa ao mapa da mamãe. A marca preta está no mesmo lugar da "estaca", mas o mapa é onze anos anterior aos suportes do porto.
+
+Há um nome sob a dobra: ELEANOR VALE / ESPELHO 2014.
+
+Estou enviando isto mesmo que sua caixa diga que foi lido ontem.
+
+— Em`,
+  },
   "email-1": {
     subject: "Sarah, onde você está?",
     body: `Sarah,
@@ -253,7 +331,7 @@ Graymoor Antiquarian Booksellers`,
   },
   "email-sarah-live": {
     subject: "você abriu",
-    body: `Eu sei que você abriu porque observei você abrir. Estou olhando do outro lado da data daquele arquivo.
+    body: `Eu sei que você abriu porque observei você abrir. Estou retida no amanhã, um dia à frente de quem lê este arquivo.
 
 Não dói. Preciso que saiba disso porque em um momento você vai sentir medo.
 
@@ -345,6 +423,38 @@ const CHATS_PT: Record<string, string> = {
  * EMAILS_PT so Outlook Express and the board never disagree.
  */
 const BOARD_CARDS_PT: Record<string, { title: string; summary: string }> = {
+  lineage_1863: {
+    title: "Arkham Gazette, 1863",
+    summary: "Eliza Marsh desapareceu de uma sala trancada e alagada por água salgada.",
+  },
+  lineage_1912: {
+    title: "Carta Whateley, 1912",
+    summary: "A linha vazia espera a catalogadora, não o livro ausente.",
+  },
+  lineage_1949: {
+    title: "Log noturno Orne, 1949",
+    summary: "Uma ficha chegou antes de ser escrita e nomeou uma Bishop.",
+  },
+  lineage_1977: {
+    title: "Transferência Bishop, 1977",
+    summary: "Miriam herdou um livro-razão incompleto da mesa Akeley.",
+  },
+  victim_2014: {
+    title: "Correlação externa, 2014",
+    summary: "O crachá de Eleanor Vale autenticou um dia depois de seu desaparecimento.",
+  },
+  em_investigation: {
+    title: "Rastro particular de Em",
+    summary: "Em testa as explicações menos dolorosas e nenhuma sobrevive.",
+  },
+  em_box_email: {
+    title: "A caixa da mamãe (eu abri)",
+    summary: "Em encontra o mapa de 1977 e um aviso à próxima guardiã.",
+  },
+  em_seawall_email: {
+    title: "A estaca já estava lá em 1977",
+    summary: "A forma na foto das irmãs é anterior aos suportes do porto.",
+  },
   "person-sarah": {
     title: "Sarah Bishop",
     summary: "Catalogadora, Coleções Especiais. Desaparecida desde 16/03.",

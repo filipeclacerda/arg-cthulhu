@@ -9,9 +9,10 @@ import {
 import {
   actOneAnswerCount,
   canRunFinalIndex,
+  findStatement,
   hasAllInsights,
   observerAnswerCount,
-  validateCaseAnswer,
+  validateStatement,
 } from "./campaign";
 import { evaluateTheory, theoryConnectionKeys } from "./theories";
 import { RunCommandError, validateIndexCommand } from "./validators";
@@ -122,6 +123,8 @@ export interface EventResult {
     questionId: string;
     accepted: boolean;
     reason: string;
+    slotResults?: Record<string, boolean>;
+    lockedSlots?: string[];
   };
 }
 
@@ -457,6 +460,14 @@ export const reduceGameEvent = (
       };
       break;
     }
+    case "COLLECT_TOKEN": {
+      if (state.collectedTokens.includes(event.tokenId)) break;
+      state = {
+        ...state,
+        collectedTokens: [...state.collectedTokens, event.tokenId],
+      };
+      break;
+    }
     case "SET_PLAYER_NAME":
       if (state.playerName === event.name) break;
       state = { ...state, playerName: event.name };
@@ -679,45 +690,97 @@ export const reduceGameEvent = (
     }
     case "SUBMIT_CASE_ANSWER": {
       const evidenceIds = Array.from(new Set(event.evidenceIds)).sort();
-      const validation = validateCaseAnswer(
+      const validation = validateStatement(
         event.questionId,
-        event.answerId,
+        event.slotSelections,
         evidenceIds
       );
-      if (!validation.accepted) {
-        return {
-          state: current,
-          caseAnswerResult: {
-            questionId: event.questionId,
-            accepted: false,
-            reason: validation.reason,
-          },
-        };
-      }
       const existing = state.caseAnswers[event.questionId];
-      if (existing) {
+      if (existing?.solvedAt) {
         return {
           state: current,
           caseAnswerResult: {
             questionId: event.questionId,
             accepted: true,
             reason: "already_solved",
+            slotResults: validation.slots,
+            lockedSlots: existing.lockedSlots,
           },
         };
       }
+
+      const evidenceHolds = validation.evidence === "ok";
+      const newlyLocked = evidenceHolds
+        ? Object.entries(validation.slots)
+            .filter(([, correct]) => correct)
+            .map(([slot]) => slot)
+        : [];
+      const lockedSlots = Array.from(
+        new Set([...(existing?.lockedSlots ?? []), ...newlyLocked])
+      );
+      const statement = findStatement(event.questionId);
+      const requiredSlotCount = statement?.slots.length ?? Number.MAX_SAFE_INTEGER;
+      const solved = lockedSlots.length === requiredSlotCount && evidenceHolds;
+      const retainedSlots = Object.fromEntries(
+        Object.entries({
+          ...(existing?.slots ?? {}),
+          ...event.slotSelections,
+        }).filter(([slot]) => lockedSlots.includes(slot))
+      );
       const now = Date.now();
+      const wrongSlotCount = Object.values(validation.slots).filter(
+        (correct) => !correct
+      ).length;
+      const nearMisses = {
+        ...(existing?.nearMisses ?? {}),
+        ...(wrongSlotCount > 0
+          ? {
+              statement_slot:
+                (existing?.nearMisses.statement_slot ?? 0) + wrongSlotCount,
+            }
+          : {}),
+        ...(validation.evidence !== "ok"
+          ? {
+              statement_evidence:
+                (existing?.nearMisses.statement_evidence ?? 0) + 1,
+            }
+          : {}),
+      };
       state = {
         ...state,
         caseAnswers: {
           ...state.caseAnswers,
           [event.questionId]: {
-            answerId: event.answerId,
-            evidenceIds,
-            attempts: 1,
-            solvedAt: now,
+            slots: retainedSlots,
+            lockedSlots,
+            evidenceIds: evidenceHolds
+              ? evidenceIds
+              : existing?.evidenceIds ?? [],
+            attempts: (existing?.attempts ?? 0) + 1,
+            nearMisses,
+            solvedAt: solved ? now : null,
           },
         },
       };
+
+      if (!solved) {
+        const hasCorrectSlot = Object.values(validation.slots).some(Boolean);
+        return {
+          state: touch(state),
+          caseAnswerResult: {
+            questionId: event.questionId,
+            accepted: false,
+            reason:
+              validation.evidence !== "ok"
+                ? validation.evidence
+                : hasCorrectSlot
+                  ? "partial_lock"
+                  : "slots_rejected",
+            slotResults: validation.slots,
+            lockedSlots,
+          },
+        };
+      }
       const actOneCount = actOneAnswerCount(state);
       const observerCount = observerAnswerCount(state);
       if (actOneCount >= 2) {
@@ -779,6 +842,8 @@ export const reduceGameEvent = (
           questionId: event.questionId,
           accepted: true,
           reason: "accepted",
+          slotResults: validation.slots,
+          lockedSlots,
         },
       };
     }

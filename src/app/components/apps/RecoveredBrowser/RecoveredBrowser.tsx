@@ -10,6 +10,7 @@ import {
 } from "@/app/game/validators";
 import { puzzleHintsFor } from "@/app/game/puzzles";
 import { useI18n } from "@/app/i18n";
+import ClueText from "@/app/components/ClueText/ClueText";
 import "../ArgTools/style.scss";
 import "./style.scss";
 
@@ -733,7 +734,19 @@ const RecoveredBrowser = ({
               <p className="arg-tool__kicker">CATALOGUE RECORD / RESTRICTED</p>
               <h2>MS-WHA-1998-114/II</h2>
               <dl className="arg-tool__properties">
-                <dt>Deposit</dt><dd>Whateley estate</dd>
+                <dt>Deposit</dt>
+                <dd>
+                  <ClueText
+                    as="span"
+                    text="Whateley estate"
+                    clues={[
+                      {
+                        tokenId: "family-whateley",
+                        snippet: { en: "Whateley", "pt-BR": "Whateley" },
+                      },
+                    ]}
+                  />
+                </dd>
                 <dt>Accession</dt><dd>1998 / M. Bishop</dd>
                 <dt>Vendor lot</dt><dd>114</dd>
                 <dt>Description</dt><dd>Bound MS., Volume II, marginal hand</dd>

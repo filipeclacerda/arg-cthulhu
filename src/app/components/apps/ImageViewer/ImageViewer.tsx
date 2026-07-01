@@ -9,6 +9,7 @@ import "../ArgTools/style.scss";
 import "./style.scss";
 import { puzzleHintsFor } from "@/app/game/puzzles";
 import { useI18n } from "@/app/i18n";
+import ClueText from "@/app/components/ClueText/ClueText";
 
 const ImageViewer = ({ fileId }: { fileId: string }) => {
   const [currentFileId, setCurrentFileId] = useState(fileId);
@@ -287,7 +288,14 @@ const ImageViewer = ({ fileId }: { fileId: string }) => {
                   <dt>Dimensions</dt><dd>{file.dimensions}</dd>
                   <dt>Camera</dt><dd>{file.camera}</dd>
                   <dt>Location</dt><dd>{file.location}</dd>
-                  <dt>Comment</dt><dd>{file.comment}</dd>
+                  <dt>Comment</dt>
+                  <dd>
+                    <ClueText
+                      as="span"
+                      text={file.comment ?? ""}
+                      clues={file.clues}
+                    />
+                  </dd>
                 </>
               )}
             </dl>

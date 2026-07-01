@@ -1,11 +1,14 @@
 import { strFromU8, strToU8, zlibSync, unzlibSync } from "fflate";
 import {
+  CaseAnswer,
+  CaseQuestionId,
   createInitialProgress,
   puzzleAct,
   ProgressStateV4,
   PuzzleId,
   PUZZLE_IDS,
 } from "./progress";
+import { CASE_STATEMENTS } from "./campaign";
 
 const DB_NAME = "miskatonic-case-archive";
 const DB_VERSION = 1;
@@ -18,6 +21,55 @@ const V4_FALLBACK_STORAGE_KEY = "arg-cthulhu-progress-v4";
 const V3_FALLBACK_STORAGE_KEY = "arg-cthulhu-progress-v3";
 const HEADER_STORAGE_KEY = "arg-cthulhu-progress-header";
 const MAX_CHECKPOINTS = 3;
+
+const normalizeCaseAnswers = (
+  value: unknown
+): Partial<Record<CaseQuestionId, CaseAnswer>> => {
+  if (!value || typeof value !== "object") return {};
+  const source = value as Record<string, any>;
+  const normalized: Partial<Record<CaseQuestionId, CaseAnswer>> = {};
+  CASE_STATEMENTS.forEach((statement) => {
+    const legacy = source[statement.id];
+    if (!legacy || typeof legacy !== "object") return;
+    if (legacy.slots && Array.isArray(legacy.lockedSlots)) {
+      normalized[statement.id] = {
+        slots: legacy.slots,
+        lockedSlots: legacy.lockedSlots,
+        evidenceIds: Array.isArray(legacy.evidenceIds)
+          ? legacy.evidenceIds
+          : [],
+        attempts:
+          typeof legacy.attempts === "number" ? legacy.attempts : 0,
+        nearMisses:
+          legacy.nearMisses && typeof legacy.nearMisses === "object"
+            ? legacy.nearMisses
+            : {},
+        solvedAt:
+          typeof legacy.solvedAt === "number" ? legacy.solvedAt : null,
+      };
+      return;
+    }
+    // v3/v4 and early v5 saves stored a selected radio answer. Existing
+    // retained findings stay retained by deriving every correct slot.
+    if (typeof legacy.answerId === "string") {
+      normalized[statement.id] = {
+        slots: Object.fromEntries(
+          statement.slots.map((slot) => [slot.key, slot.correctTokenId])
+        ),
+        lockedSlots: statement.slots.map((slot) => slot.key),
+        evidenceIds: Array.isArray(legacy.evidenceIds)
+          ? legacy.evidenceIds
+          : [],
+        attempts:
+          typeof legacy.attempts === "number" ? legacy.attempts : 1,
+        nearMisses: {},
+        solvedAt:
+          typeof legacy.solvedAt === "number" ? legacy.solvedAt : Date.now(),
+      };
+    }
+  });
+  return normalized;
+};
 
 export interface SaveHeader {
   caseId: string;
@@ -103,6 +155,10 @@ export const migrateProgress = (value: unknown): ProgressStateV4 | null => {
       ...initial,
       ...value,
       version: 5,
+      collectedTokens: Array.isArray(value.collectedTokens)
+        ? value.collectedTokens
+        : [],
+      caseAnswers: normalizeCaseAnswers(value.caseAnswers),
       puzzles: Object.fromEntries(
         PUZZLE_IDS.map((id) => [
           id,
@@ -149,9 +205,10 @@ export const migrateProgress = (value: unknown): ProgressStateV4 | null => {
         ? legacy.leadsUnlocked
         : initial.leadsUnlocked,
       caseAnswers:
-        legacy.caseAnswers && typeof legacy.caseAnswers === "object"
-          ? legacy.caseAnswers
-          : {},
+        normalizeCaseAnswers(legacy.caseAnswers),
+      collectedTokens: Array.isArray(legacy.collectedTokens)
+        ? legacy.collectedTokens
+        : [],
       hypotheses:
         legacy.hypotheses && typeof legacy.hypotheses === "object"
           ? legacy.hypotheses

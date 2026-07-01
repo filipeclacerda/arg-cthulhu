@@ -23,6 +23,7 @@ export type CaseQuestionId =
   | "sarah_intent"
   | "volume_return"
   | "locked_room_source"
+  | "lineage_ledger"
   | "future_displacement"
   | "relay_observer"
   | "chapter_ritual";
@@ -77,7 +78,22 @@ export type AttemptKind =
   | "lineage_near_year"
   | "future_sequence_fault"
   | "index_missing_references"
-  | "index_wrong_order";
+  | "index_wrong_order"
+  | "statement_slot"
+  | "statement_evidence";
+/** The kind of fact a collectable clue token represents. */
+export type TokenType =
+  | "person"
+  | "place"
+  | "date"
+  | "year"
+  | "time"
+  | "intent"
+  | "object"
+  | "status"
+  | "cause"
+  | "family"
+  | "detail";
 export type HintTrigger = "time" | "near_miss" | "manual";
 export type HintChannel =
   | "help"
@@ -127,10 +143,12 @@ export interface TheoryAttempt {
 }
 
 export interface CaseAnswer {
-  answerId: string;
+  slots: Record<string, string>;
+  lockedSlots: string[];
   evidenceIds: string[];
   attempts: number;
-  solvedAt: number;
+  nearMisses: Partial<Record<AttemptKind, number>>;
+  solvedAt: number | null;
 }
 
 export interface HypothesisRecord {
@@ -157,6 +175,7 @@ export interface ProgressStateV5 {
   discoveredEvidenceIds: string[];
   visitedPageIds: string[];
   collectedReferences: string[];
+  collectedTokens: string[];
   puzzles: Record<PuzzleId, PuzzleProgress>;
   corruptionStage: number;
   playerName: string | null;
@@ -211,6 +230,7 @@ export type GameEvent =
     }
   | { type: "ADD_ACTIVE_TIME"; puzzleId: PuzzleId; elapsedMs: number }
   | { type: "COLLECT_REFERENCE"; reference: string }
+  | { type: "COLLECT_TOKEN"; tokenId: string }
   | { type: "SET_PLAYER_NAME"; name: string | null }
   | { type: "SET_CASE_NOTES"; notes: string }
   | { type: "SET_LAST_RESOURCE"; resourceId: string }
@@ -223,7 +243,7 @@ export type GameEvent =
   | {
       type: "SUBMIT_CASE_ANSWER";
       questionId: CaseQuestionId;
-      answerId: string;
+      slotSelections: Record<string, string>;
       evidenceIds: string[];
     }
   | {
@@ -283,6 +303,7 @@ export const createInitialProgress = (
   discoveredEvidenceIds: [],
   visitedPageIds: [],
   collectedReferences: [],
+  collectedTokens: [],
   puzzles: createPuzzleState(now),
   corruptionStage: 0,
   playerName: null,

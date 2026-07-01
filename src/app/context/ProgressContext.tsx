@@ -47,6 +47,8 @@ interface DispatchResult {
     questionId: string;
     accepted: boolean;
     reason: string;
+    slotResults?: Record<string, boolean>;
+    lockedSlots?: string[];
   };
 }
 
@@ -64,6 +66,7 @@ interface ProgressContextValue {
   discoveredEvidenceIds: string[];
   visitedPageIds: string[];
   collectedReferences: string[];
+  collectedTokens: string[];
   corruptionStage: number;
   playerName: string | null;
   absenceMs: number;
@@ -84,6 +87,7 @@ interface ProgressContextValue {
   recordNearMiss: (puzzleId: PuzzleId, kind: AttemptKind) => void;
   unlockHint: (puzzleId: PuzzleId, level?: number) => void;
   collectReference: (reference: string) => void;
+  collectToken: (tokenId: string) => void;
   moveBoardCard: (cardId: string, x: number, y: number) => void;
   toggleBoardConnection: (fromId: string, toId: string) => void;
   testTheory: (evidenceIds: string[]) => DispatchResult;
@@ -551,6 +555,10 @@ export const ProgressProvider = ({
       dispatchGameEvent({ type: "COLLECT_REFERENCE", reference }),
     [dispatchGameEvent]
   );
+  const collectToken = useCallback(
+    (tokenId: string) => dispatchGameEvent({ type: "COLLECT_TOKEN", tokenId }),
+    [dispatchGameEvent]
+  );
   const moveBoardCard = useCallback(
     (cardId: string, x: number, y: number) =>
       dispatchGameEvent({ type: "MOVE_BOARD_CARD", cardId, x, y }),
@@ -650,6 +658,7 @@ export const ProgressProvider = ({
       discoveredEvidenceIds: state.discoveredEvidenceIds,
       visitedPageIds: state.visitedPageIds,
       collectedReferences: state.collectedReferences,
+      collectedTokens: state.collectedTokens,
       corruptionStage: puzzleCorruptionStage(state.puzzles),
       playerName: state.playerName,
       absenceMs: state.absenceMs,
@@ -670,6 +679,7 @@ export const ProgressProvider = ({
       recordNearMiss,
       unlockHint,
       collectReference,
+      collectToken,
       moveBoardCard,
       toggleBoardConnection,
       testTheory,
@@ -692,6 +702,7 @@ export const ProgressProvider = ({
       attemptPuzzle,
       chooseEnding,
       collectReference,
+      collectToken,
       discoverEvidence,
       dispatchGameEvent,
       exportCode,

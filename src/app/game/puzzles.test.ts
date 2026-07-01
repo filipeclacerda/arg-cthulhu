@@ -27,17 +27,26 @@ const retainObserverFindings = (
   const answers = [
     {
       questionId: "future_displacement" as const,
-      answerId: "tomorrow_state",
+      slotSelections: {
+        status: "status-tomorrow",
+        time: "time-one-day",
+      } as Record<string, string>,
       evidenceIds: ["sarah_live_email", "future_access_log"],
     },
     {
       questionId: "relay_observer" as const,
-      answerId: "occupied_observer",
+      slotSelections: {
+        person: "person-observer",
+        object: "object-archive-field",
+      } as Record<string, string>,
       evidenceIds: ["tom_last_message", "index_help"],
     },
     {
       questionId: "chapter_ritual" as const,
-      answerId: "act_of_reconstruction",
+      slotSelections: {
+        cause: "cause-act-of-reconstruction",
+        person: "person-observer",
+      } as Record<string, string>,
       evidenceIds: ["the_name", "margin_ciphertext"],
     },
   ];
@@ -212,7 +221,10 @@ describe("ARG progression reducer", () => {
     state = reduceGameEvent(state, {
       type: "SUBMIT_CASE_ANSWER",
       questionId: "sarah_intent",
-      answerId: "planned_return",
+      slotSelections: {
+        time: "time-six-thirty",
+        intent: "intent-go-home",
+      },
       evidenceIds: ["chat_em_archive", "todo"],
     }).state;
     expect(state.flags.act1_recovered_partial).toBeUndefined();
@@ -220,7 +232,10 @@ describe("ARG progression reducer", () => {
     const second = reduceGameEvent(state, {
       type: "SUBMIT_CASE_ANSWER",
       questionId: "volume_return",
-      answerId: "deliberate_return",
+      slotSelections: {
+        cause: "cause-deliberately-sent",
+        family: "family-bishop",
+      },
       evidenceIds: ["miriam_1998", "lot_114_order"],
     });
     expect(second.caseAnswerResult?.accepted).toBe(true);
@@ -233,14 +248,53 @@ describe("ARG progression reducer", () => {
     const result = reduceGameEvent(initial, {
       type: "SUBMIT_CASE_ANSWER",
       questionId: "sarah_intent",
-      answerId: "planned_return",
+      slotSelections: {
+        time: "time-six-thirty",
+        intent: "intent-go-home",
+      },
       evidenceIds: ["todo"],
     });
     expect(result.caseAnswerResult).toMatchObject({
       accepted: false,
       reason: "not_enough_evidence",
     });
-    expect(result.state).toBe(initial);
+    expect(result.state.caseAnswers.sarah_intent?.solvedAt).toBeNull();
+  });
+
+  it("keeps correct statement slots and clears wrong ones between attempts", () => {
+    const initial = createInitialProgress(1_700_000_000_000, "partial-case");
+    const result = reduceGameEvent(initial, {
+      type: "SUBMIT_CASE_ANSWER",
+      questionId: "volume_return",
+      slotSelections: {
+        cause: "cause-deliberately-sent",
+        family: "family-whateley",
+      },
+      evidenceIds: ["miriam_1998", "lot_114_order"],
+    });
+
+    expect(result.caseAnswerResult?.reason).toBe("partial_lock");
+    expect(result.state.caseAnswers.volume_return).toMatchObject({
+      slots: { cause: "cause-deliberately-sent" },
+      lockedSlots: ["cause"],
+      nearMisses: { statement_slot: 1 },
+      solvedAt: null,
+    });
+  });
+
+  it("collects clue tokens idempotently", () => {
+    const initial = createInitialProgress(1_700_000_000_000, "tokens");
+    const first = reduceGameEvent(initial, {
+      type: "COLLECT_TOKEN",
+      tokenId: "time-six-thirty",
+    }).state;
+    const duplicate = reduceGameEvent(first, {
+      type: "COLLECT_TOKEN",
+      tokenId: "time-six-thirty",
+    }).state;
+
+    expect(first.collectedTokens).toEqual(["time-six-thirty"]);
+    expect(duplicate).toBe(first);
   });
 
   it("pins a confirmed thread between every card behind a validated theory", () => {

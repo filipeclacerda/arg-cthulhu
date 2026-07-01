@@ -4,6 +4,7 @@ import React, { useMemo, useRef, useState } from "react";
 import { useProgress } from "@/app/context/ProgressContext";
 import { useWindowManager } from "@/app/context/WindowManagerContext";
 import { PuzzleId, PUZZLE_IDS } from "@/app/game/progress";
+import { localized, TOKENS_BY_ID } from "@/app/game/campaign";
 import "../ArgTools/style.scss";
 import "./style.scss";
 
@@ -51,7 +52,9 @@ const CaseNotes = () => {
   } = useProgress();
   const { openWindow } = useWindowManager();
   const editorRef = useRef<HTMLTextAreaElement>(null);
-  const [tab, setTab] = useState<"notes" | "names" | "dates" | "codes">("notes");
+  const [tab, setTab] = useState<
+    "notes" | "facts" | "names" | "dates" | "codes"
+  >("notes");
   const solvedCount = PUZZLE_IDS.filter(
     (id) => Boolean(state.puzzles[id].solvedAt)
   ).length;
@@ -94,6 +97,13 @@ const CaseNotes = () => {
 
   const autoEntries = {
     notes: [] as string[][],
+    facts: state.collectedTokens
+      .map((id) => TOKENS_BY_ID[id])
+      .filter(Boolean)
+      .map((token) => [
+        localized(token.label, state.locale),
+        `Extracted ${token.type} fact.`,
+      ]),
     names: [
       ["Sarah Bishop", "Special Collections cataloguer; missing 2026-03-16."],
       ["Miriam Bishop", "First cataloguer; missing 1998-09-14."],
@@ -137,7 +147,7 @@ const CaseNotes = () => {
         </button>
         <div className="case-notes__toolbar-separator" />
         <div className="case-notes__tabs">
-          {(["notes", "names", "dates", "codes"] as const).map((id) => (
+          {(["notes", "facts", "names", "dates", "codes"] as const).map((id) => (
             <button
               key={id}
               className={`button ${tab === id ? "active" : ""}`}

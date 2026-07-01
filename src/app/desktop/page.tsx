@@ -204,6 +204,7 @@ const Desktop = () => {
     openWindow,
     play,
     setFlag,
+    t,
   ]);
 
   useEffect(() => {
@@ -256,6 +257,7 @@ const Desktop = () => {
     openWindow,
     play,
     setFlag,
+    t,
     state.locale,
     state.worldReactionsSeen,
   ]);
@@ -309,6 +311,7 @@ const Desktop = () => {
     openWindow,
     play,
     setFlag,
+    t,
   ]);
 
   useEffect(() => {
@@ -356,6 +359,7 @@ const Desktop = () => {
     openWindow,
     play,
     setFlag,
+    t,
   ]);
 
   useEffect(() => {
@@ -403,6 +407,7 @@ const Desktop = () => {
     openWindow,
     play,
     setFlag,
+    t,
   ]);
 
   const onClickOffsideIcon = (

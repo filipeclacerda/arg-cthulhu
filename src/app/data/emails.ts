@@ -1,4 +1,5 @@
 import { UnlockCondition } from "./filesystem";
+import { ClueMarker } from "../game/campaign";
 
 export interface VEmail {
   id: string;
@@ -10,6 +11,8 @@ export interface VEmail {
   body: string;
   unlock: UnlockCondition;
   evidenceId?: string;
+  /** Collectable clue phrases inside this email's body (Case Reconstruction tokens). */
+  clues?: ClueMarker[];
   messageId?: string;
   reference?: string;
 }
@@ -75,6 +78,40 @@ Come if you can. Don't if you can't. I love you regardless.
 — Dad`,
   },
   {
+    id: "email-em-moms-box",
+    sender: "em.bishop@gmail.com",
+    subject: "Mom's box (I opened it)",
+    date: "2026-03-13",
+    unlock: { type: "always" },
+    evidenceId: "em_box_email",
+    body: `Sarah,
+
+I opened the garage box you told me not to open. It isn't occult; it is mostly tax receipts, three dead pens and Mom's 1977 coastal map.
+
+One phrase is written beside our childhood address: "the next custodian inherits the blank."
+
+Before you decide this proves anything, call me. I mean an actual call. I want to hear your voice deciding to do something reckless.
+
+— Em`,
+  },
+  {
+    id: "email-em-seawall",
+    sender: "em.bishop@gmail.com",
+    subject: "The piling was there in 1977",
+    date: "2026-03-18",
+    unlock: { type: "flag", flag: "act1_reconstruction_complete" },
+    evidenceId: "em_seawall_email",
+    body: `Sarah,
+
+I matched our coast photo to Mom's map. The black mark is in exactly the same place as the "piling," but the map predates the harbor supports by eleven years.
+
+There is a name under the fold: ELEANOR VALE / MIRROR 2014.
+
+I am sending this even though your mailbox says it was read yesterday.
+
+— Em`,
+  },
+  {
     id: "email-2",
     sender: "orders@graymoor-antiquarian.com",
     subject: "Your order has shipped — Lot 114",
@@ -138,7 +175,21 @@ If anyone else is reading this, I don't know who has this workstation now, or wh
     evidenceId: "sarah_live_email",
     messageId: "<SB-TOMORROW-0311-E7@miskatonic-research.org>",
     reference: "E7",
-    body: `I know you opened it because I watched you open it. I'm watching from the other side of the date on that file.
+    clues: [
+      {
+        tokenId: "status-tomorrow",
+        snippet: { en: "held in tomorrow", "pt-BR": "retida no amanhã" },
+      },
+      {
+        tokenId: "time-one-day",
+        snippet: { en: "one day ahead", "pt-BR": "um dia à frente" },
+      },
+      {
+        tokenId: "person-sarah-tok",
+        snippet: { en: "— S.", "pt-BR": "— S." },
+      },
+    ],
+    body: `I know you opened it because I watched you open it. I'm held in tomorrow, one day ahead of whoever reads this file.
 
 It doesn't hurt. I need you to know that because you're going to be afraid in a moment and I want you to know it doesn't hurt.
 

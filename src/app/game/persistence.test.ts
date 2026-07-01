@@ -15,10 +15,16 @@ describe("save v5", () => {
     state.puzzles.lot_114.solvedAt = 1_700_000_000_500;
     state.locale = "pt-BR";
     state.insightsUnlocked = ["second_volume"];
+    state.collectedTokens = ["time-six-thirty", "intent-go-home"];
     state.caseAnswers.sarah_intent = {
-      answerId: "planned_return",
+      slots: {
+        time: "time-six-thirty",
+        intent: "intent-go-home",
+      },
+      lockedSlots: ["time", "intent"],
       evidenceIds: ["chat_em_archive", "todo"],
       attempts: 1,
+      nearMisses: {},
       solvedAt: 1_700_000_000_600,
     };
     state.optionalDiscoveries = ["dad_recipe"];
@@ -38,7 +44,14 @@ describe("save v5", () => {
     );
     expect(imported.locale).toBe("pt-BR");
     expect(imported.insightsUnlocked).toEqual(["second_volume"]);
-    expect(imported.caseAnswers.sarah_intent?.answerId).toBe("planned_return");
+    expect(imported.caseAnswers.sarah_intent?.lockedSlots).toEqual([
+      "time",
+      "intent",
+    ]);
+    expect(imported.collectedTokens).toEqual([
+      "time-six-thirty",
+      "intent-go-home",
+    ]);
     expect(imported.optionalDiscoveries).toEqual(["dad_recipe"]);
   });
 
@@ -106,5 +119,32 @@ describe("save v5", () => {
     const misk4 = await importCaseCode(code.replace(/^MISK5\./, "MISK4."));
     expect(misk3.caseId).toBe("compatible-prefix");
     expect(misk4.caseId).toBe("compatible-prefix");
+  });
+
+  it("preserves an early radio-button finding as solved statement slots", () => {
+    const legacy = {
+      ...createInitialProgress(1_700_000_000_000, "legacy-finding"),
+      version: 4,
+      caseAnswers: {
+        sarah_intent: {
+          answerId: "planned_return",
+          evidenceIds: ["chat_em_archive", "todo"],
+          attempts: 1,
+          solvedAt: 1_700_000_000_100,
+        },
+      },
+    };
+    delete (legacy as any).collectedTokens;
+
+    const migrated = migrateProgress(legacy);
+    expect(migrated?.collectedTokens).toEqual([]);
+    expect(migrated?.caseAnswers.sarah_intent).toMatchObject({
+      slots: {
+        time: "time-six-thirty",
+        intent: "intent-go-home",
+      },
+      lockedSlots: ["time", "intent"],
+      solvedAt: 1_700_000_000_100,
+    });
   });
 });

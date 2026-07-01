@@ -1,36 +1,120 @@
 import { describe, expect, it } from "vitest";
+import { chats } from "../data/chats";
+import { emails } from "../data/emails";
+import { files } from "../data/filesystem";
 import {
-  CASE_QUESTIONS,
+  localizedChatMessage,
+  localizedEmail,
+  localizedFileContent,
+} from "../data/localizedNarrative";
+import {
+  CASE_STATEMENTS,
+  TOKEN_SOURCE_EVIDENCE,
+  TOKENS,
   validateCampaignGraph,
-  validateCaseAnswer,
+  validateStatement,
 } from "./campaign";
 
 describe("campaign graph", () => {
-  it("keeps every mandatory conclusion backed by at least two sources", () => {
+  it("keeps every mandatory finding reconstructable and corroborated", () => {
     expect(validateCampaignGraph()).toEqual([]);
-    expect(CASE_QUESTIONS).toHaveLength(6);
+    expect(CASE_STATEMENTS).toHaveLength(7);
   });
 
-  it("accepts bilingual-independent evidence IDs and the intended conclusion", () => {
+  it("validates each blank independently from its evidence", () => {
     expect(
-      validateCaseAnswer("locked_room_source", "workstation_source", [
-        "incident_report",
-        "maintenance_record",
-      ])
-    ).toEqual({ accepted: true, reason: "accepted" });
+      validateStatement(
+        "locked_room_source",
+        {
+          place: "place-under-workstation",
+          object: "object-pipe",
+        },
+        ["incident_report", "maintenance_record"]
+      )
+    ).toEqual({
+      slots: { place: true, object: true },
+      allSlotsCorrect: true,
+      evidence: "ok",
+      accepted: true,
+    });
   });
 
-  it("distinguishes a wrong conclusion from insufficient evidence", () => {
-    expect(
-      validateCaseAnswer("volume_return", "bookseller_error", [
-        "miriam_1998",
-        "lot_114_order",
-      ]).reason
-    ).toBe("wrong_conclusion");
-    expect(
-      validateCaseAnswer("volume_return", "deliberate_return", [
-        "miriam_1998",
-      ]).reason
-    ).toBe("not_enough_evidence");
+  it("returns partial correctness for Golden-Idol-style lock-in", () => {
+    const result = validateStatement(
+      "volume_return",
+      {
+        cause: "cause-deliberately-sent",
+        family: "family-whateley",
+      },
+      ["miriam_1998", "lot_114_order"]
+    );
+    expect(result.slots).toEqual({ cause: true, family: false });
+    expect(result.accepted).toBe(false);
+  });
+
+  it("has an authored click-to-collect marker for every correct token", () => {
+    const authored = [
+      ...files.flatMap((file) =>
+        (file.clues ?? []).map((clue) => ({
+          tokenId: clue.tokenId,
+          evidenceId: file.evidenceId,
+        }))
+      ),
+      ...emails.flatMap((email) =>
+        (email.clues ?? []).map((clue) => ({
+          tokenId: clue.tokenId,
+          evidenceId: email.evidenceId,
+        }))
+      ),
+      ...chats.flatMap((chat) =>
+        chat.messages.flatMap((message) =>
+          (message.clues ?? []).map((clue) => ({
+            tokenId: clue.tokenId,
+            evidenceId: chat.evidenceId,
+          }))
+        )
+      ),
+    ];
+
+    for (const token of TOKENS) {
+      const expectedSource =
+        token.sourceEvidenceId ?? TOKEN_SOURCE_EVIDENCE[token.id];
+      expect(authored).toContainEqual({
+        tokenId: token.id,
+        evidenceId: expectedSource,
+      });
+    }
+  });
+
+  it("keeps every authored clue snippet present in both localized bodies", () => {
+    for (const file of files) {
+      for (const clue of file.clues ?? []) {
+        expect(file.content).toContain(clue.snippet.en);
+        expect(localizedFileContent(file.id, file.content, "pt-BR")).toContain(
+          clue.snippet["pt-BR"]
+        );
+      }
+    }
+    for (const email of emails) {
+      const translated = localizedEmail(
+        email.id,
+        { subject: email.subject, body: email.body },
+        "pt-BR"
+      );
+      for (const clue of email.clues ?? []) {
+        expect(email.body).toContain(clue.snippet.en);
+        expect(translated.body).toContain(clue.snippet["pt-BR"]);
+      }
+    }
+    for (const chat of chats) {
+      for (const message of chat.messages) {
+        for (const clue of message.clues ?? []) {
+          expect(message.body).toContain(clue.snippet.en);
+          expect(
+            localizedChatMessage(message.id, message.body, "pt-BR")
+          ).toContain(clue.snippet["pt-BR"]);
+        }
+      }
+    }
   });
 });

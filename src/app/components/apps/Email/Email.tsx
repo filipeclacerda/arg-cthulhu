@@ -5,6 +5,7 @@ import { emails } from "@/app/data/emails";
 import { isUnlocked } from "@/app/data/filesystem";
 import { useProgress } from "@/app/context/ProgressContext";
 import { resolveTokens } from "@/app/utils/narrative";
+import ClueText from "@/app/components/ClueText/ClueText";
 import { localizedEmail } from "@/app/data/localizedNarrative";
 
 const Email = () => {
@@ -136,9 +137,12 @@ const Email = () => {
                   </p>
                 )}
               </div>
-              <pre className="email-body">
-                {resolveTokens(selected.body, ctx)}
-              </pre>
+              <ClueText
+                as="pre"
+                className="email-body"
+                text={resolveTokens(selected.body, ctx)}
+                clues={selected.clues}
+              />
             </>
           ) : (
             <p className="email-empty-detail">

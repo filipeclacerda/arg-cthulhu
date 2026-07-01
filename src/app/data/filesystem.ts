@@ -1,4 +1,5 @@
 import { PuzzleId } from "../game/progress";
+import { ClueMarker } from "../game/campaign";
 
 export type UnlockCondition =
   | { type: "always" }
@@ -31,6 +32,8 @@ export interface VFile {
   content: string;
   unlock: UnlockCondition;
   evidenceId?: string;
+  /** Collectable clue phrases inside this file's body (Case Reconstruction tokens). */
+  clues?: ClueMarker[];
   alias?: string;
   size?: string;
   modified?: string;
@@ -189,6 +192,12 @@ export const folders: VFolder[] = [
     name: "CHAPTER_SEVEN",
     parentId: "restricted",
     unlock: { type: "puzzleSolved", puzzleId: "counting_audio" },
+  },
+  {
+    id: "lineage-dossiers",
+    name: "LINEAGE",
+    parentId: "restricted",
+    unlock: { type: "flag", flag: "act1_reconstruction_complete" },
   },
 ];
 
@@ -392,6 +401,16 @@ Sunday. I mean it this time.`,
     unlock: { type: "always" },
     evidenceId: "lecture_draft",
     alias: "LECTUR~1.TXT",
+    clues: [
+      { tokenId: "time-six-thirty", snippet: { en: "6:30", "pt-BR": "18:30" } },
+      {
+        tokenId: "intent-go-home",
+        snippet: {
+          en: "call Em from the bus",
+          "pt-BR": "ligar para Em do ônibus",
+        },
+      },
+    ],
     content: `SPECIAL COLLECTIONS 204 — draft
 
 The catalogue is not the object. It is an argument about where the object belongs.
@@ -446,12 +465,30 @@ C:\\WINDOWS\\MEDIA\\track_07.mid
     unlock: { type: "always" },
     evidenceId: "maintenance_record",
     alias: "FACILI~1.TXT",
+    clues: [
+      {
+        tokenId: "place-under-workstation",
+        snippet: {
+          en: "beneath archival workstation",
+          "pt-BR": "sob a workstation",
+        },
+      },
+      {
+        tokenId: "object-pipe",
+        snippet: {
+          en: "No active supply or drainage line",
+          "pt-BR": "Nenhuma linha de água ou drenagem",
+        },
+      },
+      { tokenId: "place-ceiling", snippet: { en: "Ceiling", "pt-BR": "Teto" } },
+      { tokenId: "object-hvac", snippet: { en: "air handler", "pt-BR": "ar-condicionado" } },
+    ],
     content: `MISKATONIC FACILITIES / TICKET F-2026-0311-88
 
 Location: Orne Library B2 / Bishop office
 Complaint: damp carpet beneath archival workstation
 
-Ceiling, wall, radiator and window inspected. No active supply or drainage line enters the room. Moisture boundary was circular and centered beneath SB-ARCHIVE-02.
+Ceiling, wall, radiator, window and air handler inspected. No active supply or drainage line enters the room. Moisture boundary was circular and centered beneath SB-ARCHIVE-02.
 
 Sample conductivity exceeded building water. Ticket reassigned to Special Collections after supervisor instruction.
 
@@ -485,11 +522,20 @@ Status: CLOSED — ADMINISTRATIVE`,
     evidenceId: "diary",
     alias: "DIARY.TXT",
     size: "7 KB",
+    clues: [
+      {
+        tokenId: "cause-deliberately-sent",
+        snippet: {
+          en: "someone made sure it came back",
+          "pt-BR": "alguém fez questão de que ele voltasse",
+        },
+      },
+    ],
     content: `RESEARCH JOURNAL — S. BISHOP
 
 Feb 24 — Em called. I let it go to voicemail again and I hate that I did. She just wants to know I'm eating. I'll call her back when this lot is catalogued. I keep saying that.
 
-March 2 — Acquired the second volume today. The bookseller wouldn't meet my eyes when he handed it over. Said the previous owner "stopped coming around." I didn't ask what that meant. This is the volume Mom listed in her '98 notes — the one nobody could ever find. I'm using her old machine to cross-check her files. It still smells like her office.
+March 2 — Acquired the second volume today. The bookseller wouldn't meet my eyes when he handed it over. Said the previous owner "stopped coming around." I didn't ask what that meant. This is the volume Mom listed in her '98 notes — the one nobody could ever find. I'm using her old machine to cross-check her files. It still smells like her office. The estate had my name and address on file before I ever inquired — someone made sure it came back to a Bishop.
 
 March 9 — The cross-references check out. Three separate sources, three different centuries, the same coastline. Innsmouth isn't the only one. R'lyeh isn't a metaphor.
 
@@ -565,6 +611,12 @@ Tell Sarah I said the tomato plant is hers now if I don't get home before it die
     unlock: { type: "always" },
     evidenceId: "incident_report",
     alias: "INCIDE~1.TXT",
+    clues: [
+      {
+        tokenId: "place-window",
+        snippet: { en: "Window painted shut", "pt-BR": "Janela lacrada por tinta" },
+      },
+    ],
     content: `MISKATONIC CAMPUS SECURITY — INCIDENT 2026-0316-4
 SUBJECT: Bishop, S. (faculty, Special Collections)
 
@@ -584,6 +636,11 @@ Case open. No signs of forced entry or struggle.`,
     unlock: { type: "always" },
     evidenceId: "borrower_index",
     alias: "BORROW~1.TXT",
+    clues: [
+      { tokenId: "family-whateley", snippet: { en: "Whateley", "pt-BR": "WHATELEY" } },
+      { tokenId: "family-marsh", snippet: { en: "Marsh", "pt-BR": "MARSH" } },
+      { tokenId: "family-bishop", snippet: { en: "Bishop", "pt-BR": "BISHOP" } },
+    ],
     content: `WHATELEY DEPOSIT — RESTRICTED READER INDEX
 
 01. Dyer
@@ -735,6 +792,9 @@ The office was empty when this was taken. The monitor was off. You are looking a
     alias: "ACCESS~1.TXT",
     modified: "{TOMORROW} 03:14",
     reference: "B9",
+    clues: [
+      { tokenId: "time-0314", snippet: { en: "03:14", "pt-BR": "03:14" } },
+    ],
     content: `FILE ACCESS LOG — sequence incomplete
 
 {TOMORROW} 03:12  TRANSFORM  114VER~1.TIF /MIRROR
@@ -797,6 +857,16 @@ I'm not writing down what it spells. If you already found the first name, you'll
     kind: "text",
     unlock: { type: "puzzleSolved", puzzleId: "lineage" },
     evidenceId: "tom_last_message",
+    clues: [
+      {
+        tokenId: "person-observer",
+        snippet: { en: "last user", "pt-BR": "último usuário" },
+      },
+      {
+        tokenId: "person-tom-tok",
+        snippet: { en: "my name", "pt-BR": "T. Alvarez" },
+      },
+    ],
     content: `[Text file left by T. Alvarez, dated 03/23, the day he tried to upload the disk image and then stopped answering.]
 
 I made a forensic copy of Sarah's drive to send to people who'd take it seriously. Before I could upload it I opened the image to verify it.
@@ -818,6 +888,15 @@ Don't look for the next file. You'll open it anyway. I know because the log alre
     size: "0 bytes",
     modified: "{TOMORROW} 03:14",
     untypeable: true,
+    clues: [
+      {
+        tokenId: "cause-act-of-reconstruction",
+        snippet: {
+          en: "person trying to understand it",
+          "pt-BR": "pessoa tentando entendê-lo",
+        },
+      },
+    ],
     content: `The last thing in chapter seven is its name. Not "R'lyeh" — that was Sarah's polite approximation, a word small enough to fit in a footnote. This is the thing underneath it.
 
 The runes will not hold still long enough to copy. Try to write the name below and see for yourself.
@@ -848,6 +927,167 @@ RESTORE writes the recovered owner into the source field. The current observer
 is retained in the archive field so that the relay remains occupied.
 
 HALT closes the current relay without recovering its unresolved source.`,
+  },
+
+  // --- Historical branch: four custodians and the damaged 2014 mirror -----
+  {
+    id: "lineage_1863",
+    name: "1863_gazette_clipping.txt",
+    folderId: "lineage-dossiers",
+    kind: "text",
+    unlock: { type: "flag", flag: "act1_reconstruction_complete" },
+    evidenceId: "lineage_1863",
+    alias: "1863GA~1.TXT",
+    clues: [
+      {
+        tokenId: "detail-water-damage",
+        snippet: {
+          en: "ordinary water damage",
+          "pt-BR": "dano comum por água",
+        },
+      },
+    ],
+    content: `ARKHAM GAZETTE / 14 OCTOBER 1863 / CLIPPING 7B
+
+Eliza Marsh, temporary clerk to the Orne bequest, was found alone in the west catalogue room after the night bell. The room was locked. Salt water covered the floor beneath her writing desk, although the ceiling and windows were dry.
+
+The bursar entered "ordinary water damage" in the expense ledger. Marsh crossed out those words and wrote: IT CAME FROM THE ENTRY, NOT THE ROOM.
+
+The following morning, one folio and the clerk were both absent.`,
+  },
+  {
+    id: "lineage_1912",
+    name: "1912_whateley_letter.txt",
+    folderId: "lineage-dossiers",
+    kind: "text",
+    unlock: { type: "flag", flag: "act1_reconstruction_complete" },
+    evidenceId: "lineage_1912",
+    alias: "1912WH~1.TXT",
+    clues: [
+      { tokenId: "year-1912", snippet: { en: "1912", "pt-BR": "1912" } },
+      {
+        tokenId: "cause-clerical-error",
+        snippet: {
+          en: "clerical mix-up",
+          "pt-BR": "engano de catalogação",
+        },
+      },
+      {
+        tokenId: "detail-stolen-volume",
+        snippet: { en: "stolen volume", "pt-BR": "volume roubado" },
+      },
+    ],
+    content: `LETTER / R. WHATELEY TO ORNE SPECIAL COLLECTIONS / 1912
+
+You may call the missing second book a clerical mix-up or a stolen volume if that makes your accounts easier. Neither description explains why my father's card lists the name of a reader who had not yet been born.
+
+Do not complete the empty line. The line is not waiting for the book. It is waiting for whoever describes it.`,
+  },
+  {
+    id: "lineage_1949",
+    name: "1949_night_desk_log.txt",
+    folderId: "lineage-dossiers",
+    kind: "text",
+    unlock: { type: "flag", flag: "act1_reconstruction_complete" },
+    evidenceId: "lineage_1949",
+    alias: "1949NI~1.TXT",
+    clues: [
+      { tokenId: "year-1949", snippet: { en: "1949", "pt-BR": "1949" } },
+    ],
+    content: `ORNE LIBRARY / NIGHT DESK LOG / 1949
+
+H. Akeley returned the coastal ledger without signing it back into custody. She asked that its entries remain arranged by family name, not date.
+
+At 02:11 the pneumatic tube delivered a reader card bearing Akeley's handwriting. She was standing beside me when it arrived.
+
+The card named the next custodian only as BISHOP and left the accession field blank.`,
+  },
+  {
+    id: "lineage_1977",
+    name: "1977_bishop_transfer.txt",
+    folderId: "lineage-dossiers",
+    kind: "text",
+    unlock: { type: "flag", flag: "act1_reconstruction_complete" },
+    evidenceId: "lineage_1977",
+    alias: "1977BI~1.TXT",
+    clues: [
+      { tokenId: "year-1977", snippet: { en: "1977", "pt-BR": "1977" } },
+      { tokenId: "time-1742", snippet: { en: "17:42", "pt-BR": "17:42" } },
+      {
+        tokenId: "detail-incomplete-ledger",
+        snippet: {
+          en: "intentionally incomplete ledger",
+          "pt-BR": "livro-razão incompleto de propósito",
+        },
+      },
+    ],
+    content: `INTERNAL TRANSFER / 7 NOVEMBER 1977 / 17:42
+
+Assistant cataloguer Miriam Bishop accepted one box from the closed Akeley desk. Contents: three reader cards, a salt-stained map and an intentionally incomplete ledger.
+
+M. Bishop refused to sign the final catalogue line. Her supervisor wrote "family superstition" beside the omission.
+
+In 1998, Miriam requested this exact box by a shelfmark that had never been assigned.`,
+  },
+  {
+    id: "victim_2014",
+    name: "2014_offsite_personnel_match.txt",
+    folderId: "lineage-dossiers",
+    kind: "text",
+    unlock: { type: "flag", flag: "act1_reconstruction_complete" },
+    evidenceId: "victim_2014",
+    alias: "2014OF~1.TXT",
+    clues: [
+      {
+        tokenId: "status-deceased",
+        snippet: { en: "presumed deceased", "pt-BR": "presumida morta" },
+      },
+    ],
+    content: `OFF-SITE MIRROR / PERSONNEL CORRELATION / 18 MAY 2014
+
+Badge 14-EV belonged to Eleanor Vale, night digitization contractor. Vale disappeared during a checksum failure at 03:14. Campus Security classified her as presumed deceased after seawater was found inside the locked mirror room.
+
+The maintenance database redacted OWNER, but the same badge authenticated again on 19 May — one day after Vale vanished.
+
+Whether that later user was Eleanor Vale is unresolved. The archive only confirms that something answered with her credential.`,
+  },
+  {
+    id: "em_investigation",
+    name: "em_private_trace.txt",
+    folderId: "lineage-dossiers",
+    kind: "text",
+    unlock: { type: "flag", flag: "act1_reconstruction_complete" },
+    evidenceId: "em_investigation",
+    alias: "EMPRIV~1.TXT",
+    clues: [
+      {
+        tokenId: "intent-flee-arkham",
+        snippet: {
+          en: "leave Arkham unannounced",
+          "pt-BR": "deixar Arkham sem avisar",
+        },
+      },
+      {
+        tokenId: "status-inside-volume",
+        snippet: {
+          en: "sealed inside Volume II",
+          "pt-BR": "presa no Volume II",
+        },
+      },
+    ],
+    content: `EM BISHOP / PRIVATE TRACE / NOT SENT
+
+Bad explanations I tried because they hurt less:
+
+1. Sarah meant to leave Arkham unannounced.
+2. Tom staged the office.
+3. Mom and Sarah are sealed inside Volume II.
+
+None survives the phone records. Sarah bought groceries, promised Dad Sunday and scheduled Monday's lecture. Tom was on the east stair camera while her locked office filled with water.
+
+The detail I cannot dismiss: when we were children, Sarah asked why Mom counted family names in her sleep. Last week Sarah asked me the same question in the same words. She did not remember asking it the first time.
+
+The shape in our coast photograph is not a piling. I found it in Mom's 1977 map.`,
   },
 
   // --- Ending reveal: RESTORE SARAH ---------------------------------------
@@ -895,6 +1135,12 @@ If Sarah ever finds this, tell her I was trying to leave one blank space that di
     unlock: { type: "puzzleSolved", puzzleId: "future_log" },
     evidenceId: "record_2014",
     alias: "2014RE~1.DAT",
+    clues: [
+      {
+        tokenId: "object-archive-field",
+        snippet: { en: "WITNESS: ARCHIVE", "pt-BR": "TESTEMUNHA: ARQUIVO" },
+      },
+    ],
     content: `RECOVERY INDEX / DAMAGED ENTRY
 
 INTERVAL: 2014
@@ -984,7 +1230,7 @@ No write operation was recorded.`,
         },
       ],
     },
-    content: `[Generated by the Recovery Indexer after three independent correlations were retained.]
+    content: `[Generated by the Recovery Indexer after six independent correlations were retained.]
 
 LOT 114:
 The second volume did not return to the Bishop family. It returned through them.

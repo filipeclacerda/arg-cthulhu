@@ -60,7 +60,8 @@
     align-items: center;
     text-align: left;
     gap: 7px;
-    min-height: 52px;
+    min-height: 58px;
+    height: auto;
     margin-bottom: 5px;
     padding: 5px;
 
@@ -73,6 +74,14 @@
       background: #eee;
       border: 1px solid #777;
       font: bold 10px monospace;
+    }
+
+    span {
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      line-height: 1.25;
     }
 
     &.active { outline: 2px solid #001b73; }
@@ -126,6 +135,87 @@
     border: 1px solid #b6b29e;
     cursor: pointer;
   }
+}
+
+.case-reconstruction__statement {
+  line-height: 1.75;
+}
+
+.case-reconstruction__slot {
+  min-width: 86px;
+  margin: 0 3px;
+  padding: 3px 7px;
+  border: 1px dashed #5f5a44;
+  border-bottom: 2px solid #3c4775;
+  background: #eef1ff;
+  color: #172353;
+  font: bold 14px Georgia, serif;
+  cursor: pointer;
+
+  &.active {
+    outline: 2px solid #274ca0;
+    outline-offset: 1px;
+  }
+
+  &.locked {
+    border: 1px solid #937218;
+    background: linear-gradient(#fff3a9, #dcc35f);
+    color: #433400;
+    box-shadow: inset 0 0 0 1px #fff8c9;
+    cursor: default;
+  }
+}
+
+.case-reconstruction__token-bank {
+  padding: 8px 14px;
+  border-bottom: 1px solid #aaa;
+  background: #e2dfd3;
+
+  > div:first-child {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 6px;
+
+    small {
+      color: #625a39;
+      font: 10px "Courier New", monospace;
+    }
+  }
+}
+
+.case-reconstruction__tokens {
+  min-height: 31px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding: 5px;
+  border: 2px inset #eee;
+  background: #bbb8ad;
+
+  .button {
+    width: auto;
+    height: auto;
+    padding: 4px 8px;
+    background: #fffdf1;
+
+    &.selected {
+      outline: 2px solid #001b73;
+      background: #e8eeff;
+    }
+  }
+
+  p {
+    margin: 2px 4px;
+    color: #5d584b;
+    font-size: 10px;
+  }
+}
+
+.case-reconstruction__feedback {
+  &.warm { color: #604a00; }
+  &.cold { color: #720e0e; }
 }
 
 .case-reconstruction__evidence {

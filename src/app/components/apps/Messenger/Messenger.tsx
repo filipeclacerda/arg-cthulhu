@@ -13,6 +13,7 @@ import {
 } from "@/app/game/chat";
 import "./style.scss";
 import { resolveTokens } from "@/app/utils/narrative";
+import ClueText from "@/app/components/ClueText/ClueText";
 import { useI18n } from "@/app/i18n";
 import { localizedChatMessage } from "@/app/data/localizedNarrative";
 
@@ -390,7 +391,11 @@ const Messenger = () => {
                     <strong>{sender?.displayName ?? message.senderId}</strong>
                     <time>{message.timestamp}</time>
                   </div>
-                  <p>{message.body}</p>
+                  <ClueText
+                    as="p"
+                    text={message.body}
+                    clues={"clues" in message ? message.clues : undefined}
+                  />
                 </div>
               );
             })}

@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useProgress } from "@/app/context/ProgressContext";
 import { useWindowManager } from "@/app/context/WindowManagerContext";
 import { useSound } from "@/app/context/SoundContext";
@@ -130,10 +130,13 @@ const EvidenceBoard = () => {
     return t("webRecords");
   };
 
-  const localizeCard = (card: BoardCard): BoardCard => ({
-    ...card,
-    ...localizedBoardCard(card.id, card, locale),
-  });
+  const localizeCard = useCallback(
+    (card: BoardCard): BoardCard => ({
+      ...card,
+      ...localizedBoardCard(card.id, card, locale),
+    }),
+    [locale]
+  );
 
   const evidenceCards = useMemo(
     () =>
@@ -141,7 +144,7 @@ const EvidenceBoard = () => {
         .map((id) => EVIDENCE_CARDS[id])
         .filter((card): card is BoardCard => Boolean(card))
         .map(localizeCard),
-    [discoveredEvidenceIds, locale]
+    [discoveredEvidenceIds, localizeCard]
   );
 
   const allPositioned: PositionedCard[] = useMemo(() => {
@@ -154,7 +157,7 @@ const EvidenceBoard = () => {
       position: boardPositions[card.id] ?? defaultEvidencePosition(index),
     }));
     return [...people, ...evidence];
-  }, [boardPositions, evidenceCards, locale]);
+  }, [boardPositions, evidenceCards, localizeCard]);
 
   const normalizedQuery = query.trim().toLowerCase();
   const explainedIds = useMemo(() => {

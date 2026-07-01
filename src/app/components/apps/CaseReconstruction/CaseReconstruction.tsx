@@ -5,8 +5,10 @@ import { useProgress } from "@/app/context/ProgressContext";
 import { useSound } from "@/app/context/SoundContext";
 import { useWindowManager } from "@/app/context/WindowManagerContext";
 import {
-  CASE_QUESTIONS,
+  CASE_STATEMENTS,
+  collectedTokensOfType,
   localized,
+  TOKENS_BY_ID,
 } from "@/app/game/campaign";
 import { CaseQuestionId } from "@/app/game/progress";
 import {
@@ -33,7 +35,6 @@ const CATEGORY_ORDER: BoardCategory[] = [
   "record",
 ];
 
-/** Record-only cards that live in the recovered web cache, not the filesystem. */
 const RECORD_PAGE_ADDRESS: Partial<Record<string, string>> = {
   catalogue_lot_114: PAGE_ADDRESS.lot,
   coastline_archive: PAGE_ADDRESS.coast,
@@ -45,35 +46,53 @@ const RECORD_PAGE_ADDRESS: Partial<Record<string, string>> = {
 };
 
 const CaseReconstruction = () => {
-  const {
-    state,
-    discoveredEvidenceIds,
-    dispatchGameEvent,
-  } = useProgress();
+  const { state, discoveredEvidenceIds, dispatchGameEvent } = useProgress();
   const { locale, t } = useI18n();
   const { play } = useSound();
   const { openWindow } = useWindowManager();
-  const visibleQuestions = CASE_QUESTIONS.filter(
-    (question) =>
-      question.act === 1 ||
-      state.leadsUnlocked.includes("observer") ||
-      Boolean(state.puzzles.future_log.solvedAt)
+
+  const visibleStatements = CASE_STATEMENTS.filter(
+    (statement) =>
+      statement.act === 1 ||
+      (statement.act === 2 && state.leadsUnlocked.includes(statement.leadId)) ||
+      (statement.act === 3 &&
+        (state.leadsUnlocked.includes("observer") ||
+          Boolean(state.puzzles.future_log.solvedAt)))
   );
-  const firstUnsolved =
-    visibleQuestions.find((question) => !state.caseAnswers[question.id])?.id ??
-    visibleQuestions[0].id;
-  const [questionId, setQuestionId] =
-    useState<CaseQuestionId>(firstUnsolved);
-  const [answerId, setAnswerId] = useState("");
+  const firstOpen =
+    visibleStatements.find(
+      (statement) => !state.caseAnswers[statement.id]?.solvedAt
+    )?.id ?? visibleStatements[0].id;
+
+  const [statementId, setStatementId] =
+    useState<CaseQuestionId>(firstOpen);
+  const [slotSelections, setSlotSelections] = useState<Record<string, string>>(
+    {}
+  );
+  const [activeSlot, setActiveSlot] = useState<string | null>(null);
   const [evidenceIds, setEvidenceIds] = useState<string[]>([]);
   const [feedback, setFeedback] = useState("");
+  const [feedbackTone, setFeedbackTone] = useState<
+    "neutral" | "warm" | "cold"
+  >("neutral");
   const [evidenceFilter, setEvidenceFilter] = useState("");
   const [dossierCard, setDossierCard] = useState<BoardCard | null>(null);
 
-  const question =
-    visibleQuestions.find((candidate) => candidate.id === questionId) ??
-    visibleQuestions[0];
-  const solved = state.caseAnswers[question.id];
+  const statement =
+    visibleStatements.find((candidate) => candidate.id === statementId) ??
+    visibleStatements[0];
+  const retained = state.caseAnswers[statement.id];
+  const solved = Boolean(retained?.solvedAt);
+  const lockedSlots = retained?.lockedSlots ?? [];
+  const effectiveSlots = { ...(retained?.slots ?? {}), ...slotSelections };
+  const selectedSlot =
+    statement.slots.find((slot) => slot.key === activeSlot) ??
+    statement.slots.find((slot) => !lockedSlots.includes(slot.key)) ??
+    statement.slots[0];
+  const candidates = selectedSlot
+    ? collectedTokensOfType(selectedSlot.type, state.collectedTokens)
+    : [];
+
   const evidenceCards = useMemo(
     () =>
       discoveredEvidenceIds
@@ -85,16 +104,13 @@ const CaseReconstruction = () => {
         })),
     [discoveredEvidenceIds, locale]
   );
-  const people = PERSON_CARDS.map((card) => ({
-    ...card,
-    ...localizedBoardCard(card.id, card, locale),
-  }));
-  const cards = [...people, ...evidenceCards];
-  const requiredIds = new Set(question.evidence.allOf ?? []);
-  const relevantIds = new Set([
-    ...(question.evidence.allOf ?? []),
-    ...(question.evidence.anyOf ?? []),
-  ]);
+  const cards = [
+    ...PERSON_CARDS.map((card) => ({
+      ...card,
+      ...localizedBoardCard(card.id, card, locale),
+    })),
+    ...evidenceCards,
+  ];
   const normalizedFilter = evidenceFilter.trim().toLowerCase();
   const filteredCards = cards.filter(
     (card) =>
@@ -106,6 +122,7 @@ const CaseReconstruction = () => {
     category,
     cards: filteredCards.filter((card) => card.category === category),
   })).filter((group) => group.cards.length > 0);
+
   const categoryLabel = (category: BoardCategory): string => {
     if (category === "person") return t("people");
     if (category === "photo") return t("images");
@@ -116,17 +133,35 @@ const CaseReconstruction = () => {
     return t("webRecords");
   };
 
-  const selectQuestion = (id: CaseQuestionId) => {
-    setQuestionId(id);
-    setAnswerId("");
-    setEvidenceIds([]);
+  const selectStatement = (id: CaseQuestionId) => {
+    const saved = state.caseAnswers[id];
+    setStatementId(id);
+    setSlotSelections(saved?.slots ?? {});
+    setEvidenceIds(saved?.evidenceIds ?? []);
+    setActiveSlot(null);
     setFeedback("");
+    setFeedbackTone("neutral");
     setEvidenceFilter("");
+  };
+
+  const chooseToken = (tokenId: string) => {
+    if (!selectedSlot || lockedSlots.includes(selectedSlot.key) || solved) return;
+    setSlotSelections((current) => ({
+      ...current,
+      [selectedSlot.key]: tokenId,
+    }));
+    const next = statement.slots.find(
+      (slot) =>
+        slot.key !== selectedSlot.key &&
+        !lockedSlots.includes(slot.key) &&
+        !effectiveSlots[slot.key]
+    );
+    setActiveSlot(next?.key ?? selectedSlot.key);
+    setFeedback("");
   };
 
   const toggleEvidence = (id: string) => {
     if (solved) return;
-    setFeedback("");
     setEvidenceIds((current) =>
       current.includes(id)
         ? current.filter((candidate) => candidate !== id)
@@ -134,6 +169,7 @@ const CaseReconstruction = () => {
           ? [...current, id]
           : [...current.slice(1), id]
     );
+    setFeedback("");
   };
 
   const openRecord = (card: BoardCard) => {
@@ -144,7 +180,11 @@ const CaseReconstruction = () => {
     const file = files.find((candidate) => candidate.evidenceId === card.id);
     if (file) {
       const appType =
-        file.kind === "image" ? "image" : file.kind === "audio" ? "audio" : "notepad";
+        file.kind === "image"
+          ? "image"
+          : file.kind === "audio"
+            ? "audio"
+            : "notepad";
       openWindow({
         id: `${appType}-${file.id}`,
         appType,
@@ -153,13 +193,16 @@ const CaseReconstruction = () => {
       });
       return;
     }
-    const email = emails.find((candidate) => candidate.evidenceId === card.id);
-    if (email) {
+    if (emails.some((candidate) => candidate.evidenceId === card.id)) {
       openWindow({ id: "inbox", appType: "email", title: "Outlook Express" });
       return;
     }
     if (card.category === "conversation") {
-      openWindow({ id: "msn-messenger", appType: "messenger", title: "MSN Messenger" });
+      openWindow({
+        id: "msn-messenger",
+        appType: "messenger",
+        title: "MSN Messenger",
+      });
       return;
     }
     const address = RECORD_PAGE_ADDRESS[card.id];
@@ -171,50 +214,101 @@ const CaseReconstruction = () => {
     });
   };
 
+  const renderStatement = () => {
+    const template = localized(statement.template, locale);
+    const parts = template.split(/(\{\w+\})/g);
+    return parts.map((part, index) => {
+      const match = part.match(/^\{(\w+)\}$/);
+      if (!match) return <React.Fragment key={index}>{part}</React.Fragment>;
+      const key = match[1];
+      const token = effectiveSlots[key]
+        ? TOKENS_BY_ID[effectiveSlots[key]]
+        : undefined;
+      const locked = lockedSlots.includes(key);
+      return (
+        <button
+          type="button"
+          key={key}
+          className={`case-reconstruction__slot ${
+            activeSlot === key ? "active" : ""
+          } ${locked ? "locked" : ""}`}
+          disabled={locked || solved}
+          onClick={() => setActiveSlot(key)}
+        >
+          {token
+            ? localized(token.label, locale)
+            : locale === "pt-BR"
+              ? `[${statement.slots.find((slot) => slot.key === key)?.type}]`
+              : `[${statement.slots.find((slot) => slot.key === key)?.type}]`}
+        </button>
+      );
+    });
+  };
+
   const submit = () => {
-    if (!answerId) {
+    const missing = statement.slots.some(
+      (slot) => !effectiveSlots[slot.key] && !lockedSlots.includes(slot.key)
+    );
+    if (missing) {
       setFeedback(
         locale === "pt-BR"
-          ? "Escolha uma conclusão antes de arquivar."
-          : "Choose a conclusion before filing it."
+          ? "A frase ainda tem lacunas. Extraia fatos dos registros e preencha cada uma."
+          : "The finding still has blanks. Extract facts from records and fill each one."
       );
+      setFeedbackTone("cold");
       play("error");
       return;
     }
     const result = dispatchGameEvent({
       type: "SUBMIT_CASE_ANSWER",
-      questionId: question.id,
-      answerId,
+      questionId: statement.id,
+      slotSelections: effectiveSlots,
       evidenceIds,
     });
     const outcome = result.caseAnswerResult;
+    const newlyLocked = outcome?.lockedSlots ?? [];
+    setSlotSelections((current) =>
+      Object.fromEntries(
+        Object.entries(current).filter(([key]) => newlyLocked.includes(key))
+      )
+    );
     if (outcome?.accepted) {
       setFeedback(
         locale === "pt-BR"
-          ? "As evidências permanecem juntas. A workstation reage em algum lugar atrás desta janela."
-          : "The evidence holds together. The workstation reacts somewhere behind this window."
+          ? "A frase permanece inteira. Alguma coisa respondeu atrás desta janela."
+          : "The sentence holds. Something answered behind this window."
       );
+      setFeedbackTone("warm");
       play("chime");
       return;
     }
     const messages: Record<string, { en: string; pt: string }> = {
-      wrong_conclusion: {
-        en: "That conclusion contradicts at least one attached record.",
-        pt: "Essa conclusão contradiz pelo menos um registro anexado.",
+      partial_lock: {
+        en: "Part of the finding holds. The gold words stay; the rest slips out of the record.",
+        pt: "Parte do achado se sustenta. As palavras douradas ficam; o restante escapa do registro.",
+      },
+      slots_rejected: {
+        en: "Cold. None of those words agrees with the attached records.",
+        pt: "Frio. Nenhuma dessas palavras concorda com os registros anexados.",
       },
       not_enough_evidence: {
-        en: "One record is a clue. The archive requires corroboration.",
-        pt: "Um registro é uma pista. O arquivo exige confirmação.",
+        en: "The words may fit, but one record is only a clue. Corroborate them.",
+        pt: "As palavras podem servir, mas um registro é só uma pista. Corrobore-as.",
       },
       missing_required_evidence: {
-        en: "The conclusion may be plausible, but its primary record is missing.",
-        pt: "A conclusão pode ser plausível, mas falta o registro principal.",
+        en: "The finding lacks its primary record. Search the source, not its echo.",
+        pt: "Falta o registro primário. Procure a fonte, não o eco.",
       },
     };
-    const copy = messages[outcome?.reason ?? "wrong_conclusion"];
+    const copy = messages[outcome?.reason ?? "slots_rejected"];
     setFeedback(locale === "pt-BR" ? copy.pt : copy.en);
-    play("error");
+    setFeedbackTone(outcome?.reason === "partial_lock" ? "warm" : "cold");
+    play(outcome?.reason === "partial_lock" ? "click" : "error");
   };
+
+  const retainedCount = CASE_STATEMENTS.filter(
+    (candidate) => state.caseAnswers[candidate.id]?.solvedAt
+  ).length;
 
   return (
     <div className="arg-tool case-reconstruction">
@@ -224,11 +318,7 @@ const CaseReconstruction = () => {
       <div className="case-reconstruction__header">
         <div>
           <p>MISKATONIC INCIDENT REVIEW / SB-0316</p>
-          <h2>
-            {locale === "pt-BR"
-              ? "Reconstrução do Caso"
-              : "Case Reconstruction"}
-          </h2>
+          <h2>{locale === "pt-BR" ? "Reconstrução do Caso" : "Case Reconstruction"}</h2>
         </div>
         <button
           className="button case-reconstruction__timeline-link"
@@ -246,19 +336,20 @@ const CaseReconstruction = () => {
 
       <div className="case-reconstruction__layout">
         <nav className="case-reconstruction__questions">
-          <strong>{locale === "pt-BR" ? "Questões do caso" : "Case questions"}</strong>
-          {visibleQuestions.map((candidate, index) => {
-            const retained = state.caseAnswers[candidate.id];
+          <strong>{locale === "pt-BR" ? "Achados" : "Findings"}</strong>
+          {visibleStatements.map((candidate) => {
+            const saved = state.caseAnswers[candidate.id];
+            const locked = saved?.lockedSlots.length ?? 0;
             return (
               <button
                 key={candidate.id}
                 className={`button ${
-                  candidate.id === question.id ? "active" : ""
-                } ${retained ? "retained" : ""}`}
-                onClick={() => selectQuestion(candidate.id)}
+                  candidate.id === statement.id ? "active" : ""
+                } ${saved?.solvedAt ? "retained" : ""}`}
+                onClick={() => selectStatement(candidate.id)}
               >
-                <i>{retained ? "✓" : String(index + 1).padStart(2, "0")}</i>
-                <span>{localized(candidate.prompt, locale)}</span>
+                <i>{saved?.solvedAt ? "✓" : `${locked}/${candidate.slots.length}`}</i>
+                <span>{localized(candidate.context, locale)}</span>
               </button>
             );
           })}
@@ -267,88 +358,85 @@ const CaseReconstruction = () => {
         <main className="case-reconstruction__workspace">
           <header>
             <small>
-              {question.act === 1
-                ? locale === "pt-BR" ? "ATO I / A PESSOA" : "ACT I / THE PERSON"
-                : locale === "pt-BR" ? "ATO III / O OBSERVADOR" : "ACT III / THE OBSERVER"}
+              {locale === "pt-BR"
+                ? `ATO ${statement.act} / ACHADO EM MONTAGEM`
+                : `ACT ${statement.act} / FINDING IN PROGRESS`}
             </small>
-            <h3>{localized(question.prompt, locale)}</h3>
-            <p>{localized(question.context, locale)}</p>
+            <h3 className="case-reconstruction__statement">{renderStatement()}</h3>
+            <p>
+              {locale === "pt-BR"
+                ? "Clique numa lacuna e escolha apenas fatos que você extraiu dos registros."
+                : "Select a blank, then use only facts you extracted from the records."}
+            </p>
           </header>
 
-          <section className="case-reconstruction__conclusions">
-            <strong>{locale === "pt-BR" ? "Conclusão" : "Conclusion"}</strong>
-            {question.options.map((option) => (
-              <label key={option.id}>
-                <input
-                  type="radio"
-                  name={`answer-${question.id}`}
-                  value={option.id}
-                  checked={
-                    solved
-                      ? solved.answerId === option.id
-                      : answerId === option.id
-                  }
-                  disabled={Boolean(solved)}
-                  onChange={() => setAnswerId(option.id)}
-                />
-                <span>{localized(option.label, locale)}</span>
-              </label>
-            ))}
+          <section className="case-reconstruction__token-bank">
+            <div>
+              <strong>{locale === "pt-BR" ? "Banco de fatos" : "Fact bank"}</strong>
+              <small>
+                {selectedSlot
+                  ? `${
+                      locale === "pt-BR" ? "LACUNA" : "BLANK"
+                    }: ${selectedSlot.key.toUpperCase()}`
+                  : ""}
+              </small>
+            </div>
+            <div className="case-reconstruction__tokens">
+              {candidates.map((token) => (
+                <button
+                  type="button"
+                  className={`button ${
+                    effectiveSlots[selectedSlot?.key ?? ""] === token.id
+                      ? "selected"
+                      : ""
+                  }`}
+                  key={token.id}
+                  disabled={solved || Boolean(selectedSlot && lockedSlots.includes(selectedSlot.key))}
+                  onClick={() => chooseToken(token.id)}
+                >
+                  {localized(token.label, locale)}
+                </button>
+              ))}
+              {candidates.length === 0 && (
+                <p>
+                  {locale === "pt-BR"
+                    ? "Nenhum fato desse tipo foi extraído. Abra documentos e clique em trechos significativos."
+                    : "No fact of this type has been extracted. Open records and click significant phrases."}
+                </p>
+              )}
+            </div>
           </section>
 
           <section className="case-reconstruction__evidence">
             <div className="case-reconstruction__evidence-heading">
-              <strong>{locale === "pt-BR" ? "Evidências anexadas" : "Attached evidence"}</strong>
+              <strong>{locale === "pt-BR" ? "Registros anexados" : "Attached records"}</strong>
               <span className="case-reconstruction__evidence-count">
-                {(solved?.evidenceIds ?? evidenceIds).length}/5
+                {(retained?.evidenceIds ?? evidenceIds).length}/5
               </span>
             </div>
-            {!solved && (
-              <p className="case-reconstruction__evidence-hint">
-                {locale === "pt-BR"
-                  ? "Marcado com ★ = registro que essa conclusão exige. Os demais só corroboram."
-                  : "Marked with ★ = the record this conclusion requires. Everything else only corroborates."}
-              </p>
-            )}
             <input
               type="search"
               className="case-reconstruction__evidence-search"
               value={evidenceFilter}
-              disabled={Boolean(solved)}
+              disabled={solved}
               onChange={(event) => setEvidenceFilter(event.target.value)}
               placeholder={
                 locale === "pt-BR"
-                  ? "Filtrar por nome ou palavra-chave…"
-                  : "Filter by name or keyword…"
+                  ? "Filtrar os registros descobertos…"
+                  : "Filter discovered records…"
               }
             />
             <div className="case-reconstruction__evidence-groups">
-              {groupedCards.length === 0 && (
-                <p className="case-reconstruction__evidence-empty">
-                  {locale === "pt-BR"
-                    ? "Nenhum registro descoberto corresponde a esse filtro."
-                    : "No discovered record matches that filter."}
-                </p>
-              )}
               {groupedCards.map((group) => (
-                <div
-                  className="case-reconstruction__evidence-group"
-                  key={group.category}
-                >
+                <div className="case-reconstruction__evidence-group" key={group.category}>
                   <h4>{categoryLabel(group.category)}</h4>
                   <div className="case-reconstruction__evidence-grid">
                     {group.cards.map((card) => {
-                      const selected = (
-                        solved?.evidenceIds ?? evidenceIds
-                      ).includes(card.id);
-                      const required = requiredIds.has(card.id);
-                      const relevant = relevantIds.has(card.id);
+                      const selected = (retained?.evidenceIds ?? evidenceIds).includes(card.id);
                       return (
                         <div
                           className={`case-reconstruction__evidence-card ${
                             selected ? "selected" : ""
-                          } ${
-                            !solved && relevant ? "relevant" : ""
                           }`}
                           key={card.id}
                         >
@@ -356,36 +444,23 @@ const CaseReconstruction = () => {
                             className="case-reconstruction__evidence-toggle"
                             title={card.summary}
                             onClick={() => toggleEvidence(card.id)}
-                            disabled={Boolean(solved)}
+                            disabled={solved}
                           >
-                            <span className="case-reconstruction__evidence-check" aria-hidden="true">
+                            <span className="case-reconstruction__evidence-check">
                               {selected ? "✔" : ""}
                             </span>
                             <span className="case-reconstruction__evidence-body">
-                              <strong>
-                                {card.title}
-                                {!solved && required && (
-                                  <i className="case-reconstruction__evidence-required">★</i>
-                                )}
-                              </strong>
+                              <strong>{card.title}</strong>
                               <small>{card.summary}</small>
                             </span>
                           </button>
                           <button
                             type="button"
                             className="case-reconstruction__evidence-view"
-                            title={
-                              card.category === "person"
-                                ? locale === "pt-BR"
-                                  ? "Abrir ficha"
-                                  : "Open dossier"
-                                : locale === "pt-BR"
-                                  ? "Ver registro novamente"
-                                  : "View record again"
-                            }
                             onClick={() => openRecord(card)}
+                            title={locale === "pt-BR" ? "Abrir registro" : "Open record"}
                           >
-                            {card.category === "person" ? "🗎" : "👁"}
+                            {card.category === "person" ? "▣" : "◉"}
                           </button>
                         </div>
                       );
@@ -399,23 +474,31 @@ const CaseReconstruction = () => {
           <footer>
             <button
               className="button case-reconstruction__file"
-              disabled={Boolean(solved)}
+              disabled={solved}
               onClick={submit}
             >
               {solved
-                ? locale === "pt-BR" ? "CONCLUSÃO RETIDA" : "FINDING RETAINED"
-                : locale === "pt-BR" ? "Testar reconstrução" : "Test reconstruction"}
+                ? locale === "pt-BR" ? "ACHADO RETIDO" : "FINDING RETAINED"
+                : locale === "pt-BR" ? "Testar achado" : "Test finding"}
             </button>
-            {feedback && <p>{feedback}</p>}
+            {feedback && (
+              <p className={`case-reconstruction__feedback ${feedbackTone}`}>
+                {feedback}
+              </p>
+            )}
           </footer>
         </main>
       </div>
+
       <div className="arg-tool__status">
         <span>
-          {Object.keys(state.caseAnswers).length} / {CASE_QUESTIONS.length}{" "}
-          {locale === "pt-BR" ? "conclusões retidas" : "findings retained"}
+          {retainedCount} / {CASE_STATEMENTS.length}{" "}
+          {locale === "pt-BR" ? "achados retidos" : "findings retained"}
         </span>
-        <span>ARCHIVE MODE / NO AUTOMATIC ASSUMPTIONS</span>
+        <span>
+          {state.collectedTokens.length}{" "}
+          {locale === "pt-BR" ? "fatos extraídos" : "facts extracted"}
+        </span>
       </div>
 
       {dossierCard && (
@@ -433,7 +516,6 @@ const CaseReconstruction = () => {
                 type="button"
                 className="case-reconstruction__dossier-close"
                 onClick={() => setDossierCard(null)}
-                aria-label={locale === "pt-BR" ? "Fechar" : "Close"}
               >
                 ✕
               </button>
