@@ -102,8 +102,9 @@
 
     .email-sender {
       font-size: calc(var(--ui-scale, 1) * 11pt);
-      white-space: normal;
-      word-break: break-all;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .email-list-row {

@@ -322,6 +322,11 @@
     border: 1px solid #96aabf;
     background: #f8fbfe;
     font: bold 10px Tahoma, sans-serif;
+
+    &:disabled {
+      color: #aab8c4;
+      cursor: default;
+    }
   }
 
   span {

@@ -44,6 +44,7 @@ interface ProgressContextValue {
   persistenceAvailable: boolean;
   recoveredFromCheckpoint: boolean;
   saveStatus: SaveStatus;
+  systemNotice: string | null;
   flags: Record<string, boolean>;
   readFileIds: string[];
   readEmailIds: string[];
@@ -55,6 +56,8 @@ interface ProgressContextValue {
   absenceMs: number;
   caseNotes: string;
   activePuzzle: PuzzleId | null;
+  boardPositions: Record<string, { x: number; y: number }>;
+  boardConnections: string[];
   dispatchGameEvent: (event: GameEvent) => DispatchResult;
   setFlag: (flag: string) => void;
   markFileRead: (fileId: string) => void;
@@ -65,6 +68,9 @@ interface ProgressContextValue {
   attemptPuzzle: (puzzleId: PuzzleId) => void;
   unlockHint: (puzzleId: PuzzleId, level?: number) => void;
   collectReference: (reference: string) => void;
+  moveBoardCard: (cardId: string, x: number, y: number) => void;
+  toggleBoardConnection: (fromId: string, toId: string) => void;
+  resetBoardLayout: () => void;
   recordSequenceAction: (action: string) => DispatchResult;
   runCommand: (command: string) => DispatchResult;
   chooseEnding: (ending: EndingId) => void;
@@ -102,8 +108,10 @@ export const ProgressProvider = ({
   const [persistenceAvailable, setPersistenceAvailable] = useState(true);
   const [recoveredFromCheckpoint, setRecoveredFromCheckpoint] = useState(false);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("loading");
+  const [systemNotice, setSystemNotice] = useState<string | null>(null);
   const previousMilestone = useRef("");
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const noticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const channelRef = useRef<BroadcastChannel | null>(null);
 
   useEffect(() => {
@@ -324,9 +332,33 @@ export const ProgressProvider = ({
       dispatchGameEvent({ type: "COLLECT_REFERENCE", reference }),
     [dispatchGameEvent]
   );
+  const moveBoardCard = useCallback(
+    (cardId: string, x: number, y: number) =>
+      dispatchGameEvent({ type: "MOVE_BOARD_CARD", cardId, x, y }),
+    [dispatchGameEvent]
+  );
+  const toggleBoardConnection = useCallback(
+    (fromId: string, toId: string) =>
+      dispatchGameEvent({ type: "TOGGLE_BOARD_CONNECTION", fromId, toId }),
+    [dispatchGameEvent]
+  );
+  const resetBoardLayout = useCallback(
+    () => dispatchGameEvent({ type: "RESET_BOARD_LAYOUT" }),
+    [dispatchGameEvent]
+  );
   const recordSequenceAction = useCallback(
-    (action: string) =>
-      dispatchGameEvent({ type: "FUTURE_SEQUENCE_ACTION", action }),
+    (action: string) => {
+      const result = dispatchGameEvent({
+        type: "FUTURE_SEQUENCE_ACTION",
+        action,
+      });
+      if (result.sequenceFault) {
+        setSystemNotice("The log resets itself.");
+        if (noticeTimer.current) clearTimeout(noticeTimer.current);
+        noticeTimer.current = setTimeout(() => setSystemNotice(null), 2400);
+      }
+      return result;
+    },
     [dispatchGameEvent]
   );
   const runCommand = useCallback(
@@ -379,6 +411,7 @@ export const ProgressProvider = ({
       persistenceAvailable,
       recoveredFromCheckpoint,
       saveStatus,
+      systemNotice,
       flags: state.flags,
       readFileIds: state.readFileIds,
       readEmailIds: state.readEmailIds,
@@ -390,6 +423,8 @@ export const ProgressProvider = ({
       absenceMs: state.absenceMs,
       caseNotes: state.caseNotes,
       activePuzzle: firstUnsolvedPuzzle(state),
+      boardPositions: state.boardPositions,
+      boardConnections: state.boardConnections,
       dispatchGameEvent,
       setFlag,
       markFileRead,
@@ -400,6 +435,9 @@ export const ProgressProvider = ({
       attemptPuzzle,
       unlockHint,
       collectReference,
+      moveBoardCard,
+      toggleBoardConnection,
+      resetBoardLayout,
       recordSequenceAction,
       runCommand,
       chooseEnding,
@@ -428,11 +466,13 @@ export const ProgressProvider = ({
       isReadOnly,
       markEmailRead,
       markFileRead,
+      moveBoardCard,
       newCase,
       persistenceAvailable,
       previewCode,
       recordSequenceAction,
       recoveredFromCheckpoint,
+      resetBoardLayout,
       runCommand,
       saveStatus,
       setCaseNotes,
@@ -440,6 +480,8 @@ export const ProgressProvider = ({
       setPlayerName,
       solvePuzzle,
       state,
+      systemNotice,
+      toggleBoardConnection,
       unlockHint,
       visitPage,
     ]

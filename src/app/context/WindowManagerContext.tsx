@@ -6,6 +6,7 @@ import React, {
   useReducer,
 } from "react";
 import { createUuid } from "@/app/utils/utils";
+import { useSound } from "./SoundContext";
 
 export type AppType =
   | "explorer"
@@ -17,6 +18,7 @@ export type AppType =
   | "image"
   | "audio"
   | "cipher-lab"
+  | "evidence-board"
   | "case-notes"
   | "clock-properties"
   | "properties"
@@ -172,24 +174,32 @@ export const WindowManagerProvider = ({
   children: React.ReactNode;
 }) => {
   const [state, dispatch] = useReducer(reducer, initialState);
+  const { play } = useSound();
 
-  const openWindow = useCallback((options: OpenWindowOptions) => {
-    const id = options.id ?? createUuid();
-    dispatch({
-      type: "OPEN_WINDOW",
-      window: {
-        id,
-        appType: options.appType,
-        title: options.title,
-        props: options.props ?? {},
-        position: randomPosition(),
-      },
-    });
-  }, []);
+  const openWindow = useCallback(
+    (options: OpenWindowOptions) => {
+      const id = options.id ?? createUuid();
+      play("click");
+      dispatch({
+        type: "OPEN_WINDOW",
+        window: {
+          id,
+          appType: options.appType,
+          title: options.title,
+          props: options.props ?? {},
+          position: randomPosition(),
+        },
+      });
+    },
+    [play]
+  );
 
   const closeWindow = useCallback(
-    (id: string) => dispatch({ type: "CLOSE_WINDOW", id }),
-    []
+    (id: string) => {
+      play("click");
+      dispatch({ type: "CLOSE_WINDOW", id });
+    },
+    [play]
   );
   const focusWindow = useCallback(
     (id: string) => dispatch({ type: "FOCUS_WINDOW", id }),

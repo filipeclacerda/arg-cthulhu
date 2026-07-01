@@ -5,6 +5,7 @@ import React, { useState } from "react";
 import "./style.scss";
 import { AppType, useWindowManager } from "@/app/context/WindowManagerContext";
 import { useProgress } from "@/app/context/ProgressContext";
+import { useSound } from "@/app/context/SoundContext";
 
 type MenuView = "root" | "programs" | "accessories";
 
@@ -60,6 +61,12 @@ const ACCESSORIES: ProgramEntry[] = [
     appType: "cipher-lab",
   },
   {
+    id: "evidence-board",
+    label: "Evidence Board",
+    icon: "/icons/folder-special.png",
+    appType: "evidence-board",
+  },
+  {
     id: "calculator",
     label: "Calculator",
     icon: "/icons/internet-options.png",
@@ -80,6 +87,7 @@ const StartMenu = () => {
   const [runInput, setRunInput] = useState("");
   const { openWindow } = useWindowManager();
   const { hasFlag, runCommand } = useProgress();
+  const { play } = useSound();
 
   const endgameAvailable = hasFlag("endgame_available");
 
@@ -110,6 +118,7 @@ const StartMenu = () => {
     const result = runCommand(command);
 
     if (result.commandAccepted) {
+      play("chime");
       openWindow({
         id: "indexer-result",
         appType: "generic",
@@ -130,6 +139,7 @@ const StartMenu = () => {
       return;
     }
 
+    play("error");
     openWindow({
       appType: "generic",
       title: "Run",

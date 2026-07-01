@@ -42,6 +42,8 @@ export interface ProgressStateV3 {
   futureSequenceStep: number;
   futureSequenceFaults: number;
   ending: EndingId | null;
+  boardPositions: Record<string, { x: number; y: number }>;
+  boardConnections: string[];
 }
 
 export type GameEvent =
@@ -61,6 +63,9 @@ export type GameEvent =
   | { type: "FUTURE_SEQUENCE_ACTION"; action: string }
   | { type: "RUN_COMMAND"; command: string }
   | { type: "CHOOSE_ENDING"; ending: EndingId }
+  | { type: "MOVE_BOARD_CARD"; cardId: string; x: number; y: number }
+  | { type: "TOGGLE_BOARD_CONNECTION"; fromId: string; toId: string }
+  | { type: "RESET_BOARD_LAYOUT" }
   | { type: "TOUCH_SEEN"; now: number }
   | { type: "HYDRATE"; state: ProgressStateV3 }
   | { type: "RESET"; state: ProgressStateV3 };
@@ -112,6 +117,8 @@ export const createInitialProgress = (
   futureSequenceStep: 0,
   futureSequenceFaults: 0,
   ending: null,
+  boardPositions: {},
+  boardConnections: [],
 });
 
 export const puzzleCorruptionStage = (

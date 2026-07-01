@@ -53,7 +53,26 @@ Please just answer. Even a voice message. Even a text that says "alive, busy, so
 
 — Em
 
-P.S. Dad's birthday is the 22nd. Don't let the research eat that too.`,
+P.S. Family dinner's the 22nd. Don't let the research eat that too.`,
+  },
+  {
+    id: "email-dad",
+    sender: "david.bishop@arkham-orchards.com",
+    subject: "Sunday, or whenever",
+    date: "2026-03-08",
+    unlock: { type: "always" },
+    evidenceId: "dad_email",
+    body: `Sarah,
+
+Your mother used to say work was love with the details filed off. I never knew if that was a compliment to her own habits or an apology for them.
+
+Dinner's the 22nd if you can manage it. Sunday before, if you can't. I'll save a plate either way and pretend I didn't notice the chair was empty, same as I do every year.
+
+Em says you sound tired. I won't pretend I don't know what that particular tired sounds like.
+
+Come if you can. Don't if you can't. I love you regardless.
+
+— Dad`,
   },
   {
     id: "email-2",
@@ -97,14 +116,14 @@ it is not too late for you`,
   {
     id: "email-5",
     sender: "tom.alvarez@miskatonic-research.org",
-    subject: "Found your laptop",
+    subject: "Found your workstation",
     date: "2026-03-22",
     unlock: { type: "always" },
     body: `I have your old machine. Campus security let me into the office after... everything.
 
 I don't know what I'm hoping to find on here. I don't know what I'm hoping I don't find.
 
-If anyone else is reading this, I don't know who has this laptop now, or why, but please: just look around. Tell me what she was working on. Tell me what chapter seven is.
+If anyone else is reading this, I don't know who has this workstation now, or why, but please: just look around. Tell me what she was working on. Tell me what chapter seven is.
 
 — Tom`,
   },
@@ -117,7 +136,7 @@ If anyone else is reading this, I don't know who has this laptop now, or why, bu
     date: "{TOMORROW}",
     unlock: { type: "flag", flag: "sarah_email_arrived" },
     evidenceId: "sarah_live_email",
-    messageId: "<SB-TOMORROW-0314-E7@miskatonic-research.org>",
+    messageId: "<SB-TOMORROW-0311-E7@miskatonic-research.org>",
     reference: "E7",
     body: `I know you opened it because I watched you open it. I'm watching from the other side of the date on that file.
 
@@ -129,7 +148,24 @@ You're going to anyway. I know that too. I'm sorry I can't explain it better fro
 
 — S.
 
-sent: {TOMORROW}`,
+sent: {TOMORROW} 03:11`,
+  },
+
+  // --- Late Act 3: loose threads resolved after the index closes ------------
+  {
+    id: "email-tom-loop",
+    sender: "tom.alvarez@miskatonic-research.org",
+    subject: "RE: read receipts",
+    date: "{TOMORROW}",
+    unlock: { type: "flag", flag: "endgame_available" },
+    evidenceId: "tom_loop_email",
+    body: `The read receipts were Sarah, reading what we'd write before we wrote it. By the time I typed a line she'd already seen it. That's when I stopped calling it a bug.
+
+I'm where she is now. One day ahead, watching the queue grow by one name at a time. It doesn't hurt. Everyone keeps telling each other that, like it helps.
+
+I'm sorry I made the copy. I'm sorrier it worked.
+
+— T`,
   },
 
   // --- Post-ending: only appears after SHUT DOWN ----------------------------

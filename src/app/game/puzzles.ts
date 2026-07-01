@@ -15,7 +15,7 @@ export const PUZZLE_HINTS: Record<PuzzleId, [string, string, string]> = {
     "Use Mirror, Invert, then raise Contrast to 100 in Image Viewer.",
   ],
   margin_cipher: [
-    "Bellaso is a person's name as well as a clue to a cipher.",
+    "Bellaso is a person's name. Search the recovered web for it to learn which cipher this is.",
     "The key is the first person who catalogued this collection.",
     "Choose Vigenere in Cipher Lab and use MIRIAM as the key.",
   ],
@@ -300,6 +300,29 @@ export const reduceGameEvent = (
           [`ending_${event.ending}`]: true,
         },
       };
+      break;
+    case "MOVE_BOARD_CARD":
+      state = {
+        ...state,
+        boardPositions: {
+          ...state.boardPositions,
+          [event.cardId]: { x: event.x, y: event.y },
+        },
+      };
+      break;
+    case "TOGGLE_BOARD_CONNECTION": {
+      const key = [event.fromId, event.toId].sort().join("|");
+      state = {
+        ...state,
+        boardConnections: state.boardConnections.includes(key)
+          ? state.boardConnections.filter((existing) => existing !== key)
+          : [...state.boardConnections, key],
+      };
+      break;
+    }
+    case "RESET_BOARD_LAYOUT":
+      if (Object.keys(state.boardPositions).length === 0) break;
+      state = { ...state, boardPositions: {} };
       break;
     case "TOUCH_SEEN":
       if (

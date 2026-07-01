@@ -3,9 +3,11 @@ import type { Metadata } from "next";
 import { WindowManagerProvider } from "./context/WindowManagerContext";
 import { ProgressProvider } from "./context/ProgressContext";
 import { ZoomProvider } from "./context/ZoomContext";
+import { SoundProvider } from "./context/SoundContext";
 import { WindowLayer } from "./components/WindowFrame/WindowFrame";
 import NavigationGuard from "./components/NavigationGuard/NavigationGuard";
 import SystemContextMenu from "./components/SystemContextMenu/SystemContextMenu";
+import SystemToast from "./components/SystemToast/SystemToast";
 
 export const metadata: Metadata = {
   title: "O Arquivo de Amanhã",
@@ -21,14 +23,17 @@ export default function RootLayout({
     <html lang="en" id="root">
       <body>
         <ZoomProvider>
-          <ProgressProvider>
-            <WindowManagerProvider>
-              <NavigationGuard />
-              <SystemContextMenu />
-              {children}
-              <WindowLayer />
-            </WindowManagerProvider>
-          </ProgressProvider>
+          <SoundProvider>
+            <ProgressProvider>
+              <WindowManagerProvider>
+                <NavigationGuard />
+                <SystemToast />
+                <SystemContextMenu />
+                {children}
+                <WindowLayer />
+              </WindowManagerProvider>
+            </ProgressProvider>
+          </SoundProvider>
         </ZoomProvider>
       </body>
     </html>

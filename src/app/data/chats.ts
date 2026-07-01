@@ -191,6 +191,18 @@ export const chats: ChatThread[] = [
         timestamp: "03/15/2026 07:04 AM",
         body: "I remember you asking me that when you were seven. Call me when you wake up.",
       },
+      {
+        id: "em-10",
+        senderId: "em",
+        timestamp: "03/18/2026 11:20 PM",
+        body: "Found one of Mom's notebooks in Dad's garage. She wrote: \"The work is compulsion. The compulsion is the hook. I am not the one reading.\" I don't know what that means and I don't want to.",
+      },
+      {
+        id: "em-11",
+        senderId: "em",
+        timestamp: "03/18/2026 11:24 PM",
+        body: "Sarah, if this reaches you: stop reading whatever it is. Call me. I don't care what time it is.",
+      },
     ],
   },
   {

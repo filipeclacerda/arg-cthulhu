@@ -8,6 +8,8 @@
 *{
   cursor: url(../../public/cursor.cur), auto;
   font-family: win98, sans-serif;
+  scrollbar-width: thin;
+  scrollbar-color: #c0c0c0 #dfdfdf;
 }
 body {
   /* Teal clássico do Windows 98, com o dither diagonal das wallpapers
@@ -79,6 +81,46 @@ body {
   transform: translate(-50%, 0);
 }
 
+.system-toast {
+  position: fixed;
+  bottom: calc(var(--ui-scale, 1) * 44px);
+  left: 50%;
+  z-index: 20000;
+  min-width: calc(var(--ui-scale, 1) * 260px);
+  box-sizing: border-box;
+  padding: calc(var(--ui-scale, 1) * 9px) calc(var(--ui-scale, 1) * 13px);
+  color: #111;
+  background: #ffffdf;
+  box-shadow: inset -1px -1px #0a0a0a, inset 1px 1px #fff,
+    inset -2px -2px #808080, inset 2px 2px #dfdfdf,
+    3px 3px 0 rgba(0, 0, 0, 0.3);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, calc(100% + 24px));
+  transition: opacity 90ms steps(2, end), transform 130ms steps(3, end);
+
+  span {
+    display: block;
+    font-size: calc(var(--ui-scale, 1) * 12px);
+  }
+}
+
+.system-toast--visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+@keyframes window-appear {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 .container {
   background-color: #c0c0c0;
   padding: 3px;
@@ -87,6 +129,7 @@ body {
   display: flex;
   flex-direction: column;
   box-shadow: inset -1px -1px #0a0a0a, inset 1px 1px #dfdfdf, inset -2px -2px grey, inset 2px 2px #fff;
+  animation: window-appear 140ms ease-out;
   .title{
     flex-shrink: 0;
     display: flex;
@@ -150,13 +193,44 @@ body {
   &.btn-lg {
     width: 130px;
   }
+  &:disabled {
+    color: #808080;
+    text-shadow: 1px 1px 0 #fff;
+    cursor: default;
+  }
 }
 .windowButtons .button {
   width: calc(var(--ui-scale, 1) * 24px);
+  max-width: 40px;
   height: calc(var(--ui-scale, 1) * 22px);
+  max-height: 36px;
   font-size: calc(var(--ui-scale, 1) * 14px);
   font-weight: bold;
   line-height: 1;
+
+  &:hover {
+    filter: brightness(0.94);
+  }
+}
+
+::-webkit-scrollbar {
+  width: 16px;
+  height: 16px;
+}
+
+::-webkit-scrollbar-track {
+  background: #dfdfdf;
+  box-shadow: inset -1px -1px #fff, inset 1px 1px #808080;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c0c0c0;
+  box-shadow: inset -1px -1px #0a0a0a, inset 1px 1px #fff,
+    inset -2px -2px grey, inset 2px 2px #dfdfdf;
+}
+
+::-webkit-scrollbar-corner {
+  background: #dfdfdf;
 }
 .options {
   margin-top: 50px;

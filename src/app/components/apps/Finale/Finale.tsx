@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { useProgress } from "@/app/context/ProgressContext";
+import { useSound } from "@/app/context/SoundContext";
 import { resolveTokens, formatGameDate, tomorrow } from "@/app/utils/narrative";
 import "./style.scss";
 
@@ -8,6 +9,7 @@ type FinaleState = "choice" | "restore" | "shutdown";
 
 const Finale = () => {
   const { chooseEnding, playerName } = useProgress();
+  const { play } = useSound();
   const [screen, setScreen] = useState<FinaleState>("choice");
 
   const ctx = { playerName };
@@ -15,11 +17,13 @@ const Finale = () => {
 
   const handleRestore = () => {
     chooseEnding("restore");
+    play("chime");
     setScreen("restore");
   };
 
   const handleShutdown = () => {
     chooseEnding("shutdown");
+    play("glitch");
     setScreen("shutdown");
   };
 

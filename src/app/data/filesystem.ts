@@ -321,13 +321,38 @@ March 16 —`,
     alias: "MOM_1998.TXT",
     content: `[Recovered from Mom's old user profile. This is why I keep the machine running. Half of it only exists here.]
 
-M. BISHOP — ACCESSION NOTES, Whateley deposit, 1998
+M. BISHOP — ACCESSION NOTES, Whateley deposit, received 1998-08-29
 
 "Vol. II not present in the crate. Cataloguer (myself) to follow up re: the second volume — see marginalia in Vol. I, ch. 7. The hand in the margins is not the printer's. It answers questions I have not yet written down.
 
 If anyone reads this after me: the counting is not a countdown. Do not finish the —"
 
-[entry ends. Mom was reported missing eleven days later. They never found the second volume. I did. It came as Lot 114.]`,
+[entry dated 1998-09-03. Mom was reported missing eleven days later, on 1998-09-14. They never found the second volume. I did. It came as Lot 114.]`,
+  },
+  {
+    id: "miriam_letter",
+    name: "to_richard_1998.txt",
+    folderId: "sarah",
+    kind: "text",
+    unlock: { type: "always" },
+    evidenceId: "miriam_letter_1998",
+    alias: "TORICH~1.TXT",
+    content: `[Recovered from an old local mail archive on Mom's profile — a sent copy she kept for herself.]
+
+To: r.armitage@miskatonic-research.org
+From: m.bishop@miskatonic-research.org
+Date: 1998-08-31
+Subject: the damp books
+
+Robert — you'll tell me I'm being dramatic about a crate of mildewed paper, and you're probably right, you usually are, it's infuriating.
+
+Vol. I keeps directing me backward, toward a second volume the donor's estate swears was never separated from the first. I don't believe in books that lie about their own table of contents, but here we are.
+
+If Vol. II turns up, I want a second opinion in the room before I open it. Preferably yours, since you're the only one in this department who reads marginalia for a living and doesn't flinch.
+
+Tell Sarah I said the tomato plant is hers now if I don't get home before it dies. She'll know what that means. She's seven, not stupid.
+
+— M.`,
   },
   {
     id: "police_report",
@@ -451,7 +476,7 @@ S. BISHOP (whisper): ...that's not how many days. That's how many people.`,
     kind: "text",
     unlock: { type: "always" },
     evidenceId: "office_after",
-    content: `[Image metadata: taken 03/19 — three days after the office was sealed. Photographer unknown.]
+    content: `[Image metadata: taken 03/19 — three days after the office was sealed. Photographer field stripped; device ID resolves to Campus Security evidence camera 04.]
 
 An empty office. Chair pushed back. The damp patch under the desk, darker now.
 
@@ -486,6 +511,7 @@ The office was empty when this was taken. The monitor was off. You are looking a
     unlock: { type: "puzzleSolved", puzzleId: "lineage" },
     evidenceId: "future_access_log",
     alias: "ACCESS~1.TXT",
+    modified: "{TOMORROW} 03:14",
     reference: "B9",
     content: `FILE ACCESS LOG — sequence incomplete
 
@@ -526,6 +552,21 @@ Each gap remembers roughly three quarters of the gap before it.
 
 There is already a catalogue record for the blank year.
 It should not exist yet.`,
+  },
+  {
+    id: "second_ledger",
+    name: "second_ledger.txt",
+    folderId: "chapter-seven",
+    kind: "text",
+    unlock: { type: "puzzleSolved", puzzleId: "lineage" },
+    evidenceId: "second_ledger",
+    content: `[Found folded inside the back cover of Vol. II. Not typed — Sarah's hand, correcting itself twice.]
+
+I thought there might be a second name hidden the same way. There isn't. I checked three times and got the same eight pairs every time, which is worse than getting different ones.
+
+(9,3) (6,5) (1,3) (3,2) (4,6) (7,1) (2,1) (8,4)
+
+I'm not writing down what it spells. If you already found the first name, you'll get there faster than I did.`,
   },
   {
     id: "toms_recording",

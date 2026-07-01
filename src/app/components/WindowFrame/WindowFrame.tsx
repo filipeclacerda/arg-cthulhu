@@ -14,6 +14,7 @@ import Messenger from "../apps/Messenger/Messenger";
 import ImageViewer from "../apps/ImageViewer/ImageViewer";
 import MediaPlayer from "../apps/MediaPlayer/MediaPlayer";
 import CipherLab from "../apps/CipherLab/CipherLab";
+import EvidenceBoard from "../apps/EvidenceBoard/EvidenceBoard";
 import CaseNotes from "../apps/CaseNotes/CaseNotes";
 import ClockProperties from "../apps/ClockProperties/ClockProperties";
 import FileProperties from "../apps/FileProperties/FileProperties";
@@ -45,6 +46,8 @@ const renderAppContent = (win: WindowInstance) => {
       return <MediaPlayer fileId={win.props.fileId} />;
     case "cipher-lab":
       return <CipherLab />;
+    case "evidence-board":
+      return <EvidenceBoard />;
     case "case-notes":
       return <CaseNotes />;
     case "clock-properties":

@@ -2,6 +2,44 @@ body.desktop-mode {
     overflow: hidden;
 }
 
+.boot-splash {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    background: #000;
+    color: #c0c0c0;
+    font-family: win98, monospace;
+    font-size: 13px;
+    letter-spacing: 1px;
+}
+
+.boot-splash__bar {
+    display: flex;
+    gap: 4px;
+
+    span {
+        width: 22px;
+        height: 14px;
+        background: #2a2a2a;
+        animation: boot-splash-fill 1.6s steps(1, end) infinite;
+
+        &:nth-child(1) { animation-delay: 0ms; }
+        &:nth-child(2) { animation-delay: 200ms; }
+        &:nth-child(3) { animation-delay: 400ms; }
+        &:nth-child(4) { animation-delay: 600ms; }
+        &:nth-child(5) { animation-delay: 800ms; }
+    }
+}
+
+@keyframes boot-splash-fill {
+    0%, 100% { background: #2a2a2a; }
+    40%, 90% { background: #008080; }
+}
+
 #desktop-root {
     position: absolute;
     inset: 0;
@@ -40,6 +78,29 @@ body.desktop-mode {
     text-align: right;
     text-shadow: 1px 1px #003838;
     pointer-events: none;
+}
+
+.desktop-case-label__glitch {
+    color: rgba(255, 40, 60, 0.8);
+    font-weight: bold;
+    text-shadow: -2px 0 rgba(255, 0, 60, 0.6), 2px 0 rgba(0, 200, 255, 0.6);
+}
+
+.cursor-echo {
+    position: fixed;
+    z-index: 9996;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    pointer-events: none;
+    background: rgba(255, 255, 255, 0.5);
+    box-shadow: 0 0 8px rgba(0, 200, 255, 0.5);
+    animation: cursor-echo-fade 900ms ease-out forwards;
+}
+
+@keyframes cursor-echo-fade {
+    0% { opacity: 0.55; transform: scale(1); }
+    100% { opacity: 0; transform: scale(1.6); }
 }
 
 #taskbar {
@@ -132,6 +193,40 @@ body.desktop-mode {
 .save-indicator--error,
 .save-indicator--readonly {
     color: #8b0000;
+}
+
+.taskbar-sound-toggle {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 20px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+
+    &:hover {
+        filter: brightness(0.85);
+    }
+}
+
+.taskbar-sound-toggle__muted {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+
+    &::before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 1px;
+        right: 1px;
+        height: 2px;
+        background: #8b0000;
+        transform: translateY(-50%) rotate(-45deg);
+    }
 }
 
 #desktop-icons {

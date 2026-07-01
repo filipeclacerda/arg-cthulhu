@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import "./style.scss";
 import "../globals.scss";
 import Image from "next/image";
@@ -7,6 +7,8 @@ import Clock from "../components/Clock/Clock";
 import StartMenu from "../components/StartMenu/StartMenu";
 import { useWindowManager, AppType } from "../context/WindowManagerContext";
 import { useProgress } from "../context/ProgressContext";
+import { useSound } from "../context/SoundContext";
+import { useSubliminalGlitch } from "../hooks/useSubliminalGlitch";
 
 interface DesktopApp {
   id: string;
@@ -71,6 +73,7 @@ const appIcon = (appType: AppType) => {
   if (appType === "audio") return "/icons/media-player.png";
   if (appType === "help") return "/icons/help.png";
   if (appType === "recycle-bin") return "/icons/recycle-bin.png";
+  if (appType === "evidence-board") return "/icons/folder-special.png";
   return "/icons/file.png";
 };
 
@@ -85,9 +88,38 @@ const Desktop = () => {
     persistenceAvailable,
     recoveredFromCheckpoint,
     exportCode,
+    corruptionStage,
+    playerName,
   } = useProgress();
+  const { play, setAmbientActive, muted, toggleMuted } = useSound();
   const [warningDismissed, setWarningDismissed] = useState(false);
   const [caseCodeCopied, setCaseCodeCopied] = useState(false);
+  const [booted, setBooted] = useState(false);
+  const previousCorruptionStage = useRef<number | null>(null);
+  const { labelGlitch, cursorEcho } = useSubliminalGlitch(
+    corruptionStage >= 4,
+    playerName
+  );
+
+  useEffect(() => {
+    const t = setTimeout(() => setBooted(true), 1700);
+    return () => clearTimeout(t);
+  }, []);
+
+  useEffect(() => {
+    if (
+      previousCorruptionStage.current !== null &&
+      corruptionStage > previousCorruptionStage.current
+    ) {
+      play("glitch");
+    }
+    previousCorruptionStage.current = corruptionStage;
+  }, [corruptionStage, play]);
+
+  useEffect(() => {
+    setAmbientActive(corruptionStage >= 3);
+    return () => setAmbientActive(false);
+  }, [corruptionStage, setAmbientActive]);
 
   useEffect(() => {
     document.body.classList.add("desktop-mode");
@@ -100,6 +132,7 @@ const Desktop = () => {
 
     const t = setTimeout(() => {
       setFlag("sarah_email_notice_shown");
+      play("chime");
       openWindow({
         id: "new-mail-alert",
         appType: "generic",
@@ -139,6 +172,101 @@ const Desktop = () => {
     flags.sarah_email_notice_shown,
     isHydrated,
     openWindow,
+    play,
+    setFlag,
+  ]);
+
+  useEffect(() => {
+    if (!isHydrated) return;
+    if (!flags.puzzle_lot_114_solved || flags.restricted_folder_notice_shown) return;
+
+    const t = setTimeout(() => {
+      setFlag("restricted_folder_notice_shown");
+      play("chime");
+      openWindow({
+        id: "restricted-folder-alert",
+        appType: "generic",
+        title: "New Folder Recovered",
+        props: {
+          children: (
+            <div className="new-mail-alert">
+              <p className="new-mail-alert__kicker">File system change</p>
+              <h2>A new folder has appeared in this account.</h2>
+              <p>RECOVERED — Sarah Bishop&apos;s My Documents.</p>
+              <button
+                className="button"
+                type="button"
+                onClick={() =>
+                  openWindow({
+                    id: "explorer-restricted",
+                    appType: "explorer",
+                    title: "RECOVERED",
+                    props: { folderId: "restricted" },
+                  })
+                }
+              >
+                Open Folder
+              </button>
+            </div>
+          ),
+        },
+      });
+    }, 900);
+
+    return () => clearTimeout(t);
+  }, [
+    flags.puzzle_lot_114_solved,
+    flags.restricted_folder_notice_shown,
+    isHydrated,
+    openWindow,
+    play,
+    setFlag,
+  ]);
+
+  useEffect(() => {
+    if (!isHydrated) return;
+    if (!flags.puzzle_counting_audio_solved || flags.chapter_seven_notice_shown) return;
+
+    const t = setTimeout(() => {
+      setFlag("chapter_seven_notice_shown");
+      play("chime");
+      openWindow({
+        id: "chapter-seven-alert",
+        appType: "generic",
+        title: "New Folder Recovered",
+        props: {
+          children: (
+            <div className="new-mail-alert">
+              <p className="new-mail-alert__kicker">File system change</p>
+              <h2>A new folder has appeared inside RECOVERED.</h2>
+              <p>CHAPTER_SEVEN.</p>
+              <button
+                className="button"
+                type="button"
+                onClick={() =>
+                  openWindow({
+                    id: "explorer-chapter-seven",
+                    appType: "explorer",
+                    title: "CHAPTER_SEVEN",
+                    props: { folderId: "chapter-seven" },
+                  })
+                }
+              >
+                Open Folder
+              </button>
+            </div>
+          ),
+        },
+      });
+    }, 900);
+
+    return () => clearTimeout(t);
+  }, [
+    flags.puzzle_counting_audio_solved,
+    flags.chapter_seven_notice_shown,
+    isHydrated,
+    openWindow,
+    play,
     setFlag,
   ]);
 
@@ -148,6 +276,7 @@ const Desktop = () => {
 
     const t = setTimeout(() => {
       setFlag("endgame_notice_shown");
+      play("chime");
       openWindow({
         id: "recovered-program-alert",
         appType: "generic",
@@ -187,6 +316,7 @@ const Desktop = () => {
     flags.endgame_notice_shown,
     isHydrated,
     openWindow,
+    play,
     setFlag,
   ]);
 
@@ -231,13 +361,41 @@ const Desktop = () => {
     }
   };
 
+  if (!booted) {
+    return (
+      <main className="boot-splash">
+        <div className="boot-splash__bar">
+          <span />
+          <span />
+          <span />
+          <span />
+          <span />
+        </div>
+        <p>MOUNTING DISK IMAGE — VOL_114</p>
+      </main>
+    );
+  }
+
   return (
     <main id="desktop-root">
       <div className="desktop-atmosphere" aria-hidden="true" />
       <div className="desktop-case-label" aria-hidden="true">
-        <span>MISKATONIC DISK IMAGE</span>
-        <span>READ ONLY / VOL_114</span>
+        {labelGlitch ? (
+          <span className="desktop-case-label__glitch">{labelGlitch}</span>
+        ) : (
+          <>
+            <span>MISKATONIC DISK IMAGE</span>
+            <span>READ ONLY / VOL_114</span>
+          </>
+        )}
       </div>
+      {cursorEcho && (
+        <div
+          className="cursor-echo"
+          aria-hidden="true"
+          style={{ left: cursorEcho.x, top: cursorEcho.y }}
+        />
+      )}
       <div id="taskbar">
         <div className="taskbar-left">
           <StartMenu />
@@ -271,6 +429,16 @@ const Desktop = () => {
           >
             {isReadOnly ? "READ ONLY" : saveStatus.toUpperCase()}
           </span>
+          <button
+            className="taskbar-sound-toggle"
+            type="button"
+            onClick={toggleMuted}
+            title={muted ? "Unmute" : "Mute"}
+            aria-pressed={muted}
+          >
+            <Image src="/icons/sound-recorder.png" alt="" width={16} height={16} />
+            {muted && <span className="taskbar-sound-toggle__muted" aria-hidden="true" />}
+          </button>
           <Clock />
         </div>
       </div>

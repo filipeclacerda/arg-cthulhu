@@ -16,6 +16,11 @@
     font: inherit;
     text-align: left;
     text-decoration: underline;
+
+    &.web-link--inline {
+      display: inline;
+      padding: 0;
+    }
   }
 }
 
@@ -509,6 +514,25 @@
   }
 }
 
+.gazette-archive {
+  display: grid;
+  grid-template-columns: 46px 1fr;
+  gap: 6px 10px;
+  margin: 8px 0 0;
+
+  dt {
+    font-weight: bold;
+  }
+
+  dd {
+    margin: 0 0 6px;
+    padding-bottom: 6px;
+    border-bottom: 1px dotted #999;
+    line-height: 1.45;
+    text-align: justify;
+  }
+}
+
 .site-expedition {
   max-width: 760px;
   margin: 0 auto;
@@ -700,6 +724,163 @@
   }
 }
 
+.site-families {
+  max-width: 760px;
+  margin: 0 auto;
+  color: #1c2b2e;
+  background: #eef2ef;
+  font-family: Georgia, serif;
+
+  header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 13px 16px;
+    color: #eaf3f1;
+    background: #14322f;
+
+    p,
+    h1 {
+      margin: 0;
+    }
+
+    p {
+      font-size: 11px;
+      letter-spacing: 2px;
+    }
+  }
+}
+
+.families-registry {
+  padding: 16px;
+
+  > p {
+    margin-top: 0;
+    line-height: 1.5;
+    color: #35433f;
+  }
+
+  dl {
+    display: grid;
+    grid-template-columns: 130px 1fr;
+    gap: 10px 14px;
+    margin: 14px 0 0;
+  }
+
+  dt {
+    font-weight: bold;
+    color: #14322f;
+  }
+
+  dd {
+    margin: 0 0 4px;
+    line-height: 1.5;
+  }
+}
+
+.families-footnote {
+  margin: 0 16px 16px;
+  padding: 10px;
+  border: 1px solid #8b9e98;
+  background: #dbe6e2;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.site-forum {
+  max-width: 760px;
+  margin: 0 auto;
+  color: #222;
+  background: #eef1f5;
+  font-family: Verdana, Arial, sans-serif;
+  font-size: 12px;
+
+  header {
+    padding: 10px 14px;
+    color: #fff;
+    background: #33526e;
+
+    h1 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    p {
+      margin: 4px 0 0;
+      font-size: 11px;
+      opacity: 0.85;
+    }
+  }
+}
+
+.forum-meta {
+  padding: 6px 14px;
+  color: #556;
+  background: #dde5ec;
+  font-size: 11px;
+  border-bottom: 1px solid #b7c4d1;
+}
+
+.forum-thread {
+  padding: 10px 14px;
+}
+
+.forum-post {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 10px;
+  margin-bottom: 10px;
+  border: 1px solid #b7c4d1;
+  background: #fff;
+
+  > div:first-child {
+    padding: 8px;
+    border-right: 1px solid #dde5ec;
+    background: #f4f7fa;
+    font-size: 11px;
+    word-break: break-word;
+  }
+
+  .forum-handle {
+    display: block;
+    color: #1a4d8f;
+    font-weight: bold;
+  }
+
+  .forum-post-body {
+    padding: 8px 10px;
+
+    time {
+      display: block;
+      margin-bottom: 4px;
+      color: #778;
+      font-size: 10px;
+    }
+
+    p {
+      margin: 0;
+      line-height: 1.5;
+    }
+  }
+}
+
+.forum-post--system {
+  background: #f5f0da;
+
+  .forum-post-body p {
+    color: #7a6a2e;
+    font-style: italic;
+  }
+}
+
+.forum-post--orphan {
+  border-color: #8b0000;
+
+  .forum-handle {
+    color: #8b0000;
+  }
+}
+
 .browser-table {
   width: 100%;
   border-collapse: collapse;
@@ -757,6 +938,11 @@
   .site-columns,
   .gazette-grid,
   .expedition-record {
+    grid-template-columns: 1fr;
+  }
+
+  .families-registry dl,
+  .forum-post {
     grid-template-columns: 1fr;
   }
 

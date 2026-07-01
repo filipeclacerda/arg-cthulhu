@@ -59,6 +59,27 @@
   }
 }
 
+@keyframes screen-tear {
+  0%,
+  92%,
+  100% {
+    clip-path: inset(0 0 0 0);
+    transform: translate(0, 0);
+  }
+  93% {
+    clip-path: inset(22% 0 61% 0);
+    transform: translate(6px, 0);
+  }
+  94% {
+    clip-path: inset(58% 0 12% 0);
+    transform: translate(-8px, 0);
+  }
+  95% {
+    clip-path: inset(0 0 0 0);
+    transform: translate(0, 0);
+  }
+}
+
 // Stage 1 — applied to a single window's body via the `corrupted` className.
 // Window chrome (title bar, close button) stays stable and clickable.
 .corrupted {
@@ -78,8 +99,8 @@
       inset: 0;
       background: repeating-linear-gradient(
         0deg,
-        rgba(255, 0, 60, 0.06) 0px,
-        rgba(0, 200, 255, 0.06) 1px,
+        rgba(255, 0, 60, 0.13) 0px,
+        rgba(0, 200, 255, 0.13) 1px,
         transparent 2px,
         transparent 4px
       );
@@ -93,7 +114,7 @@
   .explorer-view {
     background-image: radial-gradient(
       ellipse at 50% 0%,
-      rgba(255, 0, 60, 0.06),
+      rgba(255, 0, 60, 0.11),
       transparent 46%
     );
   }
@@ -110,7 +131,7 @@
 
   #taskbar {
     box-shadow: inset 0 1px #fff, inset 0 2px #dfdfdf, 0 -1px #0a0a0a,
-      0 -8px 24px rgba(255, 0, 60, 0.12);
+      0 -8px 24px rgba(255, 0, 60, 0.22);
   }
 }
 
@@ -178,6 +199,17 @@
   .desktop-case-label {
     color: rgba(255, 210, 220, 0.65);
     text-shadow: -2px 0 rgba(255, 0, 60, 0.45), 2px 0 rgba(0, 200, 255, 0.45);
+  }
+
+  #desktop-root::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9997;
+    background: rgba(0, 200, 255, 0.06);
+    mix-blend-mode: screen;
+    animation: screen-tear 6s steps(1, end) infinite;
   }
 }
 

@@ -73,8 +73,38 @@
   }
 }
 
+.finale--shutdown {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100vw;
+  height: 100vh;
+  padding: 0;
+  background: #000;
+  animation: shutdown-fade 700ms ease-in;
+}
+
 .finale--shutdown .finale-terminal {
+  width: min(640px, 90vw);
   min-height: calc(var(--ui-scale, 1) * 290px);
   color: #d8d8d8;
   background: #000;
+  box-shadow: none;
+}
+
+.finale--shutdown .finale-caption {
+  color: #888;
+}
+
+@keyframes shutdown-fade {
+  from {
+    background: #c0c0c0;
+  }
+  to {
+    background: #000;
+  }
 }

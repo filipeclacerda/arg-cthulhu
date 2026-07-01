@@ -179,6 +179,7 @@ const ImageViewer = ({ fileId }: { fileId: string }) => {
               {isPalimpsest ? (
                 <>
                   <dt>Orientation</dt><dd>back-facing / tonal range rejected</dd>
+                  <dt>Accession</dt><dd>MS-WHA-1998-114/II</dd>
                 </>
               ) : (
                 <>

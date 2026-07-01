@@ -120,6 +120,25 @@ describe("ARG progression reducer", () => {
       }).state
     ).toBe(solved);
   });
+
+  it("resets custom evidence-board positions without removing connections", () => {
+    let state = createInitialProgress(1_700_000_000_000, "test-case");
+    state = reduceGameEvent(state, {
+      type: "MOVE_BOARD_CARD",
+      cardId: "person-sarah",
+      x: 120,
+      y: 80,
+    }).state;
+    state = reduceGameEvent(state, {
+      type: "TOGGLE_BOARD_CONNECTION",
+      fromId: "person-sarah",
+      toId: "diary",
+    }).state;
+
+    const reset = reduceGameEvent(state, { type: "RESET_BOARD_LAYOUT" }).state;
+    expect(reset.boardPositions).toEqual({});
+    expect(reset.boardConnections).toEqual(["diary|person-sarah"]);
+  });
 });
 
 describe("compound unlock conditions", () => {
