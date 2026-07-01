@@ -617,8 +617,9 @@ Tell Sarah I said the tomato plant is hers now if I don't get home before it die
         snippet: { en: "Window painted shut", "pt-BR": "Janela lacrada por tinta" },
       },
     ],
-    content: `MISKATONIC CAMPUS SECURITY — INCIDENT 2026-0316-4
+    content: `MISKATONIC CAMPUS SECURITY — INCIDENT 2026-0318-2
 SUBJECT: Bishop, S. (faculty, Special Collections)
+SUBJECT LAST CONFIRMED ON PREMISES: 2026-03-16
 
 Responding to welfare check requested by colleague (T. Alvarez). Office door locked from the inside; no other egress. Window painted shut, intact. Subject not present.
 
@@ -738,7 +739,7 @@ If you are reading this, the desktop is already starting to remember things that
     name: "counting.wav — transcript.txt",
     folderId: "restricted",
     kind: "text",
-    unlock: { type: "always" },
+    unlock: { type: "puzzleSolved", puzzleId: "margin_cipher" },
     evidenceId: "counting_transcript",
     content: `[Audio recovered from the office. 4 min 11 sec. Auto-transcribed; the second voice could not be rendered to text.]
 
@@ -1000,7 +1001,11 @@ H. Akeley returned the coastal ledger without signing it back into custody. She 
 
 At 02:11 the pneumatic tube delivered a reader card bearing Akeley's handwriting. She was standing beside me when it arrived.
 
-The card named the next custodian only as BISHOP and left the accession field blank.`,
+The card named the next custodian only as BISHOP and left the accession field blank.
+
+Tube runner Harold Gilman did not report for the next shift. His badge was recovered inside the empty carrier.
+
+Handwritten addendum: THE DESK KEEPS ITS CLERK UNTIL THE SHELF IS DESCRIBED. THE READER IT KEEPS ONLY IF THE READER FINISHES.`,
   },
   {
     id: "lineage_1977",
@@ -1026,6 +1031,8 @@ The card named the next custodian only as BISHOP and left the accession field bl
 Assistant cataloguer Miriam Bishop accepted one box from the closed Akeley desk. Contents: three reader cards, a salt-stained map and an intentionally incomplete ledger.
 
 M. Bishop refused to sign the final catalogue line. Her supervisor wrote "family superstition" beside the omission.
+
+The library volunteer reported missing that evening was Daniel Carter, the Carter named in the coastal registry.
 
 In 1998, Miriam requested this exact box by a shelfmark that had never been assigned.`,
   },

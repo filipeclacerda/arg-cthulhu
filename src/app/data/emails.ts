@@ -31,9 +31,9 @@ export const emails: VEmail[] = [
 
 You missed the department meeting again. That's three in a row. I covered for you with Whitfield but I'm running out of excuses.
 
-I tried calling. Straight to voicemail. I know the Bishop archive thing has had you buried for weeks but this isn't like you.
+I tried calling. Straight to voicemail. Security says your office is locked from the inside. They're doing a welfare check tomorrow morning.
 
-Call me back.
+Call me before they do.
 
 — Tom`,
   },
@@ -107,6 +107,8 @@ I matched our coast photo to Mom's map. The black mark is in exactly the same pl
 
 There is a name under the fold: ELEANOR VALE / MIRROR 2014.
 
+The map is from 1977. That name does not exist in any Miskatonic record until 2014. I checked twice. I'm not telling Dad.
+
 I am sending this even though your mailbox says it was read yesterday.
 
 — Em`,
@@ -132,8 +134,9 @@ Graymoor Antiquarian Booksellers`,
     id: "email-3",
     sender: "unknown",
     subject: "(no subject)",
-    date: "2026-03-15",
+    date: "2026-03-15 03:12",
     unlock: { type: "always" },
+    messageId: "<SB-?????-0312-??@miskatonic-research.org>",
     body: `you are reading the wrong book in the wrong order
 
 stop at chapter seven
@@ -233,6 +236,8 @@ I'm sorry I have to try again.
 The file will go to someone else now — someone who will be curious enough, or kind enough, or afraid enough, to open it. I don't choose them. The curiosity is the address.
 
 Maybe this time someone will stop sooner.
+
+Tom asked me to say: the coffee was never that bad.
 
 — S.
 

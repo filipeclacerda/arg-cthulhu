@@ -4,6 +4,7 @@ import { emails } from "../data/emails";
 import { files } from "../data/filesystem";
 import {
   localizedChatMessage,
+  localizedBrowserText,
   localizedEmail,
   localizedFileContent,
 } from "../data/localizedNarrative";
@@ -116,5 +117,27 @@ describe("campaign graph", () => {
         }
       }
     }
+  });
+
+  it("keeps the Bishop welfare-check chronology and audio gate coherent", () => {
+    const incident = files.find((file) => file.id === "police_report");
+    const transcript = files.find((file) => file.id === "counting");
+    const warning = emails.find((email) => email.id === "email-3");
+
+    expect(incident?.content).toContain("INCIDENT 2026-0318-2");
+    expect(incident?.content).toContain(
+      "SUBJECT LAST CONFIRMED ON PREMISES: 2026-03-16"
+    );
+    expect(transcript?.unlock).toEqual({
+      type: "puzzleSolved",
+      puzzleId: "margin_cipher",
+    });
+    expect(warning).toMatchObject({
+      date: "2026-03-15 03:12",
+      messageId: "<SB-?????-0312-??@miskatonic-research.org>",
+    });
+    expect(
+      localizedBrowserText("forum_7411_meta", "fallback", "pt-BR")
+    ).toContain("Thread #7411");
   });
 });
