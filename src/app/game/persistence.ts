@@ -450,7 +450,7 @@ const fromBase64Url = (value: string): Uint8Array => {
 };
 
 const checksum = async (bytes: Uint8Array): Promise<string> => {
-  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  const digest = await crypto.subtle.digest("SHA-256", Uint8Array.from(bytes).buffer);
   return Array.from(new Uint8Array(digest).slice(0, 6))
     .map((byte) => byte.toString(16).padStart(2, "0"))
     .join("")

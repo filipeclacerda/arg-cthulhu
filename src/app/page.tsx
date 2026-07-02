@@ -113,7 +113,7 @@ export default function Home() {
       is_returning: hasExistingCase,
       act: puzzleAct(state),
     });
-    window.location.href = "/desktop";
+    window.location.href = "/desktop/";
   };
 
   const chooseDiagnostics = (consent: "granted" | "denied") => {
@@ -445,7 +445,7 @@ export default function Home() {
                             posthog.capture("case_code_imported", {
                               act: puzzleAct(imported),
                             });
-                            window.location.href = "/desktop";
+                            window.location.href = "/desktop/";
                           }}
                         >
                           Replace and mount
