@@ -253,9 +253,11 @@ body.desktop-mode {
     display: flex;
     flex-wrap: wrap;
     flex-direction: column;
-    gap: 0px;
+    column-gap: calc(var(--ui-scale, 1) * 4px);
+    row-gap: 0;
     justify-content: flex-start;
     align-items: flex-start;
+    align-content: flex-start;
     height: 100vh;
     width: 100vw;
     padding-top: calc(var(--ui-scale, 1) * 10px);
