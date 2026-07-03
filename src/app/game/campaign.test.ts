@@ -1,12 +1,15 @@
 import { describe, expect, it } from "vitest";
 import { chats } from "../data/chats";
 import { emails } from "../data/emails";
+import { EVIDENCE_CARDS } from "../data/evidenceBoard";
 import { files } from "../data/filesystem";
 import {
   localizedChatMessage,
+  localizedBrowserText,
   localizedEmail,
   localizedFileContent,
 } from "../data/localizedNarrative";
+import { translate } from "../i18n";
 import {
   CASE_STATEMENTS,
   TOKEN_SOURCE_EVIDENCE,
@@ -116,5 +119,69 @@ describe("campaign graph", () => {
         }
       }
     }
+  });
+
+  it("keeps the Bishop welfare-check chronology and audio gate coherent", () => {
+    const incident = files.find((file) => file.id === "police_report");
+    const transcript = files.find((file) => file.id === "counting");
+    const warning = emails.find((email) => email.id === "email-3");
+
+    expect(incident?.content).toContain("INCIDENT 2026-0318-2");
+    expect(incident?.content).toContain(
+      "SUBJECT LAST CONFIRMED ON PREMISES: 2026-03-16"
+    );
+    expect(transcript?.unlock).toEqual({
+      type: "puzzleSolved",
+      puzzleId: "margin_cipher",
+    });
+    expect(warning).toMatchObject({
+      date: "2026-03-15 03:12",
+      messageId: "<SB-?????-0312-??@miskatonic-research.org>",
+    });
+    expect(
+      localizedBrowserText("forum_7411_meta", "fallback", "pt-BR")
+    ).toContain("Thread #7411");
+  });
+
+  it("plants Miriam's second-voice identity only through fields and metadata", () => {
+    const marginMatch = files.find(
+      (file) => file.id === "miriam_margin_match"
+    );
+    const transcript = files.find((file) => file.id === "counting");
+    const todo = files.find((file) => file.id === "todo");
+    const shutdownEmail = emails.find(
+      (email) => email.id === "email-finale-shutdown"
+    );
+
+    expect(marginMatch).toMatchObject({
+      folderId: "lineage-dossiers",
+      evidenceId: "miriam_margin_match",
+      unlock: { type: "flag", flag: "act1_reconstruction_complete" },
+    });
+    expect(marginMatch?.content).toContain("ATTRIBUTED HAND: M. BISHOP");
+    expect(marginMatch?.content).not.toMatch(/M\. BISHOP:\s+[A-Za-z]/);
+    expect(EVIDENCE_CARDS.miriam_margin_match).toBeDefined();
+    expect(transcript?.content).toContain(
+      "Closest match withheld by administrative order"
+    );
+    expect(todo?.content).toContain("did Mom count UP or DOWN?");
+    expect(shutdownEmail?.body).toContain(
+      "The counting paused when you chose"
+    );
+    expect(
+      localizedFileContent(
+        marginMatch?.id ?? "",
+        marginMatch?.content ?? "",
+        "pt-BR"
+      )
+    ).toContain("MÃO ATRIBUÍDA: M. BISHOP");
+    expect(translate("en", "voiceTwoMiriamMatch")).toContain("M. BISHOP");
+    expect(translate("pt-BR", "sysMiriamSession")).toContain("10.227 dias");
+    expect(translate("en", "finaleRestoreTerminal")).toContain(
+      "SECOND SESSION RETAINED — M.B."
+    );
+    expect(translate("pt-BR", "finaleSealCaption")).toContain(
+      "mudou de direção"
+    );
   });
 });

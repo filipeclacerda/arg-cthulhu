@@ -557,6 +557,7 @@ March 16 —`,
 - ask Tom to cover Thursday seminar
 - replace the rug under the desk?? second time this week it's damp. building says no leaks above me.
 - the carpet smells like the beach. I grew up three hours from the nearest beach.
+- ask Em: did Mom count UP or DOWN? can't remember. it matters.
 - finish ch. 7 transcription
 - sleep`,
   },
@@ -617,8 +618,9 @@ Tell Sarah I said the tomato plant is hers now if I don't get home before it die
         snippet: { en: "Window painted shut", "pt-BR": "Janela lacrada por tinta" },
       },
     ],
-    content: `MISKATONIC CAMPUS SECURITY — INCIDENT 2026-0316-4
+    content: `MISKATONIC CAMPUS SECURITY — INCIDENT 2026-0318-2
 SUBJECT: Bishop, S. (faculty, Special Collections)
+SUBJECT LAST CONFIRMED ON PREMISES: 2026-03-16
 
 Responding to welfare check requested by colleague (T. Alvarez). Office door locked from the inside; no other egress. Window painted shut, intact. Subject not present.
 
@@ -738,9 +740,11 @@ If you are reading this, the desktop is already starting to remember things that
     name: "counting.wav — transcript.txt",
     folderId: "restricted",
     kind: "text",
-    unlock: { type: "always" },
+    unlock: { type: "puzzleSolved", puzzleId: "margin_cipher" },
     evidenceId: "counting_transcript",
     content: `[Audio recovered from the office. 4 min 11 sec. Auto-transcribed; the second voice could not be rendered to text.]
+
+[VOICE 2: pattern-matched against staff dictation archive. Closest match withheld by administrative order.]
 
 S. BISHOP: ...okay. It's the fourteenth. I'm recording this so there's proof I'm not — [pause] — it's doing it again. Listen.
 
@@ -1000,7 +1004,11 @@ H. Akeley returned the coastal ledger without signing it back into custody. She 
 
 At 02:11 the pneumatic tube delivered a reader card bearing Akeley's handwriting. She was standing beside me when it arrived.
 
-The card named the next custodian only as BISHOP and left the accession field blank.`,
+The card named the next custodian only as BISHOP and left the accession field blank.
+
+Tube runner Harold Gilman did not report for the next shift. His badge was recovered inside the empty carrier.
+
+Handwritten addendum: THE DESK KEEPS ITS CLERK UNTIL THE SHELF IS DESCRIBED. THE READER IT KEEPS ONLY IF THE READER FINISHES.`,
   },
   {
     id: "lineage_1977",
@@ -1027,7 +1035,28 @@ Assistant cataloguer Miriam Bishop accepted one box from the closed Akeley desk.
 
 M. Bishop refused to sign the final catalogue line. Her supervisor wrote "family superstition" beside the omission.
 
+The library volunteer reported missing that evening was Daniel Carter, the Carter named in the coastal registry.
+
 In 1998, Miriam requested this exact box by a shelfmark that had never been assigned.`,
+  },
+  {
+    id: "miriam_margin_match",
+    name: "miriam_margin_match.txt",
+    folderId: "lineage-dossiers",
+    kind: "text",
+    unlock: { type: "flag", flag: "act1_reconstruction_complete" },
+    evidenceId: "miriam_margin_match",
+    alias: "MIRIAM~2.TXT",
+    modified: "{TOMORROW} 03:10",
+    content: `HANDWRITING COMPARISON / HYDROGRAPHIC DRAWER
+
+SOURCE A: accession annotation / 1998-09-03
+SOURCE B: margin annotation / {TOMORROW} 03:10
+ATTRIBUTED HAND: M. BISHOP
+MATCH: 98.7%
+
+FINAL STROKE: interrupted at identical angle
+ADMINISTRATIVE STATUS: REVIEW WITHHELD`,
   },
   {
     id: "victim_2014",
@@ -1105,7 +1134,9 @@ These are your files now. They're dated {TOMORROW}, because that's where you are
 
 I'll watch for you. The way you watched for me.
 
-— S.`,
+— S.
+
+P.S. A second session is still open: M.BISHOP. The only readable fields are TOMATO / SARAH / FINISH —`,
   },
   {
     id: "miriam_draft",
@@ -1203,6 +1234,7 @@ SOURCE: unresolved
 ARCHIVE: SB-0316
 WITNESS: SB-0316
 RECIPIENTS: 3
+COUNT: HELD
 
 The fourth field is empty again.
 
@@ -1246,6 +1278,7 @@ custody begins after each person opens it.
 No conclusion was recorded for the 2014 interval.
 No physical recovery of Thomas Alvarez was recorded.
 No external system has confirmed that Sarah Bishop returned.
+No determination was made whether the second voice counts toward the total or against it.
 
 The archive has marked these omissions as intentional.`,
   },

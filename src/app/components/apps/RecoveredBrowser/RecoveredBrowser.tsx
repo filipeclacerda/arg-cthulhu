@@ -11,6 +11,7 @@ import {
 import { puzzleHintsFor } from "@/app/game/puzzles";
 import { useI18n } from "@/app/i18n";
 import ClueText from "@/app/components/ClueText/ClueText";
+import { localizedBrowserText } from "@/app/data/localizedNarrative";
 import "../ArgTools/style.scss";
 import "./style.scss";
 
@@ -87,7 +88,7 @@ const RecoveredBrowser = ({
     activePuzzle,
     dispatchGameEvent,
   } = useProgress();
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
   const initialPage: BrowserPage = initialAddress
     ? ((Object.entries(PAGE_ADDRESS) as [BrowserPage, string][]).find(
         ([, addr]) => addr === initialAddress
@@ -722,7 +723,13 @@ const RecoveredBrowser = ({
               <p>They called it a mirage because a mirage ends when you stop looking.</p>
               <p>The city was not built for bodies that walk forward. The carvings were a history, and the history was afraid of something lower in the ice.</p>
               <p className="tekeli">TEKELI—LI&nbsp;&nbsp; TEKELI—LI&nbsp;&nbsp; TEKELI—LI</p>
-              <p>I saw the range again in Sarah Bishop&apos;s scan. She was not born when the photograph was taken.</p>
+              <p>
+                {localizedBrowserText(
+                  "danforth_sarah_photo",
+                  "I saw Sarah Bishop in the photograph attached to the scan. The photograph was taken before she was born.",
+                  locale
+                )}
+              </p>
               <p>They took my recommendation off the department site in 1932. It is still true. I have not changed one word since.</p>
               <hr />
               <small>Last updated: {resolveTokens("{TOMORROW}")} — webmaster email returned: USER DOES NOT EXIST YET</small>
@@ -960,8 +967,11 @@ const RecoveredBrowser = ({
                 <p>Folklore, Cryptozoology &amp; Local History Board</p>
               </header>
               <div className="forum-meta">
-                Thread: &ldquo;the counting pattern (regional disappearances,
-                need eyes on this)&rdquo; · 4 replies
+                {localizedBrowserText(
+                  "forum_7411_meta",
+                  "Thread #7411: “the counting pattern (regional disappearances, need eyes on this)” · 4 replies",
+                  locale
+                )}
               </div>
               <div className="forum-thread">
                 <div className="forum-post">
@@ -1066,7 +1076,13 @@ const RecoveredBrowser = ({
                 </section>
                 <section>
                   <h2>Last voicemail</h2>
-                  <p>“Leaving the archive at six-thirty. If I forget to call, be annoying.” Saved 03/16, 17:42. The office was found empty before six.</p>
+                  <p>
+                    {localizedBrowserText(
+                      "em_last_voicemail",
+                      "“Leaving the archive at six-thirty. If I forget to call, be annoying.” Saved 03/16, 17:42. She never called at six-thirty. By the time anyone opened the office, the water had been standing long enough to leave a ring.",
+                      locale
+                    )}
+                  </p>
                 </section>
               </div>
               <footer>Last updated 2001. Cached revision appended 2026-03-16 by S. Bishop.</footer>

@@ -175,6 +175,12 @@ const MediaPlayer = ({ fileId }: { fileId: string }) => {
               <dt>Duration</dt><dd>04:11</dd>
               <dt>Channels</dt><dd>2 / phase conflict</dd>
               <dt>Modified</dt><dd>{file.modified}</dd>
+              {isPuzzleSolved("future_log") && (
+                <>
+                  <dt>VOICE 1</dt><dd>S. BISHOP</dd>
+                  <dt>VOICE 2</dt><dd>{t("voiceTwoMiriamMatch")}</dd>
+                </>
+              )}
             </dl>
             {isPuzzleSolved("future_log") && (
               <div className="arg-tool__reference">CUE REF: {file.reference}</div>

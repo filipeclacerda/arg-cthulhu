@@ -23,7 +23,7 @@ interface ClueTextProps {
 const ClueText = ({ text, clues, as = "div", className }: ClueTextProps) => {
   const { state, collectedTokens, collectToken } = useProgress();
   const { t } = useI18n();
-  const Tag = as as keyof JSX.IntrinsicElements;
+  const Tag = as;
 
   const markers = (clues ?? [])
     .map((clue) => ({

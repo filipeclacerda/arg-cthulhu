@@ -56,6 +56,7 @@ const desktopApps: DesktopApp[] = [
   {
     id: "case-reconstruction",
     label: "Case Reconstruction",
+    labelKey: "caseReconstructionLabel",
     appType: "case-reconstruction",
     icon: "/icons/folder-special.png",
     maximized: true,
@@ -118,6 +119,10 @@ const Desktop = () => {
   const { play, setAmbientActive, muted, toggleMuted } = useSound();
   const { t } = useI18n();
   const appLabel = (app: DesktopApp) => (app.labelKey ? t(app.labelKey) : app.label);
+  const windowTitle = (win: (typeof windows)[number]) =>
+    win.appType === "case-reconstruction"
+      ? t("caseReconstructionLabel")
+      : win.title;
   const SAVE_STATUS_LABELS: Record<string, TranslationKey> = {
     loading: "statusLoading",
     saving: "statusSaving",
@@ -128,6 +133,9 @@ const Desktop = () => {
   const [warningDismissed, setWarningDismissed] = useState(false);
   const [caseCodeCopied, setCaseCodeCopied] = useState(false);
   const [booted, setBooted] = useState(false);
+  const [selectedDesktopAppId, setSelectedDesktopAppId] = useState<
+    string | null
+  >(null);
   const previousCorruptionStage = useRef<number | null>(null);
   const { labelGlitch, cursorEcho } = useSubliminalGlitch(
     corruptionStage >= 4,
@@ -413,43 +421,31 @@ const Desktop = () => {
   const onClickOffsideIcon = (
     ev: React.MouseEvent<HTMLDivElement, MouseEvent>
   ) => {
-    const target = ev.target as HTMLDivElement;
-    if (target.closest(".desktop-icon")) {
-      return;
-    } else {
-      deselectIcons();
-    }
-  };
-
-  const deselectIcons = () => {
-    const icons = document.querySelectorAll(".desktop-icon");
-    icons.forEach((icon) => {
-      icon.classList.remove("selected");
-    });
+    const target = ev.target as HTMLElement;
+    if (!target.closest(".desktop-icon")) setSelectedDesktopAppId(null);
   };
 
   const handleClickIcon = (
-    ev: React.MouseEvent<HTMLDivElement, MouseEvent>
+    ev: React.MouseEvent<HTMLDivElement, MouseEvent>,
+    appId: string
   ) => {
-    const target = ev.target as HTMLDivElement;
-    const icon = target.closest(".desktop-icon") as HTMLElement | null;
-    if (!icon) return;
-    if (icon.classList.contains("selected")) {
-      const appId = icon.dataset.appId;
-      const app = desktopApps.find((a) => a.id === appId);
-      if (app) {
-        openWindow({
-          id: app.id,
-          appType: app.appType,
-          title: appLabel(app),
-          props: app.props,
-          maximized: app.maximized,
-        });
-      }
-      deselectIcons();
-    } else {
-      icon.classList.toggle("selected");
-    }
+    ev.stopPropagation();
+    setSelectedDesktopAppId(appId);
+  };
+
+  const handleDoubleClickIcon = (
+    ev: React.MouseEvent<HTMLDivElement, MouseEvent>,
+    app: DesktopApp
+  ) => {
+    ev.stopPropagation();
+    openWindow({
+      id: app.id,
+      appType: app.appType,
+      title: appLabel(app),
+      props: app.props,
+      maximized: app.maximized,
+    });
+    setSelectedDesktopAppId(null);
   };
 
   if (!booted) {
@@ -506,10 +502,10 @@ const Desktop = () => {
                   win.minimized ? "taskbar-window--minimized" : ""
                 }`}
                 onClick={() => focusWindow(win.id)}
-                title={win.title}
+                title={windowTitle(win)}
               >
                 <Image src={appIcon(win.appType)} alt="" width={18} height={18} />
-                <span>{win.title}</span>
+                <span>{windowTitle(win)}</span>
               </button>
             ))}
           </div>
@@ -544,10 +540,13 @@ const Desktop = () => {
         {desktopApps.map((app) => (
           <div
             key={app.id}
-            className="desktop-icon"
+            className={`desktop-icon ${
+              selectedDesktopAppId === app.id ? "selected" : ""
+            }`}
             data-app-id={app.id}
             title={t("doubleClickToOpen")}
-            onClick={(ev) => handleClickIcon(ev)}
+            onClick={(ev) => handleClickIcon(ev, app.id)}
+            onDoubleClick={(ev) => handleDoubleClickIcon(ev, app)}
           >
             <Image src={app.icon} alt={appLabel(app)} width={46} height={46} />
             <p>{appLabel(app)}</p>

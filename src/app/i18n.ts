@@ -139,19 +139,25 @@ const en = {
   sysSarahOnlineBlip: "SYSTEM: Sarah Bishop changed status to Online for 1 second.",
   sysMiriamReceipt:
     "SYSTEM: M.BISHOP acknowledged a message sent after account closure.",
+  sysMiriamSession:
+    "SYSTEM: Legacy account M.BISHOP is still authenticated. Session duration: 10,227 days.",
   sysTomReceipt:
     "SYSTEM: Last message read from RELAY-07 / recipient unresolved.",
+  voiceTwoMiriamMatch:
+    "M. BISHOP (LEGACY DICTATION MATCH, ACCOUNT CLOSED 1998)",
 
   restoreSarahLabel: "RESTORE SARAH",
   shutDownChoiceLabel: "SHUT DOWN",
   finaleChoiceTerminal:
     "[RECOVERED PROGRAM — last modified {TOMORROW}]\n\nChapter seven is not in the book.\nChapter seven is the person trying to understand it.\n\nTwo options remain.",
   finaleRestoreTerminal:
-    "[SIGNAL RECEIVED — {TOMORROW}]\n\nS: i'm here\nS: i can hear you on the other side of it\nS: come back i'm right here\n\n[SIGNAL LOST]\n\n[REBOOTING]\n[USER: sarah.bishop]\n[LAST LOGIN: {TOMORROW}]\n\nNew documents found in this folder.\nOwner: {PLAYER}\nCreated: {TOMORROW}",
+    "[SIGNAL RECEIVED — {TOMORROW}]\n\nS: i'm here\nS: i can hear you on the other side of it\nS: come back i'm right here\n\n[SIGNAL LOST]\n[SECOND SESSION RETAINED — M.B.]\n\n[REBOOTING]\n[USER: sarah.bishop]\n[LAST LOGIN: {TOMORROW}]\n\nNew documents found in this folder.\nOwner: {PLAYER}\nCreated: {TOMORROW}",
   finaleRestoreCaption: "Sarah's account is restored. Your files are dated",
   finaleShutdownTerminal:
     "Windows 98 is shutting down.\n\nIt is now safe to turn off your computer.\n\n...\n\n...\n\n...",
   finaleShutdownCaption: "Check your inbox.",
+  finaleSealCaption:
+    "The archive is watching itself. The count did not stop — it changed direction. You are still here. Probably.",
 
   typeLabel: "Type",
   dosAliasLabel: "DOS alias",
@@ -217,6 +223,7 @@ const en = {
   myComputerLabel: "My Computer",
   myDocumentsLabel: "My Documents",
   caseNotesLabel: "Case Notes",
+  caseReconstructionLabel: "Case Reconstruction",
   recycleBinLabel: "Recycle Bin",
   mountingDiskImage: "MOUNTING DISK IMAGE",
   newMailTitle: "New Mail",
@@ -413,19 +420,25 @@ const pt: Record<keyof typeof en, string> = {
     "SISTEMA: Sarah Bishop mudou o status para Online por 1 segundo.",
   sysMiriamReceipt:
     "SISTEMA: M.BISHOP confirmou o recebimento de uma mensagem enviada após o encerramento da conta.",
+  sysMiriamSession:
+    "SISTEMA: A conta legada M.BISHOP continua autenticada. Duração da sessão: 10.227 dias.",
   sysTomReceipt:
     "SISTEMA: Última mensagem lida a partir do RELAY-07 / destinatário não resolvido.",
+  voiceTwoMiriamMatch:
+    "M. BISHOP (CORRESPONDÊNCIA COM DITADO LEGADO, CONTA ENCERRADA EM 1998)",
 
   restoreSarahLabel: "RESTAURAR SARAH",
   shutDownChoiceLabel: "DESLIGAR",
   finaleChoiceTerminal:
     "[PROGRAMA RECUPERADO — última modificação {TOMORROW}]\n\nO capítulo sete não está no livro.\nO capítulo sete é a pessoa tentando entendê-lo.\n\nRestam duas opções.",
   finaleRestoreTerminal:
-    "[SINAL RECEBIDO — {TOMORROW}]\n\nS: estou aqui\nS: consigo ouvir você do outro lado disso\nS: volte, estou bem aqui\n\n[SINAL PERDIDO]\n\n[REINICIANDO]\n[USUÁRIO: sarah.bishop]\n[ÚLTIMO LOGIN: {TOMORROW}]\n\nNovos documentos encontrados nesta pasta.\nProprietário: {PLAYER}\nCriado: {TOMORROW}",
+    "[SINAL RECEBIDO — {TOMORROW}]\n\nS: estou aqui\nS: consigo ouvir você do outro lado disso\nS: volte, estou bem aqui\n\n[SINAL PERDIDO]\n[SEGUNDA SESSÃO RETIDA — M.B.]\n\n[REINICIANDO]\n[USUÁRIO: sarah.bishop]\n[ÚLTIMO LOGIN: {TOMORROW}]\n\nNovos documentos encontrados nesta pasta.\nProprietário: {PLAYER}\nCriado: {TOMORROW}",
   finaleRestoreCaption: "A conta de Sarah foi restaurada. Seus arquivos estão datados de",
   finaleShutdownTerminal:
     "O Windows 98 está sendo desligado.\n\nAgora é seguro desligar o computador.\n\n...\n\n...\n\n...",
   finaleShutdownCaption: "Verifique sua caixa de entrada.",
+  finaleSealCaption:
+    "O arquivo observa a si mesmo. A contagem não parou — mudou de direção. Você ainda está aqui. Provavelmente.",
 
   typeLabel: "Tipo",
   dosAliasLabel: "Alias DOS",
@@ -494,6 +507,7 @@ const pt: Record<keyof typeof en, string> = {
   myComputerLabel: "Meu Computador",
   myDocumentsLabel: "Meus Documentos",
   caseNotesLabel: "Anotações do Caso",
+  caseReconstructionLabel: "Reconstrução do Caso",
   recycleBinLabel: "Lixeira",
   mountingDiskImage: "MONTANDO IMAGEM DE DISCO",
   newMailTitle: "Nova Mensagem",

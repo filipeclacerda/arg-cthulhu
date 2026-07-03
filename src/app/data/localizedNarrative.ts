@@ -1,8 +1,26 @@
 import { Locale } from "../game/progress";
 
 const FILES_PT: Record<string, string> = {
-  police_report: `SEGURANÇA DO CAMPUS MISKATONIC — INCIDENTE 2026-0316-4
+  todo: `- ligar para Em (ligar de verdade)
+- café, lâmpadas, mais papel-toalha
+- pedir ao Tom que cubra o seminário de quinta
+- trocar o tapete sob a mesa?? segunda vez esta semana que fica úmido. manutenção diz que não há vazamento acima.
+- o carpete cheira a praia. cresci a três horas da praia mais próxima.
+- perguntar à Em: mamãe contava UP ou DOWN? não lembro. isso importa.
+- terminar a transcrição do cap. 7
+- dormir`,
+  counting: `[Áudio recuperado do escritório. 4 min 11 s. Transcrição automática; a segunda voz não pôde ser convertida em texto.]
+
+[VOICE 2: correspondência com o arquivo de ditados da equipe. Correspondência mais próxima retida por ordem administrativa.]
+
+S. BISHOP: ...certo. É dia catorze. Estou gravando isto para provar que não estou — [pausa] — está fazendo de novo. Escute.
+
+[Uma contagem. A voz de Sarah acompanha, meio segundo atrasada, como se lesse junto com algo que consegue ouvir, mas o microfone não.]
+
+S. BISHOP (sussurro): ...não é quantos dias. É quantas pessoas.`,
+  police_report: `SEGURANÇA DO CAMPUS MISKATONIC — INCIDENTE 2026-0318-2
 ASSUNTO: Bishop, S. (Coleções Especiais)
+ÚLTIMA CONFIRMAÇÃO DA PESSOA NO LOCAL: 16/03/2026
 
 Porta trancada por dentro; nenhuma outra saída. Janela lacrada por tinta, intacta. Sarah não estava presente.
 
@@ -27,14 +45,29 @@ H. Akeley devolveu o livro-razão costeiro sem registrá-lo na custódia. Pediu 
 
 Às 02:11, o tubo pneumático entregou uma ficha com a letra de Akeley. Ela estava ao meu lado.
 
-A ficha nomeava a próxima guardiã apenas como BISHOP.`,
+A ficha nomeava a próxima guardiã apenas como BISHOP.
+
+O mensageiro do tubo, Harold Gilman, não apareceu no turno seguinte. O crachá dele foi recuperado dentro do compartimento vazio.
+
+Adendo manuscrito: A MESA GUARDA SUA ESCRITURÁRIA ATÉ A ESTANTE SER DESCRITA. O LEITOR, ELA SÓ GUARDA SE ELE TERMINAR.`,
   lineage_1977: `TRANSFERÊNCIA INTERNA / 7 DE NOVEMBRO DE 1977 / 17:42
 
 A catalogadora assistente Miriam Bishop aceitou uma caixa da mesa Akeley. Conteúdo: três fichas, um mapa manchado de sal e um livro-razão incompleto de propósito.
 
 M. Bishop recusou-se a assinar a última linha. O supervisor escreveu "superstição familiar".
 
+O voluntário desaparecido naquela noite era Daniel Carter, o Carter citado no registro costeiro.
+
 Em 1998, Miriam solicitou a mesma caixa usando uma cota nunca atribuída.`,
+  miriam_margin_match: `COMPARAÇÃO DE CALIGRAFIA / GAVETA HIDROGRÁFICA
+
+FONTE A: anotação de incorporação / 03/09/1998
+FONTE B: anotação marginal / {TOMORROW} 03:10
+MÃO ATRIBUÍDA: M. BISHOP
+CORRESPONDÊNCIA: 98,7%
+
+TRAÇO FINAL: interrompido no mesmo ângulo
+STATUS ADMINISTRATIVO: REVISÃO RETIDA`,
   victim_2014: `ESPELHO EXTERNO / CORRELAÇÃO DE PESSOAL / 18 DE MAIO DE 2014
 
 O crachá 14-EV pertencia a Eleanor Vale, técnica noturna de digitalização. Vale desapareceu durante uma falha de checksum às 03:14 e foi considerada presumida morta.
@@ -152,6 +185,7 @@ ORIGEM: não resolvida
 ARQUIVO: SB-0316
 TESTEMUNHA: SB-0316
 DESTINATÁRIOS: 3
+CONTAGEM: RETIDA
 
 O quarto campo está vazio outra vez.
 
@@ -255,7 +289,27 @@ Agora estes são os seus arquivos. Eles estão datados de amanhã porque é de l
 
 Vou observar você. Do mesmo modo que você me observou.
 
-— S.`,
+— S.
+
+P.S. Uma segunda sessão continua aberta: M.BISHOP. Os únicos campos legíveis são TOMATE / SARAH / TERMINAR —`,
+  case_correlations: `[Gerado pelo Indexador de Recuperação após seis correlações independentes serem retidas.]
+
+LOTE 114:
+O segundo volume não retornou para a família Bishop. Retornou através dela.
+
+CATALOGADORAS:
+Miriam e Sarah ocupam o mesmo campo em registros separados por vinte e oito anos.
+O campo não é "proprietário". O rótulo danificado pode dizer "testemunha".
+
+RELAY:
+Alvarez criou a cópia, mas a cópia criou o destinatário. A cadeia de custódia começa depois que cada pessoa a abre.
+
+Nenhuma conclusão foi registrada para o intervalo de 2014.
+Nenhuma recuperação física de Thomas Alvarez foi registrada.
+Nenhum sistema externo confirmou que Sarah Bishop retornou.
+Não foi determinado se a segunda voz conta a favor do total ou contra ele.
+
+O arquivo marcou estas omissões como intencionais.`,
 };
 
 const EMAILS_PT: Record<string, { subject: string; body: string }> = {
@@ -279,6 +333,8 @@ Comparei nossa foto da costa ao mapa da mamãe. A marca preta está no mesmo lug
 
 Há um nome sob a dobra: ELEANOR VALE / ESPELHO 2014.
 
+O mapa é de 1977. Esse nome não existe em nenhum registro da Miskatonic antes de 2014. Conferi duas vezes. Não vou contar ao pai.
+
 Estou enviando isto mesmo que sua caixa diga que foi lido ontem.
 
 — Em`,
@@ -289,9 +345,9 @@ Estou enviando isto mesmo que sua caixa diga que foi lido ontem.
 
 Você faltou à reunião outra vez. Já são três. Eu encobri você para Whitfield, mas minhas desculpas estão acabando.
 
-Tentei ligar. Cai direto na caixa postal. Sei que o arquivo Bishop ocupa você há semanas, mas isso não parece você.
+Tentei ligar. Cai direto na caixa postal. A Segurança diz que seu escritório está trancado por dentro. Vão fazer uma verificação amanhã cedo.
 
-Me liga.
+Me liga antes que façam isso.
 
 — Tom`,
   },
@@ -360,6 +416,10 @@ Desculpe ter feito a cópia. Sinto ainda mais por ela ter funcionado.
 Desculpe precisar tentar outra vez.
 
 O arquivo irá para outra pessoa — alguém curioso, gentil ou assustado o bastante para abri-lo. Eu não escolho. A curiosidade é o endereço.
+
+Tom pediu que eu dissesse: o café nunca foi tão ruim assim.
+
+A contagem parou quando você escolheu. Uma respiração. Foi assim que soube que ela também ouviu.
 
 — S.
 
@@ -438,6 +498,10 @@ const BOARD_CARDS_PT: Record<string, { title: string; summary: string }> = {
   lineage_1977: {
     title: "Transferência Bishop, 1977",
     summary: "Miriam herdou um livro-razão incompleto da mesa Akeley.",
+  },
+  miriam_margin_match: {
+    title: "Comparação das margens de Miriam",
+    summary: "Anotações datadas de 1998 e de amanhã pertencem à mesma mão.",
   },
   victim_2014: {
     title: "Correlação externa, 2014",
@@ -688,6 +752,21 @@ const BOARD_CARDS_PT: Record<string, { title: string; summary: string }> = {
     summary: "Catorze espécimes. Acesso revogado.",
   },
 };
+
+const BROWSER_TEXT_PT: Record<string, string> = {
+  danforth_sarah_photo:
+    "Eu vi Sarah Bishop na fotografia anexada ao scan. A fotografia foi tirada antes de ela nascer.",
+  forum_7411_meta:
+    "Thread #7411: “o padrão da contagem (desaparecimentos regionais, preciso de mais olhos nisso)” · 4 respostas",
+  em_last_voicemail:
+    "“Saindo do arquivo às seis e meia. Se eu esquecer de ligar, seja irritante.” Salvo em 16/03, 17:42. Ela não ligou às seis e meia. Quando abriram o escritório, a água estava parada havia tempo suficiente para deixar uma marca.",
+};
+
+export const localizedBrowserText = (
+  textId: string,
+  original: string,
+  locale: Locale
+): string => (locale === "pt-BR" ? BROWSER_TEXT_PT[textId] ?? original : original);
 
 export const localizedBoardCard = (
   cardId: string,

@@ -43,7 +43,7 @@ const copyToClipboard = async (text: string) => {
 const SystemContextMenu = () => {
   const [menu, setMenu] = useState<MenuState | null>(null);
   const [notice, setNotice] = useState("");
-  const noticeTimer = useRef<ReturnType<typeof setTimeout>>();
+  const noticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const selectionCache = useRef<{ text: string; root: Element } | null>(null);
   const { caseNotes, setCaseNotes } = useProgress();
   const { openWindow } = useWindowManager();

@@ -54,6 +54,7 @@ const ACCESSORIES: ProgramEntry[] = [
   {
     id: "case-reconstruction",
     label: "Case Reconstruction",
+    labelKey: "caseReconstructionLabel",
     icon: "/icons/folder-special.png",
     appType: "case-reconstruction",
     maximized: true,

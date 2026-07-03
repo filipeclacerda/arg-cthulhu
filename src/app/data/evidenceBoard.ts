@@ -310,6 +310,12 @@ export const EVIDENCE_CARDS: Record<string, BoardCard> = {
     category: "document",
     summary: "Miriam inherited an intentionally incomplete ledger from the Akeley desk.",
   },
+  miriam_margin_match: {
+    id: "miriam_margin_match",
+    title: "Miriam margin comparison",
+    category: "document",
+    summary: "Annotations dated 1998 and tomorrow resolve to the same hand.",
+  },
   victim_2014: {
     id: "victim_2014",
     title: "Off-site personnel match, 2014",
