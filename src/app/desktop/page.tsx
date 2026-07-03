@@ -133,6 +133,9 @@ const Desktop = () => {
   const [warningDismissed, setWarningDismissed] = useState(false);
   const [caseCodeCopied, setCaseCodeCopied] = useState(false);
   const [booted, setBooted] = useState(false);
+  const [selectedDesktopAppId, setSelectedDesktopAppId] = useState<
+    string | null
+  >(null);
   const previousCorruptionStage = useRef<number | null>(null);
   const { labelGlitch, cursorEcho } = useSubliminalGlitch(
     corruptionStage >= 4,
@@ -418,43 +421,31 @@ const Desktop = () => {
   const onClickOffsideIcon = (
     ev: React.MouseEvent<HTMLDivElement, MouseEvent>
   ) => {
-    const target = ev.target as HTMLDivElement;
-    if (target.closest(".desktop-icon")) {
-      return;
-    } else {
-      deselectIcons();
-    }
-  };
-
-  const deselectIcons = () => {
-    const icons = document.querySelectorAll(".desktop-icon");
-    icons.forEach((icon) => {
-      icon.classList.remove("selected");
-    });
+    const target = ev.target as HTMLElement;
+    if (!target.closest(".desktop-icon")) setSelectedDesktopAppId(null);
   };
 
   const handleClickIcon = (
-    ev: React.MouseEvent<HTMLDivElement, MouseEvent>
+    ev: React.MouseEvent<HTMLDivElement, MouseEvent>,
+    appId: string
   ) => {
-    const target = ev.target as HTMLDivElement;
-    const icon = target.closest(".desktop-icon") as HTMLElement | null;
-    if (!icon) return;
-    if (icon.classList.contains("selected")) {
-      const appId = icon.dataset.appId;
-      const app = desktopApps.find((a) => a.id === appId);
-      if (app) {
-        openWindow({
-          id: app.id,
-          appType: app.appType,
-          title: appLabel(app),
-          props: app.props,
-          maximized: app.maximized,
-        });
-      }
-      deselectIcons();
-    } else {
-      icon.classList.toggle("selected");
-    }
+    ev.stopPropagation();
+    setSelectedDesktopAppId(appId);
+  };
+
+  const handleDoubleClickIcon = (
+    ev: React.MouseEvent<HTMLDivElement, MouseEvent>,
+    app: DesktopApp
+  ) => {
+    ev.stopPropagation();
+    openWindow({
+      id: app.id,
+      appType: app.appType,
+      title: appLabel(app),
+      props: app.props,
+      maximized: app.maximized,
+    });
+    setSelectedDesktopAppId(null);
   };
 
   if (!booted) {
@@ -549,10 +540,13 @@ const Desktop = () => {
         {desktopApps.map((app) => (
           <div
             key={app.id}
-            className="desktop-icon"
+            className={`desktop-icon ${
+              selectedDesktopAppId === app.id ? "selected" : ""
+            }`}
             data-app-id={app.id}
             title={t("doubleClickToOpen")}
-            onClick={(ev) => handleClickIcon(ev)}
+            onClick={(ev) => handleClickIcon(ev, app.id)}
+            onDoubleClick={(ev) => handleDoubleClickIcon(ev, app)}
           >
             <Image src={app.icon} alt={appLabel(app)} width={46} height={46} />
             <p>{appLabel(app)}</p>
