@@ -16,7 +16,8 @@ const STORE = "saves";
 const CURRENT_KEY = "current";
 const CHECKPOINT_PREFIX = "checkpoint-";
 const LEGACY_STORAGE_KEY = "arg-cthulhu-progress";
-const FALLBACK_STORAGE_KEY = "arg-cthulhu-progress-v5";
+const FALLBACK_STORAGE_KEY = "arg-cthulhu-progress-v6";
+const V5_FALLBACK_STORAGE_KEY = "arg-cthulhu-progress-v5";
 const V4_FALLBACK_STORAGE_KEY = "arg-cthulhu-progress-v4";
 const V3_FALLBACK_STORAGE_KEY = "arg-cthulhu-progress-v3";
 const HEADER_STORAGE_KEY = "arg-cthulhu-progress-header";
@@ -126,7 +127,7 @@ const isProgressV5 = (value: unknown): value is ProgressStateV4 => {
   if (!value || typeof value !== "object") return false;
   const parsed = value as Partial<ProgressStateV4>;
   return (
-    parsed.version === 5 &&
+    (parsed.version === 5 || parsed.version === 6) &&
     typeof parsed.caseId === "string" &&
     typeof parsed.updatedAt === "number" &&
     Boolean(parsed.puzzles) &&
@@ -154,7 +155,7 @@ export const migrateProgress = (value: unknown): ProgressStateV4 | null => {
     return {
       ...initial,
       ...value,
-      version: 5,
+      version: 6,
       collectedTokens: Array.isArray(value.collectedTokens)
         ? value.collectedTokens
         : [],
@@ -192,7 +193,7 @@ export const migrateProgress = (value: unknown): ProgressStateV4 | null => {
     return {
       ...initial,
       ...legacy,
-      version: 5,
+      version: 6,
       locale: legacy.locale === "pt-BR" ? "pt-BR" : "en",
       puzzles,
       insightsUnlocked: Array.isArray(legacy.insightsUnlocked)
@@ -301,6 +302,7 @@ const safeParse = (raw: string | null): unknown => {
 const readLocalFallback = (): ProgressStateV4 | null =>
   migrateProgress(
     safeParse(localStorage.getItem(FALLBACK_STORAGE_KEY)) ??
+      safeParse(localStorage.getItem(V5_FALLBACK_STORAGE_KEY)) ??
       safeParse(localStorage.getItem(V4_FALLBACK_STORAGE_KEY)) ??
       safeParse(localStorage.getItem(V3_FALLBACK_STORAGE_KEY)) ??
       safeParse(localStorage.getItem(LEGACY_STORAGE_KEY))
@@ -408,6 +410,7 @@ export const clearCurrentProgress = async (): Promise<void> => {
     // IndexedDB may be unavailable; the local fallback is cleared below.
   }
   localStorage.removeItem(FALLBACK_STORAGE_KEY);
+  localStorage.removeItem(V5_FALLBACK_STORAGE_KEY);
   localStorage.removeItem(V4_FALLBACK_STORAGE_KEY);
   localStorage.removeItem(V3_FALLBACK_STORAGE_KEY);
   localStorage.removeItem(LEGACY_STORAGE_KEY);
@@ -461,15 +464,15 @@ export const exportCaseCode = async (
   state: ProgressStateV4
 ): Promise<string> => {
   const compressed = zlibSync(strToU8(canonicalize(state)), { level: 9 });
-  return `MISK5.${toBase64Url(compressed)}.${await checksum(compressed)}`;
+  return `MISK6.${toBase64Url(compressed)}.${await checksum(compressed)}`;
 };
 
 export const importCaseCode = async (
   code: string
 ): Promise<ProgressStateV4> => {
   const [prefix, payload, expectedChecksum] = code.trim().split(".");
-  if (!["MISK3", "MISK4", "MISK5"].includes(prefix) || !payload || !expectedChecksum) {
-    throw new Error("This is not a MISK3, MISK4 or MISK5 case code.");
+  if (!["MISK3", "MISK4", "MISK5", "MISK6"].includes(prefix) || !payload || !expectedChecksum) {
+    throw new Error("This is not a MISK3, MISK4, MISK5 or MISK6 case code.");
   }
   const compressed = fromBase64Url(payload);
   const actualChecksum = await checksum(compressed);

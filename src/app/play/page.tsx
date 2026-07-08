@@ -442,7 +442,7 @@ export default function Home() {
                           setCaseError("");
                         }}
                       >
-                        {isPt ? "Importar MISK5 / MISK4 / MISK3" : "Import MISK5 / MISK4 / MISK3"}
+                        {isPt ? "Importar MISK6 / MISK5 / MISK4 / MISK3" : "Import MISK6 / MISK5 / MISK4 / MISK3"}
                       </button>
                     </div>
                   </div>
@@ -459,7 +459,7 @@ export default function Home() {
                         setCasePreview(null);
                         setCaseError("");
                       }}
-                      placeholder="MISK5.payload.checksum"
+                      placeholder="MISK6.payload.checksum"
                     />
                     {caseError && <p className="relay-error">{caseError}</p>}
                     {casePreview && (

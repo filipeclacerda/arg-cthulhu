@@ -14,10 +14,8 @@ import Messenger from "../apps/Messenger/Messenger";
 import ImageViewer from "../apps/ImageViewer/ImageViewer";
 import MediaPlayer from "../apps/MediaPlayer/MediaPlayer";
 import CipherLab from "../apps/CipherLab/CipherLab";
-import EvidenceBoard from "../apps/EvidenceBoard/EvidenceBoard";
+import Casefile from "../apps/Casefile/Casefile";
 import CaseNotes from "../apps/CaseNotes/CaseNotes";
-import CaseReconstruction from "../apps/CaseReconstruction/CaseReconstruction";
-import Timeline from "../apps/Timeline/Timeline";
 import ArchiveViewer from "../apps/ArchiveViewer/ArchiveViewer";
 import ClockProperties from "../apps/ClockProperties/ClockProperties";
 import FileProperties from "../apps/FileProperties/FileProperties";
@@ -50,14 +48,16 @@ const renderAppContent = (win: WindowInstance) => {
       return <MediaPlayer fileId={win.props.fileId} />;
     case "cipher-lab":
       return <CipherLab />;
+    case "casefile":
+      return <Casefile initialLens={win.props.initialLens ?? "reconstruct"} />;
     case "evidence-board":
-      return <EvidenceBoard />;
+      return <Casefile initialLens="organize" />;
     case "case-notes":
       return <CaseNotes />;
     case "case-reconstruction":
-      return <CaseReconstruction />;
+      return <Casefile initialLens="reconstruct" />;
     case "timeline":
-      return <Timeline />;
+      return <Casefile initialLens="timeline" />;
     case "archive-viewer":
       return <ArchiveViewer />;
     case "clock-properties":
@@ -147,8 +147,11 @@ const WindowFrame = ({ win }: { win: WindowInstance }) => {
     >
       <WindowComponent
         title={
-          win.appType === "case-reconstruction"
-            ? t("caseReconstructionLabel")
+          win.appType === "casefile" ||
+          win.appType === "case-reconstruction" ||
+          win.appType === "evidence-board" ||
+          win.appType === "timeline"
+            ? t("casefileLabel")
             : win.title
         }
         onClose={() => closeWindow(win.id)}

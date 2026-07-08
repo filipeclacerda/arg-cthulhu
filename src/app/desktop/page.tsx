@@ -46,18 +46,10 @@ const desktopApps: DesktopApp[] = [
     icon: "/icons/notepad.png",
   },
   {
-    id: "evidence-board",
-    label: "Evidence Board",
-    labelKey: "evidenceBoardLabel",
-    appType: "evidence-board",
-    icon: "/icons/folder-special.png",
-    maximized: true,
-  },
-  {
-    id: "case-reconstruction",
-    label: "Case Reconstruction",
-    labelKey: "caseReconstructionLabel",
-    appType: "case-reconstruction",
+    id: "casefile",
+    label: "Casefile.exe",
+    labelKey: "casefileLabel",
+    appType: "casefile",
     icon: "/icons/folder-special.png",
     maximized: true,
   },
@@ -96,7 +88,7 @@ const appIcon = (appType: AppType) => {
   if (appType === "audio") return "/icons/media-player.png";
   if (appType === "help") return "/icons/help.png";
   if (appType === "recycle-bin") return "/icons/recycle-bin.png";
-  if (appType === "evidence-board") return "/icons/folder-special.png";
+  if (appType === "casefile" || appType === "evidence-board") return "/icons/folder-special.png";
   if (appType === "case-reconstruction" || appType === "timeline") return "/icons/folder-special.png";
   return "/icons/file.png";
 };
@@ -120,8 +112,11 @@ const Desktop = () => {
   const { t } = useI18n();
   const appLabel = (app: DesktopApp) => (app.labelKey ? t(app.labelKey) : app.label);
   const windowTitle = (win: (typeof windows)[number]) =>
-    win.appType === "case-reconstruction"
-      ? t("caseReconstructionLabel")
+    win.appType === "casefile" ||
+    win.appType === "case-reconstruction" ||
+    win.appType === "evidence-board" ||
+    win.appType === "timeline"
+      ? t("casefileLabel")
       : win.title;
   const SAVE_STATUS_LABELS: Record<string, TranslationKey> = {
     loading: "statusLoading",

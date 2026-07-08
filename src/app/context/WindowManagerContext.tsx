@@ -18,6 +18,7 @@ export type AppType =
   | "image"
   | "audio"
   | "cipher-lab"
+  | "casefile"
   | "evidence-board"
   | "case-notes"
   | "case-reconstruction"

@@ -164,7 +164,7 @@ export interface PlayerChoice {
 }
 
 export interface ProgressStateV5 {
-  version: 5;
+  version: 5 | 6;
   caseId: string;
   revision: number;
   createdAt: number;
@@ -203,7 +203,7 @@ export interface ProgressStateV5 {
   assetVariantsSeen: string[];
 }
 
-/** Source-compatible aliases keep the existing UI incremental while saves move to v5. */
+/** Source-compatible aliases keep the existing UI incremental while saves move forward. */
 export type ProgressStateV4 = ProgressStateV5;
 export type ProgressStateV3 = ProgressStateV5;
 
@@ -292,7 +292,7 @@ export const createInitialProgress = (
       ? crypto.randomUUID()
       : `case-${now}-${Math.random().toString(36).slice(2)}`
 ): ProgressStateV5 => ({
-  version: 5,
+  version: 6,
   caseId,
   revision: 0,
   createdAt: now,

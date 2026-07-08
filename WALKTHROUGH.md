@@ -12,6 +12,11 @@
 | Achado: Volume II | `deliberately re-sent` + `Bishop` |
 | Achado: sala trancada | `beneath the workstation` + `water pipe` |
 | Achado histórico | `1977` + `Bishop` + `an intentionally incomplete ledger` |
+| Achado: Sarah no amanhã | `tomorrow` + `one day ahead` |
+| Achado: Relay 07 | `observer` + `archive field` |
+| Achado: capítulo sete | `act of reconstruction` + `observer` |
+| Casefile — cronologia | Miriam 1998 → lote enviado → áudio → Sarah desaparece → foto do escritório → Tom monta a imagem → log futuro |
+| Casefile — refutações | Tom falsificou: `tom_last_message` + `future_access_log`; Sarah fugiu: `incident_report` + `chat_em_archive`; Innsmouth roubou: `lot_114_order` + `catalogue_lot_114` |
 | Catálogo | Pesquisar `WHATELEY 1998 114 VOLUME II` |
 | Palimpsesto | `Mirror` + `Invert` + contraste em 90 ou mais |
 | Cifra | Vigenère, chave `MIRIAM` |
@@ -68,17 +73,17 @@ As informações que precisam ser cruzadas são:
 - Miriam catalogou a coleção em **1998**;
 - o objeto ausente era o **Volume II**.
 
-## 1A. Extraindo fatos e reconstruindo o caso
+## 1A. Casefile.exe — extraindo fatos e reconstruindo o caso
 
 Abra um documento no Notepad, uma mensagem, um e-mail ou um metadado. Trechos com uma
 marcação discreta podem ser clicados. Ao clicar, o jogo **extrai um fato** para:
 
-- `Case Reconstruction → Fact bank`;
+- `Casefile.exe → Achados → Fact bank`;
 - `Case Notes → Facts`.
 
-No Case Reconstruction, clique numa lacuna, escolha um fato do tipo pedido, anexe registros
-que corroborem a frase e pressione **Test finding**. Palavras corretas ficam douradas e
-continuam travadas mesmo se as demais estiverem erradas.
+No **Casefile.exe**, use a lente **Achados**. Clique numa lacuna, escolha ou arraste um
+fato do tipo pedido, anexe registros que corroborem a frase e pressione **Test finding**.
+Palavras corretas ficam douradas e continuam travadas mesmo se as demais estiverem erradas.
 
 Resolva os três achados iniciais em qualquer ordem:
 
@@ -110,6 +115,107 @@ opcional é:
 Anexe o documento de 1977 e pelo menos dois outros dossiês históricos. Esse achado não
 bloqueia a campanha, mas explica como o aviso chegou a Miriam e alimenta a descoberta do
 final secreto.
+
+### Respostas completas do Casefile.exe
+
+O **Casefile.exe** concentra quatro lentes: **Achados**, **Correlações**, **Cronologia** e
+**Refutar**. As respostas abaixo cobrem todos os gates e descobertas desse hub.
+
+#### Achados — achados retidos
+
+1. **Último dia de Sarah**
+   - Frase: `On her last day, Sarah meant to leave the archive around`
+     **6:30 in the evening** `and` **go home to her family**.
+   - Fatos: `time-six-thirty` + `intent-go-home`.
+   - Fonte dos fatos: `lecture_draft.txt`.
+   - Anexos válidos: dois entre `lecture_draft`, `chat_em_archive`, `dad_email`, `todo`,
+     `photo_bishop_birthday_2025`.
+2. **Retorno do Volume II**
+   - Frase: `Volume II resurfaced because it was` **deliberately re-sent**,
+     `routed back through the` **Bishop** `line`.
+   - Fatos: `cause-deliberately-sent` + `family-bishop`.
+   - Fontes dos fatos: `diary.txt` e `borrower_index.txt`.
+   - Anexos válidos: `miriam_1998` obrigatório, mais pelo menos um entre `lot_114_order`,
+     `diary`, `miriam_letter_1998`, `catalogue_lot_114`, `whateley_accession_card`.
+3. **Sala trancada**
+   - Frase: `In the sealed office the seawater surfaced` **beneath the workstation**,
+     `and no` **water pipe** `could account for it`.
+   - Fatos: `place-under-workstation` + `object-pipe`.
+   - Fonte dos fatos: `facilities_ticket_0311.txt`.
+   - Anexos válidos: `incident_report` obrigatório, mais pelo menos um entre
+     `office_after_photo`, `maintenance_record`, `office_frames_11_13`.
+4. **Achado histórico opcional**
+   - Frase: `In` **1977**, `the` **Bishop** `line inherited`
+     **an intentionally incomplete ledger**.
+   - Fatos: `year-1977` + `family-bishop` + `detail-incomplete-ledger`.
+   - Fontes dos fatos: `lineage_1977` e `borrower_index`.
+   - Anexos válidos: `lineage_1977` obrigatório, mais dois entre `lineage_1863`,
+     `lineage_1912`, `lineage_1949`, `em_investigation`.
+5. **Sarah no amanhã**
+   - Frase: `Sarah is not gone: she is held in` **tomorrow**, `always`
+     **one day ahead** `of whoever observes`.
+   - Fatos: `status-tomorrow` + `time-one-day`.
+   - Fonte dos fatos: e-mail `you opened it`.
+   - Anexos válidos: `sarah_live_email` obrigatório, mais um entre `future_access_log`,
+     `do_not_open`, `absence_note`.
+6. **Relay 07**
+   - Frase: `The Relay 07 stays open only while a living` **observer**
+     `occupies the` **archive field**.
+   - Fatos: `person-observer` + `object-archive-field`.
+   - Fontes dos fatos: `toms_last_message.txt` e `2014_RECORD.DAT`.
+   - Anexos válidos: `tom_last_message` obrigatório, mais um entre `sarah_live_email`,
+     `future_access_log`, `index_help`.
+7. **Capítulo sete**
+   - Frase: `Chapter Seven is not in the book — it is the`
+     **act of reconstruction** `carried out by the` **observer**.
+   - Fatos: `cause-act-of-reconstruction` + `person-observer`.
+   - Fontes dos fatos: `the_name.txt` e `toms_last_message.txt`.
+   - Anexos válidos: `the_name` obrigatório, mais um entre `margin_ciphertext`,
+     `counting_audio`, `lineage_pattern`, `future_access_log`.
+
+#### Correlações — correlações retidas
+
+Na lente **Correlações**, selecione as cartas listadas. Uma correlação correta vira fio
+dourado e conta para o final secreto.
+
+1. **The second volume returned through the Bishops**
+   - Cartas: `miriam_1998` + `diary` + `lot_114_order`.
+2. **Miriam and Sarah occupy the same catalogue field**
+   - Cartas: `person-miriam` + `person-sarah` + `lineage_pattern`.
+3. **The copy creates its recipient**
+   - Cartas: `person-sarah` + `person-tom` + `future_access_log` ou `sarah_live_email`.
+4. **Miskatonic archived anomalies as maintenance incidents**
+   - Cartas: `incident_report` + `maintenance_record` + `whitfield_memo` ou
+     `coastline_archive`.
+5. **Miriam left the catalogue incomplete on purpose**
+   - Cartas: `miriam_1998` + `miriam_letter_1998` + `catalogue_lot_114`,
+     `margin_ciphertext` ou `miriam_notebook`.
+6. **An archive can be registered as its own observer**
+   - Cartas: `future_access_log` + `index_help` + `containment_utility` ou `record_2014`.
+
+#### Refutar — hipóteses refutadas
+
+Na lente **Refutar**, cada hipótese falsa exige dois registros independentes:
+
+1. **Tom forged the forensic image**
+   - Refute com `tom_last_message` + `future_access_log`.
+2. **Sarah fled after exposing the university**
+   - Refute com `incident_report` + `chat_em_archive`.
+3. **The Innsmouth society stole Volume II**
+   - Refute com `lot_114_order` + `catalogue_lot_114`.
+
+#### Cronologia — cronologia do caso
+
+Na lente **Cronologia**, ordene os eventos descobertos nesta sequência:
+
+1. `1998-09-03` — Miriam deixa a nota de incorporação inacabada (`miriam_1998`).
+2. `1998-09-14` — Miriam Bishop é declarada desaparecida (`miriam_letter_1998`).
+3. `2026-02-28` — Graymoor envia o Lote 114 para Sarah (`lot_114_order`).
+4. `2026-03-14` — Sarah grava a contagem (`counting_audio`).
+5. `2026-03-16` — Sarah desaparece da sala trancada (`incident_report`).
+6. `2026-03-19` — a Segurança fotografa o escritório vazio (`office_after_photo`).
+7. `2026-03-23` — Tom monta a imagem forense (`tom_last_message`).
+8. `{TOMORROW}` — a imagem registra as ações do observador (`future_access_log`).
 
 ## 2. O catálogo do Lote 114
 
@@ -364,8 +470,8 @@ Os metadados dão a ordem cronológica usada pelo Indexer:
 
 ## 9. O nome que não pode ser escrito
 
-Antes de executar o Indexer, volte ao **Case Reconstruction**. Três novos achados estão
-visíveis no Ato 3:
+Antes de executar o Indexer, volte ao **Casefile.exe → Achados**. Três novos achados
+estão visíveis no Ato 3:
 
 1. **Sarah está retida em `tomorrow`, sempre `one day ahead` do observador.**
    - extraia ambos do e-mail `you opened it`;
@@ -446,7 +552,8 @@ para o próximo observador.
 
 ### SEAL RELAY — final secreto
 
-Antes de escolher RESTORE ou SHUT DOWN, encontre as seis correlações no Evidence Board:
+Antes de escolher RESTORE ou SHUT DOWN, encontre as seis correlações em
+**Casefile.exe → Correlações**:
 
 1. Lote 114 + Miriam + diário → o segundo volume voltou através das Bishop.
 2. Miriam + Sarah + padrão da linhagem → ambas ocupam o mesmo campo.
@@ -488,7 +595,7 @@ parte do save.
 - A tela inicial mostra **Continue Case** quando encontra progresso.
 - **New Case** cria um checkpoint antes de substituir o caso atual.
 - **Import Case Code** valida e mostra nome, ato e data antes da importação.
-- O código começa com `MISK5.` e inclui também o nome do jogador e suas Case Notes.
+- O código começa com `MISK6.` e inclui também o nome do jogador e suas Case Notes.
 - Se duas abas abrirem o mesmo caso, a segunda entra em modo somente leitura.
 
 ## Easter eggs e conteúdo opcional

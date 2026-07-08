@@ -52,18 +52,12 @@ const PROGRAMS: ProgramEntry[] = [
 
 const ACCESSORIES: ProgramEntry[] = [
   {
-    id: "case-reconstruction",
-    label: "Case Reconstruction",
-    labelKey: "caseReconstructionLabel",
+    id: "casefile",
+    label: "Casefile.exe",
+    labelKey: "casefileLabel",
     icon: "/icons/folder-special.png",
-    appType: "case-reconstruction",
+    appType: "casefile",
     maximized: true,
-  },
-  {
-    id: "case-timeline",
-    label: "Case Timeline",
-    icon: "/icons/favorites.png",
-    appType: "timeline",
   },
   {
     id: "archive-viewer",
@@ -84,14 +78,6 @@ const ACCESSORIES: ProgramEntry[] = [
     labelKey: "cipherLabLabel",
     icon: "/icons/internet-options.png",
     appType: "cipher-lab",
-  },
-  {
-    id: "evidence-board",
-    label: "Evidence Board",
-    labelKey: "evidenceBoardLabel",
-    icon: "/icons/folder-special.png",
-    appType: "evidence-board",
-    maximized: true,
   },
   {
     id: "calculator",
@@ -232,8 +218,8 @@ const StartMenu = () => {
           ? t("wrongOrder")
           : result.commandError === "case_incomplete"
             ? locale === "pt-BR"
-              ? "O índice recusou a operação. Três conclusões sobre o observador ainda não foram retidas em Case Reconstruction."
-              : "The index refused the operation. Three observer findings have not been retained in Case Reconstruction."
+              ? "O índice recusou a operação. Três conclusões sobre o observador ainda não foram retidas no Dossiê do Caso."
+              : "The index refused the operation. Three observer findings have not been retained in Casefile.exe."
             : result.commandError === "seal_unavailable"
               ? locale === "pt-BR"
                 ? "O arquivo não reconhece a si mesmo como testemunha. Seis correlações independentes são necessárias."
@@ -314,7 +300,19 @@ const StartMenu = () => {
                     <Image src="/icons/my-computer.png" alt="" width={30} height={30} />
                     <span>{t("programs")}</span><b>▶</b>
                   </button>
-                  <button className="startMenuButton button" onClick={() => launch(ACCESSORIES[0])}>
+                  <button
+                    className="startMenuButton button"
+                    onClick={() =>
+                      launch({
+                        id: "my-documents",
+                        label: "My Documents",
+                        labelKey: "myDocumentsLabel",
+                        icon: "/icons/my-documents.png",
+                        appType: "explorer",
+                        props: { folderId: "sarah" },
+                      })
+                    }
+                  >
                     <Image src="/icons/my-documents.png" alt="" width={30} height={30} />
                     <span>{t("documents")}</span>
                   </button>
