@@ -16,6 +16,12 @@ npm run dev
 
 Abra [http://localhost:3000](http://localhost:3000).
 
+## Rotas públicas
+
+- `/`: entrada direta no jogo.
+- `/archive`: página de divulgação sem spoilers, para trailers, posts e press kit.
+- `/play`: alias compatível da entrada do jogo.
+
 ## Verificação
 
 ```bash

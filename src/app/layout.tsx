@@ -11,8 +11,9 @@ import SystemToast from "./components/SystemToast/SystemToast";
 import { PHProvider } from "./components/PHProvider/PHProvider";
 
 export const metadata: Metadata = {
-  title: "O Arquivo de Amanhã",
-  description: "Recovered disk image — Sarah Bishop workstation",
+  title: "The Fourth Recipient",
+  description:
+    "A forensic disk image with four recipients. Three were chosen. You opened the link.",
 };
 
 export default function RootLayout({

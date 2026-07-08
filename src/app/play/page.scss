@@ -127,6 +127,43 @@
 .relay-terminal__date {
   color: #8d6652;
   font-size: 11px;
+  white-space: nowrap;
+}
+
+.relay-terminal__tools {
+  display: flex;
+  align-items: flex-end;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.relay-terminal__languages {
+  display: flex;
+  gap: 4px;
+
+  button {
+    min-height: 24px;
+    padding: 3px 8px;
+    border: 1px solid #3d7565;
+    color: #7db39f;
+    background: #09231f;
+    font: bold 9px "Courier New", monospace;
+    letter-spacing: 0.8px;
+    cursor: pointer;
+
+    &:hover,
+    &:focus-visible {
+      border-color: #91c7a8;
+      color: #c6ffe9;
+      outline: none;
+    }
+
+    &.active {
+      border-color: #91c7a8;
+      color: #03100c;
+      background: #91c7a8;
+    }
+  }
 }
 
 .relay-terminal__body {
@@ -254,6 +291,7 @@
   box-shadow: inset 0 0 14px rgba(66, 255, 196, 0.06);
   font: bold 12px "Courier New", monospace;
   letter-spacing: 1px;
+  cursor: pointer;
 
   &:hover,
   &:focus {
@@ -345,13 +383,57 @@
     gap: 6px;
   }
 
-  button,
-  .relay-import button {
-    border: 1px solid #315e52;
-    color: #8bc5b2;
-    background: #071817;
-    font: 10px "Courier New", monospace;
+}
+
+.relay-inline-command {
+  min-height: 28px;
+  padding: 5px 9px;
+  border: 1px solid #315e52;
+  color: #8bc5b2;
+  background: #071817;
+  box-shadow:
+    inset 0 0 10px rgba(74, 225, 177, 0.03),
+    0 0 0 transparent;
+  font: 10px "Courier New", monospace;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    border-color: #8be4c6;
+    color: #d9fff1;
+    background: #12342e;
+    box-shadow:
+      inset 0 0 12px rgba(74, 225, 177, 0.08),
+      0 0 10px rgba(74, 225, 177, 0.12);
+    outline: 1px solid rgba(139, 228, 198, 0.45);
+    outline-offset: 2px;
   }
+
+  &:active,
+  &.active {
+    border-color: #91c7a8;
+    color: #03100c;
+    background: #91c7a8;
+    box-shadow:
+      inset 0 2px 0 rgba(0, 0, 0, 0.28),
+      0 0 12px rgba(145, 199, 168, 0.16);
+  }
+
+  &:active {
+    transform: translateY(1px);
+  }
+}
+
+.relay-inline-command--emphasis {
+  min-height: 32px;
+  padding-inline: 13px;
+  border-color: #4a8e78;
+  color: #bcffe8;
+  background: #0a2a25;
+  font-weight: bold;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
 }
 
 .relay-import {
@@ -427,6 +509,24 @@
 
   .relay-terminal__date {
     display: none;
+  }
+
+  .relay-terminal__header {
+    gap: 9px;
+    padding-inline: 10px;
+
+    strong {
+      font-size: 11px;
+    }
+
+    small {
+      font-size: 8px;
+      letter-spacing: 1px;
+    }
+  }
+
+  .relay-terminal__tools {
+    align-items: flex-end;
   }
 
   .relay-credentials {
