@@ -137,6 +137,21 @@ describe("save v6", () => {
     expect(migrated?.insightsUnlocked).toEqual(["second_volume"]);
   });
 
+  it("fills v6 puzzle defaults when importing an older v5 puzzle set", () => {
+    const legacy = {
+      ...createInitialProgress(1_700_000_000_000, "legacy-v5-missing-puzzle"),
+      version: 5,
+    } as any;
+    delete legacy.puzzles.index_name;
+
+    const migrated = migrateProgress(legacy);
+    expect(migrated?.version).toBe(6);
+    expect(migrated?.puzzles.index_name).toMatchObject({
+      attempts: 0,
+      solvedAt: null,
+    });
+  });
+
   it("continues to accept MISK3, MISK4 and MISK5 portable prefixes", async () => {
     const code = await exportCaseCode(
       createInitialProgress(1_700_000_000_000, "compatible-prefix")

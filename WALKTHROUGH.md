@@ -84,6 +84,9 @@ marcação discreta podem ser clicados. Ao clicar, o jogo **extrai um fato** par
 No **Casefile.exe**, use a lente **Achados**. Clique numa lacuna, escolha ou arraste um
 fato do tipo pedido, anexe registros que corroborem a frase e pressione **Test finding**.
 Palavras corretas ficam douradas e continuam travadas mesmo se as demais estiverem erradas.
+No primeiro contato, o inspector mostra um memo de capa diegético com esse ciclo; o menu
+**Help** do Casefile abre a legenda de símbolos. Ao extrair o primeiro fato, o sistema mostra
+um toast curto confirmando que ele foi arquivado no Casefile.
 
 Resolva os três achados iniciais em qualquer ordem:
 
@@ -275,7 +278,8 @@ como Vigenère. Essa é a solução offline; pesquisar Bellaso na web real é ap
    XMWBC TMVEM LDQDV ZSQRW LZEXQ DVVCA GVKVA YQAEW TPMGJ
    ```
 
-3. Abra `Start → Programs → Accessories → Cipher Lab`.
+3. Use **Open in Cipher Lab** no Notepad, ou abra
+   `Start → Programs → Accessories → Cipher Lab`.
 4. Configure:
    - **Method:** `Vigenere / moving alphabet`;
    - **Key:** `MIRIAM`
@@ -588,6 +592,16 @@ Abra `Start → Help`.
 
 O cronômetro só avança enquanto a aba está visível. Case Notes, tentativas e pistas fazem
 parte do save.
+
+## Novos sinais
+
+- Ao chegar o e-mail de Sarah, aparece um aviso em barra de tarefas (primeiro “**new mail**”).
+- Ao resolver o palimpsesto, reaparece `margin_ch7.enc` com aviso de recuperação lateral.
+- Após a cifra da margem, surge `counting.wav` junto à pasta recuperada.
+- Quando o `RECOVERED PROGRAM` fica disponível, surge um aviso dedicado de instalação.
+- Resolver `lot_114`, `palimpsest` e `counting_audio` também pode gerar avisos de pasta nova
+  (`RECOVERED`, `CHAPTER_SEVEN`), além do alerta da impressora quando `MIRIAM_DRAFT.PRN` é
+  restaurado.
 
 ## Save e continuação
 

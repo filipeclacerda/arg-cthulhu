@@ -26,7 +26,7 @@ import { localizedBoardCard } from "@/app/data/localizedNarrative";
 import { files } from "@/app/data/filesystem";
 import { emails } from "@/app/data/emails";
 import { PAGE_ADDRESS } from "@/app/components/apps/RecoveredBrowser/RecoveredBrowser";
-import { useI18n } from "@/app/i18n";
+import { TranslationKey, useI18n } from "@/app/i18n";
 import {
   CASE_STATEMENTS,
   HYPOTHESES,
@@ -40,19 +40,21 @@ import {
   CasefileClaimId,
   CasefileLens,
   HYPOTHESIS_EVIDENCE_REQUIREMENTS,
+  TOKEN_TYPE_LABEL_KEYS,
   claimIdForFinding,
   collectedTokensForEvidence,
   findingIdFromClaim,
 } from "@/app/game/casefile";
-import { displayedEvidenceIds } from "@/app/game/caseReconstruction";
+import { displayedEvidenceIds } from "@/app/game/casefile";
 import {
   CaseQuestionId,
   HypothesisId,
   InsightId,
+  TokenType,
 } from "@/app/game/progress";
 import "../ArgTools/style.scss";
-import "../EvidenceBoard/style.scss";
-import "../CaseReconstruction/style.scss";
+import "./evidence-board.scss";
+import "./case-reconstruction.scss";
 import "./style.scss";
 
 type CasefileCategory =
@@ -73,29 +75,56 @@ interface PositionedCard {
   position: { x: number; y: number };
 }
 
-const CATEGORY_META: Record<
-  CasefileCategory,
-  { en: string; pt: string; short: string }
-> = {
-  person: { en: "People", pt: "Pessoas", short: "ID" },
-  photo: { en: "Images", pt: "Imagens", short: "IMG" },
-  document: { en: "Documents", pt: "Documentos", short: "TXT" },
-  audio: { en: "Audio", pt: "Áudio", short: "WAV" },
-  email: { en: "Mail", pt: "E-mail", short: "MAIL" },
-  conversation: { en: "Chats", pt: "Conversas", short: "MSN" },
-  record: { en: "Web records", pt: "Registros web", short: "WEB" },
-  finding: { en: "Findings", pt: "Achados", short: "FND" },
-  correlation: { en: "Correlations", pt: "Correlações", short: "RET" },
-  hypothesis: { en: "Contradictions", pt: "Contradições", short: "HYP" },
-  event: { en: "Timeline", pt: "Linha do tempo", short: "TIME" },
+const CATEGORY_META: Record<CasefileCategory, { short: string }> = {
+  person: { short: "ID" },
+  photo: { short: "IMG" },
+  document: { short: "TXT" },
+  audio: { short: "WAV" },
+  email: { short: "MAIL" },
+  conversation: { short: "MSN" },
+  record: { short: "WEB" },
+  finding: { short: "FND" },
+  correlation: { short: "RET" },
+  hypothesis: { short: "HYP" },
+  event: { short: "TIME" },
 };
-
-const LENS_LABELS: Record<CasefileLens, { en: string; pt: string }> = {
-  reconstruct: { en: "Findings", pt: "Achados" },
-  organize: { en: "Correlations", pt: "Correlações" },
-  timeline: { en: "Chronology", pt: "Cronologia" },
-  contradictions: { en: "Refute", pt: "Refutar" },
+const LENS_LABEL_KEYS: Record<CasefileLens, TranslationKey> = {
+  reconstruct: "casefileLensReconstruct",
+  organize: "casefileLensOrganize",
+  timeline: "casefileLensTimeline",
+  contradictions: "casefileLensContradictions",
 };
+const CATEGORY_LABEL_KEYS: Record<CasefileCategory, TranslationKey> = {
+  person: "people",
+  photo: "images",
+  document: "documentsCategory",
+  audio: "audio",
+  email: "mail",
+  conversation: "chats",
+  record: "webRecords",
+  finding: "casefileFindings",
+  correlation: "casefileCorrelations",
+  hypothesis: "casefileHypotheses",
+  event: "casefileTimeline",
+};
+const LENS_HINT_KEYS: Record<CasefileLens, TranslationKey> = {
+  reconstruct: "casefileAttachedRecordsHint",
+  organize: "casefileCorrelationHint",
+  timeline: "casefileNeedTimelineHint",
+  contradictions: "casefileNeedTwoRecordsToRefute",
+};
+const HELP_LEGEND_CATEGORIES: BoardCategory[] = [
+  "person",
+  "photo",
+  "document",
+  "audio",
+  "email",
+  "conversation",
+  "record",
+];
+const HELP_DIALOG_TITLE_ID = "casefile-help-dialog-title";
+const PERSONAL_FILE_DIALOG_TITLE_ID = "casefile-personal-file-dialog-title";
+let lastVisitIds: { caseId: string; ids: Set<string> } | null = null;
 
 const DRAG_THRESHOLD = 4;
 const CASEFILE_BOARD_WIDTH = 1680;
@@ -230,10 +259,29 @@ const Casefile = ({
   const [evidenceFilter, setEvidenceFilter] = useState("");
   const [dossierCard, setDossierCard] = useState<CasefileCard | null>(null);
   const [timelineOrder, setTimelineOrder] = useState<string[]>([]);
+  const [helpLegendOpen, setHelpLegendOpen] = useState(false);
+  const [coverMemoVisible, setCoverMemoVisible] = useState(true);
+  const [showNewBadge, setShowNewBadge] = useState(true);
+  const [freshBaseline] = useState<Set<string>>(
+    () =>
+      lastVisitIds?.caseId === state.caseId
+        ? new Set(lastVisitIds.ids)
+        : new Set(discoveredEvidenceIds)
+  );
+  const dossierDialogRef = useRef<HTMLDivElement>(null);
+  const helpDialogRef = useRef<HTMLDivElement>(null);
+  const returnFocusRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     setLens(initialLens);
   }, [initialLens]);
+
+  useEffect(() => {
+    lastVisitIds = {
+      caseId: state.caseId,
+      ids: new Set(discoveredEvidenceIds),
+    };
+  }, [discoveredEvidenceIds, state.caseId]);
 
   useEffect(() => {
     if (visibleStatements.some((candidate) => candidate.id === statementId)) {
@@ -241,6 +289,13 @@ const Casefile = ({
     }
     setStatementId(firstOpen);
   }, [firstOpen, statementId, visibleStatements]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setShowNewBadge(false);
+    }, 10000);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   const activeClaimId = claimIdForFinding(statement.id);
   const attachedEvidenceIds = displayedEvidenceIds(
@@ -267,9 +322,13 @@ const Casefile = ({
   );
 
   const categoryLabel = (category: CasefileCategory): string => {
-    const meta = CATEGORY_META[category];
-    return locale === "pt-BR" ? meta.pt : meta.en;
+    return t(CATEGORY_LABEL_KEYS[category]);
   };
+  const lensTabId = (candidate: CasefileLens): string =>
+    `casefile-lens-tab-${candidate}`;
+  const lensPanelId = (candidate: CasefileLens): string =>
+    `casefile-lens-panel-${candidate}`;
+  const lensHintText = t(LENS_HINT_KEYS[lens]);
 
   const evidenceCards = useMemo(
     () =>
@@ -298,15 +357,12 @@ const Casefile = ({
       insightsUnlocked.map((insightId) => ({
         id: `correlation:${insightId}`,
         title: localized(INSIGHT_LABELS[insightId], locale),
-        summary:
-          locale === "pt-BR"
-            ? "Conclusão retida pelo arquivo. Pode sustentar leituras posteriores."
-            : "A retained conclusion. It can support later readings.",
+        summary: t("casefileCorrelationSummary"),
         category: "correlation",
         claimId: `correlation:${insightId}`,
         sourceId: insightId,
       })),
-    [insightsUnlocked, locale]
+    [insightsUnlocked, locale, t]
   );
 
   const hypothesisCards = useMemo<CasefileCard[]>(
@@ -318,15 +374,13 @@ const Casefile = ({
           title: localized(HYPOTHESES[hypothesisId].title, locale),
           summary: refuted
             ? localized(HYPOTHESES[hypothesisId].truth, locale)
-            : locale === "pt-BR"
-              ? "Hipótese em aberto. Encontre dois registros que a derrubem."
-              : "Open hypothesis. Find two records that make it collapse.",
+            : t("casefileNeedTwoRecordsToRefute"),
           category: "hypothesis",
           claimId: `hypothesis:${hypothesisId}`,
           sourceId: hypothesisId,
         };
       }),
-    [locale, state.hypotheses]
+    [locale, state.hypotheses, t]
   );
 
   const allPositioned: PositionedCard[] = useMemo(() => {
@@ -469,6 +523,11 @@ const Casefile = ({
       ) as Record<string, CasefileCard>,
     [allPositioned]
   );
+  const cardLabelById = (id: string): string =>
+    cardsById[id]?.title ?? t("casefileUnknownRecord");
+  const freshIds = useMemo(() => {
+    return new Set(discoveredEvidenceIds.filter((id) => !freshBaseline.has(id)));
+  }, [discoveredEvidenceIds, freshBaseline]);
   const visibleIds = useMemo(
     () => new Set(positioned.map(({ card }) => card.id)),
     [positioned]
@@ -511,6 +570,16 @@ const Casefile = ({
       }, {} as Record<CasefileCategory, number>),
     [allPositioned]
   );
+  const solvedFindingsVisible = useMemo(
+    () =>
+      visibleStatements.filter((statement) => state.caseAnswers[statement.id]?.solvedAt)
+        .length,
+    [state.caseAnswers, visibleStatements]
+  );
+  const showCoverMemo =
+    coverMemoVisible &&
+    state.collectedTokens.length === 0 &&
+    Object.keys(state.caseAnswers).length === 0;
 
   const selectStatement = (id: CaseQuestionId) => {
     const saved = state.caseAnswers[id];
@@ -533,16 +602,37 @@ const Casefile = ({
     addedTimer.current = setTimeout(() => setJustAddedKey(null), 1600);
   };
 
+  const closeDialogs = () => {
+    setDossierCard(null);
+    setHelpLegendOpen(false);
+    if (returnFocusRef.current) {
+      returnFocusRef.current.focus();
+    }
+  };
+
+  const openDossierDialog = (card: CasefileCard) => {
+    setDossierCard(card);
+    returnFocusRef.current = document.activeElement as HTMLElement | null;
+    requestAnimationFrame(() => {
+      dossierDialogRef.current?.focus();
+    });
+  };
+
+  const openHelpLegend = () => {
+    setHelpLegendOpen(true);
+    setShowNewBadge(false);
+    returnFocusRef.current = document.activeElement as HTMLElement | null;
+    requestAnimationFrame(() => {
+      helpDialogRef.current?.focus();
+    });
+  };
+
   const chooseToken = (tokenId: string, slotKey = selectedSlot?.key) => {
     const slot = statement.slots.find((candidate) => candidate.key === slotKey);
     const token = TOKENS_BY_ID[tokenId];
     if (!slot || !token || lockedSlots.includes(slot.key) || solved) return;
     if (token.type !== slot.type) {
-      setCaseFeedback(
-        locale === "pt-BR"
-          ? "Esse fato pertence a outro tipo de lacuna."
-          : "That fact belongs to a different kind of blank."
-      );
+      setCaseFeedback(t("casefileTokenMismatch"));
       setCaseFeedbackTone("cold");
       play("error");
       return;
@@ -575,7 +665,7 @@ const Casefile = ({
 
   const openRecord = (card: CasefileCard) => {
     if (card.category === "person") {
-      setDossierCard(card);
+      openDossierDialog(card);
       return;
     }
     const file = files.find((candidate) => candidate.evidenceId === card.id);
@@ -620,11 +710,7 @@ const Casefile = ({
       (slot) => !effectiveSlots[slot.key] && !lockedSlots.includes(slot.key)
     );
     if (missing) {
-      setCaseFeedback(
-        locale === "pt-BR"
-          ? "A frase ainda tem lacunas. Extraia fatos dos registros e preencha cada uma."
-          : "The finding still has blanks. Extract facts from records and fill each one."
-      );
+      setCaseFeedback(t("casefileFactHasBlanks"));
       setCaseFeedbackTone("cold");
       play("error");
       return;
@@ -643,35 +729,18 @@ const Casefile = ({
       )
     );
     if (outcome?.accepted) {
-      setCaseFeedback(
-        locale === "pt-BR"
-          ? "A frase permanece inteira. O arquivo respondeu atrás desta janela."
-          : "The sentence holds. The archive answered behind this window."
-      );
+      setCaseFeedback(t("casefileFindingHeld"));
       setCaseFeedbackTone("warm");
       play("chime");
       return;
     }
-    const messages: Record<string, { en: string; pt: string }> = {
-      partial_lock: {
-        en: "Part of the finding holds. The gold words stay; the rest slips out of the record.",
-        pt: "Parte do achado se sustenta. As palavras douradas ficam; o restante escapa do registro.",
-      },
-      slots_rejected: {
-        en: "Cold. None of those words agrees with the attached records.",
-        pt: "Frio. Nenhuma dessas palavras concorda com os registros anexados.",
-      },
-      not_enough_evidence: {
-        en: "The words may fit, but one record is only a clue. Corroborate them.",
-        pt: "As palavras podem servir, mas um registro é só uma pista. Corrobore-as.",
-      },
-      missing_required_evidence: {
-        en: "The finding lacks its primary record. Search the source, not its echo.",
-        pt: "Falta o registro primário. Procure a fonte, não o eco.",
-      },
+    const messages: Record<string, TranslationKey> = {
+      partial_lock: "casefilePartialLock",
+      slots_rejected: "casefileSlotsRejected",
+      not_enough_evidence: "casefileNotEnoughEvidence",
+      missing_required_evidence: "casefileMissingPrimaryRecord",
     };
-    const copy = messages[outcome?.reason ?? "slots_rejected"];
-    setCaseFeedback(locale === "pt-BR" ? copy.pt : copy.en);
+    setCaseFeedback(t(messages[outcome?.reason ?? "slots_rejected"]));
     setCaseFeedbackTone(outcome?.reason === "partial_lock" ? "warm" : "cold");
     play(outcome?.reason === "partial_lock" ? "click" : "error");
   };
@@ -696,11 +765,7 @@ const Casefile = ({
   const refuteHypothesis = (hypothesisId: HypothesisId) => {
     const ids = HYPOTHESIS_EVIDENCE_REQUIREMENTS[hypothesisId];
     if (!ids.every((id) => discoveredEvidenceIds.includes(id))) {
-      setTheoryFeedback(
-        locale === "pt-BR"
-          ? "Ainda faltam dois registros independentes para carimbar essa contradição."
-          : "Two independent records are still required to stamp that contradiction."
-      );
+      setTheoryFeedback(t("casefileHypothesisEvidenceNeeded"));
       play("error");
       return;
     }
@@ -813,6 +878,9 @@ const Casefile = ({
         ? TOKENS_BY_ID[effectiveSlots[key]]
         : undefined;
       const locked = lockedSlots.includes(key);
+      const slotType =
+        statement.slots.find((slot) => slot.key === key)?.type ??
+        ("detail" as TokenType);
       return (
         <button
           type="button"
@@ -833,7 +901,7 @@ const Casefile = ({
         >
           {token
             ? localized(token.label, locale)
-            : `[${statement.slots.find((slot) => slot.key === key)?.type}]`}
+            : `[${t(TOKEN_TYPE_LABEL_KEYS[slotType])}]`}
         </button>
       );
     });
@@ -858,11 +926,9 @@ const Casefile = ({
           event.dataTransfer.setData("application/x-case-token", token.id);
           event.dataTransfer.effectAllowed = "copy";
         }}
-        title={
-          locale === "pt-BR"
-            ? `Fato extraído: ${token.type}`
-            : `Extracted fact: ${token.type}`
-        }
+        title={`${t("casefileExtractedFactOfType")} ${t(
+          TOKEN_TYPE_LABEL_KEYS[token.type]
+        )}`}
       >
         {localized(token.label, locale)}
       </span>
@@ -872,7 +938,7 @@ const Casefile = ({
   const cardStatus = (card: CasefileCard): { label: string; tone: string } => {
     if (confirmedCardIds.has(card.id) || card.category === "correlation") {
       return {
-        label: locale === "pt-BR" ? "retido" : "retained",
+        label: t("casefileStatusRetained"),
         tone: "retained",
       };
     }
@@ -881,15 +947,15 @@ const Casefile = ({
         answer?.evidenceIds?.includes(card.id)
       )
     ) {
-      return { label: locale === "pt-BR" ? "usado" : "used", tone: "used" };
+      return { label: t("casefileStatusUsed"), tone: "used" };
     }
     if (collectedTokensForEvidence(card.id, state.collectedTokens).length > 0) {
       return {
-        label: locale === "pt-BR" ? "extraído" : "extracted",
+        label: t("casefileStatusExtracted"),
         tone: "extracted",
       };
     }
-    return { label: locale === "pt-BR" ? "registrado" : "filed", tone: "filed" };
+    return { label: t("casefileStatusFiled"), tone: "filed" };
   };
 
   const allCardsForLists = useMemo(
@@ -941,28 +1007,54 @@ const Casefile = ({
         type: "SEE_ASSET_VARIANT",
         variantId: "timeline-reconstructed",
       });
-      setTheoryFeedback(
-        locale === "pt-BR"
-          ? "A cronologia permanece estável — exceto pelo último registro."
-          : "The chronology holds — except for the final record."
-      );
+      setTheoryFeedback(t("casefileTimelineSuccess"));
       play("chime");
     } else {
-      setTheoryFeedback(
-        locale === "pt-BR"
-          ? "Uma ou mais evidências aparecem antes da causa que deveriam registrar."
-          : "One or more records appear before the cause they should document."
-      );
+      setTheoryFeedback(t("casefileChronologyMismatch"));
       play("error");
     }
   };
 
+  useEffect(() => {
+    if (!dossierCard && !helpLegendOpen) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        closeDialogs();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [dossierCard, helpLegendOpen]);
+
+  useEffect(() => {
+    if (!dossierCard) return;
+    returnFocusRef.current = document.activeElement as HTMLElement | null;
+    requestAnimationFrame(() => {
+      dossierDialogRef.current?.focus();
+    });
+  }, [dossierCard]);
+
+  useEffect(() => {
+    if (!helpLegendOpen) return;
+    returnFocusRef.current = document.activeElement as HTMLElement | null;
+    requestAnimationFrame(() => {
+      helpDialogRef.current?.focus();
+    });
+  }, [helpLegendOpen]);
+
   const renderInspector = () => {
     if (lens === "reconstruct") {
       return (
-        <div className="casefile-inspector__stack">
+        <section
+          id={lensPanelId("reconstruct")}
+          className="casefile-inspector__stack"
+          role="tabpanel"
+          aria-labelledby={lensTabId("reconstruct")}
+        >
           <div className="casefile-claim-list">
-            <strong>{locale === "pt-BR" ? "Achados" : "Findings"}</strong>
+            <strong>{t("casefileFindings")}</strong>
             {visibleStatements.map((candidate) => {
               const saved = state.caseAnswers[candidate.id];
               const locked = saved?.lockedSlots.length ?? 0;
@@ -984,21 +1076,19 @@ const Casefile = ({
 
           <section className="casefile-reconstruction">
             <small>
-              {locale === "pt-BR"
-                ? `ATO ${statement.act} / ACHADO EM MONTAGEM`
-                : `ACT ${statement.act} / FINDING IN PROGRESS`}
+              {`${t("casefileAct")} ${statement.act} / ${t(
+                "casefileFindingInProgress"
+              )}`}
             </small>
             <h3 className="case-reconstruction__statement">{renderStatement()}</h3>
             <div className="casefile-fact-bank">
-              <strong>{locale === "pt-BR" ? "Banco de fatos" : "Fact bank"}</strong>
+              <strong>{t("casefileFactBank")}</strong>
               <div>
                 {candidates.length > 0 ? (
                   candidates.map((token) => renderFactChip(token.id, "bank"))
                 ) : (
                   <p>
-                    {locale === "pt-BR"
-                      ? "Nenhum fato desse tipo foi extraído ainda."
-                      : "No fact of this type has been extracted yet."}
+                    {t("casefileNoFactOfType")}
                   </p>
                 )}
               </div>
@@ -1006,15 +1096,13 @@ const Casefile = ({
             <div className="casefile-attached">
               <header>
                 <strong>
-                  {locale === "pt-BR" ? "Registros anexados" : "Attached records"}
+                  {t("casefileAttachedRecords")}
                 </strong>
                 <span>{attachedEvidenceIds.length}/5</span>
               </header>
               {attachedEvidenceIds.length === 0 ? (
                 <p>
-                  {locale === "pt-BR"
-                    ? "Clique cartas no quadro para anexá-las ao achado."
-                    : "Click board cards to attach them to the finding."}
+                  {t("casefileAttachedRecordsHint")}
                 </p>
               ) : (
                 attachedEvidenceIds.map((id) => (
@@ -1025,7 +1113,7 @@ const Casefile = ({
                     onClick={() => toggleEvidence(id)}
                     disabled={solved}
                   >
-                    {cardsById[id]?.title ?? id}
+                    {cardLabelById(id)}
                     <span>{solved ? "LOCK" : "×"}</span>
                   </button>
                 ))
@@ -1038,12 +1126,8 @@ const Casefile = ({
               onClick={submitFinding}
             >
               {solved
-                ? locale === "pt-BR"
-                  ? "ACHADO RETIDO"
-                  : "FINDING RETAINED"
-                : locale === "pt-BR"
-                  ? "Testar achado"
-                  : "Test finding"}
+                ? t("casefileFindingRetained")
+                : t("casefileTestFinding")}
             </button>
             {caseFeedback && (
               <p className={`case-reconstruction__feedback ${caseFeedbackTone}`}>
@@ -1057,11 +1141,7 @@ const Casefile = ({
               type="search"
               value={evidenceFilter}
               onChange={(event) => setEvidenceFilter(event.target.value)}
-              placeholder={
-                locale === "pt-BR"
-                  ? "Filtrar registros descobertos..."
-                  : "Filter discovered records..."
-              }
+              placeholder={t("casefileFilterFoundations")}
             />
             {filteredListCards.map((card) => {
               const selected = activeEvidenceSet.has(card.id);
@@ -1081,26 +1161,32 @@ const Casefile = ({
                     <strong>{card.title}</strong>
                     <small>{card.summary}</small>
                   </button>
-                  <button
-                    type="button"
-                    title={locale === "pt-BR" ? "Abrir registro" : "Open record"}
-                    onClick={() => openRecord(card)}
-                  >
-                    ◉
-                  </button>
+                    <button
+                      type="button"
+                      aria-label={`${t("casefileOpenRecord")} ${card.title}`}
+                      onClick={() => openRecord(card)}
+                    >
+                      ◉
+                    </button>
                 </div>
               );
             })}
           </section>
-        </div>
+        </section>
       );
     }
 
     if (lens === "timeline") {
       return (
-        <div className="casefile-inspector__stack">
+        <section
+          id={lensPanelId("timeline")}
+          className="casefile-inspector__stack"
+          role="tabpanel"
+          aria-labelledby={lensTabId("timeline")}
+        >
           <section className="casefile-timeline">
-            <strong>SB-0316 / CHRONOLOGY</strong>
+            <strong>{t("casefileTimelineTitle")}</strong>
+            <p>{t("casefileTimelineHint")}</p>
             <div className="casefile-timeline__ruler" aria-hidden="true">
               <span>1998</span>
               <i />
@@ -1108,7 +1194,7 @@ const Casefile = ({
               <i />
               <span>2026</span>
               <i />
-              <span>{locale === "pt-BR" ? "AMANHÃ" : "TOMORROW"}</span>
+              <span>{t("casefileTomorrow")}</span>
             </div>
             <ol>
               {visibleTimelineOrder.map((id, index) => {
@@ -1118,24 +1204,26 @@ const Casefile = ({
                 return (
                   <li key={id} className={event.date === "{TOMORROW}" ? "impossible" : ""}>
                     <div>
-                      <button
-                        className="button"
-                        onClick={() => moveTimelineEvent(index, -1)}
-                        disabled={index === 0}
-                      >
-                        ▲
-                      </button>
-                      <button
-                        className="button"
-                        onClick={() => moveTimelineEvent(index, 1)}
-                        disabled={index === visibleTimelineOrder.length - 1}
-                      >
-                        ▼
-                      </button>
+                    <button
+                      className="button"
+                      onClick={() => moveTimelineEvent(index, -1)}
+                      disabled={index === 0}
+                      aria-label="Move event up"
+                    >
+                      ▲
+                    </button>
+                    <button
+                      className="button"
+                      onClick={() => moveTimelineEvent(index, 1)}
+                      disabled={index === visibleTimelineOrder.length - 1}
+                      aria-label="Move event down"
+                    >
+                      ▼
+                    </button>
                     </div>
                     <time>{event.date}</time>
                     <span>{localized(event.title, locale)}</span>
-                    <small>{event.evidenceId}</small>
+                    <small>{cardLabelById(event.evidenceId)}</small>
                   </li>
                 );
               })}
@@ -1145,23 +1233,25 @@ const Casefile = ({
               disabled={knownTimelineEvents.length < 5}
               onClick={testTimeline}
             >
-              {locale === "pt-BR" ? "Testar cronologia" : "Test chronology"}
+              {t("casefileTestChronology")}
             </button>
             {theoryFeedback && <p>{theoryFeedback}</p>}
           </section>
-        </div>
+        </section>
       );
     }
 
     if (lens === "contradictions") {
       return (
-        <div className="casefile-inspector__stack">
+        <section
+          id={lensPanelId("contradictions")}
+          className="casefile-inspector__stack"
+          role="tabpanel"
+          aria-labelledby={lensTabId("contradictions")}
+        >
           <section className="casefile-contradictions">
-            <strong>
-              {locale === "pt-BR"
-                ? "Hipóteses concorrentes"
-                : "Competing hypotheses"}
-            </strong>
+            <strong>{t("casefileCompetingHypotheses")}</strong>
+            <p>{t("casefileNeedTwoRecordsToRefute")}</p>
             {(Object.keys(HYPOTHESES) as HypothesisId[]).map((hypothesisId) => {
               const record = state.hypotheses[hypothesisId];
               const requiredIds = HYPOTHESIS_EVIDENCE_REQUIREMENTS[hypothesisId];
@@ -1180,20 +1270,14 @@ const Casefile = ({
                       {localized(HYPOTHESES[hypothesisId].truth, locale)}
                     </p>
                   ) : (
-                    <p>
-                      {locale === "pt-BR"
-                        ? "Encontre dois registros independentes para derrubar esta hipótese."
-                        : "Find two independent records to collapse this hypothesis."}
-                    </p>
+                    <p>{t("casefileNeedTwoRecordsToRefute")}</p>
                   )}
                   <div className="casefile-contradictions__progress">
                     <strong>
                       {readyCount}/{requiredIds.length}
                     </strong>
                     <span>
-                      {locale === "pt-BR"
-                        ? "registros encontrados"
-                        : "records found"}
+                      {t("casefileRecordsFound")}
                     </span>
                   </div>
                   <div className="casefile-contradictions__slots">
@@ -1204,7 +1288,17 @@ const Casefile = ({
                           discoveredEvidenceIds.includes(id) ? "ready" : ""
                         }
                       >
-                        {cardsById[id]?.title ?? id}
+                        <span
+                          aria-hidden="true"
+                          className={`casefile-contradictions__slot-state ${
+                            discoveredEvidenceIds.includes(id)
+                              ? "casefile-contradictions__slot-state--found"
+                              : "casefile-contradictions__slot-state--missing"
+                          }`}
+                        >
+                          {discoveredEvidenceIds.includes(id) ? "•" : "◯"}
+                        </span>
+                        {cardLabelById(id)}
                       </span>
                     ))}
                   </div>
@@ -1214,12 +1308,8 @@ const Casefile = ({
                     onClick={() => refuteHypothesis(hypothesisId)}
                   >
                     {refuted
-                      ? locale === "pt-BR"
-                        ? "REFUTADA"
-                        : "REFUTED"
-                      : locale === "pt-BR"
-                        ? "Refutar"
-                        : "Refute"}
+                      ? t("casefileRefuted")
+                      : t("casefileRefute")}
                   </button>
                 </article>
               );
@@ -1228,40 +1318,42 @@ const Casefile = ({
               <p className="evidence-board__theory-feedback">{theoryFeedback}</p>
             )}
           </section>
-        </div>
+        </section>
       );
     }
 
     return (
-      <div className="casefile-inspector__stack">
+      <section
+        id={lensPanelId("organize")}
+        className="casefile-inspector__stack"
+        role="tabpanel"
+        aria-labelledby={lensTabId("organize")}
+      >
         <section className="evidence-board__theory">
-          <span>
-            {locale === "pt-BR" ? "Bandeja de correlação" : "Correlation tray"}
-          </span>
+          <span>{t("casefileCorrelationTray")}</span>
           <strong>{t("theoryPrompt")}</strong>
-          <p className="casefile-correlation-hint">
-            {locale === "pt-BR"
-              ? "Clique em pessoas e registros no quadro. Quando a relação fizer sentido, teste a correlação."
-              : "Click people and records on the board. When the relation feels right, test the correlation."}
-          </p>
+          <p className="casefile-correlation-hint">{t("casefileCorrelationHint")}</p>
           <div className="evidence-board__theory-cards">
             {theoryIds.length === 0 ? (
               <em>—</em>
-            ) : (
-              theoryIds.map((id) => (
-                <button
-                  type="button"
-                  key={id}
-                  onClick={() =>
+                ) : (
+                  theoryIds.map((id) => (
+                    <button
+                      type="button"
+                      key={id}
+                      onClick={() =>
                     setTheoryIds((current) =>
                       current.filter((item) => item !== id)
                     )
-                  }
-                >
-                  {cardsById[id]?.title ?? id} ×
-                </button>
-              ))
-            )}
+                      }
+                    >
+                      {cardLabelById(id)} ×
+                      <span className="casefile-card__selected-tag">
+                        {t("casefileSelectedTag")}
+                      </span>
+                    </button>
+                  ))
+                )}
           </div>
           <div className="evidence-board__theory-actions">
             <button type="button" className="button" onClick={submitTheory}>
@@ -1282,7 +1374,7 @@ const Casefile = ({
           {selectedCard && (
             <div className="evidence-board__selection">
               <span>
-                {locale === "pt-BR" ? "Carta selecionada" : "Selected card"}
+                {t("casefileSelectedCard")}
               </span>
               <strong>{selectedCard.title}</strong>
               <p>{selectedCard.summary}</p>
@@ -1309,7 +1401,7 @@ const Casefile = ({
 
         {insightsUnlocked.length > 0 && (
           <section className="evidence-board__insights">
-            <strong>RETAINED CORRELATIONS</strong>
+            <strong>{t("casefileRetainedCorrelations")}</strong>
             {insightsUnlocked.map((insightId) => (
               <div className="evidence-board__insight-row" key={insightId}>
                 <p>{localized(INSIGHT_LABELS[insightId], locale)}</p>
@@ -1335,15 +1427,13 @@ const Casefile = ({
         <div className="evidence-board__connection-list">
           <header>
             <strong>
-              {locale === "pt-BR" ? "Relações no quadro" : "Board relations"}
+              {t("casefileBoardRelations")}
             </strong>
             <span>{allThreadKeys.length}</span>
           </header>
           {allThreadKeys.length === 0 ? (
             <p>
-              {locale === "pt-BR"
-                ? "Teste correlações ou aceite achados para gerar fios úteis."
-                : "Test correlations or accept findings to create useful threads."}
+              {t("casefileNoCorrelationsPrompt")}
             </p>
           ) : (
             allThreadKeys.map((key) => {
@@ -1363,16 +1453,14 @@ const Casefile = ({
                   <span className="evidence-board__thread-confirmed-tag">
                     {confirmed
                       ? t("confirmedTag")
-                      : locale === "pt-BR"
-                        ? "anexo"
-                        : "attached"}
+                      : t("casefileAttachedTag")}
                   </span>
                 </div>
               );
             })
           )}
         </div>
-      </div>
+      </section>
     );
   };
 
@@ -1382,30 +1470,41 @@ const Casefile = ({
         <span>Casefile.exe</span>
         <span>{t("menuView")}</span>
         <span>{t("menuConnections")}</span>
-        <span>{t("help")}</span>
+        <button
+          type="button"
+          className="casefile__menubar-help"
+          aria-label={`${t("help")} ${t("casefileHelpLegendTitle")}`}
+          onClick={openHelpLegend}
+          aria-haspopup="dialog"
+        >
+          {t("help")}
+          {showNewBadge && <span className="casefile__new-badge">{t("casefileNewTag")}</span>}
+        </button>
       </div>
 
       <header className="casefile__header">
         <div>
           <p>MISKATONIC INCIDENT REVIEW / SB-0316</p>
-          <h2>{locale === "pt-BR" ? "Dossiê do Caso" : "Casefile.exe"}</h2>
+          <h2>{t("casefileLabel")}</h2>
         </div>
         <div className="casefile__lenses" role="tablist">
-          {(Object.keys(LENS_LABELS) as CasefileLens[]).map((candidate) => (
+          {(Object.keys(LENS_LABEL_KEYS) as CasefileLens[]).map((candidate) => (
             <button
               type="button"
               key={candidate}
+              id={lensTabId(candidate)}
+              role="tab"
+              aria-controls={lensPanelId(candidate)}
+              aria-selected={lens === candidate}
+              tabIndex={lens === candidate ? 0 : -1}
               className={lens === candidate ? "active" : ""}
-              aria-pressed={lens === candidate}
               onClick={() => {
                 setLens(candidate);
                 setSelectedId(null);
                 setTheoryFeedback("");
               }}
             >
-              {locale === "pt-BR"
-                ? LENS_LABELS[candidate].pt
-                : LENS_LABELS[candidate].en}
+              {t(LENS_LABEL_KEYS[candidate])}
             </button>
           ))}
         </div>
@@ -1422,9 +1521,9 @@ const Casefile = ({
           />
         </label>
         <details className="casefile__tools">
-          <summary>{locale === "pt-BR" ? "Opções" : "Options"}</summary>
+          <summary>{t("casefileOptions")}</summary>
           <label>
-            {locale === "pt-BR" ? "Mostrar" : "Show"}
+            {t("casefileShow")}
             <select
               value={filter}
               onChange={(event) =>
@@ -1453,7 +1552,7 @@ const Casefile = ({
               checked={showUnexplainedOnly}
               onChange={(event) => setShowUnexplainedOnly(event.target.checked)}
             />
-            {locale === "pt-BR" ? "Só sem explicação" : "Only unexplained"}
+            {t("casefileOnlyUnexplained")}
           </label>
           <button
             type="button"
@@ -1483,7 +1582,7 @@ const Casefile = ({
               {t("discoveredEvidenceZone")}
             </div>
             <div className="evidence-board__zone casefile__zone--claims">
-              {locale === "pt-BR" ? "ACHADOS / RITUAL" : "FINDINGS / RITUAL"}
+              {t("casefileZoneClaims")}
             </div>
 
             <svg
@@ -1565,6 +1664,7 @@ const Casefile = ({
               );
               const relevant = relevantEvidence.has(card.id);
               const attached = activeEvidenceSet.has(card.id);
+              const fresh = freshIds.has(card.id);
               return (
                 <div
                   key={card.id}
@@ -1576,6 +1676,7 @@ const Casefile = ({
                     confirmedCardIds.has(card.id) ? "evidence-card--confirmed" : ""
                   } ${relevant ? "casefile-card--relevant" : ""} ${
                     attached ? "casefile-card--attached" : ""
+                  } ${fresh ? "casefile-card--fresh" : ""
                   } casefile-card--${status.tone}`}
                   style={{ left: position.x, top: position.y }}
                   onMouseDown={(event) => startDrag(event, card.id)}
@@ -1587,18 +1688,17 @@ const Casefile = ({
                   aria-label={`${card.title}. ${card.summary}`}
                   title={
                     lens === "reconstruct"
-                      ? locale === "pt-BR"
-                        ? "Clique para anexar ao achado ativo"
-                        : "Click to attach to the active finding"
+                      ? t("casefileAttachToFinding")
                       : lens === "organize"
-                        ? locale === "pt-BR"
-                          ? "Clique para adicionar ou remover da correlação"
-                          : "Click to add or remove from the correlation"
-                        : locale === "pt-BR"
-                          ? "Clique para selecionar"
-                          : "Click to select"
+                        ? t("casefileAddOrRemoveCorrelation")
+                        : t("casefileSelect")
                   }
                 >
+                  {fresh && (
+                    <span className="casefile-card__fresh">
+                      {t("casefileNewTag")}
+                    </span>
+                  )}
                   <span className="evidence-card__pin" aria-hidden="true" />
                   {confirmedCardIds.has(card.id) && (
                     <span
@@ -1630,12 +1730,8 @@ const Casefile = ({
                     {card.category === "finding" && (
                       <span>
                         {state.caseAnswers[card.sourceId as CaseQuestionId]?.solvedAt
-                          ? locale === "pt-BR"
-                            ? "selado"
-                            : "sealed"
-                          : locale === "pt-BR"
-                            ? "aberto"
-                            : "open"}
+                          ? t("casefileFindingSealed")
+                          : t("casefileFindingOpen")}
                       </span>
                     )}
                   </div>
@@ -1657,12 +1753,8 @@ const Casefile = ({
         <aside className="evidence-board__inspector casefile__inspector">
           <p className="arg-tool__kicker">
             {lens === "organize"
-              ? locale === "pt-BR"
-                ? "CORRELAÇÕES"
-                : "CORRELATIONS"
-              : locale === "pt-BR"
-                ? LENS_LABELS[lens].pt.toUpperCase()
-                : LENS_LABELS[lens].en.toUpperCase()}
+              ? t("casefileCorrelations").toUpperCase()
+              : t(LENS_LABEL_KEYS[lens]).toUpperCase()}
           </p>
           {renderInspector()}
         </aside>
@@ -1670,35 +1762,65 @@ const Casefile = ({
 
       <div className="arg-tool__status">
         <span>
-          {locale === "pt-BR" ? "Lente" : "Lens"}:{" "}
-          {locale === "pt-BR" ? LENS_LABELS[lens].pt : LENS_LABELS[lens].en}
+          {t("casefileLensLabel")}: {t(LENS_LABEL_KEYS[lens])}
         </span>
+        <span>{lensHintText}</span>
         <span>
-          {Object.values(state.caseAnswers).filter((answer) => answer?.solvedAt).length} /{" "}
-          {CASE_STATEMENTS.length}{" "}
-          {locale === "pt-BR" ? "achados retidos" : "findings retained"}
+          {solvedFindingsVisible} / {visibleStatements.length}{" "}
+          {t("casefileFindingsRetained")}
         </span>
         <span>
           {state.collectedTokens.length}{" "}
-          {locale === "pt-BR" ? "fatos extraídos" : "facts extracted"}
+          {t("casefileFactsExtracted")}
         </span>
       </div>
+
+      {showCoverMemo && (
+        <section className="casefile__cover-memo" role="note">
+          <p className="casefile__cover-memo-kicker">{t("casefileMemoKicker")}</p>
+          <button
+            type="button"
+            className="casefile__cover-memo-close"
+            aria-label={t("casefileMemoDismiss")}
+            onClick={() => setCoverMemoVisible(false)}
+          >
+            ×
+          </button>
+          <strong>{t("casefileMemoTitle")}</strong>
+          <ol>
+            <li>{t("casefileMemoStep1")}</li>
+            <li>{t("casefileMemoStep2")}</li>
+            <li>{t("casefileMemoStep3")}</li>
+            <li>{t("casefileMemoStep4")}</li>
+          </ol>
+          <p>{t("casefileMemoSignoff")}</p>
+        </section>
+      )}
 
       {dossierCard && (
         <div
           className="case-reconstruction__dossier-overlay"
-          onClick={() => setDossierCard(null)}
+          onClick={closeDialogs}
+          role="presentation"
         >
           <div
             className="case-reconstruction__dossier"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={PERSONAL_FILE_DIALOG_TITLE_ID}
+            tabIndex={-1}
+            ref={dossierDialogRef}
             onClick={(event) => event.stopPropagation()}
           >
             <header>
-              <strong>{locale === "pt-BR" ? "Ficha pessoal" : "Personal file"}</strong>
+              <strong id={PERSONAL_FILE_DIALOG_TITLE_ID}>
+                {t("casefilePersonalFile")}
+              </strong>
               <button
                 type="button"
                 className="case-reconstruction__dossier-close"
-                onClick={() => setDossierCard(null)}
+                aria-label={t("casefileDialogClose")}
+                onClick={closeDialogs}
               >
                 ×
               </button>
@@ -1706,6 +1828,57 @@ const Casefile = ({
             <h3>{dossierCard.title}</h3>
             <p>{dossierCard.summary}</p>
           </div>
+        </div>
+      )}
+
+      {helpLegendOpen && (
+        <div className="casefile__dialog-overlay" onClick={closeDialogs}>
+          <section
+            className="casefile__dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={HELP_DIALOG_TITLE_ID}
+            ref={helpDialogRef}
+            tabIndex={-1}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <header className="casefile__dialog-header">
+              <strong id={HELP_DIALOG_TITLE_ID}>{t("casefileHelpLegendTitle")}</strong>
+              <button
+                type="button"
+                className="casefile__dialog-close"
+                aria-label={t("casefileDialogClose")}
+                onClick={closeDialogs}
+              >
+                ×
+              </button>
+            </header>
+            <div className="casefile__help-legend" role="list">
+              {[
+                "casefileLegendOpen",
+                "casefileLegendRemove",
+                "casefileLegendThread",
+                "casefileLegendRetained",
+                "casefileLegendMove",
+                "casefileLegendStatus",
+                "casefileLegendLens",
+              ].map((key) => (
+                <span role="listitem" key={key}>
+                  {t(key as TranslationKey)}
+                </span>
+              ))}
+              {HELP_LEGEND_CATEGORIES.map((category) => (
+                <span role="listitem" key={category}>
+                  <span
+                    className="casefile__help-legend-dot"
+                    data-category={category}
+                    aria-hidden="true"
+                  />
+                  <span>{categoryLabel(category)}</span>
+                </span>
+              ))}
+            </div>
+          </section>
         </div>
       )}
     </div>

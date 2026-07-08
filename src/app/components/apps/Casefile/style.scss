@@ -1,4 +1,5 @@
 .casefile {
+  position: relative;
   width: min(1180px, calc(100vw - 46px));
   height: min(760px, calc(100vh - 86px));
   display: flex;
@@ -158,10 +159,6 @@
     0 0 12px rgba(52, 125, 214, 0.55);
 }
 
-.casefile .evidence-card--theory::after {
-  content: "SELECTED";
-}
-
 .casefile-card__footer {
   position: absolute;
   left: 8px;
@@ -174,6 +171,58 @@
   color: #5a503c;
   font: bold 8px "Courier New", monospace;
   text-transform: uppercase;
+}
+
+.casefile-card__selected-tag {
+  border: 1px solid #a58f53;
+  padding: 0 4px;
+  color: #47371a;
+  background: #f1e7ca;
+}
+
+.casefile-card--fresh {
+  animation: casefile-fresh-pulse 1.2s ease-out 1;
+}
+
+.casefile-card__fresh {
+  position: absolute;
+  top: -7px;
+  right: 7px;
+  z-index: 2;
+  padding: 1px 5px;
+  border: 1px solid #9a7626;
+  color: #1d1607;
+  background: #ffe277;
+  box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.24);
+  font: bold 8px Tahoma, Arial, sans-serif;
+}
+
+@keyframes casefile-fresh-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(255, 226, 119, 0.92); }
+  100% { box-shadow: 0 0 0 8px rgba(255, 226, 119, 0); }
+}
+
+.casefile__menubar-help {
+  position: relative;
+  min-width: 56px;
+  margin-left: 8px;
+  padding: 0 10px;
+  border: 1px solid #a7c6da;
+  color: #f8f9ff;
+  background: rgba(255, 255, 255, 0.14);
+  font: bold 10px Tahoma, Arial, sans-serif;
+  cursor: pointer;
+}
+
+.casefile__new-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  padding: 1px 4px;
+  border: 1px solid #e8e8b0;
+  color: #0a0a24;
+  background: #ffe87a;
+  font: bold 7px Tahoma, Arial, sans-serif;
 }
 
 .casefile-status {
@@ -208,6 +257,61 @@
   gap: 3px;
   max-height: 32px;
   overflow: hidden;
+}
+
+.casefile__cover-memo {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: min(340px, calc(100% - 16px));
+  padding: 10px 34px 10px 12px;
+  border: 1px solid #8d8878;
+  background: #fbf7df;
+  color: #2d2d2b;
+  box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
+  z-index: 4;
+  font: bold 10px "Courier New", monospace;
+
+  > strong {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 12px;
+  }
+
+  ol {
+    margin: 6px 0;
+    padding-left: 18px;
+  }
+
+  li {
+    margin-bottom: 3px;
+    line-height: 1.35;
+  }
+
+  p {
+    margin: 0 0 6px;
+    line-height: 1.35;
+  }
+}
+
+.casefile__cover-memo-kicker {
+  color: #705f38;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.casefile__cover-memo-close {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: 1px solid #9ca3b0;
+  color: #25364d;
+  background: transparent;
+  font: bold 10px Arial, sans-serif;
 }
 
 .casefile-fact-chip {
@@ -655,14 +759,131 @@
   }
 }
 
-.casefile-contradictions__slots span {
-  &::before {
-    content: "MISSING ";
-  }
+.casefile__dialog-overlay {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(10, 12, 20, 0.45);
+  z-index: 8;
+}
 
-  &.ready::before {
-    content: "FOUND ";
-  }
+.casefile__dialog {
+  width: min(420px, calc(100% - 48px));
+  border: 2px outset #d8d5ca;
+  background: #f2f0e8;
+  box-shadow: 4px 4px 14px rgba(0, 0, 0, 0.35);
+  color: #24324e;
+  overflow: hidden;
+}
+
+.casefile__dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 10px;
+  color: #fff;
+  background: linear-gradient(90deg, #07196e, #2679a7);
+}
+
+.casefile__dialog-close {
+  width: 22px;
+  height: 20px;
+  padding: 0;
+  border: 1px solid #9ab4ff;
+  background: transparent;
+  color: #fff;
+  font: bold 11px Tahoma, Arial, sans-serif;
+  cursor: pointer;
+}
+
+.casefile__dialog-close:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.casefile__dialog p {
+  margin: 10px 12px 12px;
+  color: #333;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.casefile__help-legend {
+  display: grid;
+  gap: 4px;
+  margin: 0 12px 12px;
+  padding: 0;
+  font-size: 11px;
+}
+
+.casefile__help-legend > span {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.casefile__help-legend-dot {
+  width: 11px;
+  height: 11px;
+  display: inline-block;
+  background: #888;
+}
+
+.casefile__help-legend-dot[data-category="person"] {
+  background: #4d6;
+}
+
+.casefile__help-legend-dot[data-category="photo"] {
+  background: #b28b00;
+}
+
+.casefile__help-legend-dot[data-category="document"] {
+  background: #d66;
+}
+
+.casefile__help-legend-dot[data-category="audio"] {
+  background: #397c3b;
+}
+
+.casefile__help-legend-dot[data-category="email"] {
+  background: #70439b;
+}
+
+.casefile__help-legend-dot[data-category="conversation"] {
+  background: #1d777d;
+}
+
+.casefile__help-legend-dot[data-category="record"] {
+  background: #a85818;
+}
+
+.casefile-contradictions__slots span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid #b3a99a;
+  color: #70655a;
+  background: #eee7de;
+  font: bold 8px "Courier New", monospace;
+}
+
+.casefile-contradictions__slot-state {
+  display: inline-grid;
+  place-items: center;
+  width: 12px;
+  height: 12px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 8px;
+  line-height: 1;
+}
+
+.casefile-contradictions__slot-state--found {
+  color: #1a6324;
+}
+
+.casefile-contradictions__slot-state--missing {
+  color: #7c6e5a;
 }
 
 @media (max-width: 900px) {

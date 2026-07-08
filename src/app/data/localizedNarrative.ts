@@ -779,7 +779,10 @@ export const localizedFileContent = (
   fileId: string,
   original: string,
   locale: Locale
-): string => (locale === "pt-BR" ? FILES_PT[fileId] ?? original : original);
+): string => {
+  const localizedId = fileId === "cipher_1" ? "margin_ciphertext" : fileId;
+  return locale === "pt-BR" ? FILES_PT[localizedId] ?? original : original;
+};
 
 export const localizedEmail = (
   emailId: string,

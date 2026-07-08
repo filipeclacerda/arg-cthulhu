@@ -99,6 +99,18 @@ describe("ARG progression reducer", () => {
     expect(result.state.puzzles.lineage.solvedAt).not.toBeNull();
   });
 
+  it("ignores future-log sequence actions before lineage is solved", () => {
+    const initial = createInitialProgress(1_700_000_000_000, "legacy-order");
+    const result = reduceGameEvent(initial, {
+      type: "FUTURE_SEQUENCE_ACTION",
+      action: FUTURE_SEQUENCE[0],
+    });
+    expect(result.sequenceFault).toBeUndefined();
+    expect(result.state.futureSequenceStep).toBe(0);
+    expect(result.state.puzzles.future_log.solvedAt).toBeNull();
+    expect(result.state).toBe(initial);
+  });
+
   it("rejects INDEX /JOIN until all four object references were collected", () => {
     let state = solveThroughFutureLog();
     const premature = reduceGameEvent(state, {
@@ -127,6 +139,21 @@ describe("ARG progression reducer", () => {
     });
     expect(accepted.commandAccepted).toBe(true);
     expect(accepted.state.flags.endgame_available).toBe(true);
+  });
+
+  it("normalizes command syntax while preserving required puzzle gates", () => {
+    let state = solveThroughFutureLog();
+    state = retainObserverFindings(state);
+    state = ["E7", "A1", "C4", "B9"].reduce(
+      (acc, reference) => reduceGameEvent(acc, { type: "COLLECT_REFERENCE", reference }).state,
+      state
+    );
+    const accepted = reduceGameEvent(state, {
+      type: "RUN_COMMAND",
+      command: "  InDeX   /jOiN   e7 - a1 - c4 - b9 ",
+    });
+    expect(accepted.commandAccepted).toBe(true);
+    expect(accepted.state.puzzles.index_name.solvedAt).not.toBeNull();
   });
 
   it("does not create revisions for duplicate evidence events", () => {
@@ -165,6 +192,21 @@ describe("ARG progression reducer", () => {
         command: "NOT A VALID COMMAND",
       }).state
     ).toBe(solved);
+  });
+
+  it("sets solved flags used by desktop progression notices", () => {
+    let state = createInitialProgress(1_700_000_000_000, "notice-flags");
+    state = reduceGameEvent(state, {
+      type: "SOLVE_PUZZLE",
+      puzzleId: "palimpsest",
+    }).state;
+    expect(state.flags.puzzle_palimpsest_solved).toBe(true);
+
+    state = reduceGameEvent(state, {
+      type: "SOLVE_PUZZLE",
+      puzzleId: "margin_cipher",
+    }).state;
+    expect(state.flags.puzzle_margin_cipher_solved).toBe(true);
   });
 
   it("resets custom evidence-board positions without removing connections", () => {

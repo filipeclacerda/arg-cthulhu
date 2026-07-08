@@ -131,7 +131,8 @@ const isProgressV5 = (value: unknown): value is ProgressStateV4 => {
     typeof parsed.caseId === "string" &&
     typeof parsed.updatedAt === "number" &&
     Boolean(parsed.puzzles) &&
-    PUZZLE_IDS.every((id) => Boolean(parsed.puzzles?.[id]))
+    typeof parsed.puzzles === "object" &&
+    PUZZLE_IDS.some((id) => Boolean(parsed.puzzles?.[id]))
   );
 };
 

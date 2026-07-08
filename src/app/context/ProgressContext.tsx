@@ -151,6 +151,16 @@ const SOLUTION_REACTIONS: Record<PuzzleId, { en: string; pt: string }> = {
   },
 };
 
+const HINT_NOTICE = {
+  en: "The archive changed a related record. A new fragment is filed under Start -> Help.",
+  pt: "O arquivo alterou um registro relacionado. Um novo fragmento está em Iniciar -> Ajuda.",
+};
+
+const FIRST_FACT_NOTICE = {
+  en: "Fact extracted — filed to Casefile.exe.",
+  pt: "Fato extraído — arquivado no Casefile.exe.",
+};
+
 export const ProgressProvider = ({
   children,
 }: {
@@ -344,18 +354,19 @@ export const ProgressProvider = ({
       previousHintSignature.current &&
       signature !== previousHintSignature.current
     ) {
+      const newest = Object.entries(state.puzzles)
+        .flatMap(([puzzleId, puzzle]) =>
+          puzzle.hintHistory.map((entry) => ({
+            puzzleId: puzzleId as PuzzleId,
+            ...entry,
+          }))
+        )
+        .sort((a, b) => b.unlockedAt - a.unlockedAt)[0];
       setSystemNotice(
-        state.locale === "pt-BR"
-          ? "O arquivo alterou um registro relacionado."
-          : "The archive changed a related record."
+        state.locale === "pt-BR" ? HINT_NOTICE.pt : HINT_NOTICE.en
       );
       if (noticeTimer.current) clearTimeout(noticeTimer.current);
       noticeTimer.current = setTimeout(() => setSystemNotice(null), 3200);
-      const newest = Object.entries(state.puzzles)
-        .flatMap(([puzzleId, puzzle]) =>
-          puzzle.hintHistory.map((entry) => ({ puzzleId, ...entry }))
-        )
-        .sort((a, b) => b.unlockedAt - a.unlockedAt)[0];
       if (newest?.trigger === "time") {
         captureTelemetry({
           name: "hint_unlocked",
@@ -373,6 +384,8 @@ export const ProgressProvider = ({
   const dispatchGameEvent = useCallback(
     (event: GameEvent): DispatchResult => {
       if (isReadOnly) return {};
+      const beforeTokenCount = stateRef.current.collectedTokens.length;
+      const beforeLocale = stateRef.current.locale;
       const result = reduceGameEvent(stateRef.current, event);
       dispatch(event);
 
@@ -440,6 +453,17 @@ export const ProgressProvider = ({
             trigger: result.hintUnlocked.trigger,
           },
         });
+      }
+      if (
+        event.type === "COLLECT_TOKEN" &&
+        beforeTokenCount === 0 &&
+        result.state.collectedTokens.length > beforeTokenCount
+      ) {
+        setSystemNotice(
+          beforeLocale === "pt-BR" ? FIRST_FACT_NOTICE.pt : FIRST_FACT_NOTICE.en
+        );
+        if (noticeTimer.current) clearTimeout(noticeTimer.current);
+        noticeTimer.current = setTimeout(() => setSystemNotice(null), 3800);
       }
       if (result.solvedPuzzle) {
         const puzzle = result.solvedPuzzle;

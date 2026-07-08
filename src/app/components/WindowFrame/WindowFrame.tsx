@@ -47,17 +47,11 @@ const renderAppContent = (win: WindowInstance) => {
     case "audio":
       return <MediaPlayer fileId={win.props.fileId} />;
     case "cipher-lab":
-      return <CipherLab />;
+      return <CipherLab initialCiphertext={win.props.initialCiphertext} />;
     case "casefile":
       return <Casefile initialLens={win.props.initialLens ?? "reconstruct"} />;
-    case "evidence-board":
-      return <Casefile initialLens="organize" />;
     case "case-notes":
       return <CaseNotes />;
-    case "case-reconstruction":
-      return <Casefile initialLens="reconstruct" />;
-    case "timeline":
-      return <Casefile initialLens="timeline" />;
     case "archive-viewer":
       return <ArchiveViewer />;
     case "clock-properties":
@@ -146,14 +140,7 @@ const WindowFrame = ({ win }: { win: WindowInstance }) => {
       onMouseDown={handleMouseDown}
     >
       <WindowComponent
-        title={
-          win.appType === "casefile" ||
-          win.appType === "case-reconstruction" ||
-          win.appType === "evidence-board" ||
-          win.appType === "timeline"
-            ? t("casefileLabel")
-            : win.title
-        }
+        title={win.appType === "casefile" ? t("casefileLabel") : win.title}
         onClose={() => closeWindow(win.id)}
         onMinimize={() => toggleMinimize(win.id)}
         onMaximize={() => toggleMaximize(win.id)}

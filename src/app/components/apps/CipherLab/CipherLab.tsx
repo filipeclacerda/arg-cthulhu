@@ -40,7 +40,11 @@ const decodeVigenere = (text: string, key: string): string => {
     .join("");
 };
 
-const CipherLab = () => {
+const CipherLab = ({
+  initialCiphertext,
+}: {
+  initialCiphertext?: string;
+}) => {
   const {
     hasEvidence,
     solvePuzzle,
@@ -52,7 +56,8 @@ const CipherLab = () => {
   const [algorithm, setAlgorithm] = useState<Algorithm>("caesar");
   const [key, setKey] = useState("");
   const [ciphertext, setCiphertext] = useState(
-    hasEvidence("margin_ciphertext") ? CIPHERTEXT[state.locale] : ""
+    initialCiphertext ??
+      (hasEvidence("margin_ciphertext") ? CIPHERTEXT[state.locale] : "")
   );
   const [output, setOutput] = useState("");
   const [error, setError] = useState("");

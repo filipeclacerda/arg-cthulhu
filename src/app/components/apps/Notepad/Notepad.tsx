@@ -131,6 +131,16 @@ const Notepad = ({ fileId }: NotepadProps) => {
     });
   };
 
+  const openInCipherLab = () => {
+    if (!file) return;
+    openWindow({
+      id: "cipher-lab",
+      appType: "cipher-lab",
+      title: t("cipherLabLabel"),
+      props: { initialCiphertext: resolvedContent },
+    });
+  };
+
   return (
     <div className="notepad">
       <div className="notepad-menubar">
@@ -143,6 +153,15 @@ const Notepad = ({ fileId }: NotepadProps) => {
         <span>{file.name}</span>
         {file.raisesCorruptionTo != null && <strong>unstable text</strong>}
         {file.unlocksFlag && solved && <strong>decoded</strong>}
+        {file.name.toLowerCase().endsWith(".enc") && (
+          <button
+            type="button"
+            className="notepad-open-cipher"
+            onClick={openInCipherLab}
+          >
+            {t("openInCipherLab")}
+          </button>
+        )}
         <button
           type="button"
           className="notepad-properties"

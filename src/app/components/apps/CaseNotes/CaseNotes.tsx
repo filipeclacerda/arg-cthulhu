@@ -5,6 +5,7 @@ import { useProgress } from "@/app/context/ProgressContext";
 import { useWindowManager } from "@/app/context/WindowManagerContext";
 import { PuzzleId, PUZZLE_IDS } from "@/app/game/progress";
 import { localized, TOKENS_BY_ID } from "@/app/game/campaign";
+import { useI18n } from "@/app/i18n";
 import "../ArgTools/style.scss";
 import "./style.scss";
 
@@ -51,6 +52,7 @@ const CaseNotes = () => {
     activePuzzle,
   } = useProgress();
   const { openWindow } = useWindowManager();
+  const { t } = useI18n();
   const editorRef = useRef<HTMLTextAreaElement>(null);
   const [tab, setTab] = useState<
     "notes" | "facts" | "names" | "dates" | "codes"
@@ -176,14 +178,15 @@ const CaseNotes = () => {
           type="button"
           onClick={() =>
             openWindow({
-              id: "evidence-board",
-              appType: "evidence-board",
-              title: "Evidence Board",
+              id: "casefile",
+              appType: "casefile",
+              title: t("casefileLabel"),
+              props: { initialLens: "organize" },
               maximized: true,
             })
           }
         >
-          Evidence Board
+          {t("casefileLabel")}
         </button>
       </div>
 

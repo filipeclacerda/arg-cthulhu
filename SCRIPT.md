@@ -251,7 +251,7 @@ Referência rápida de como cada batida vira código (ver também o plano de imp
 | Os três finais | flags `ending_restore` / `ending_shutdown` / `ending_seal` | `components/apps/Finale`, `StartMenu` |
 | Conversas recuperadas e chat futuro | threads com modos `readonly` / `choices` / `freeform` | `data/chats.ts`, `game/chat.ts`, `components/apps/Messenger` |
 | Save resiliente entre abas/sessões | IndexedDB + fallback localStorage + `BroadcastChannel` | `game/persistence.ts`, `ProgressContext` |
-| Exportar/importar o caso como texto | código `MISK5.<payload>.<checksum>` | `game/persistence.ts` (`exportCaseCode`/`importCaseCode`) |
+| Exportar/importar o caso como texto | código `MISK6.<payload>.<checksum>` | `game/persistence.ts` (`exportCaseCode`/`importCaseCode`) |
 
 **Escala de corrupção (estágios, função `puzzleCorruptionStage`):**
 
@@ -266,7 +266,7 @@ Referência rápida de como cada batida vira código (ver também o plano de imp
   (`RECOVERED PROGRAM`) fica disponível no Start Menu.
 
 Ver a seção **"Os Sete Enigmas — solução completa"** abaixo para o detalhamento de cada um,
-e **"Arquitetura de save (v5)"** para o modelo de persistência.
+e **"Arquitetura de save (v6)"** para o modelo de persistência.
 
 ---
 
@@ -279,7 +279,7 @@ e **"Arquitetura de save (v5)"** para o modelo de persistência.
 
 Espinha técnica: `lot_114 → palimpsest → margin_cipher → counting_audio → lineage →
 future_log → index_name`. Ela agora cruza três linhas paralelas — último dia de Sarah,
-proveniência do Lote 114 e sala trancada — verificadas em **Case Reconstruction**. O comando
+proveniência do Lote 114 e sala trancada — verificadas em **Casefile**. O comando
 final só é aceito depois que o jogador também retém as três conclusões sobre o observador.
 
 ### 1. `lot_114` — "O Lote 114"
@@ -445,7 +445,7 @@ final só é aceito depois que o jogador também retém as três conclusões sob
   ("o capítulo sete é a pessoa tentando entendê-lo") se cumpre tecnicamente: entender não era
   necessário, só executar.
 
-## Case Reconstruction — achados montados
+## Casefile — achados montados
 
 As respostas não são senhas nem alternativas de múltipla escolha. O jogador primeiro
 **extrai fatos** clicando em trechos significativos de documentos, e-mails, conversas,
@@ -485,7 +485,7 @@ fluxo principal.
 
 ## Correlações opcionais e contenção
 
-O Evidence Board reconhece seis deduções: segundo volume, linhagem de catalogadores, cadeia
+O Casefile reconhece seis deduções: segundo volume, linhagem de catalogadores, cadeia
 de observadores, supressão institucional, interrupção deliberada de Miriam e autoindexação.
 As três últimas dependem de novos artefatos — manutenção/Whitfield, caderno de Miriam e
 registro de 2014/LOOPBACK. Com todas as correlações, `CONTAIN.HLP` aparece. O comando secreto
@@ -506,7 +506,7 @@ primeiro enigma não resolvido), então alternar de janela não some com o progr
 
 ---
 
-## Arquitetura de save (v5)
+## Arquitetura de save (v6)
 
 > Resumo de design: o jogo nunca deve perder o progresso por fechar a aba, trocar de
 > dispositivo ou abrir duas abas ao mesmo tempo. O estado também precisa caber em um texto que
@@ -517,11 +517,11 @@ primeiro enigma não resolvido), então alternar de janela não some com o progr
   pontos de recuperação rotativos, escritos sempre que um enigma é resolvido (não em todo
   autosave). Se o save `current` estiver corrompido ou ausente, `loadProgress()` percorre os
   checkpoints do mais recente ao mais antigo antes de desistir.
-- **Fallback: localStorage** (`arg-cthulhu-progress-v5`). Espelha o save a cada gravação,
+- **Fallback: localStorage** (`arg-cthulhu-progress-v6`). Espelha o save a cada gravação,
   inclusive quando o IndexedDB funciona — por isso, mesmo num navegador sem IndexedDB (modo
   privado restritivo, por exemplo), o jogo continua salvando. Há também leitura de um formato
-  legado (`arg-cthulhu-progress`, v1/v2) para quem ainda tem um save da época do `cipher_1`
-  único.
+  legado (`arg-cthulhu-progress`, v1/v2) e das chaves `arg-cthulhu-progress-v3`,
+  `arg-cthulhu-progress-v4` e `arg-cthulhu-progress-v5`.
 - **Cabeçalho leve** (`arg-cthulhu-progress-header`): só `caseId`, `updatedAt`, `playerName` e
   `act` — permite mostrar "retomar o caso de [nome]" sem precisar abrir o save completo.
 - **Trava multi-aba via `BroadcastChannel`** (`"miskatonic-case-session"`): a primeira aba
@@ -532,7 +532,7 @@ primeiro enigma não resolvido), então alternar de janela não some com o progr
   assinatura de marcos — `milestoneSignature()` — não por toda tecla digitada); gravação
   imediata (sem debounce) quando um enigma é resolvido, e *flush* forçado em `pagehide` /
   `visibilitychange` para não perder o último segundo antes de fechar a aba.
-- **Migração de versões:** `migrateProgress()` aceita saves v3 e v4 (mescla com os
+- **Migração de versões:** `migrateProgress()` aceita saves v3, v4 e v5 (mescla com os
   defaults atuais, preservando campos desconhecidos de versões futuras) quanto um save legado
   v1/v2, mapeando o antigo `corruptionStage` numérico e as flags `cipher_1_solved`/
   `cipher_2_solved`/`endgame_available` para o conjunto equivalente de enigmas já resolvidos
@@ -540,11 +540,11 @@ primeiro enigma não resolvido), então alternar de janela não some com o progr
 - **Códigos de caso exportáveis:** `exportCaseCode()` serializa o estado de forma
   determinística (`canonicalize()`, chaves ordenadas), comprime com `zlibSync` (fflate),
   codifica em base64url e calcula um checksum SHA-256 (6 bytes, hex maiúsculo) sobre os bytes
-  comprimidos. O resultado tem o formato `MISK5.<payload-base64url>.<checksum>`.
+  comprimidos. O resultado tem o formato `MISK6.<payload-base64url>.<checksum>`.
   `importCaseCode()` faz o caminho inverso, valida o checksum antes de descomprimir, e passa o
-  resultado por `migrateProgress()`. Prefixos `MISK3` e `MISK4` continuam importáveis.
+  resultado por `migrateProgress()`. Prefixos `MISK3`, `MISK4`, `MISK5` e `MISK6` continuam importáveis.
 
-O v5 acrescenta `leadsUnlocked`, `collectedTokens`, `caseAnswers` (slots, acertos travados,
+O modelo atual preserva os campos acrescentados no v5/v6: `leadsUnlocked`, `collectedTokens`, `caseAnswers` (slots, acertos travados,
 evidências, tentativas), `hypotheses`, `narrativeBeatsSeen`, `worldReactionsSeen`,
 `playerChoices`, `optionalDiscoveries` e `assetVariantsSeen`. Saves do modelo antigo de
 radio-buttons são migrados para frases já resolvidas, preservando leads e finais. Nenhum

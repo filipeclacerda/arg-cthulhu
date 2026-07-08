@@ -88,8 +88,7 @@ const appIcon = (appType: AppType) => {
   if (appType === "audio") return "/icons/media-player.png";
   if (appType === "help") return "/icons/help.png";
   if (appType === "recycle-bin") return "/icons/recycle-bin.png";
-  if (appType === "casefile" || appType === "evidence-board") return "/icons/folder-special.png";
-  if (appType === "case-reconstruction" || appType === "timeline") return "/icons/folder-special.png";
+  if (appType === "casefile") return "/icons/folder-special.png";
   return "/icons/file.png";
 };
 
@@ -112,10 +111,7 @@ const Desktop = () => {
   const { t } = useI18n();
   const appLabel = (app: DesktopApp) => (app.labelKey ? t(app.labelKey) : app.label);
   const windowTitle = (win: (typeof windows)[number]) =>
-    win.appType === "casefile" ||
-    win.appType === "case-reconstruction" ||
-    win.appType === "evidence-board" ||
-    win.appType === "timeline"
+    win.appType === "casefile"
       ? t("casefileLabel")
       : win.title;
   const SAVE_STATUS_LABELS: Record<string, TranslationKey> = {
@@ -362,6 +358,116 @@ const Desktop = () => {
     openWindow,
     play,
     setFlag,
+    t,
+  ]);
+
+  useEffect(() => {
+    if (!isHydrated) return;
+    if (
+      !flags.puzzle_palimpsest_solved ||
+      flags.puzzle_margin_cipher_solved ||
+      flags.margin_file_notice_shown
+    ) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setFlag("margin_file_notice_shown");
+      play("chime");
+      openWindow({
+        id: "margin-file-alert",
+        appType: "generic",
+        title: t("newFileRecoveredTitle"),
+        props: {
+          children: (
+            <div className="new-mail-alert">
+              <p className="new-mail-alert__kicker">{t("fileSystemChangeKicker")}</p>
+              <h2>margin_ch7.enc</h2>
+              <p>{t("palimpsestFileLine")}</p>
+              <button
+                className="button"
+                type="button"
+                onClick={() =>
+                  openWindow({
+                    id: "notepad-cipher_1",
+                    appType: "notepad",
+                    title: "margin_ch7.enc - Notepad",
+                    props: { fileId: "cipher_1" },
+                  })
+                }
+              >
+                {t("openFileLabel")}
+              </button>
+            </div>
+          ),
+        },
+      });
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [
+    flags.margin_file_notice_shown,
+    flags.puzzle_margin_cipher_solved,
+    flags.puzzle_palimpsest_solved,
+    isHydrated,
+    openWindow,
+    play,
+    setFlag,
+    t,
+  ]);
+
+  useEffect(() => {
+    if (!isHydrated) return;
+    if (
+      !flags.puzzle_margin_cipher_solved ||
+      state.puzzles.counting_audio.solvedAt ||
+      flags.counting_file_notice_shown
+    ) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setFlag("counting_file_notice_shown");
+      play("chime");
+      openWindow({
+        id: "counting-file-alert",
+        appType: "generic",
+        title: t("newFileRecoveredTitle"),
+        props: {
+          children: (
+            <div className="new-mail-alert">
+              <p className="new-mail-alert__kicker">{t("fileSystemChangeKicker")}</p>
+              <h2>counting.wav</h2>
+              <p>{t("marginAudioLine")}</p>
+              <button
+                className="button"
+                type="button"
+                onClick={() =>
+                  openWindow({
+                    id: "audio-counting_audio",
+                    appType: "audio",
+                    title: "counting.wav",
+                    props: { fileId: "counting_audio" },
+                  })
+                }
+              >
+                {t("openRecordingLabel")}
+              </button>
+            </div>
+          ),
+        },
+      });
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [
+    flags.counting_file_notice_shown,
+    flags.puzzle_margin_cipher_solved,
+    isHydrated,
+    openWindow,
+    play,
+    setFlag,
+    state.puzzles.counting_audio.solvedAt,
     t,
   ]);
 

@@ -10,7 +10,9 @@ import {
   HypothesisId,
   InsightId,
   LeadId,
+  TokenType,
 } from "./progress";
+import type { TranslationKey } from "../i18n";
 import { THEORY_DEFINITIONS } from "./theories";
 
 export type CasefileLens =
@@ -54,6 +56,20 @@ export interface CasefileClaim {
   sourceId: CaseQuestionId | InsightId | HypothesisId;
   leadId?: LeadId;
 }
+
+export const TOKEN_TYPE_LABEL_KEYS: Record<TokenType, TranslationKey> = {
+  person: "tokenTypePerson",
+  place: "tokenTypePlace",
+  date: "tokenTypeDate",
+  year: "tokenTypeYear",
+  time: "tokenTypeTime",
+  intent: "tokenTypeIntent",
+  object: "tokenTypeObject",
+  status: "tokenTypeStatus",
+  cause: "tokenTypeCause",
+  family: "tokenTypeFamily",
+  detail: "tokenTypeDetail",
+};
 
 export const HYPOTHESIS_EVIDENCE_REQUIREMENTS: Record<
   HypothesisId,
@@ -222,6 +238,12 @@ export const collectedTokensForEvidence = (
     collected.has(token.id)
   );
 };
+
+export const displayedEvidenceIds = (
+  solved: boolean,
+  retainedEvidenceIds: string[] | undefined,
+  pendingEvidenceIds: string[]
+): string[] => (solved ? retainedEvidenceIds ?? [] : pendingEvidenceIds);
 
 export const evidenceIdsForClaim = (claim: CasefileClaim): string[] =>
   Array.from(
