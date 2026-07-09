@@ -179,21 +179,21 @@ const en = {
   finaleEchoRestoreAlive:
     "Her answer lingers: not alive in your tense, but still remembering a body.",
   finaleEchoRestoreRestore:
-    "Her warning was right. RESTORE changes which name belongs to SOURCE and which belongs to ARCHIVE.",
+    "You asked what RESTORE does. She only said: check the dates on your files.",
   finaleEchoRestoreBreak:
-    "You asked how to break it. RESTORE is not a break; it is an exchange.",
+    "You asked how to break it. She went quiet for a long time, and then answered something else.",
   finaleEchoShutdownAlive:
     "Her answer lingers: she was close enough to remember a body, not close enough to return to it.",
   finaleEchoShutdownRestore:
     "You asked what RESTORE does. The file keeps that answer for someone less cautious.",
   finaleEchoShutdownBreak:
-    "You asked how to break it. Refusing slows the chain, but it does not remove the hook.",
+    "You asked how to break it. The window closed before anything answered.",
   finaleEchoSealAlive:
     "Her answer lingers in the loop. The archive cannot decide whether a memory is a witness.",
   finaleEchoSealRestore:
-    "You asked what RESTORE does. The loop denies the exchange and keeps the cost unresolved.",
+    "You asked what RESTORE does. The sealed index filed the question under UNANSWERED.",
   finaleEchoSealBreak:
-    "You asked how to break it. The archive watches itself because no human field is clean enough.",
+    "You asked how to break it. Something inside the loop is still counting, more slowly now.",
   finaleEchoDefault:
     "The unanswered question remains in the chat window.",
 
@@ -637,21 +637,21 @@ const pt: Record<keyof typeof en, string> = {
   finaleEchoRestoreAlive:
     "A resposta dela permanece: não viva no seu tempo verbal, mas ainda lembrando de ter um corpo.",
   finaleEchoRestoreRestore:
-    "O aviso dela estava certo. RESTORE troca qual nome pertence à ORIGEM e qual pertence ao ARQUIVO.",
+    "Você perguntou o que RESTORE faz. Ela só disse: confira as datas dos seus arquivos.",
   finaleEchoRestoreBreak:
-    "Você perguntou como quebrar isto. RESTORE não quebra; troca.",
+    "Você perguntou como quebrar isto. Ela ficou em silêncio por um longo tempo e respondeu outra coisa.",
   finaleEchoShutdownAlive:
     "A resposta dela permanece: perto o bastante para lembrar de um corpo, longe demais para voltar a ele.",
   finaleEchoShutdownRestore:
     "Você perguntou o que RESTORE faz. O arquivo guarda essa resposta para alguém menos cauteloso.",
   finaleEchoShutdownBreak:
-    "Você perguntou como quebrar isto. Recusar desacelera a cadeia, mas não remove o anzol.",
+    "Você perguntou como quebrar isto. A janela fechou antes de qualquer coisa responder.",
   finaleEchoSealAlive:
     "A resposta dela permanece no loop. O arquivo não sabe decidir se uma memória é testemunha.",
   finaleEchoSealRestore:
-    "Você perguntou o que RESTORE faz. O loop nega a troca e mantém o custo sem resolução.",
+    "Você perguntou o que RESTORE faz. O índice selado arquivou a pergunta sob NÃO RESPONDIDA.",
   finaleEchoSealBreak:
-    "Você perguntou como quebrar isto. O arquivo observa a si mesmo porque nenhum campo humano é limpo o bastante.",
+    "Você perguntou como quebrar isto. Algo dentro do loop ainda está contando, mais devagar agora.",
   finaleEchoDefault:
     "A pergunta não respondida permanece na janela de conversa.",
 

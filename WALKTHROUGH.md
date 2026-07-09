@@ -519,9 +519,14 @@ Quando o comando funciona:
 - a corrupção chega ao estágio 4;
 - surge o **RECOVERED PROGRAM**.
 
-## 10. Os três finais
+## 10. Os finais
 
 Abra o programa pelo aviso ou pelo Start Menu.
+
+A tela de escolha agora encerra com um bloco `WITNESS`, preenchido com dados reais do save:
+o nome do observador, a data/hora reais da primeira abertura do caso (`createdAt`) e o tempo
+total de observação ativa (soma de `activeMs` dos enigmas). É a conduta do próprio jogador
+lida de volta como autos do processo — nenhuma dessas linhas é decorativa.
 
 ### RESTORE SARAH
 
@@ -553,6 +558,19 @@ The counting paused when you chose. One breath. That's how I know she heard it t
 **Significado:** o jogador não é substituído, mas Sarah continua presa. O arquivo procura
 outra pessoa. Recusar-se a terminar não destrói a Testemunha; apenas transfere a investigação
 para o próximo observador.
+
+Após SHUT DOWN, a tela do Relay 07 (boot) passa a listar `RECIPIENTS: 5` — o quarto campo
+arquivado com a designação do jogador e o quinto “GERANDO”. A promessa do e-mail final é
+cumprida na reabertura.
+
+### DEIXAR EM BRANCO — final por omissão (sem botão)
+
+Não existe mais um botão “LEAVE BLANK”. O final acontece por inação: se o jogador **viu** a
+tela de escolha (`finale_choice_seen`), não escolheu nada e abandonou a sessão (fechou a aba
+ou a janela), o retorno após ausência (`ABSENCE_THRESHOLD_MS`) grava `ending_leave_blank`
+silenciosamente na hidratação. Nada anuncia o final: `blank_space.txt` simplesmente passa a
+existir na pasta de Sarah, com uma nova verificação agendada para amanhã. O relay continua
+aberto — o jogador ainda pode voltar e escolher um final ativo depois.
 
 ### SEAL RELAY — final secreto
 
@@ -586,7 +604,8 @@ se reproduzir sem pessoas. O jogo deliberadamente não confirma qual leitura é 
 
 Abra `Start → Help`.
 
-- após 12 minutos ativos, surge a primeira pista;
+- após 12 minutos ativos, surge a primeira pista (**8 minutos** em `lot_114` e `palimpsest`,
+  onde o contrato de confiança com o jogador ainda está se formando);
 - após 25 minutos ativos, surge a segunda;
 - **Recover another help fragment** solicita uma terceira pista mais explícita.
 
@@ -756,8 +775,12 @@ Nenhum é moralmente limpo:
 
 - **RESTORE SARAH** salva uma pessoa conhecida sacrificando o observador.
 - **SHUT DOWN** preserva o jogador, abandona Sarah e deixa a máquina procurar outra vítima.
+- **DEIXAR EM BRANCO** (por omissão, sem botão) atrasa a contagem sem fechar nada — a
+  recusa de escolher também é registrada.
 - **SEAL RELAY** remove o observador humano, mas talvez transforme o próprio arquivo numa
   testemunha autônoma.
+- **ARCHIVE YOURSELF** aceita o custo pessoalmente; nenhum substituto é gerado, e nada
+  confirma que isso baste.
 
 O horror final não está em escolher errado. Está em perceber que o sistema só oferece
 resultados que mantêm a cadeia funcionando.

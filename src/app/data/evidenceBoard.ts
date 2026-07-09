@@ -451,6 +451,30 @@ export const EVIDENCE_CARDS: Record<string, BoardCard> = {
     category: "document",
     summary: "Em tests the explanations that hurt less and finds that none survive.",
   },
+  fellowship_draft: {
+    id: "fellowship_draft",
+    title: "fellowship_draft.txt",
+    category: "document",
+    summary: "Sarah was applying to leave. The deadline was April 1.",
+  },
+  graymoor_ledger_copy: {
+    id: "graymoor_ledger_copy",
+    title: "Graymoor hold ledger",
+    category: "document",
+    summary: "Lot 114 was held for S. Bishop since 1998. Sarah was seven.",
+  },
+  counting_retranscribed: {
+    id: "counting_retranscribed",
+    title: "counting.wav — retranscribed",
+    category: "record",
+    summary: "The recording is unchanged. The count is not.",
+  },
+  pending_receipts: {
+    id: "pending_receipts",
+    title: "pending_receipts.dbx",
+    category: "record",
+    summary: "A receipt exists for a message Em has not written.",
+  },
   em_box_email: {
     id: "em_box_email",
     title: "Mom's box (I opened it)",

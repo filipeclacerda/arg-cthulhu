@@ -19,6 +19,11 @@ import { RunCommandError, validateIndexCommand } from "./validators";
 
 export const HINT_ONE_MS = 12 * 60 * 1000;
 export const HINT_TWO_MS = 25 * 60 * 1000;
+/** The first two puzzles form the trust contract — help arrives sooner there. */
+const EARLY_HINT_ONE_MS = 8 * 60 * 1000;
+const EARLY_HINT_PUZZLES: readonly PuzzleId[] = ["lot_114", "palimpsest"];
+export const hintOneDelayFor = (puzzleId: PuzzleId): number =>
+  EARLY_HINT_PUZZLES.includes(puzzleId) ? EARLY_HINT_ONE_MS : HINT_ONE_MS;
 
 export const PUZZLE_HINTS: Record<PuzzleId, [string, string, string]> = {
   lot_114: [
@@ -436,7 +441,8 @@ export const reduceGameEvent = (
         let hintsUnlocked = puzzle.hintsUnlocked;
         const activeMs = puzzle.activeMs + Math.max(0, event.elapsedMs);
         if (activeMs >= HINT_TWO_MS) hintsUnlocked = Math.max(hintsUnlocked, 2);
-        else if (activeMs >= HINT_ONE_MS) hintsUnlocked = Math.max(hintsUnlocked, 1);
+        else if (activeMs >= hintOneDelayFor(event.puzzleId))
+          hintsUnlocked = Math.max(hintsUnlocked, 1);
         state = {
           ...state,
           puzzles: {

@@ -269,7 +269,20 @@ export default function Home() {
               <dt>{isPt ? "Mídia" : "Medium"}</dt><dd>{isPt ? "IMAGEM DE DISCO" : "DISK IMAGE"}</dd>
               <dt>{isPt ? "Origem" : "Source"}</dt><dd>T. ALVAREZ</dd>
               <dt>Status</dt><dd>{isPt ? "NÃO RESOLVIDO" : "UNRESOLVED"}</dd>
-              <dt>{isPt ? "Destinatário" : "Recipient"}</dt><dd className="relay-unstable">{isPt ? "GERADO AO ABRIR" : "GENERATED AT OPEN"}</dd>
+              {state.flags.ending_shutdown ? (
+                <>
+                  <dt>{isPt ? "Destinatários" : "Recipients"}</dt>
+                  <dd className="relay-unstable">
+                    {isPt
+                      ? `5 // 4º ARQUIVADO: ${(state.playerName ?? "USUÁRIO SEGUINTE").toUpperCase()} // 5º: GERANDO`
+                      : `5 // 4TH ARCHIVED: ${(state.playerName ?? "NEXT USER").toUpperCase()} // 5TH: GENERATING`}
+                  </dd>
+                </>
+              ) : (
+                <>
+                  <dt>{isPt ? "Destinatário" : "Recipient"}</dt><dd className="relay-unstable">{isPt ? "GERADO AO ABRIR" : "GENERATED AT OPEN"}</dd>
+                </>
+              )}
               <dt>{isPt ? "Horário" : "Timestamp"}</dt><dd>{tomorrowStamp}</dd>
               <dt>Referrer</dt>
               <dd className={phase === "mount" ? "relay-unstable" : ""}>

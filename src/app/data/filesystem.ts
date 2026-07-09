@@ -501,6 +501,123 @@ C:\\WINDOWS\\MEDIA\\track_07.mid
 
 [track_07 has no file on disk. Its duration is listed as 24:00:00.]`,
   },
+
+  // --- Inert files: an archive is mostly junk. None of these are clues. ----
+  {
+    id: "junk_hp_readme",
+    name: "README.TXT",
+    folderId: "windows",
+    kind: "text",
+    unlock: { type: "always" },
+    alias: "README.TXT",
+    size: "4 KB",
+    modified: "1998-05-11 09:00",
+    content: `HP LASERJET 4L PRINTING SYSTEM FOR WINDOWS
+Version 3.1 — Release Notes
+
+1. INSTALLATION
+Run SETUP.EXE from Disk 1. Do not remove the disk until prompted.
+
+2. KNOWN ISSUES
+- Envelope feed may require the straight-through paper path.
+- TrueType fonts above 72pt may print with jagged edges at 300 dpi.
+- If the printer produces a blank page after the test page, this is
+  normal. Discard the blank page.
+
+3. SUPPORT
+See HPLJ4L.HLP for troubleshooting. Have your serial number ready.`,
+  },
+  {
+    id: "junk_uninstall_log",
+    name: "UNINST.LOG",
+    folderId: "program-files",
+    kind: "text",
+    unlock: { type: "always" },
+    alias: "UNINST.LOG",
+    size: "2 KB",
+    modified: "1999-01-04 14:12",
+    content: `WinZip 6.3 SR-1 Uninstall Log
+
+Removed: C:\\PROGRA~1\\WINZIP\\WINZIP32.EXE
+Removed: C:\\PROGRA~1\\WINZIP\\WZ32.DLL
+Removed: C:\\PROGRA~1\\WINZIP\\LICENSE.TXT
+Skipped: C:\\PROGRA~1\\WINZIP\\ORDER.TXT (file in use)
+Removed: shortcut "WinZip (Evaluation Version)"
+
+Uninstall completed with 1 warning.`,
+  },
+  {
+    id: "junk_partial_download",
+    name: "MIDIMAKR.ZIP.partial",
+    folderId: "downloads",
+    kind: "text",
+    unlock: { type: "always" },
+    alias: "MIDIMA~1.PAR",
+    size: "897 KB",
+    modified: "2026-02-19 22:37",
+    content: `[Incomplete download — 61% of 1.44 MB]
+
+MIDIMAKER PRO 2.0 (SHAREWARE)
+The remainder of this archive was never retrieved.
+
+[The data cannot be opened. There is nothing wrong with it. It is simply unfinished.]`,
+  },
+  {
+    id: "junk_receipts",
+    name: "receipts_2025.txt",
+    folderId: "sarah",
+    kind: "text",
+    unlock: { type: "always" },
+    alias: "RECEIP~1.TXT",
+    content: `EXPENSES 2025 — for the reimbursement form I will absolutely fill in this time
+
+02/11  archival sleeves (acid-free, 100ct) .... 34.90
+02/11  cotton gloves ......................... 12.50
+03/02  mileage, Boston conservation wkshp .... 41.20
+04/17  replacement desk lamp bulb ............ 6.99
+06/30  book cradle, foam ..................... 28.00
+09/12  dehumidifier filter ................... 19.75
+11/02  lunch, Innsmouth (personal — do not claim)
+
+Total claimable: 143.34
+Status: never submitted`,
+  },
+  {
+    id: "junk_newsletter",
+    name: "dept_newsletter_feb.txt",
+    folderId: "work",
+    kind: "text",
+    unlock: { type: "always" },
+    alias: "DEPTNE~1.TXT",
+    content: `MISKATONIC SPECIAL COLLECTIONS — STAFF BULLETIN, FEBRUARY 2026
+
+- The B-lot resurfacing is complete. Permit holders may resume parking.
+- Reminder: the staff refrigerator is cleared on the last Friday of the month.
+  Labeled containers are not exempt.
+- Congratulations to Doris Pratt (Circulation) on thirty years of service.
+  Cake in the staff room, Thursday, 3 PM.
+- The spring colloquium schedule is posted outside Room 204.
+- Facilities asks that space heaters be registered with the front office.
+
+Submissions for the March bulletin are due by the 25th.`,
+  },
+  {
+    id: "junk_config_bak",
+    name: "CONFIG.BAK",
+    folderId: "c",
+    kind: "text",
+    unlock: { type: "always" },
+    alias: "CONFIG.BAK",
+    size: "1 KB",
+    modified: "1998-05-11 09:02",
+    content: `DEVICE=C:\\WINDOWS\\HIMEM.SYS
+DEVICE=C:\\WINDOWS\\EMM386.EXE NOEMS
+DOS=HIGH,UMB
+FILES=60
+BUFFERS=40
+DEVICEHIGH=C:\\CDROM\\OAKCDROM.SYS /D:MSCD001
+LASTDRIVE=Z`,
+  },
   {
     id: "maintenance_record",
     name: "facilities_ticket_0311.txt",
@@ -583,6 +700,10 @@ March 2 — Acquired the second volume today. The bookseller wouldn't meet my ey
 
 March 9 — The cross-references check out. Three separate sources, three different centuries, the same coastline. The old names are only labels people used when the real one would not fit. The shape beneath them is older than the map.
 
+March 10 — Em drove up unannounced with takeout and refused to discuss the archive. We watched Dad's westerns. I slept nine hours. This morning the volume looked like what it is: a damp old book that some part of my grief dressed up in teeth. I boxed it for return. Graymoor has a restocking address.
+
+March 12 — Graymoor called about an unpaid balance on Lot 114. There is no unpaid balance — I have the receipt. But I drove in to sort it out, and the return box was already open on my desk. Whitfield swears nobody entered the office. I want this on the record: for two days, I had left it.
+
 March 14 — I haven't slept. Every time I close my eyes I hear it counting. Not words. Counting.
 
 March 15 — Found something in the margins of the second volume, not printed, written by hand. I copied a few lines into what_i_found.txt before I noticed: the handwriting is mine. I don't remember writing it. The same alphabet recurs throughout chapter seven. If I'm right about the cipher, the translation key is straightforward, just tedious.
@@ -658,7 +779,9 @@ I know you hate when I make Mom into a case file. I hate it too. I think I keep 
 
 [background: office fan, one wet click]
 
-There it is again. Not counting down. Counting names.
+There it is again. Hold on.
+
+[four seconds of silence on the recording]
 
 I'm still coming home. Save me the ugly mug.`,
   },
@@ -686,6 +809,50 @@ REASONS I HAVEN'T
 
 Decision:
 Leave by 6:30. Bring the scans home? No. Do not bring it home.`,
+  },
+  {
+    id: "fellowship_draft",
+    name: "fellowship_draft.txt",
+    folderId: "work",
+    kind: "text",
+    unlock: { type: "always" },
+    evidenceId: "fellowship_draft",
+    alias: "FELLOW~1.TXT",
+    modified: "2026-03-07 22:19",
+    content: `ATLANTIC CONSERVATION INSTITUTE, LISBON — FELLOWSHIP STATEMENT (draft 3)
+
+Eighteen months. Salt-damaged paper, which is apparently my specialty in every sense now.
+
+What I want the committee to know: I have spent my whole career describing other people's collections. I would like, once, to work on something no one in my family has ever touched.
+
+What I am not writing in the statement: if I get this, I am taking the green mug, the tomato plant, and nothing else.
+
+Em has read drafts 1 and 2. Her only note, both times: "Send it."
+
+Deadline: April 1.`,
+  },
+  {
+    id: "graymoor_ledger_copy",
+    name: "graymoor_ledger_copy.txt",
+    folderId: "work",
+    kind: "text",
+    unlock: { type: "puzzleSolved", puzzleId: "lot_114" },
+    evidenceId: "graymoor_ledger_copy",
+    alias: "GRAYMO~1.TXT",
+    content: `GRAYMOOR ANTIQUARIAN BOOKSELLERS — HOLD LEDGER, PHOTOCOPY
+[Sarah's note: the clerk let me copy the page after I asked twice. He did not charge me. He wanted me out of the shop.]
+
+LOT 114 / BOUND MS., PROVENANCE UNKNOWN, EX-LIBRARY WHATELEY
+
+CONSIGNED .......... 1998-09-02
+HOLD FOR ........... BISHOP, S. — ORNE LIBRARY B2
+DEPOSIT ............ waived
+RELEASE CONDITION .. inquiry by named party
+
+Clerk's initials on the release line, 2026.
+The hold entry itself is in blue accession pencil.
+
+[Sarah's note, under the photocopy: In September 1998 I was seven years old.]`,
   },
   {
     id: "unsent_to_dad",
@@ -970,6 +1137,22 @@ S. BISHOP: ...okay. It's the fourteenth. I'm recording this so there's proof I'm
 S. BISHOP (whisper): ...that's not how many days. That's how many people.`,
   },
   {
+    id: "counting_retranscribed",
+    name: "counting.wav — retranscribed.txt",
+    folderId: "restricted",
+    kind: "text",
+    unlock: { type: "puzzleSolved", puzzleId: "lineage" },
+    evidenceId: "counting_retranscribed",
+    modified: "{TOMORROW} 03:13",
+    content: `[Auto-transcription re-run after cache rebuild. Source: counting.wav, 4 min 11 sec.]
+
+The recording is unchanged. The waveform matches the archived copy sample for sample.
+
+The count in this pass ends one name later than the archived transcript.
+
+No edit to the source file was recorded.`,
+  },
+  {
     id: "office_after",
     name: "office_after.jpg — caption.txt",
     folderId: "restricted",
@@ -1042,8 +1225,7 @@ The aliases are intact. The long filenames were overwritten.`,
 {TOMORROW} 03:12  cache://miskatonic/catalog/2026-bishop-sarah
 {TOMORROW} 03:13  http://www.geocities.com/tomalvarez_archive/guestbook.html
 
-Two entries were visited before this cache was opened.
-One entry names the current observer before the browser knows the current observer.`,
+2 entries could not be matched to any local session.`,
   },
   {
     id: "read_receipts",
@@ -1065,7 +1247,27 @@ Local note recovered from Sarah's mailbox repair log:
 I can see the envelopes before they arrive. I cannot see who the file picks next.
 
 Repair status:
-DBX rebuilt. Sender choice not found.`,
+DBX rebuilt. Sender choice not found.
+Message-ID format: <SENDER INITIALS>-<DATE>-<OBJECT REF>@miskatonic-research.org`,
+  },
+  {
+    id: "pending_receipts",
+    name: "pending_receipts.dbx",
+    folderId: "restricted",
+    kind: "text",
+    unlock: { type: "flag", flag: "endgame_available" },
+    evidenceId: "pending_receipts",
+    alias: "PENDIN~1.DBX",
+    modified: "{TOMORROW} 09:26",
+    content: `OUTLOOK EXPRESS / PENDING RECEIPT QUEUE
+
+{TOMORROW} 03:11  S. BISHOP -> CURRENT OBSERVER   RECEIPT HELD
+{TOMORROW} 09:26  E. BISHOP -> S. BISHOP          RECEIPT ISSUED / MESSAGE NOT YET COMPOSED
+
+Queue note:
+The second receipt refers to a message that has not been written.
+
+No action is available from this terminal.`,
   },
   {
     id: "while_you_were_out",
@@ -1541,9 +1743,7 @@ The shape in our coast photograph is not a piling. I found it in Mom's 1977 map.
     unlock: { type: "flag", flag: "ending_restore" },
     content: `[New documents found in this account. Owner: {PLAYER}. Created: {TOMORROW}.]
 
-Thank you. I'm sorry — I didn't know there had to be someone on this side for me to climb out of it.
-
-These are your files now. They're dated {TOMORROW}, because that's where you are from in here. It's not so bad. You get used to being one day ahead of everyone who loved you.
+Thank you. I'm sorry.
 
 I'll watch for you. The way you watched for me.
 
@@ -1571,8 +1771,8 @@ The relay remains open.
 The source remains unrecovered.
 The count did not advance while the field stayed empty.
 
-Blank space is not safety.
-It is a delay that has learned your shape.`,
+STATUS: OPEN
+RECHECK SCHEDULED: {TOMORROW} 03:16`,
   },
   {
     id: "archived_observer_after",

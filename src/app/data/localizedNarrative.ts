@@ -9,6 +9,10 @@ const FILES_PT: Record<string, string> = {
 
 09/03 — As referências cruzadas conferem. Três fontes separadas, três séculos diferentes, a mesma linha da costa. Os nomes antigos são apenas etiquetas que as pessoas usaram quando o real não cabia. A forma por baixo deles é mais velha que o mapa.
 
+10/03 — Em apareceu sem avisar com comida pronta e se recusou a falar do arquivo. Vimos os faroestes do papai. Dormi nove horas. Hoje de manhã o volume parecia o que é: um livro velho e úmido que alguma parte do meu luto vestiu de dentes. Encaixotei para devolver. A Graymoor tem endereço de devolução.
+
+12/03 — A Graymoor ligou sobre um saldo em aberto do Lote 114. Não existe saldo em aberto — eu tenho o recibo. Mas fui até o escritório resolver, e a caixa de devolução já estava aberta na minha mesa. Whitfield jura que ninguém entrou na sala. Quero isto registrado: por dois dias, eu tinha largado.
+
 14/03 — Não dormi. Sempre que fecho os olhos, ouço a contagem. Não palavras. Contagem.
 
 15/03 — Encontrei algo nas margens do segundo volume, não impresso, escrito à mão. Copiei algumas linhas em what_i_found.txt antes de perceber: a caligrafia é minha. Não lembro de ter escrito. O mesmo alfabeto se repete pelo capítulo sete. Se eu estiver certa sobre a cifra, a chave de tradução é direta, só trabalhosa.
@@ -58,7 +62,9 @@ Eu sei que você odeia quando transformo a mamãe num dossiê. Eu também odeio.
 
 [fundo: ventilador do escritório, um estalo molhado]
 
-Lá está de novo. Não contando para baixo. Contando nomes.
+Lá está de novo. Espera.
+
+[quatro segundos de silêncio na gravação]
 
 Ainda vou para casa. Guarda a caneca feia para mim.`,
   reasons_to_stop: `MOTIVOS PARA PARAR
@@ -103,6 +109,70 @@ Uma ficha em branco foi contada antes de ser colocada na mesa.
 
 Nota do operador:
 Não catalogar espaços soltos à mão.`,
+  fellowship_draft: `INSTITUTO ATLÂNTICO DE CONSERVAÇÃO, LISBOA — CARTA DE INTENÇÃO (rascunho 3)
+
+Dezoito meses. Papel danificado por sal, que aparentemente virou minha especialidade em todos os sentidos.
+
+O que eu quero que o comitê saiba: passei a carreira inteira descrevendo as coleções dos outros. Eu gostaria, uma vez, de trabalhar em algo que ninguém da minha família jamais tocou.
+
+O que não estou escrevendo na carta: se eu conseguir, levo a caneca verde, o pé de tomate e mais nada.
+
+Em leu os rascunhos 1 e 2. A única observação dela, nas duas vezes: "Envia."
+
+Prazo: 1º de abril.`,
+  graymoor_ledger_copy: `GRAYMOOR ANTIQUARIAN BOOKSELLERS — LIVRO DE RESERVAS, FOTOCÓPIA
+[Nota de Sarah: o balconista deixou copiar a página depois que pedi duas vezes. Não cobrou nada. Ele queria que eu saísse da loja.]
+
+LOTE 114 / MS. ENCADERNADO, PROCEDÊNCIA DESCONHECIDA, EX-BIBLIOTECA WHATELEY
+
+CONSIGNADO ......... 1998-09-02
+RESERVADO PARA ..... BISHOP, S. — BIBLIOTECA ORNE B2
+DEPÓSITO ........... dispensado
+CONDIÇÃO ........... consulta pela parte nomeada
+
+Iniciais do balconista na linha de liberação, 2026.
+A entrada da reserva está em lápis azul de incorporação.
+
+[Nota de Sarah, sob a fotocópia: Em setembro de 1998 eu tinha sete anos.]`,
+  counting_retranscribed: `[Nova transcrição automática após reconstrução do cache. Origem: counting.wav, 4 min 11 s.]
+
+A gravação está inalterada. A forma de onda confere com a cópia arquivada, amostra por amostra.
+
+A contagem desta passagem termina um nome depois da transcrição arquivada.
+
+Nenhuma edição do arquivo de origem foi registrada.`,
+  pending_receipts: `OUTLOOK EXPRESS / FILA DE CONFIRMAÇÕES PENDENTES
+
+{TOMORROW} 03:11  S. BISHOP -> OBSERVADOR ATUAL   CONFIRMAÇÃO RETIDA
+{TOMORROW} 09:26  E. BISHOP -> S. BISHOP          CONFIRMAÇÃO EMITIDA / MENSAGEM AINDA NÃO ESCRITA
+
+Nota da fila:
+A segunda confirmação se refere a uma mensagem que não foi escrita.
+
+Nenhuma ação está disponível neste terminal.`,
+  junk_receipts: `DESPESAS 2025 — para o formulário de reembolso que desta vez eu juro que preencho
+
+02/11  plásticos de arquivo (sem ácido, 100un) .. 34,90
+02/11  luvas de algodão ......................... 12,50
+03/02  quilometragem, workshop em Boston ........ 41,20
+04/17  lâmpada da luminária da mesa ............. 6,99
+06/30  berço de espuma para livros .............. 28,00
+09/12  filtro do desumidificador ................ 19,75
+11/02  almoço, Innsmouth (pessoal — não pedir)
+
+Total reembolsável: 143,34
+Status: nunca enviado`,
+  junk_newsletter: `MISKATONIC COLEÇÕES ESPECIAIS — BOLETIM INTERNO, FEVEREIRO 2026
+
+- O recapeamento do estacionamento B foi concluído. Portadores de credencial já podem voltar a estacionar.
+- Lembrete: a geladeira da copa é esvaziada na última sexta-feira do mês.
+  Potes etiquetados não estão isentos.
+- Parabéns a Doris Pratt (Circulação) pelos trinta anos de casa.
+  Bolo na sala da equipe, quinta-feira, 15h.
+- A programação do colóquio de primavera está afixada em frente à Sala 204.
+- A Manutenção pede que aquecedores portáteis sejam registrados na recepção.
+
+Contribuições para o boletim de março até o dia 25.`,
   em_draft_reply: `Rascunho de formulário do navegador / Em Bishop
 Não publicado.
 
@@ -309,7 +379,8 @@ Nota local recuperada do reparo da caixa postal de Sarah:
 Consigo ver os envelopes antes de chegarem. Não consigo ver quem o arquivo escolhe em seguida.
 
 Status do reparo:
-DBX reconstruído. Escolha do remetente não encontrada.`,
+DBX reconstruído. Escolha do remetente não encontrada.
+Formato do Message-ID: <INICIAIS DO REMETENTE>-<DATA>-<REF DO OBJETO>@miskatonic-research.org`,
   containment_utility: `LOOPBACK 0.3 — utilitário órfão
 
 Registra um índice montado como sua própria testemunha de verificação.
@@ -388,8 +459,7 @@ Os aliases estão intactos. Os nomes longos foram sobrescritos.`,
 {TOMORROW} 03:12  cache://miskatonic/catalog/2026-bishop-sarah
 {TOMORROW} 03:13  http://www.geocities.com/tomalvarez_archive/guestbook.html
 
-Duas entradas foram visitadas antes deste cache ser aberto.
-Uma entrada nomeia o observador atual antes do navegador conhecer o observador atual.`,
+2 entradas não puderam ser associadas a nenhuma sessão local.`,
   the_pattern: `INTERVALOS COSTEIROS RECUPERADOS
 
 1798 → 1863 → 1912 → 1949 → 1977 → 1998 → 2014 → [ ]
@@ -496,9 +566,7 @@ Nota de Tom no registro de upload falho:
 Sarah não escolheu. Eu também não. A cópia fez o que catálogos fazem: criou uma entrada onde havia um espaço vazio.`,
   welcome_back: `[Novos documentos encontrados. Proprietário: {PLAYER}. Criado: {TOMORROW}.]
 
-Obrigada. Desculpe — eu não sabia que precisava existir alguém deste lado para que eu conseguisse sair.
-
-Agora estes são os seus arquivos. Eles estão datados de amanhã porque é de lá que você existe aqui dentro.
+Obrigada. Desculpe.
 
 Vou observar você. Do mesmo modo que você me observou.
 
@@ -516,8 +584,8 @@ O relay continua aberto.
 A origem continua sem recuperação.
 A contagem não avançou enquanto o campo permaneceu vazio.
 
-Espaço em branco não é segurança.
-É um atraso que aprendeu o seu formato.`,
+STATUS: ABERTO
+NOVA VERIFICAÇÃO AGENDADA: {TOMORROW} 03:16`,
   archived_observer_after: `ÍNDICE DE RECUPERAÇÃO / OBSERVADOR ARQUIVADO
 
 ORIGEM: não resolvida
@@ -958,6 +1026,22 @@ const BOARD_CARDS_PT: Record<string, { title: string; summary: string }> = {
     title: "read_receipts.dbx",
     summary: "Sarah via envelopes cedo demais, mas o campo de destinatário escolhia a si mesmo.",
   },
+  fellowship_draft: {
+    title: "fellowship_draft.txt",
+    summary: "Sarah estava se candidatando para ir embora. O prazo era 1º de abril.",
+  },
+  graymoor_ledger_copy: {
+    title: "Livro de reservas da Graymoor",
+    summary: "O Lote 114 estava reservado para S. Bishop desde 1998. Sarah tinha sete anos.",
+  },
+  counting_retranscribed: {
+    title: "counting.wav — nova transcrição",
+    summary: "A gravação não mudou. A contagem, sim.",
+  },
+  pending_receipts: {
+    title: "pending_receipts.dbx",
+    summary: "Existe uma confirmação para uma mensagem que Em não escreveu.",
+  },
   browser_history_0316: {
     title: "browser_history_0316.dat",
     summary: "O histórico do navegador lista páginas antes deste cache abri-las.",
@@ -1107,6 +1191,10 @@ const BROWSER_TEXT_PT: Record<string, string> = {
     "Thread #7411: “o padrão da contagem (desaparecimentos regionais, preciso de mais olhos nisso)” · 4 respostas",
   em_last_voicemail:
     "“Saindo do arquivo às seis e meia. Se eu esquecer de ligar, seja irritante.” Salvo em 16/03, 17:42. Ela não ligou às seis e meia. Quando abriram o escritório, a água estava parada havia tempo suficiente para deixar uma marca.",
+  tom_guestbook_mother:
+    "Aqui é a mãe do Tom. Ele fez esta página na faculdade e eu não sei mais onde escrever. Se você trabalhou com o meu filho, por favor me ligue. A polícia diz que adultos têm o direito de desaparecer. Ele ia vir para a Páscoa.",
+  tom_guestbook_colleague:
+    "O Tom deixou um pacote na fila para mim no dia 23. Nunca chegou, e tenho vergonha do alívio que isso me dá. Rosa, eu liguei. Deixa o telefone por perto.",
 };
 
 export const localizedBrowserText = (

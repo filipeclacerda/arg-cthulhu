@@ -79,8 +79,14 @@ Esta cronologia é canônica. Novos arquivos podem omitir datas, mas não contra
 - **1998-08-31:** Miriam pede a Robert Armitage uma segunda opinião caso o volume apareça.
 - **1998-09-03:** última nota de acesso de Miriam.
 - **1998-09-14:** Miriam é declarada desaparecida.
+- **1998-09-02:** a Graymoor consigna o Lote 114 com reserva para "BISHOP, S." — um dia antes
+  da última nota de Miriam.
 - **2026-02-28:** Sarah recebe a confirmação de envio do Lote 114.
 - **2026-03-02:** o Volume II chega e Sarah cria a entrada temporária.
+- **2026-03-10:** a vitória temporária — Em aparece, Sarah dorme, encaixota o volume para
+  devolução. Por dois dias, ela tinha saído.
+- **2026-03-12:** a Graymoor liga sobre um saldo que não existe; Sarah volta ao escritório e a
+  caixa de devolução já está aberta. A compulsão sobrevive à interrupção — por isso assusta.
 - **2026-03-14:** Sarah grava `counting.wav`; os recibos de leitura começam a antecipar mensagens.
 - **2026-03-16:** Sarah desaparece da sala trancada.
 - **2026-03-18:** Tom solicita o welfare check; Campus Security abre a sala e registra o
@@ -161,17 +167,30 @@ A frase-síntese (pode aparecer in-game, é enigma, não explicação):
 
 O último programa oferece **RESTORE SARAH** e **SHUT DOWN**.
 
+A tela de escolha termina com um bloco `WITNESS` montado com dados reais do save: designação
+do observador, data/hora reais da primeira abertura e horas de observação ativa. A conduta do
+jogador é a última evidência do caso.
+
 - **RESTORE SARAH** — chega uma comunicação fragmentada dela; Sarah retorna ao presente. O
   computador reinicia, mas agora a conta se chama `sarah.bishop` e contém arquivos **recentes
   do jogador**, datados de amanhã. Ninguém explica a troca; o jogador sente o chão sumir
   sozinho. O terminal retém uma segunda sessão identificada apenas como `M.B.`; Sarah sai,
   Miriam permanece. (Sarah escapou trocando de lugar com quem a observava — isto **não** se
-  diz.)
+  diz. `welcome_back.txt` foi deliberadamente reduzido a agradecimento + P.S. de Miriam: as
+  datas dos arquivos fazem o trabalho. As legendas de eco do Finale também não podem nomear a
+  troca — se um texto do finale explica RESTORE, ele está errado.)
 - **SHUT DOWN** — o ritual fica incompleto. Após os créditos, um último e-mail de Sarah:
   > Obrigada por parar.
   > Sinto muito por precisar tentar de novo.
   Data: amanhã. Destinatário: outra pessoa. Recusar não derrota a entidade — só faz o
   computador procurar o próximo observador. A contagem pausa por uma respiração e recomeça.
+  Na reabertura do jogo, a tela do Relay 07 lista `RECIPIENTS: 5` — quarto campo arquivado
+  com a designação do jogador, quinto “GERANDO”. O new game+ é o horror cumprindo a promessa.
+- **DEIXAR EM BRANCO** — final por omissão, sem botão. Se o jogador viu o campo final aberto
+  e foi embora sem escolher, o retorno após ausência grava o final em silêncio:
+  `blank_space.txt` aparece na pasta de Sarah com uma nova verificação agendada para amanhã.
+  O relay continua aberto; a recusa por inação é registrada, não encenada. (Um final que só
+  se alcança desistindo de escolher — nenhum texto o anuncia.)
 - **SEAL RELAY** — final secreto. Depois de seis correlações opcionais, o jogador pode
   registrar o arquivo como sua própria testemunha e selar o Relay 07 num loop. Sarah não
   retorna e ninguém ocupa o lugar dela. O checksum muda sem operação de escrita, deixando
@@ -186,6 +205,17 @@ O último programa oferece **RESTORE SARAH** e **SHUT DOWN**.
 - Toda exposição metafísica vive nesta bíblia, não nos arquivos do jogo.
 - Preferir que o jogador faça a dedução (a subtração das datas, o reconhecimento da
   caligrafia, o nome que não se digita) a entregar a conclusão escrita.
+- **Regra da sujeira:** um arquivo de verdade é majoritariamente lixo. O disco mantém
+  arquivos genuinamente inertes (readme de driver, log de desinstalação, recibos, boletim
+  interno, download incompleto, CONFIG.BAK) — sem `evidenceId`, sem recompensa. Eles compram
+  credibilidade para o resto.
+- **Regra do sting:** nem toda anomalia ganha uma reversão poética de duas linhas. Vozes de
+  sistema (índices, logs, históricos) registram o erro em tom seco; a frase memorável é
+  reservada a vozes humanas (Sarah, Em, Tom, o transcript). Se um RECOVERY INDEX “fala
+  bonito”, o jogador ouve o roteirista.
+- **Revelações não se repetem:** “conta nomes, não dias” existe em duas fontes (a instrução
+  cifrada e o sussurro do transcript). O voicemail guarda apenas o beat sensorial e quatro
+  segundos de silêncio. Não reintroduzir a frase em novos artefatos.
 
 ## Artefatos diegéticos (mapa para os dados do jogo)
 
@@ -229,6 +259,23 @@ Extras de lore posteriores:
   imagem forense que começou o Relay 07, sem transformar Tom em remetente consciente do jogador.
 - `RECOVERED/LINEAGE/akeley_box_1977.png` e `box_inventory_1977.txt` tornam visual a caixa
   herdada por Miriam em 1977 e reforçam a regra do espaço em branco.
+- `Work/fellowship_draft.txt` — o futuro próprio de Sarah (bolsa em Lisboa, prazo 1º de
+  abril). O desaparecimento rouba um futuro, não só um presente. Em dizia: "Envia."
+- `Work/graymoor_ledger_copy.txt` (pós-`lot_114`) — a recompensa humana do primeiro enigma: o
+  Lote 114 estava reservado para "BISHOP, S." desde 1998-09-02, em lápis azul de incorporação.
+  A nota de Sarah faz a única conta permitida: em 1998 ela tinha sete anos. Não atribuir a
+  caligrafia em texto.
+- Guestbook do Tom (browser recuperado, pós-`lineage`) — o luto de Tom: a mãe (`rosa.alvarez`)
+  procurando o filho, e um dos três colegas (`j.okafor`) confessando alívio pelo pacote nunca
+  ter chegado. O colega que **não** abriu sobreviveu — a tese do jogo, sem uma linha de tese.
+- `RECOVERED/counting.wav — retranscribed.txt` (pós-`lineage`) — a gravação não mudou; a
+  contagem termina um nome depois. Voz de sistema, tom seco, nenhuma explicação.
+- `RECOVERED/pending_receipts.dbx` (pós-endgame) — **um único artefato** colocando Em na fila:
+  confirmação emitida para uma mensagem que ela ainda não escreveu. Gancho do "quinto
+  destinatário". Não expandir: a força é ser um só.
+- `read_receipts.dbx` documenta o formato dos Message-IDs (`<INICIAIS>-<DATA>-<REF>`). É a
+  atribuição silenciosa do e-mail "pare no capítulo sete" (`<SB-?????-0312-??@…>`): quem
+  reler os cabeçalhos descobre sozinho quem tentou avisar. Nunca declarar a autoria.
 
 ### MSN Messenger
 
@@ -506,7 +553,9 @@ registro de 2014/LOOPBACK. Com todas as correlações, `CONTAIN.HLP` aparece. O 
 Cada enigma tem até 3 dicas, reveladas em ordem crescente de explicitação:
 
 - **Nível 1** liberado automaticamente após **12 minutos** de tempo ativo gasto naquele
-  enigma (`HINT_ONE_MS`), medido só enquanto ele está sem solução.
+  enigma (`HINT_ONE_MS`), medido só enquanto ele está sem solução. Exceção: `lot_114` e
+  `palimpsest` liberam em **8 minutos** (`hintOneDelayFor`) — o contrato de confiança com o
+  jogador se forma nos dois primeiros enigmas.
 - **Nível 2** liberado automaticamente após **25 minutos** (`HINT_TWO_MS`).
 - O jogador também pode forçar o próximo nível a qualquer momento no **Help Center**
   ("Recover another help fragment"), até o limite de 3.

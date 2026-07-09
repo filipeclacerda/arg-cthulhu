@@ -176,15 +176,19 @@ const Messenger = () => {
       setPresencePulse(false);
       return;
     }
+    // Rare and irregular on purpose: a metronome becomes wallpaper, but a
+    // status that flicks Online once while you happen to be looking is the
+    // thing Tom described. First blip 20–60s in, then every 3–7 minutes.
     let pulseTimer: ReturnType<typeof setTimeout> | null = null;
+    let scheduleTimer: ReturnType<typeof setTimeout> | null = null;
     const pulse = () => {
       setPresencePulse(true);
       pulseTimer = setTimeout(() => setPresencePulse(false), 1100);
+      scheduleTimer = setTimeout(pulse, 180_000 + Math.random() * 240_000);
     };
-    pulse();
-    const interval = setInterval(pulse, 11_000);
+    scheduleTimer = setTimeout(pulse, 20_000 + Math.random() * 40_000);
     return () => {
-      clearInterval(interval);
+      if (scheduleTimer) clearTimeout(scheduleTimer);
       if (pulseTimer) clearTimeout(pulseTimer);
     };
   }, [corruptionStage]);

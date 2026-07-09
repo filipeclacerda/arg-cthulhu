@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useProgress } from "@/app/context/ProgressContext";
 import { useSound } from "@/app/context/SoundContext";
@@ -12,15 +12,23 @@ type FinaleState =
   | "restore"
   | "shutdown"
   | "seal"
-  | "leave_blank"
   | "archive_self";
 type EchoEnding = "restore" | "shutdown" | "seal";
 
+const pad2 = (value: number) => String(value).padStart(2, "0");
+
 const Finale = () => {
-  const { chooseEnding, playerName, hasFlag, state } = useProgress();
+  const { chooseEnding, playerName, hasFlag, state, setFlag } = useProgress();
   const { play } = useSound();
   const { t, locale } = useI18n();
   const [screen, setScreen] = useState<FinaleState>("choice");
+
+  // The open field is recorded the moment it is seen. Walking away from it
+  // (closing the window, the tab, the day) is itself an answer — committed
+  // on the next return, in ProgressContext, as ending_leave_blank.
+  useEffect(() => {
+    setFlag("finale_choice_seen");
+  }, [setFlag]);
 
   const ctx = { playerName };
   const tomorrowStr = formatGameDate(tomorrow());
@@ -61,12 +69,6 @@ const Finale = () => {
     chooseEnding("seal");
     play("glitch");
     setScreen("seal");
-  };
-
-  const handleLeaveBlank = () => {
-    chooseEnding("leave_blank");
-    play("glitch");
-    setScreen("leave_blank");
   };
 
   const handleArchiveSelf = () => {
@@ -165,17 +167,6 @@ NO WRITE OPERATION WAS RECORDED.`}</pre>
     );
   }
 
-  if (screen === "leave_blank") {
-    return (
-      <div className="finale finale--seal">
-        <div className="finale-terminal">
-          <pre>{resolveTokens(t("finaleLeaveBlankTerminal"), ctx)}</pre>
-        </div>
-        <p className="finale-caption">{t("finaleLeaveBlankCaption")}</p>
-      </div>
-    );
-  }
-
   if (screen === "archive_self") {
     return (
       <div className="finale finale--seal">
@@ -187,11 +178,23 @@ NO WRITE OPERATION WAS RECORDED.`}</pre>
     );
   }
 
-  // Default: the choice
+  // Default: the choice. The observer's own conduct is part of the record.
+  const firstOpened = new Date(state.createdAt);
+  const observedMs = Object.values(state.puzzles).reduce(
+    (total, puzzle) => total + puzzle.activeMs,
+    0
+  );
+  const observedHours = Math.floor(observedMs / 3600000);
+  const observedMinutes = Math.floor((observedMs % 3600000) / 60000);
+  const witnessBlock =
+    locale === "pt-BR"
+      ? `\n\nTESTEMUNHA ........ ${playerName ?? "USUÁRIO SEGUINTE"}\nPRIMEIRA ABERTURA . ${firstOpened.getFullYear()}-${pad2(firstOpened.getMonth() + 1)}-${pad2(firstOpened.getDate())} ${pad2(firstOpened.getHours())}:${pad2(firstOpened.getMinutes())}\nOBSERVAÇÃO ........ ${observedHours} H ${pad2(observedMinutes)} MIN`
+      : `\n\nWITNESS ........... ${playerName ?? "NEXT USER"}\nFIRST OPENED ...... ${firstOpened.getFullYear()}-${pad2(firstOpened.getMonth() + 1)}-${pad2(firstOpened.getDate())} ${pad2(firstOpened.getHours())}:${pad2(firstOpened.getMinutes())}\nOBSERVATION ....... ${observedHours} H ${pad2(observedMinutes)} MIN`;
+
   return (
     <div className="finale">
       <div className="finale-terminal">
-        <pre>{resolveTokens(t("finaleChoiceTerminal"), ctx)}</pre>
+        <pre>{resolveTokens(t("finaleChoiceTerminal"), ctx) + witnessBlock}</pre>
       </div>
       <div className="finale-actions">
         <button
@@ -207,13 +210,6 @@ NO WRITE OPERATION WAS RECORDED.`}</pre>
           onClick={handleShutdown}
         >
           {t("shutDownChoiceLabel")}
-        </button>
-        <button
-          className="button btn-lg"
-          type="button"
-          onClick={handleLeaveBlank}
-        >
-          {t("leaveBlankLabel")}
         </button>
         {hasFlag("secret_ending_available") && (
           <button

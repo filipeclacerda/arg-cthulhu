@@ -1191,6 +1191,36 @@ const RecoveredBrowser = ({
                     <p>Logged and ignored.</p>
                   </div>
                 </div>
+                {state.puzzles.lineage.solvedAt && (
+                  <>
+                    <div className="forum-post">
+                      <div><span className="forum-handle">rosa.alvarez</span> appended revision</div>
+                      <div className="forum-post-body">
+                        <time>2026-04-02</time>
+                        <p>
+                          {localizedBrowserText(
+                            "tom_guestbook_mother",
+                            "This is Tom's mother. He built this page in college and I don't know where else to write. If you worked with my son, please call me. The police say adults are allowed to disappear. He was supposed to come for Easter.",
+                            locale
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="forum-post">
+                      <div><span className="forum-handle">j.okafor</span> appended revision</div>
+                      <div className="forum-post-body">
+                        <time>2026-04-05</time>
+                        <p>
+                          {localizedBrowserText(
+                            "tom_guestbook_colleague",
+                            "Tom queued a package for me on the 23rd. It never arrived, and I am ashamed of how relieved that makes me. Rosa, I called. Keep your phone on.",
+                            locale
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                  </>
+                )}
                 <div className="forum-post forum-post--orphan">
                   <div>
                     <span className="forum-handle">

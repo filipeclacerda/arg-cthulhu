@@ -203,14 +203,28 @@ export const ProgressProvider = ({
       if (cancelled) return;
       const now = Date.now();
       const gap = result.state.lastSeenAt ? now - result.state.lastSeenAt : 0;
+      // Walking away from the open final field is itself an ending. If the
+      // choice screen was seen, no ending was chosen, and the observer left,
+      // the blank is committed on their return — nothing announces it.
+      const flags = result.state.flags;
+      const leftFieldBlank =
+        gap > ABSENCE_THRESHOLD_MS &&
+        Boolean(flags.finale_choice_seen) &&
+        Boolean(flags.endgame_available) &&
+        !flags.ending_restore &&
+        !flags.ending_shutdown &&
+        !flags.ending_seal &&
+        !flags.ending_archive_self &&
+        !flags.ending_leave_blank;
       const hydrated = {
         ...result.state,
         absenceMs: gap > ABSENCE_THRESHOLD_MS ? gap : 0,
         flags: {
-          ...result.state.flags,
+          ...flags,
           ...(gap > ABSENCE_THRESHOLD_MS
             ? { returned_after_absence: true }
             : {}),
+          ...(leftFieldBlank ? { ending_leave_blank: true } : {}),
         },
         lastSeenAt: now,
       };
