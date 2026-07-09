@@ -6,12 +6,19 @@ import {
   CARD_HEIGHT,
   CARD_WIDTH,
   CASEFILE_BOARD_WIDTH,
+  CASEFILE_DECK_CARD_HEIGHT,
+  CASEFILE_DECK_CARD_WIDTH,
+  CASEFILE_DECK_OFFSET,
   CASEFILE_EVIDENCE_CATEGORY_ORDER,
   EVIDENCE_CARDS,
+  CASEFILE_EXPANDED_EVIDENCE_OFFSET,
   PERSON_CARDS,
   PERSON_POSITIONS,
   casefileClaimPosition,
+  casefileDeckPosition,
   casefileEvidenceLayout,
+  casefileExpandedEvidenceOffset,
+  casefileExpandedEvidencePosition,
 } from "./evidenceBoard";
 
 type Rect = { x: number; y: number };
@@ -183,5 +190,39 @@ describe("casefileEvidenceLayout", () => {
   it("keeps the five pinned people non-overlapping with each other", () => {
     assertNoOverlaps(Object.values(PERSON_POSITIONS));
     expect(Object.keys(PERSON_POSITIONS)).toHaveLength(PERSON_CARDS.length);
+  });
+
+  it("derives deck position from the current finding position", () => {
+    const defaultFinding = casefileClaimPosition(0, "finding");
+    const customFinding = { x: defaultFinding.x + 73, y: defaultFinding.y + 41 };
+
+    expect(casefileDeckPosition(defaultFinding)).toEqual({
+      x: defaultFinding.x + CASEFILE_DECK_OFFSET.x,
+      y: defaultFinding.y + CASEFILE_DECK_OFFSET.y,
+    });
+    expect(casefileDeckPosition(customFinding)).toEqual({
+      x: customFinding.x + CASEFILE_DECK_OFFSET.x,
+      y: customFinding.y + CASEFILE_DECK_OFFSET.y,
+    });
+  });
+
+  it("places expanded deck evidence with deterministic offsets", () => {
+    const deck = { x: 500, y: 300 };
+    const stepX = CASEFILE_DECK_CARD_WIDTH + 24;
+    const stepY = CASEFILE_DECK_CARD_HEIGHT + 24;
+
+    expect([0, 1, 2, 3].map(casefileExpandedEvidenceOffset)).toEqual([
+      CASEFILE_EXPANDED_EVIDENCE_OFFSET,
+      { x: CASEFILE_EXPANDED_EVIDENCE_OFFSET.x - stepX, y: 0 },
+      { x: CASEFILE_EXPANDED_EVIDENCE_OFFSET.x, y: stepY },
+      { x: CASEFILE_EXPANDED_EVIDENCE_OFFSET.x - stepX, y: stepY },
+    ]);
+    expect(casefileExpandedEvidencePosition(deck, 3)).toEqual({
+      x: Math.max(
+        0,
+        deck.x + CASEFILE_EXPANDED_EVIDENCE_OFFSET.x - stepX
+      ),
+      y: deck.y + stepY,
+    });
   });
 });

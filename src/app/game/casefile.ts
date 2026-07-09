@@ -6,6 +6,7 @@ import {
   TokenDefinition,
 } from "./campaign";
 import {
+  CaseAnswer,
   CaseQuestionId,
   HypothesisId,
   InsightId,
@@ -260,3 +261,70 @@ export const findingIdFromClaim = (
   claimId.startsWith("finding:")
     ? (claimId.slice("finding:".length) as CaseQuestionId)
     : null;
+
+export interface RetainedFinding {
+  claimId: CasefileClaimId;
+  questionId: CaseQuestionId;
+  evidenceIds: string[];
+}
+
+export type CasefileEvidenceUsage = Record<string, CasefileClaimId[]>;
+export type CasefileExclusiveEvidenceByClaim = Partial<
+  Record<CasefileClaimId, string[]>
+>;
+
+const uniqueIds = (ids: readonly string[]): string[] => Array.from(new Set(ids));
+
+export const retainedFindingsFromAnswers = (
+  caseAnswers: Partial<Record<CaseQuestionId, CaseAnswer>>
+): RetainedFinding[] =>
+  CASE_STATEMENTS.flatMap((statement) => {
+    const answer = caseAnswers[statement.id];
+    if (!answer?.solvedAt) return [];
+
+    return [
+      {
+        claimId: claimIdForFinding(statement.id),
+        questionId: statement.id,
+        evidenceIds: uniqueIds(answer.evidenceIds ?? []),
+      },
+    ];
+  });
+
+export const evidenceUsageById = (
+  retainedFindings: readonly RetainedFinding[]
+): CasefileEvidenceUsage => {
+  const usage: CasefileEvidenceUsage = {};
+
+  retainedFindings.forEach((finding) => {
+    finding.evidenceIds.forEach((evidenceId) => {
+      usage[evidenceId] = usage[evidenceId]
+        ? [...usage[evidenceId], finding.claimId]
+        : [finding.claimId];
+    });
+  });
+
+  return usage;
+};
+
+export const sharedEvidenceIds = (
+  usage: CasefileEvidenceUsage
+): string[] =>
+  Object.entries(usage)
+    .filter(([, claimIds]) => claimIds.length > 1)
+    .map(([evidenceId]) => evidenceId);
+
+export const exclusiveEvidenceByClaim = (
+  retainedFindings: readonly RetainedFinding[],
+  usage = evidenceUsageById(retainedFindings)
+): CasefileExclusiveEvidenceByClaim => {
+  const exclusive: CasefileExclusiveEvidenceByClaim = {};
+
+  retainedFindings.forEach((finding) => {
+    exclusive[finding.claimId] = finding.evidenceIds.filter(
+      (evidenceId) => usage[evidenceId]?.length === 1
+    );
+  });
+
+  return exclusive;
+};

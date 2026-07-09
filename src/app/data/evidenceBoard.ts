@@ -500,7 +500,12 @@ export const CARD_HEIGHT = 138;
 const GAP_X = 24;
 const GAP_Y = 24;
 
-export const PERSON_POSITIONS: Record<string, { x: number; y: number }> = {
+export interface BoardPosition {
+  x: number;
+  y: number;
+}
+
+export const PERSON_POSITIONS: Record<string, BoardPosition> = {
   "person-miriam": { x: 60, y: 48 },
   "person-sarah": { x: 264, y: 48 },
   "person-tom": { x: 468, y: 48 },
@@ -532,7 +537,7 @@ export interface CasefileEvidenceCluster {
 }
 
 export interface CasefileEvidenceLayout {
-  positions: Record<string, { x: number; y: number }>;
+  positions: Record<string, BoardPosition>;
   clusters: CasefileEvidenceCluster[];
   /** Bottom edge (y) of the last cluster, or the grid top if there's nothing to show yet. */
   bottom: number;
@@ -564,7 +569,7 @@ export const casefileEvidenceLayout = (
     ),
   ];
 
-  const positions: Record<string, { x: number; y: number }> = {};
+  const positions: Record<string, BoardPosition> = {};
   const clusters: CasefileEvidenceCluster[] = [];
   let cursorY = CASEFILE_EVIDENCE_GRID_TOP;
 
@@ -604,7 +609,7 @@ export type CasefileClaimKind = "finding" | "correlation" | "hypothesis";
 export const casefileClaimPosition = (
   index: number,
   kind: CasefileClaimKind
-): { x: number; y: number } => {
+): BoardPosition => {
   if (kind === "correlation") {
     return { x: CASEFILE_CORRELATION_LEFT, y: 212 + index * 156 };
   }
@@ -612,4 +617,58 @@ export const casefileClaimPosition = (
     return { x: CASEFILE_HYPOTHESIS_LEFT, y: 48 + index * 156 };
   }
   return { x: CASEFILE_FINDING_LEFT, y: 44 + index * 150 };
+};
+
+export const CASEFILE_DECK_WIDTH = 64;
+export const CASEFILE_DECK_HEIGHT = 44;
+export const CASEFILE_DECK_CARD_WIDTH = 240;
+export const CASEFILE_DECK_CARD_HEIGHT = 190;
+export const CASEFILE_DECK_OFFSET: BoardPosition = {
+  x: CARD_WIDTH - CASEFILE_DECK_WIDTH - 10,
+  y: CARD_HEIGHT - CASEFILE_DECK_HEIGHT - 8,
+};
+export const CASEFILE_EXPANDED_EVIDENCE_OFFSET: BoardPosition = {
+  x: -(CASEFILE_DECK_CARD_WIDTH + GAP_X),
+  y: 0,
+};
+
+export const casefileDeckPosition = (
+  findingPosition: BoardPosition
+): BoardPosition => ({
+  x: Math.max(
+    0,
+    Math.min(
+      CASEFILE_BOARD_WIDTH - CASEFILE_DECK_WIDTH,
+      findingPosition.x + CASEFILE_DECK_OFFSET.x
+    )
+  ),
+  y: Math.max(0, findingPosition.y + CASEFILE_DECK_OFFSET.y),
+});
+
+export const casefileExpandedEvidenceOffset = (
+  index: number
+): BoardPosition => ({
+  x:
+    CASEFILE_EXPANDED_EVIDENCE_OFFSET.x -
+    (index % 2) * (CASEFILE_DECK_CARD_WIDTH + GAP_X),
+  y:
+    CASEFILE_EXPANDED_EVIDENCE_OFFSET.y +
+    Math.floor(index / 2) * (CASEFILE_DECK_CARD_HEIGHT + GAP_Y),
+});
+
+export const casefileExpandedEvidencePosition = (
+  deckPosition: BoardPosition,
+  index: number
+): BoardPosition => {
+  const offset = casefileExpandedEvidenceOffset(index);
+  return {
+    x: Math.max(
+      0,
+      Math.min(
+        CASEFILE_BOARD_WIDTH - CASEFILE_DECK_CARD_WIDTH,
+        deckPosition.x + offset.x
+      )
+    ),
+    y: deckPosition.y + offset.y,
+  };
 };

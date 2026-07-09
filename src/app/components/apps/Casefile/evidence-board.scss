@@ -509,6 +509,199 @@
   }
 }
 
+.evidence-card--shared {
+  box-shadow:
+    0 0 0 2px rgba(20, 118, 129, 0.7),
+    2px 3px 0 rgba(0, 0, 0, 0.36),
+    0 0 8px rgba(29, 119, 125, 0.36);
+}
+
+.evidence-card__shared {
+  position: absolute;
+  top: 15px;
+  right: -9px;
+  z-index: 4;
+  min-width: 20px;
+  padding: 2px 4px;
+  border: 1px solid #fff7d2;
+  color: #fff7d2;
+  background: #1d777d;
+  box-shadow: 1px 2px 3px rgba(0, 0, 0, 0.45);
+  font: bold 8px "Courier New", monospace;
+  text-align: center;
+}
+
+.casefile-retained-deck {
+  position: absolute;
+  z-index: 7;
+  width: 64px;
+  min-height: 44px;
+  padding: 4px;
+  box-sizing: border-box;
+  border: 1px solid rgba(86, 54, 25, 0.9);
+  color: #2d2214;
+  background:
+    linear-gradient(110deg, rgba(255, 255, 255, 0.34), transparent 40%),
+    #d9c497;
+  box-shadow:
+    3px 4px 0 rgba(0, 0, 0, 0.36),
+    inset 0 0 0 2px rgba(255, 247, 211, 0.38);
+  transform: translateY(0);
+  animation: casefile-deck-arrive 0.22s ease-out;
+  filter: saturate(0.94);
+  pointer-events: auto;
+}
+
+.casefile-retained-deck,
+.casefile-retained-deck * {
+  cursor: pointer;
+}
+
+.casefile-retained-deck--expanded {
+  z-index: 7;
+  filter: saturate(1.08);
+}
+
+.casefile-retained-deck--filtered {
+  box-shadow:
+    0 0 0 2px rgba(255, 244, 184, 0.78),
+    3px 4px 0 rgba(0, 0, 0, 0.36),
+    inset 0 0 0 2px rgba(255, 247, 211, 0.38);
+}
+
+.casefile-retained-deck__toggle {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 4px;
+  border: 1px solid #74552d;
+  color: #2d2214;
+  background: #f1e2b9;
+  font: bold 10px "Courier New", monospace;
+  text-align: left;
+  text-transform: uppercase;
+
+  strong,
+  i {
+    position: absolute;
+    top: -7px;
+    right: -7px;
+    display: grid;
+    place-items: center;
+    min-width: 14px;
+    height: 14px;
+    color: #fff8dc;
+    background: #6f301c;
+    font-style: normal;
+  }
+}
+
+.casefile-retained-deck__stack {
+  position: relative;
+  height: 18px;
+  margin-top: 5px;
+
+  span {
+    position: absolute;
+    left: 5px;
+    right: 5px;
+    height: 14px;
+    border: 1px solid rgba(91, 66, 35, 0.74);
+    background:
+      linear-gradient(90deg, rgba(255, 255, 255, 0.32), transparent 42%),
+      #efe2bd;
+    box-shadow: 1px 2px 0 rgba(0, 0, 0, 0.22);
+    opacity: 0.94;
+    transform: rotate(-1deg);
+  }
+
+  span:nth-child(even) {
+    transform: rotate(1deg);
+  }
+}
+
+.casefile-retained-deck small {
+  display: inline-block;
+  margin-top: 3px;
+  padding: 2px 5px;
+  color: #fff8dc;
+  background: #6f301c;
+  font: bold 8px "Courier New", monospace;
+  text-transform: uppercase;
+}
+
+.evidence-card--decked {
+  z-index: 9;
+  width: 240px;
+  height: 190px;
+  padding-bottom: 12px;
+  cursor: pointer;
+  animation: casefile-deck-card-open 0.24s ease-out both;
+  filter: saturate(1.08);
+
+  &:hover {
+    z-index: 10;
+  }
+
+  &:active {
+    cursor: pointer;
+  }
+
+  > p {
+    -webkit-line-clamp: 4;
+  }
+
+  .evidence-card__lead strong {
+    display: -webkit-box;
+    overflow: hidden;
+    white-space: normal;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .casefile-card__facts {
+    bottom: 26px;
+    max-height: 54px;
+  }
+
+  .casefile-fact-chip {
+    max-width: calc(50% - 3px);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+@keyframes casefile-deck-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+    filter: blur(1px) saturate(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0) saturate(0.94);
+  }
+}
+
+@keyframes casefile-deck-card-open {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) rotate(var(--tilt, -0.7deg)) scale(0.96);
+    filter: blur(1px) saturate(0.75);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) rotate(var(--tilt, -0.7deg)) scale(1);
+    filter: blur(0) saturate(1.08);
+  }
+}
+
 .evidence-card--person { --card-accent: #8b2424; background-color: #f4dfc1; }
 .evidence-card--photo { --card-accent: #b28b00; }
 .evidence-card--document { --card-accent: #286aa5; }
@@ -802,5 +995,13 @@
 
   .evidence-board__inspector {
     max-height: 180px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .casefile-retained-deck,
+  .evidence-card--decked {
+    animation: none;
+    transition: none;
   }
 }

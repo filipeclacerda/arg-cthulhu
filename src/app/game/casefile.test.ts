@@ -11,10 +11,26 @@ import {
   displayedEvidenceIds,
   collectedTokensForEvidence,
   evidenceIdsForClaim,
+  evidenceUsageById,
+  exclusiveEvidenceByClaim,
+  retainedFindingsFromAnswers,
+  sharedEvidenceIds,
   tokensForEvidence,
 } from "./casefile";
-import type { TokenType } from "./progress";
+import type { CaseAnswer, CaseQuestionId, TokenType } from "./progress";
 import { THEORY_DEFINITIONS } from "./theories";
+
+const solvedAnswer = (
+  evidenceIds: string[],
+  solvedAt: number | null = 1000
+): CaseAnswer => ({
+  slots: {},
+  lockedSlots: [],
+  evidenceIds,
+  attempts: 1,
+  nearMisses: {},
+  solvedAt,
+});
 
 describe("casefile graph", () => {
   it("exposes every reconstruction finding as a board claim", () => {
@@ -68,6 +84,68 @@ describe("casefile graph", () => {
     expect(
       displayedEvidenceIds(false, ["incident_report"], ["miriam_1998", "tom_last_message"])
     ).toEqual(["miriam_1998", "tom_last_message"]);
+  });
+
+  it("retains only solved findings and deduplicates their evidence", () => {
+    const retained = retainedFindingsFromAnswers({
+      sarah_intent: solvedAnswer([
+        "lecture_draft",
+        "lecture_draft",
+        "dad_email",
+      ]),
+      locked_room_source: solvedAnswer(["incident_report"], null),
+    });
+
+    expect(retained).toEqual([
+      {
+        claimId: "finding:sarah_intent",
+        questionId: "sarah_intent",
+        evidenceIds: ["lecture_draft", "dad_email"],
+      },
+    ]);
+  });
+
+  it("reports evidence usage by retained finding claim", () => {
+    const usage = evidenceUsageById(
+      retainedFindingsFromAnswers({
+        sarah_intent: solvedAnswer(["lecture_draft", "dad_email"]),
+        volume_return: solvedAnswer(["miriam_1998", "lecture_draft"]),
+      })
+    );
+
+    expect(usage).toEqual({
+      lecture_draft: ["finding:sarah_intent", "finding:volume_return"],
+      dad_email: ["finding:sarah_intent"],
+      miriam_1998: ["finding:volume_return"],
+    });
+  });
+
+  it("keeps exclusive evidence in its deck and shared evidence outside decks", () => {
+    const retained = retainedFindingsFromAnswers({
+      sarah_intent: solvedAnswer(["lecture_draft", "dad_email"]),
+      volume_return: solvedAnswer(["miriam_1998", "lecture_draft"]),
+    });
+    const usage = evidenceUsageById(retained);
+
+    expect(exclusiveEvidenceByClaim(retained, usage)).toEqual({
+      "finding:sarah_intent": ["dad_email"],
+      "finding:volume_return": ["miriam_1998"],
+    });
+    expect(sharedEvidenceIds(usage)).toEqual(["lecture_draft"]);
+  });
+
+  it("ignores unsolved findings when deriving deck evidence", () => {
+    const retained = retainedFindingsFromAnswers({
+      sarah_intent: solvedAnswer(["lecture_draft"]),
+      volume_return: solvedAnswer(["miriam_1998"], null),
+    } satisfies Partial<Record<CaseQuestionId, CaseAnswer>>);
+
+    expect(retained.map((finding) => finding.claimId)).toEqual([
+      "finding:sarah_intent",
+    ]);
+    expect(evidenceUsageById(retained)).toEqual({
+      lecture_draft: ["finding:sarah_intent"],
+    });
   });
 
   it("keeps timeline events sorted by declared order", () => {

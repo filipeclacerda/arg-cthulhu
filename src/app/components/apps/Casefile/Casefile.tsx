@@ -14,15 +14,19 @@ import { useSound } from "@/app/context/SoundContext";
 import {
   BoardCard,
   BoardCategory,
+  BoardPosition,
   CARD_HEIGHT,
   CARD_WIDTH,
   CASEFILE_BOARD_WIDTH,
+  CASEFILE_DECK_CARD_HEIGHT,
   CASEFILE_EVIDENCE_CATEGORY_ORDER,
   CASEFILE_EVIDENCE_GRID_LEFT,
   EVIDENCE_CARDS,
   PERSON_CARDS,
   PERSON_POSITIONS,
   casefileClaimPosition,
+  casefileDeckPosition,
+  casefileExpandedEvidencePosition,
   casefileEvidenceLayout,
 } from "@/app/data/evidenceBoard";
 import { localizedBoardCard } from "@/app/data/localizedNarrative";
@@ -46,7 +50,11 @@ import {
   TOKEN_TYPE_LABEL_KEYS,
   claimIdForFinding,
   collectedTokensForEvidence,
+  evidenceUsageById,
+  exclusiveEvidenceByClaim,
   findingIdFromClaim,
+  retainedFindingsFromAnswers,
+  sharedEvidenceIds,
 } from "@/app/game/casefile";
 import { displayedEvidenceIds } from "@/app/game/casefile";
 import {
@@ -75,7 +83,7 @@ interface CasefileCard extends Omit<BoardCard, "category"> {
 
 interface PositionedCard {
   card: CasefileCard;
-  position: { x: number; y: number };
+  position: BoardPosition;
 }
 
 const CATEGORY_META: Record<CasefileCategory, { short: string }> = {
@@ -233,6 +241,9 @@ const Casefile = ({
   const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [boardZoom, setBoardZoom] = useState(1);
   const [panningBoard, setPanningBoard] = useState(false);
+  const [expandedDeckIds, setExpandedDeckIds] = useState<Set<CasefileClaimId>>(
+    () => new Set()
+  );
 
   const [statementId, setStatementId] =
     useState<CaseQuestionId>(firstOpen);
@@ -375,9 +386,43 @@ const Casefile = ({
     [discoveredEvidenceIds, localizeCard]
   );
 
+  const retainedFindings = useMemo(
+    () => retainedFindingsFromAnswers(state.caseAnswers),
+    [state.caseAnswers]
+  );
+  const retainedEvidenceUsage = useMemo(
+    () => evidenceUsageById(retainedFindings),
+    [retainedFindings]
+  );
+  const exclusiveEvidenceByFinding = useMemo(
+    () => exclusiveEvidenceByClaim(retainedFindings, retainedEvidenceUsage),
+    [retainedFindings, retainedEvidenceUsage]
+  );
+  const sharedRetainedEvidenceIds = useMemo(
+    () => new Set(sharedEvidenceIds(retainedEvidenceUsage)),
+    [retainedEvidenceUsage]
+  );
+  const exclusiveEvidenceOwnerById = useMemo(() => {
+    const owners: Record<string, CasefileClaimId> = {};
+    Object.entries(exclusiveEvidenceByFinding).forEach(([claimId, ids]) => {
+      ids.forEach((id) => {
+        owners[id] = claimId as CasefileClaimId;
+      });
+    });
+    return owners;
+  }, [exclusiveEvidenceByFinding]);
+  const exclusiveEvidenceSet = useMemo(
+    () => new Set(Object.keys(exclusiveEvidenceOwnerById)),
+    [exclusiveEvidenceOwnerById]
+  );
+  const normalEvidenceCards = useMemo(
+    () => evidenceCards.filter((card) => !exclusiveEvidenceSet.has(card.id)),
+    [evidenceCards, exclusiveEvidenceSet]
+  );
+
   const evidenceLayout = useMemo(
-    () => casefileEvidenceLayout(evidenceCards),
-    [evidenceCards]
+    () => casefileEvidenceLayout(normalEvidenceCards),
+    [normalEvidenceCards]
   );
 
   const findingCards = useMemo<CasefileCard[]>(
@@ -431,7 +476,9 @@ const Casefile = ({
     }));
     const evidence = evidenceCards.map((card) => ({
       card: card as CasefileCard,
-      position: boardPositions[card.id] ?? evidenceLayout.positions[card.id],
+      position:
+        boardPositions[card.id] ??
+        evidenceLayout.positions[card.id] ?? { x: 0, y: evidenceLayout.bottom },
     }));
     const findings = findingCards.map((card, index) => ({
       card,
@@ -512,33 +559,38 @@ const Casefile = ({
     [discoveredEvidenceIds]
   );
 
-  const positioned = useMemo(
+  const cardsById = useMemo(
     () =>
-      allPositioned.filter(({ card }) => {
-        const matchesCategory =
-          filter === "all" || card.category === filter;
-        const matchesQuery =
-          !normalizedQuery ||
-          card.title.toLowerCase().includes(normalizedQuery) ||
-          card.summary.toLowerCase().includes(normalizedQuery);
-        const matchesExplanation =
-          !showUnexplainedOnly || !explainedIds.has(card.id);
-        const matchesLens =
-          lens !== "timeline" ||
-          card.category === "event" ||
-          card.category === "finding" ||
-          card.category === "correlation" ||
-          timelineEvidence.has(card.id) ||
-          card.category === "person";
-        return (
-          matchesCategory &&
-          matchesQuery &&
-          matchesExplanation &&
-          matchesLens
-        );
-      }),
+      Object.fromEntries(
+        allPositioned.map(({ card }) => [card.id, card])
+      ) as Record<string, CasefileCard>,
+    [allPositioned]
+  );
+
+  const cardMatchesView = useCallback(
+    (card: CasefileCard) => {
+      const matchesCategory = filter === "all" || card.category === filter;
+      const matchesQuery =
+        !normalizedQuery ||
+        card.title.toLowerCase().includes(normalizedQuery) ||
+        card.summary.toLowerCase().includes(normalizedQuery);
+      const matchesExplanation =
+        !showUnexplainedOnly || !explainedIds.has(card.id);
+      const matchesLens =
+        lens !== "timeline" ||
+        card.category === "event" ||
+        card.category === "finding" ||
+        card.category === "correlation" ||
+        timelineEvidence.has(card.id) ||
+        card.category === "person";
+      return (
+        matchesCategory &&
+        matchesQuery &&
+        matchesExplanation &&
+        matchesLens
+      );
+    },
     [
-      allPositioned,
       explainedIds,
       filter,
       lens,
@@ -548,7 +600,89 @@ const Casefile = ({
     ]
   );
 
-  const positionsById = useMemo(() => {
+  const retainedDecks = useMemo(
+    () =>
+      retainedFindings
+        .map((finding) => {
+          const findingCard = cardsById[finding.claimId];
+          const evidence = (exclusiveEvidenceByFinding[finding.claimId] ?? [])
+            .map((id) => cardsById[id])
+            .filter((card): card is CasefileCard => Boolean(card));
+          return findingCard && evidence.length > 0
+            ? { id: finding.claimId, findingCard, evidence }
+            : null;
+        })
+        .filter(
+          (
+            deck
+          ): deck is {
+            id: CasefileClaimId;
+            findingCard: CasefileCard;
+            evidence: CasefileCard[];
+          } => Boolean(deck)
+        ),
+    [
+      cardsById,
+      exclusiveEvidenceByFinding,
+      retainedFindings,
+    ]
+  );
+
+  const deckEvidenceIds = useMemo(
+    () => new Set(retainedDecks.flatMap((deck) => deck.evidence.map((card) => card.id))),
+    [retainedDecks]
+  );
+
+  const filteringDecks = Boolean(normalizedQuery) || filter !== "all";
+  const autoExpandedDeckIds = useMemo(
+    () =>
+      new Set(
+        filteringDecks
+          ? retainedDecks
+              .filter((deck) => deck.evidence.some((card) => cardMatchesView(card)))
+              .map((deck) => deck.id)
+          : []
+      ),
+    [cardMatchesView, filteringDecks, retainedDecks]
+  );
+
+  const deckIsExpanded = useCallback(
+    (deckId: CasefileClaimId) =>
+      expandedDeckIds.has(deckId) || autoExpandedDeckIds.has(deckId),
+    [autoExpandedDeckIds, expandedDeckIds]
+  );
+
+  const deckMatchesView = useCallback(
+    (deck: { findingCard: CasefileCard; evidence: CasefileCard[] }) =>
+      cardMatchesView(deck.findingCard) ||
+      deck.evidence.some((card) => cardMatchesView(card)),
+    [cardMatchesView]
+  );
+
+  const positioned = useMemo(
+    () =>
+      allPositioned.filter(({ card }) => {
+        if (deckEvidenceIds.has(card.id)) return false;
+        if (
+          card.category === "finding" &&
+          retainedDecks.some(
+            (deck) => deck.id === card.id && deckMatchesView(deck)
+          )
+        ) {
+          return true;
+        }
+        return cardMatchesView(card);
+      }),
+    [
+      allPositioned,
+      cardMatchesView,
+      deckEvidenceIds,
+      deckMatchesView,
+      retainedDecks,
+    ]
+  );
+
+  const basePositionsById = useMemo(() => {
     const map: Record<string, { x: number; y: number }> = {};
     allPositioned.forEach(({ card, position }) => {
       map[card.id] =
@@ -559,21 +693,48 @@ const Casefile = ({
     return map;
   }, [allPositioned, dragPreview]);
 
-  const cardsById = useMemo(
-    () =>
-      Object.fromEntries(
-        allPositioned.map(({ card }) => [card.id, card])
-      ) as Record<string, CasefileCard>,
-    [allPositioned]
+  const visibleDecks = useMemo(
+    () => retainedDecks.filter((deck) => deckMatchesView(deck)),
+    [deckMatchesView, retainedDecks]
   );
+
+  const deckPosition = useCallback(
+    (deckId: CasefileClaimId) => {
+      const finding = basePositionsById[deckId] ?? { x: 0, y: 0 };
+      return casefileDeckPosition(finding);
+    },
+    [basePositionsById]
+  );
+
+  const deckCardPositionsById = useMemo(() => {
+    const map: Record<string, { x: number; y: number }> = {};
+    visibleDecks.forEach((deck) => {
+      if (!deckIsExpanded(deck.id)) return;
+      const position = deckPosition(deck.id);
+      deck.evidence.forEach((card, index) => {
+        map[card.id] = casefileExpandedEvidencePosition(position, index);
+      });
+    });
+    return map;
+  }, [deckIsExpanded, deckPosition, visibleDecks]);
+
+  const positionsById = useMemo(
+    () => ({ ...basePositionsById, ...deckCardPositionsById }),
+    [basePositionsById, deckCardPositionsById]
+  );
+
   const cardLabelById = (id: string): string =>
     cardsById[id]?.title ?? t("casefileUnknownRecord");
   const freshIds = useMemo(() => {
     return new Set(discoveredEvidenceIds.filter((id) => !freshBaseline.has(id)));
   }, [discoveredEvidenceIds, freshBaseline]);
   const visibleIds = useMemo(
-    () => new Set(positioned.map(({ card }) => card.id)),
-    [positioned]
+    () =>
+      new Set([
+        ...positioned.map(({ card }) => card.id),
+        ...Object.keys(deckCardPositionsById),
+      ]),
+    [deckCardPositionsById, positioned]
   );
   const focusId = dragPreview?.id ?? hoverId ?? selectedId;
   const selectedCard = selectedId ? cardsById[selectedId] : undefined;
@@ -600,8 +761,27 @@ const Casefile = ({
       ),
     [allConfirmedConnections, pendingFindingKeys]
   );
+  const deckCanvasBottom = useMemo(
+    () =>
+      visibleDecks.reduce((max, deck) => {
+        const position = deckPosition(deck.id);
+        const deckBottom = position.y + CARD_HEIGHT;
+        const evidenceBottom = deck.evidence.reduce((evidenceMax, card) => {
+          const cardPosition = deckCardPositionsById[card.id];
+          return cardPosition
+            ? Math.max(
+                evidenceMax,
+                cardPosition.y + CASEFILE_DECK_CARD_HEIGHT + 40
+              )
+            : evidenceMax;
+        }, 0);
+        return Math.max(max, deckBottom, evidenceBottom);
+      }, 0),
+    [deckCardPositionsById, deckPosition, visibleDecks]
+  );
   const canvasHeight = Math.max(
     1110,
+    deckCanvasBottom,
     allPositioned.reduce(
       (max, { position }) => Math.max(max, position.y + CARD_HEIGHT + 40),
       0
@@ -754,13 +934,24 @@ const Casefile = ({
   };
 
   const locateOnBoard = (cardId: string) => {
+    const deck = retainedDecks.find((candidate) =>
+      candidate.evidence.some((card) => card.id === cardId)
+    );
+    if (deck) {
+      setExpandedDeckIds((current) => new Set(current).add(deck.id));
+    }
     if (!visibleIds.has(cardId)) {
       setQuery("");
       setFilter("all");
       setShowUnexplainedOnly(false);
     }
     setSelectedId(cardId);
-    const target = positionsById[cardId];
+    const deckEvidenceIndex =
+      deck?.evidence.findIndex((card) => card.id === cardId) ?? -1;
+    const target =
+      deck && deckEvidenceIndex >= 0
+        ? casefileExpandedEvidencePosition(deckPosition(deck.id), deckEvidenceIndex)
+        : positionsById[cardId];
     const scroller = scrollRef.current;
     if (target && scroller) {
       scroller.scrollTo({
@@ -881,6 +1072,18 @@ const Casefile = ({
     setSelectedId((previous) => (previous === cardId ? null : cardId));
   };
 
+  const toggleDeck = (deckId: CasefileClaimId) => {
+    setExpandedDeckIds((current) => {
+      const next = new Set(current);
+      if (next.has(deckId)) {
+        next.delete(deckId);
+      } else {
+        next.add(deckId);
+      }
+      return next;
+    });
+  };
+
   const startDrag = (
     event: React.MouseEvent<HTMLElement>,
     cardId: string
@@ -959,6 +1162,7 @@ const Casefile = ({
     const target = event.target as HTMLElement;
     if (
       target.closest(".evidence-card") ||
+      target.closest(".casefile-retained-deck") ||
       target.closest("button") ||
       target.closest("input") ||
       target.closest("select") ||
@@ -1598,6 +1802,130 @@ const Casefile = ({
     );
   };
 
+  const renderBoardCard = (
+    card: CasefileCard,
+    options: { decked?: boolean } = {}
+  ) => {
+    const position = positionsById[card.id];
+    if (!position) return null;
+    const meta = CATEGORY_META[card.category];
+    const status = cardStatus(card);
+    const facts = collectedTokensForEvidence(card.id, state.collectedTokens);
+    const relevant = relevantEvidence.has(card.id);
+    const attached = activeEvidenceSet.has(card.id);
+    const fresh = freshIds.has(card.id);
+    const dragging = !options.decked && dragPreview?.id === card.id;
+    const located = flashId === card.id;
+    const shared = sharedRetainedEvidenceIds.has(card.id);
+    const className = `evidence-card evidence-card--${card.category} ${
+      selectedId === card.id ? "evidence-card--selected" : ""
+    } ${theoryIds.includes(card.id) ? "evidence-card--theory" : ""} ${
+      confirmedCardIds.has(card.id) ? "evidence-card--confirmed" : ""
+    } ${relevant ? "casefile-card--relevant" : ""} ${
+      attached ? "casefile-card--attached" : ""
+    } ${shared ? "evidence-card--shared" : ""
+    } ${fresh ? "casefile-card--fresh" : ""} ${
+      dragging ? "evidence-card--dragging" : ""
+    } ${located ? "casefile-card--locate" : ""} ${
+      options.decked ? "evidence-card--decked" : ""
+    } casefile-card--${status.tone}`;
+
+    return (
+      <div
+        key={card.id}
+        role="button"
+        tabIndex={0}
+        className={className}
+        style={{ left: position.x, top: position.y }}
+        onMouseDown={(event) => {
+          if (options.decked) {
+            event.stopPropagation();
+            return;
+          }
+          startDrag(event, card.id);
+        }}
+        onClick={
+          options.decked
+            ? (event) => {
+                event.stopPropagation();
+                handleCardClick(card.id);
+              }
+            : undefined
+        }
+        onMouseEnter={() => setHoverId(card.id)}
+        onMouseLeave={() =>
+          setHoverId((current) => (current === card.id ? null : current))
+        }
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            handleCardClick(card.id);
+          }
+        }}
+        aria-label={`${card.title}. ${card.summary}`}
+        title={
+          lens === "reconstruct"
+            ? t("casefileAttachToFinding")
+            : lens === "organize"
+              ? t("casefileAddOrRemoveCorrelation")
+              : t("casefileSelect")
+        }
+      >
+        {fresh && (
+          <span className="casefile-card__fresh">
+            {t("casefileNewTag")}
+          </span>
+        )}
+        <span className="evidence-card__pin" aria-hidden="true" />
+        {confirmedCardIds.has(card.id) && (
+          <span
+            className="evidence-card__seal"
+            aria-hidden="true"
+            title={t("confirmedCorrelation")}
+          />
+        )}
+        {shared && (
+          <span className="evidence-card__shared" title={t("casefileSharedEvidence")}>
+            {retainedEvidenceUsage[card.id]?.length ?? 2}x
+          </span>
+        )}
+        <span className="evidence-card__lead">
+          {card.preview ? (
+            <span className="evidence-card__preview">
+              <Image src={card.preview} alt="" fill sizes="52px" />
+            </span>
+          ) : (
+            <span className="evidence-card__type" aria-hidden="true">
+              {card.category === "person" ? initials(card.title) : meta.short}
+            </span>
+          )}
+          <span>
+            <small>{categoryLabel(card.category)}</small>
+            <strong>{card.title}</strong>
+          </span>
+        </span>
+        <p>{card.summary}</p>
+        <div className="casefile-card__footer">
+          <span className={`casefile-status casefile-status--${status.tone}`}>
+            {status.label}
+          </span>
+          {card.category === "finding" && (
+            <span>
+              {state.caseAnswers[card.sourceId as CaseQuestionId]?.solvedAt
+                ? t("casefileFindingSealed")
+                : t("casefileFindingOpen")}
+            </span>
+          )}
+        </div>
+        {facts.length > 0 && (
+          <div className="casefile-card__facts">
+            {facts.map((token) => renderFactChip(token.id, card.id))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="arg-tool casefile evidence-board">
       <div className="arg-tool__menubar">
@@ -1847,105 +2175,81 @@ const Casefile = ({
               })}
             </svg>
 
-            {positioned.map(({ card }) => {
-              const position = positionsById[card.id];
-              const meta = CATEGORY_META[card.category];
-              const status = cardStatus(card);
-              const facts = collectedTokensForEvidence(
-                card.id,
-                state.collectedTokens
-              );
-              const relevant = relevantEvidence.has(card.id);
-              const attached = activeEvidenceSet.has(card.id);
-              const fresh = freshIds.has(card.id);
-              const dragging = dragPreview?.id === card.id;
-              const located = flashId === card.id;
+            {visibleDecks.map((deck) => {
+              const expanded = deckIsExpanded(deck.id);
+              const position = deckPosition(deck.id);
+              const deckPanelId = `casefile-retained-deck-${deck.id}`;
               return (
-                <div
-                  key={card.id}
-                  role="button"
-                  tabIndex={0}
-                  className={`evidence-card evidence-card--${card.category} ${
-                    selectedId === card.id ? "evidence-card--selected" : ""
-                  } ${theoryIds.includes(card.id) ? "evidence-card--theory" : ""} ${
-                    confirmedCardIds.has(card.id) ? "evidence-card--confirmed" : ""
-                  } ${relevant ? "casefile-card--relevant" : ""} ${
-                    attached ? "casefile-card--attached" : ""
-                  } ${fresh ? "casefile-card--fresh" : ""} ${
-                    dragging ? "evidence-card--dragging" : ""
-                  } ${located ? "casefile-card--locate" : ""
-                  } casefile-card--${status.tone}`}
+                <section
+                  key={`deck:${deck.id}`}
+                  id={deckPanelId}
+                  className={`casefile-retained-deck ${
+                    expanded ? "casefile-retained-deck--expanded" : ""
+                  } ${
+                    autoExpandedDeckIds.has(deck.id)
+                      ? "casefile-retained-deck--filtered"
+                      : ""
+                  }`}
                   style={{ left: position.x, top: position.y }}
-                  onMouseDown={(event) => startDrag(event, card.id)}
-                  onMouseEnter={() => setHoverId(card.id)}
-                  onMouseLeave={() =>
-                    setHoverId((current) => (current === card.id ? null : current))
-                  }
+                  aria-label={`${t("casefileDeckLabel")} ${deck.findingCard.title}`}
+                  onMouseDown={(event) => event.stopPropagation()}
+                  onClick={() => toggleDeck(deck.id)}
                   onKeyDown={(event) => {
                     if (event.key === "Enter" || event.key === " ") {
-                      handleCardClick(card.id);
+                      event.preventDefault();
+                      toggleDeck(deck.id);
+                    }
+                    if (event.key === "Escape" && expandedDeckIds.has(deck.id)) {
+                      event.stopPropagation();
+                      setExpandedDeckIds((current) => {
+                        const next = new Set(current);
+                        next.delete(deck.id);
+                        return next;
+                      });
                     }
                   }}
-                  aria-label={`${card.title}. ${card.summary}`}
-                  title={
-                    lens === "reconstruct"
-                      ? t("casefileAttachToFinding")
-                      : lens === "organize"
-                        ? t("casefileAddOrRemoveCorrelation")
-                        : t("casefileSelect")
-                  }
                 >
-                  {fresh && (
-                    <span className="casefile-card__fresh">
-                      {t("casefileNewTag")}
-                    </span>
-                  )}
-                  <span className="evidence-card__pin" aria-hidden="true" />
-                  {confirmedCardIds.has(card.id) && (
-                    <span
-                      className="evidence-card__seal"
-                      aria-hidden="true"
-                      title={t("confirmedCorrelation")}
-                    />
-                  )}
-                  <span className="evidence-card__lead">
-                    {card.preview ? (
-                      <span className="evidence-card__preview">
-                        <Image src={card.preview} alt="" fill sizes="52px" />
-                      </span>
-                    ) : (
-                      <span className="evidence-card__type" aria-hidden="true">
-                        {card.category === "person" ? initials(card.title) : meta.short}
-                      </span>
-                    )}
-                    <span>
-                      <small>{categoryLabel(card.category)}</small>
-                      <strong>{card.title}</strong>
-                    </span>
-                  </span>
-                  <p>{card.summary}</p>
-                  <div className="casefile-card__footer">
-                    <span className={`casefile-status casefile-status--${status.tone}`}>
-                      {status.label}
-                    </span>
-                    {card.category === "finding" && (
-                      <span>
-                        {state.caseAnswers[card.sourceId as CaseQuestionId]?.solvedAt
-                          ? t("casefileFindingSealed")
-                          : t("casefileFindingOpen")}
-                      </span>
-                    )}
+                  <button
+                    type="button"
+                    className="casefile-retained-deck__toggle"
+                    aria-label={`${
+                      expanded ? t("casefileDeckCollapse") : t("casefileDeckExpand")
+                    } ${deck.findingCard.title}, ${deck.evidence.length} ${t(
+                      "casefileDeckEvidenceCount"
+                    )}`}
+                    aria-expanded={expanded}
+                    aria-controls={deckPanelId}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      toggleDeck(deck.id);
+                    }}
+                    onMouseDown={(event) => event.stopPropagation()}
+                  >
+                    <span>{t("casefileDeckLabel")}</span>
+                    <strong>{deck.evidence.length}</strong>
+                    <i aria-hidden="true">{expanded ? "−" : "+"}</i>
+                  </button>
+                  <div className="casefile-retained-deck__stack" aria-hidden="true">
+                    {deck.evidence.slice(0, 4).map((card, index) => (
+                      <span key={card.id} style={{ top: index * 7 }} />
+                    ))}
                   </div>
-                  {facts.length > 0 && (
-                    <div className="casefile-card__facts">
-                      {facts.map((token) => renderFactChip(token.id, card.id))}
-                    </div>
+                  {autoExpandedDeckIds.has(deck.id) && !expandedDeckIds.has(deck.id) && (
+                    <small>{t("casefileDeckFiltered")}</small>
                   )}
-                </div>
+                </section>
               );
             })}
 
-            {positioned.length === 0 && (
+            {positioned.map(({ card }) => renderBoardCard(card))}
+
+            {visibleDecks.flatMap((deck) =>
+              deckIsExpanded(deck.id)
+                ? deck.evidence.map((card) => renderBoardCard(card, { decked: true }))
+                : []
+            )}
+
+            {positioned.length === 0 && visibleDecks.length === 0 && (
               <div className="evidence-board__empty">{t("noEvidenceMatch")}</div>
             )}
           </div>
