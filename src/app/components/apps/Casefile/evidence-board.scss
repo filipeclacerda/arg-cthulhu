@@ -131,6 +131,8 @@
   min-width: 0;
   min-height: 0;
   overflow: auto;
+  overscroll-behavior: contain;
+  cursor: grab;
   border: 2px inset #fff;
   background-color: #805e38;
   background-image:
@@ -140,9 +142,27 @@
     repeating-linear-gradient(93deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 7px);
 }
 
+.evidence-board__scroll * {
+  cursor: grab;
+}
+
+.evidence-board__scroll--panning {
+  cursor: grabbing;
+}
+
+.evidence-board__scroll--panning * {
+  cursor: grabbing;
+}
+
+.evidence-board__zoom-layer {
+  position: relative;
+  overflow: hidden;
+}
+
 .evidence-board__canvas {
   position: relative;
   overflow: hidden;
+  transform-origin: top left;
 
   &::before {
     content: "";
@@ -154,6 +174,12 @@
   }
 }
 
+.evidence-board__zoom-layer > .evidence-board__canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
 .evidence-board__zone {
   position: absolute;
   z-index: 0;
@@ -162,6 +188,18 @@
   background: rgba(60, 38, 19, 0.46);
   font: bold 9px "Courier New", monospace;
   letter-spacing: 0.14em;
+  pointer-events: none;
+}
+
+.evidence-board__cluster-label {
+  position: absolute;
+  z-index: 0;
+  padding: 3px 7px;
+  color: rgba(255, 244, 216, 0.86);
+  background: rgba(42, 25, 12, 0.58);
+  font: bold 9px "Courier New", monospace;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
   pointer-events: none;
 }
 
@@ -197,6 +235,24 @@
 .evidence-board__string {
   stroke: #b5141d;
   stroke-width: 2.5;
+}
+
+.evidence-board__string-group {
+  transition: opacity 0.18s ease;
+}
+
+.evidence-board__string-group--dimmed {
+  opacity: 0.22;
+}
+
+.evidence-board__string-group--focused {
+  .evidence-board__string {
+    stroke-width: 3.5;
+  }
+
+  .evidence-board__string-shadow {
+    stroke-width: 6;
+  }
 }
 
 .evidence-board__string--confirmed {
@@ -307,6 +363,16 @@
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 3;
   }
+}
+
+.evidence-card--dragging {
+  z-index: 6;
+  cursor: grabbing;
+  transform: rotate(var(--tilt, -0.7deg)) scale(1.02);
+  box-shadow:
+    4px 7px 0 rgba(0, 0, 0, 0.46),
+    0 0 0 2px rgba(255, 255, 255, 0.58),
+    inset 0 0 18px rgba(112, 83, 40, 0.08);
 }
 
 .evidence-card__lead {

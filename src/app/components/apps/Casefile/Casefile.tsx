@@ -16,11 +16,14 @@ import {
   BoardCategory,
   CARD_HEIGHT,
   CARD_WIDTH,
+  CASEFILE_BOARD_WIDTH,
+  CASEFILE_EVIDENCE_CATEGORY_ORDER,
+  CASEFILE_EVIDENCE_GRID_LEFT,
   EVIDENCE_CARDS,
   PERSON_CARDS,
   PERSON_POSITIONS,
-  boardCanvasHeight,
-  defaultEvidencePosition,
+  casefileClaimPosition,
+  casefileEvidenceLayout,
 } from "@/app/data/evidenceBoard";
 import { localizedBoardCard } from "@/app/data/localizedNarrative";
 import { files } from "@/app/data/filesystem";
@@ -115,22 +118,16 @@ const LENS_HINT_KEYS: Record<CasefileLens, TranslationKey> = {
 };
 const HELP_LEGEND_CATEGORIES: BoardCategory[] = [
   "person",
-  "photo",
-  "document",
-  "audio",
-  "email",
-  "conversation",
-  "record",
+  ...CASEFILE_EVIDENCE_CATEGORY_ORDER,
 ];
 const HELP_DIALOG_TITLE_ID = "casefile-help-dialog-title";
 const PERSONAL_FILE_DIALOG_TITLE_ID = "casefile-personal-file-dialog-title";
 let lastVisitIds: { caseId: string; ids: Set<string> } | null = null;
 
 const DRAG_THRESHOLD = 4;
-const CASEFILE_BOARD_WIDTH = 1680;
-const FINDING_LEFT = 856;
-const CORRELATION_LEFT = 1088;
-const HYPOTHESIS_LEFT = 1220;
+const BOARD_ZOOM_MIN = 0.55;
+const BOARD_ZOOM_MAX = 1.8;
+const BOARD_ZOOM_STEP = 0.1;
 const RECORD_PAGE_ADDRESS: Partial<Record<string, string>> = {
   catalogue_lot_114: PAGE_ADDRESS.lot,
   coastline_archive: PAGE_ADDRESS.coast,
@@ -165,18 +162,11 @@ const initials = (title: string) =>
     .join("")
     .toUpperCase();
 
-const defaultClaimPosition = (
-  index: number,
-  category: CasefileCategory
-): { x: number; y: number } => {
-  if (category === "correlation") {
-    return { x: CORRELATION_LEFT, y: 212 + index * 156 };
-  }
-  if (category === "hypothesis") {
-    return { x: HYPOTHESIS_LEFT, y: 48 + index * 156 };
-  }
-  return { x: FINDING_LEFT, y: 44 + index * 150 };
-};
+const clampBoardZoom = (value: number) =>
+  Math.min(
+    BOARD_ZOOM_MAX,
+    Math.max(BOARD_ZOOM_MIN, Math.round(value * 100) / 100)
+  );
 
 const isCorrelationCandidate = (card?: CasefileCard): boolean =>
   Boolean(
@@ -236,7 +226,13 @@ const Casefile = ({
   >(null);
   const [justAddedKey, setJustAddedKey] = useState<string | null>(null);
   const addedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
+  const [hoverId, setHoverId] = useState<string | null>(null);
+  const [flashId, setFlashId] = useState<string | null>(null);
+  const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [boardZoom, setBoardZoom] = useState(1);
+  const [panningBoard, setPanningBoard] = useState(false);
 
   const [statementId, setStatementId] =
     useState<CaseQuestionId>(firstOpen);
@@ -297,6 +293,46 @@ const Casefile = ({
     return () => window.clearTimeout(timer);
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (flashTimer.current) {
+        clearTimeout(flashTimer.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    const scroller = scrollRef.current;
+    if (!scroller) return;
+
+    const handleBoardWheel = (event: WheelEvent) => {
+      if (!(event.ctrlKey || event.metaKey) || event.deltaY === 0) return;
+      event.preventDefault();
+      event.stopPropagation();
+
+      const rect = scroller.getBoundingClientRect();
+      const pointerX = event.clientX - rect.left;
+      const pointerY = event.clientY - rect.top;
+      const contentX = scroller.scrollLeft + pointerX;
+      const contentY = scroller.scrollTop + pointerY;
+      const direction = event.deltaY < 0 ? 1 : -1;
+
+      setBoardZoom((current) => {
+        const next = clampBoardZoom(current + direction * BOARD_ZOOM_STEP);
+        if (next === current) return current;
+        const ratio = next / current;
+        requestAnimationFrame(() => {
+          scroller.scrollLeft = Math.max(0, contentX * ratio - pointerX);
+          scroller.scrollTop = Math.max(0, contentY * ratio - pointerY);
+        });
+        return next;
+      });
+    };
+
+    scroller.addEventListener("wheel", handleBoardWheel, { passive: false });
+    return () => scroller.removeEventListener("wheel", handleBoardWheel);
+  }, []);
+
   const activeClaimId = claimIdForFinding(statement.id);
   const attachedEvidenceIds = displayedEvidenceIds(
     solved,
@@ -337,6 +373,11 @@ const Casefile = ({
         .filter((card): card is BoardCard => Boolean(card))
         .map(localizeCard),
     [discoveredEvidenceIds, localizeCard]
+  );
+
+  const evidenceLayout = useMemo(
+    () => casefileEvidenceLayout(evidenceCards),
+    [evidenceCards]
   );
 
   const findingCards = useMemo<CasefileCard[]>(
@@ -388,19 +429,20 @@ const Casefile = ({
       card: localizeCard(card) as CasefileCard,
       position: boardPositions[card.id] ?? PERSON_POSITIONS[card.id],
     }));
-    const evidence = evidenceCards.map((card, index) => ({
+    const evidence = evidenceCards.map((card) => ({
       card: card as CasefileCard,
-      position: boardPositions[card.id] ?? defaultEvidencePosition(index),
+      position: boardPositions[card.id] ?? evidenceLayout.positions[card.id],
     }));
     const findings = findingCards.map((card, index) => ({
       card,
       position:
-        boardPositions[card.id] ?? defaultClaimPosition(index, "finding"),
+        boardPositions[card.id] ?? casefileClaimPosition(index, "finding"),
     }));
     const correlations = correlationCards.map((card, index) => ({
       card,
       position:
-        boardPositions[card.id] ?? defaultClaimPosition(index, "correlation"),
+        boardPositions[card.id] ??
+        casefileClaimPosition(index, "correlation"),
     }));
     const hypotheses =
       lens === "contradictions"
@@ -408,7 +450,7 @@ const Casefile = ({
             card,
             position:
               boardPositions[card.id] ??
-              defaultClaimPosition(index, "hypothesis"),
+              casefileClaimPosition(index, "hypothesis"),
           }))
         : [];
     return [...people, ...evidence, ...findings, ...correlations, ...hypotheses];
@@ -416,6 +458,7 @@ const Casefile = ({
     boardPositions,
     correlationCards,
     evidenceCards,
+    evidenceLayout,
     findingCards,
     hypothesisCards,
     lens,
@@ -532,6 +575,7 @@ const Casefile = ({
     () => new Set(positioned.map(({ card }) => card.id)),
     [positioned]
   );
+  const focusId = dragPreview?.id ?? hoverId ?? selectedId;
   const selectedCard = selectedId ? cardsById[selectedId] : undefined;
   const confirmedSet = useMemo(
     () => new Set(allConfirmedConnections),
@@ -557,10 +601,14 @@ const Casefile = ({
     [allConfirmedConnections, pendingFindingKeys]
   );
   const canvasHeight = Math.max(
-    boardCanvasHeight(evidenceCards.length),
     1110,
-    60 + visibleStatements.length * 156
+    allPositioned.reduce(
+      (max, { position }) => Math.max(max, position.y + CARD_HEIGHT + 40),
+      0
+    )
   );
+  const scaledCanvasWidth = Math.ceil(CASEFILE_BOARD_WIDTH * boardZoom);
+  const scaledCanvasHeight = Math.ceil(canvasHeight * boardZoom);
 
   const categoryCounts = useMemo(
     () =>
@@ -705,6 +753,33 @@ const Casefile = ({
     });
   };
 
+  const locateOnBoard = (cardId: string) => {
+    if (!visibleIds.has(cardId)) {
+      setQuery("");
+      setFilter("all");
+      setShowUnexplainedOnly(false);
+    }
+    setSelectedId(cardId);
+    const target = positionsById[cardId];
+    const scroller = scrollRef.current;
+    if (target && scroller) {
+      scroller.scrollTo({
+        left: Math.max(
+          0,
+          (target.x + CARD_WIDTH / 2) * boardZoom - scroller.clientWidth / 2
+        ),
+        top: Math.max(
+          0,
+          (target.y + CARD_HEIGHT / 2) * boardZoom - scroller.clientHeight / 2
+        ),
+        behavior: "smooth",
+      });
+    }
+    setFlashId(cardId);
+    if (flashTimer.current) clearTimeout(flashTimer.current);
+    flashTimer.current = setTimeout(() => setFlashId(null), 1400);
+  };
+
   const submitFinding = () => {
     const missing = statement.slots.some(
       (slot) => !effectiveSlots[slot.key] && !lockedSlots.includes(slot.key)
@@ -816,8 +891,12 @@ const Casefile = ({
     if (!canvas) return;
     const startRect = canvas.getBoundingClientRect();
     const current = positionsById[cardId] ?? { x: 0, y: 0 };
-    const offsetX = event.clientX - startRect.left - current.x;
-    const offsetY = event.clientY - startRect.top - current.y;
+    const startPoint = {
+      x: (event.clientX - startRect.left) / boardZoom,
+      y: (event.clientY - startRect.top) / boardZoom,
+    };
+    const offsetX = startPoint.x - current.x;
+    const offsetY = startPoint.y - current.y;
     const startX = event.clientX;
     const startY = event.clientY;
     let moved = false;
@@ -832,14 +911,18 @@ const Casefile = ({
         moved = true;
       }
       const rect = canvas.getBoundingClientRect();
+      const point = {
+        x: (moveEvent.clientX - rect.left) / boardZoom,
+        y: (moveEvent.clientY - rect.top) / boardZoom,
+      };
       const x = Math.max(
-          0,
-          Math.min(
+        0,
+        Math.min(
           CASEFILE_BOARD_WIDTH - CARD_WIDTH,
-          moveEvent.clientX - rect.left - offsetX
+          point.x - offsetX
         )
       );
-      const y = Math.max(0, moveEvent.clientY - rect.top - offsetY);
+      const y = Math.max(0, point.y - offsetY);
       setDragPreview({ id: cardId, x, y });
     };
 
@@ -848,19 +931,63 @@ const Casefile = ({
       window.removeEventListener("mouseup", handleUp);
       if (moved) {
         const rect = canvas.getBoundingClientRect();
+        const point = {
+          x: (upEvent.clientX - rect.left) / boardZoom,
+          y: (upEvent.clientY - rect.top) / boardZoom,
+        };
         const x = Math.max(
           0,
           Math.min(
             CASEFILE_BOARD_WIDTH - CARD_WIDTH,
-            upEvent.clientX - rect.left - offsetX
+            point.x - offsetX
           )
         );
-        const y = Math.max(0, upEvent.clientY - rect.top - offsetY);
+        const y = Math.max(0, point.y - offsetY);
         moveBoardCard(cardId, x, y);
         setDragPreview(null);
       } else {
         handleCardClick(cardId);
       }
+    };
+
+    window.addEventListener("mousemove", handleMove);
+    window.addEventListener("mouseup", handleUp);
+  };
+
+  const startBoardPan = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (event.button !== 0) return;
+    const target = event.target as HTMLElement;
+    if (
+      target.closest(".evidence-card") ||
+      target.closest("button") ||
+      target.closest("input") ||
+      target.closest("select") ||
+      target.closest("textarea") ||
+      target.closest("a")
+    ) {
+      return;
+    }
+
+    const scroller = scrollRef.current;
+    if (!scroller) return;
+    event.preventDefault();
+
+    const startX = event.clientX;
+    const startY = event.clientY;
+    const startLeft = scroller.scrollLeft;
+    const startTop = scroller.scrollTop;
+    setPanningBoard(true);
+
+    const handleMove = (moveEvent: MouseEvent) => {
+      moveEvent.preventDefault();
+      scroller.scrollLeft = startLeft - (moveEvent.clientX - startX);
+      scroller.scrollTop = startTop - (moveEvent.clientY - startY);
+    };
+
+    const handleUp = () => {
+      window.removeEventListener("mousemove", handleMove);
+      window.removeEventListener("mouseup", handleUp);
+      setPanningBoard(false);
     };
 
     window.addEventListener("mousemove", handleMove);
@@ -1161,13 +1288,20 @@ const Casefile = ({
                     <strong>{card.title}</strong>
                     <small>{card.summary}</small>
                   </button>
-                    <button
-                      type="button"
-                      aria-label={`${t("casefileOpenRecord")} ${card.title}`}
-                      onClick={() => openRecord(card)}
-                    >
-                      ◉
-                    </button>
+                  <button
+                    type="button"
+                    aria-label={`${t("casefileOpenRecord")} ${card.title}`}
+                    onClick={() => openRecord(card)}
+                  >
+                    ◉
+                  </button>
+                  <button
+                    type="button"
+                    aria-label={`${t("casefileLocateOnBoard")} ${card.title}`}
+                    onClick={() => locateOnBoard(card.id)}
+                  >
+                    ⌖
+                  </button>
                 </div>
               );
             })}
@@ -1569,21 +1703,57 @@ const Casefile = ({
       </div>
 
       <div className="evidence-board__workspace casefile__workspace">
-        <div className="evidence-board__scroll">
+        <div
+          ref={scrollRef}
+          className={`evidence-board__scroll ${
+            panningBoard ? "evidence-board__scroll--panning" : ""
+          }`}
+          onMouseDown={startBoardPan}
+        >
           <div
-            ref={canvasRef}
-            className="evidence-board__canvas casefile__canvas"
-            style={{ width: CASEFILE_BOARD_WIDTH, height: canvasHeight }}
+            className="evidence-board__zoom-layer"
+            style={{ width: scaledCanvasWidth, height: scaledCanvasHeight }}
           >
+            <div
+              ref={canvasRef}
+              className="evidence-board__canvas casefile__canvas"
+              style={{
+                width: CASEFILE_BOARD_WIDTH,
+                height: canvasHeight,
+                transform: `scale(${boardZoom})`,
+              }}
+            >
             <div className="evidence-board__zone evidence-board__zone--people">
               {t("peopleAnchors")}
             </div>
             <div className="evidence-board__zone evidence-board__zone--evidence">
               {t("discoveredEvidenceZone")}
             </div>
+            {filter === "all" &&
+              !normalizedQuery &&
+              evidenceLayout.clusters.map((cluster) => (
+                <div
+                  key={cluster.category}
+                  className="evidence-board__cluster-label"
+                  style={{
+                    top: cluster.labelY,
+                    left: CASEFILE_EVIDENCE_GRID_LEFT,
+                  }}
+                >
+                  {categoryLabel(cluster.category)} · {cluster.count}
+                </div>
+              ))}
             <div className="evidence-board__zone casefile__zone--claims">
               {t("casefileZoneClaims")}
             </div>
+            <div className="evidence-board__zone casefile__zone--correlations">
+              {t("casefileCorrelations")}
+            </div>
+            {lens === "contradictions" && (
+              <div className="evidence-board__zone casefile__zone--hypotheses">
+                {t("casefileHypotheses")}
+              </div>
+            )}
 
             <svg
               className="evidence-board__strings"
@@ -1610,8 +1780,18 @@ const Casefile = ({
                   const x2 = to.x + CARD_WIDTH / 2;
                   const y2 = to.y + CARD_HEIGHT / 2;
                   const d = sagPath(x1, y1, x2, y2);
+                  const touchesFocus =
+                    focusId != null &&
+                    (fromId === focusId || toId === focusId);
+                  const groupClass = focusId
+                    ? `evidence-board__string-group ${
+                        touchesFocus
+                          ? "evidence-board__string-group--focused"
+                          : "evidence-board__string-group--dimmed"
+                      }`
+                    : "evidence-board__string-group";
                   return (
-                    <g key={key}>
+                    <g key={key} className={groupClass}>
                       <path d={d} className="evidence-board__string-shadow" />
                       <path d={d} className="evidence-board__string" />
                     </g>
@@ -1635,8 +1815,21 @@ const Casefile = ({
                 const x2 = to.x + CARD_WIDTH / 2;
                 const y2 = to.y + CARD_HEIGHT / 2;
                 const d = sagPath(x1, y1, x2, y2);
+                const touchesFocus =
+                  focusId != null && (fromId === focusId || toId === focusId);
+                const groupClass = [
+                  "evidence-board__string-group",
+                  "evidence-board__confirmed-group",
+                  focusId
+                    ? touchesFocus
+                      ? "evidence-board__string-group--focused"
+                      : "evidence-board__string-group--dimmed"
+                    : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ");
                 return (
-                  <g key={key} className="evidence-board__confirmed-group">
+                  <g key={key} className={groupClass}>
                     <path d={d} className="evidence-board__string-shadow" />
                     <path d={d} className="evidence-board__string evidence-board__string--confirmed">
                       <title>{t("confirmedCorrelation")}</title>
@@ -1665,6 +1858,8 @@ const Casefile = ({
               const relevant = relevantEvidence.has(card.id);
               const attached = activeEvidenceSet.has(card.id);
               const fresh = freshIds.has(card.id);
+              const dragging = dragPreview?.id === card.id;
+              const located = flashId === card.id;
               return (
                 <div
                   key={card.id}
@@ -1676,10 +1871,16 @@ const Casefile = ({
                     confirmedCardIds.has(card.id) ? "evidence-card--confirmed" : ""
                   } ${relevant ? "casefile-card--relevant" : ""} ${
                     attached ? "casefile-card--attached" : ""
-                  } ${fresh ? "casefile-card--fresh" : ""
+                  } ${fresh ? "casefile-card--fresh" : ""} ${
+                    dragging ? "evidence-card--dragging" : ""
+                  } ${located ? "casefile-card--locate" : ""
                   } casefile-card--${status.tone}`}
                   style={{ left: position.x, top: position.y }}
                   onMouseDown={(event) => startDrag(event, card.id)}
+                  onMouseEnter={() => setHoverId(card.id)}
+                  onMouseLeave={() =>
+                    setHoverId((current) => (current === card.id ? null : current))
+                  }
                   onKeyDown={(event) => {
                     if (event.key === "Enter" || event.key === " ") {
                       handleCardClick(card.id);
@@ -1747,6 +1948,7 @@ const Casefile = ({
             {positioned.length === 0 && (
               <div className="evidence-board__empty">{t("noEvidenceMatch")}</div>
             )}
+          </div>
           </div>
         </div>
 

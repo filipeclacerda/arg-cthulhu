@@ -127,6 +127,16 @@
   left: 850px;
 }
 
+.casefile__zone--correlations {
+  top: 186px;
+  left: 1088px;
+}
+
+.casefile__zone--hypotheses {
+  top: 12px;
+  left: 1320px;
+}
+
 .evidence-card--finding {
   --card-accent: #4d326d;
   background-color: #f3e9ff;
@@ -181,6 +191,10 @@
 }
 
 .casefile-card--fresh {
+  animation: casefile-fresh-pulse 1.2s ease-out 1;
+}
+
+.casefile-card--locate {
   animation: casefile-fresh-pulse 1.2s ease-out 1;
 }
 
@@ -528,7 +542,7 @@
 
 .casefile-evidence-row {
   display: grid;
-  grid-template-columns: 1fr 28px;
+  grid-template-columns: 1fr 28px 28px;
   border: 1px solid #8f8c7e;
   background: #fdfcf6;
 
@@ -561,7 +575,7 @@
       padding: 5px 6px;
     }
 
-    &:last-child {
+    &:not(:first-child) {
       display: grid;
       place-items: center;
       border-left: 1px solid rgba(0, 0, 0, 0.18);

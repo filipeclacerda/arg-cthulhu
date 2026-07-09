@@ -31,7 +31,7 @@ const en = {
   chats: "Chats",
   webRecords: "Web records",
   find: "Find",
-  resetLayout: "Reset layout",
+  resetLayout: "Organize board",
   theoryMode: "Theory mode",
   linkMode: "Thread mode",
   testTheory: "Test theory",
@@ -376,6 +376,7 @@ const en = {
   casefileLegendThread: "↔ marks a working relation.",
   casefileLegendRetained: "✦ marks a retained relation.",
   casefileLegendMove: "▲ and ▼ reorder dated records.",
+  casefileLocateOnBoard: "Locate on board",
   casefileLegendStatus:
     "filed, extracted, used and retained describe how far a record has held.",
   casefileLegendLens:
@@ -442,7 +443,7 @@ const pt: Record<keyof typeof en, string> = {
   chats: "Conversas",
   webRecords: "Registros web",
   find: "Localizar",
-  resetLayout: "Restaurar layout",
+  resetLayout: "Organizar quadro",
   theoryMode: "Modo teoria",
   linkMode: "Modo fios",
   testTheory: "Testar teoria",
@@ -787,6 +788,7 @@ const pt: Record<keyof typeof en, string> = {
   casefileLegendThread: "↔ marca uma relação em trabalho.",
   casefileLegendRetained: "✦ marca uma relação retida.",
   casefileLegendMove: "▲ e ▼ reordenam registros datados.",
+  casefileLocateOnBoard: "Localizar no quadro",
   casefileLegendStatus:
     "registrado, extraído, usado e retido indicam até onde um registro se sustentou.",
   casefileLegendLens:

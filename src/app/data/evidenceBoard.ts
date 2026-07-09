@@ -495,13 +495,10 @@ export const EVIDENCE_CARDS: Record<string, BoardCard> = {
   },
 };
 
-const COLS = 5;
 export const CARD_WIDTH = 180;
 export const CARD_HEIGHT = 138;
 const GAP_X = 24;
 const GAP_Y = 24;
-const GRID_LEFT = 36;
-const GRID_TOP = 390;
 
 export const PERSON_POSITIONS: Record<string, { x: number; y: number }> = {
   "person-miriam": { x: 60, y: 48 },
@@ -511,20 +508,108 @@ export const PERSON_POSITIONS: Record<string, { x: number; y: number }> = {
   "person-em": { x: 366, y: 210 },
 };
 
-export const defaultEvidencePosition = (
-  index: number
-): { x: number; y: number } => {
-  const col = index % COLS;
-  const row = Math.floor(index / COLS);
+/** Evidence clusters by category, in reading order — new categories fall back to the end. */
+export const CASEFILE_EVIDENCE_CATEGORY_ORDER: readonly BoardCategory[] = [
+  "photo",
+  "document",
+  "audio",
+  "email",
+  "conversation",
+  "record",
+];
+
+const EVIDENCE_GRID_COLS = 4;
+export const CASEFILE_EVIDENCE_GRID_LEFT = 36;
+const CASEFILE_EVIDENCE_GRID_TOP = 390;
+const CASEFILE_EVIDENCE_CLUSTER_LABEL_HEIGHT = 26;
+const EVIDENCE_COL_STEP = CARD_WIDTH + GAP_X;
+const EVIDENCE_ROW_STEP = CARD_HEIGHT + GAP_Y;
+
+export interface CasefileEvidenceCluster {
+  category: BoardCategory;
+  labelY: number;
+  count: number;
+}
+
+export interface CasefileEvidenceLayout {
+  positions: Record<string, { x: number; y: number }>;
+  clusters: CasefileEvidenceCluster[];
+  /** Bottom edge (y) of the last cluster, or the grid top if there's nothing to show yet. */
+  bottom: number;
+}
+
+/**
+ * Groups evidence cards into per-category clusters that only occupy the rows
+ * they need. A category with zero discovered cards contributes nothing, so
+ * early-game boards stay compact; growing a cluster only ever shifts the
+ * clusters that come after it, never reorders cards within a cluster.
+ */
+export const casefileEvidenceLayout = (
+  cards: readonly Pick<BoardCard, "id" | "category">[]
+): CasefileEvidenceLayout => {
+  const byCategory = new Map<BoardCategory, Pick<BoardCard, "id" | "category">[]>();
+  cards.forEach((card) => {
+    const list = byCategory.get(card.category);
+    if (list) {
+      list.push(card);
+    } else {
+      byCategory.set(card.category, [card]);
+    }
+  });
+
+  const order = [
+    ...CASEFILE_EVIDENCE_CATEGORY_ORDER,
+    ...Array.from(byCategory.keys()).filter(
+      (category) => !CASEFILE_EVIDENCE_CATEGORY_ORDER.includes(category)
+    ),
+  ];
+
+  const positions: Record<string, { x: number; y: number }> = {};
+  const clusters: CasefileEvidenceCluster[] = [];
+  let cursorY = CASEFILE_EVIDENCE_GRID_TOP;
+
+  order.forEach((category) => {
+    const cardsInCategory = byCategory.get(category);
+    if (!cardsInCategory || cardsInCategory.length === 0) return;
+
+    const labelY = cursorY;
+    clusters.push({ category, labelY, count: cardsInCategory.length });
+    const firstRowY = labelY + CASEFILE_EVIDENCE_CLUSTER_LABEL_HEIGHT;
+    cardsInCategory.forEach((card, index) => {
+      const col = index % EVIDENCE_GRID_COLS;
+      const row = Math.floor(index / EVIDENCE_GRID_COLS);
+      positions[card.id] = {
+        x: CASEFILE_EVIDENCE_GRID_LEFT + col * EVIDENCE_COL_STEP,
+        y: firstRowY + row * EVIDENCE_ROW_STEP,
+      };
+    });
+    const rows = Math.ceil(cardsInCategory.length / EVIDENCE_GRID_COLS);
+    cursorY = firstRowY + rows * EVIDENCE_ROW_STEP;
+  });
+
   return {
-    x: GRID_LEFT + col * (CARD_WIDTH + GAP_X),
-    y: GRID_TOP + row * (CARD_HEIGHT + GAP_Y),
+    positions,
+    clusters,
+    bottom: clusters.length > 0 ? cursorY : CASEFILE_EVIDENCE_GRID_TOP,
   };
 };
 
-export const BOARD_WIDTH = 1080;
+export const CASEFILE_BOARD_WIDTH = 1680;
+const CASEFILE_FINDING_LEFT = 856;
+const CASEFILE_CORRELATION_LEFT = 1088;
+const CASEFILE_HYPOTHESIS_LEFT = 1320;
 
-export const boardCanvasHeight = (evidenceCount: number): number => {
-  const rows = Math.ceil(evidenceCount / COLS) || 1;
-  return GRID_TOP + rows * (CARD_HEIGHT + GAP_Y) + 40;
+export type CasefileClaimKind = "finding" | "correlation" | "hypothesis";
+
+export const casefileClaimPosition = (
+  index: number,
+  kind: CasefileClaimKind
+): { x: number; y: number } => {
+  if (kind === "correlation") {
+    return { x: CASEFILE_CORRELATION_LEFT, y: 212 + index * 156 };
+  }
+  if (kind === "hypothesis") {
+    return { x: CASEFILE_HYPOTHESIS_LEFT, y: 48 + index * 156 };
+  }
+  return { x: CASEFILE_FINDING_LEFT, y: 44 + index * 150 };
 };
