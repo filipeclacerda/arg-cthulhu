@@ -148,6 +148,18 @@ const OPTIONAL_EVIDENCE_IDS = new Set([
   "solitaire_save",
   "tom_homepage",
   "containment_utility",
+  "calendar_0316",
+  "voicemail_to_em",
+  "reasons_to_stop",
+  "read_receipts",
+  "hash_manifest",
+  "unsent_to_dad",
+  "desk_inventory",
+  "printer_alignment",
+  "browser_history_0316",
+  "em_draft_reply",
+  "field_04",
+  "do_not_catalogue",
 ]);
 
 const DEFAULT_HINT_CHANNEL: Record<PuzzleId, HintChannel> = {
@@ -612,6 +624,22 @@ export const reduceGameEvent = (
       ) {
         break;
       }
+      if (event.ending === "leave_blank" && !state.flags.endgame_available) {
+        break;
+      }
+      if (
+        event.ending === "archive_self" &&
+        (!state.flags.secret_ending_available ||
+          !hasAllInsights(state) ||
+          !state.discoveredEvidenceIds.includes("hash_manifest") ||
+          !state.playerChoices.some(
+            (choice) =>
+              choice.choiceId === "sarah_live_question" &&
+              choice.optionId === "break"
+          ))
+      ) {
+        break;
+      }
       if (state.ending === event.ending) break;
       state = {
         ...state,
@@ -619,10 +647,18 @@ export const reduceGameEvent = (
         narrativeBeatsSeen:
           event.ending === "seal"
             ? uniquePushTyped(state.narrativeBeatsSeen, "relay_sealed")
+            : event.ending === "leave_blank"
+              ? uniquePushTyped(state.narrativeBeatsSeen, "blank_left")
+              : event.ending === "archive_self"
+                ? uniquePushTyped(state.narrativeBeatsSeen, "observer_archived")
             : state.narrativeBeatsSeen,
         worldReactionsSeen:
           event.ending === "seal"
             ? uniquePushTyped(state.worldReactionsSeen, "case_code_drift")
+            : event.ending === "leave_blank"
+              ? uniquePushTyped(state.worldReactionsSeen, "blank_space")
+              : event.ending === "archive_self"
+                ? uniquePushTyped(state.worldReactionsSeen, "observer_filed")
             : state.worldReactionsSeen,
         flags: {
           ...state.flags,

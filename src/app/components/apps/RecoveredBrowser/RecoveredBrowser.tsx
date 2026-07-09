@@ -29,11 +29,13 @@ export type BrowserPage =
   | "sarah"
   | "memo"
   | "staff"
+  | "reader-log"
   | "graymoor"
   | "families"
   | "forum"
   | "em"
   | "tom"
+  | "tom-guestbook"
   | "maintenance"
   | "downloads"
   | "false-lead"
@@ -58,11 +60,13 @@ export const PAGE_ADDRESS: Record<BrowserPage, string> = {
   sarah: "cache://miskatonic/catalog/2026-bishop-sarah",
   memo: "cache://miskatonic/library/incident-memo-2026",
   staff: "http://www.miskatonic.edu/library/staff/armitage.htm",
+  "reader-log": "http://www.miskatonic.edu/library/readers/notices.htm",
   graymoor: "http://www.graymoor-antiquarian.com/about/",
   families: "http://www.innsmouth-historical.org/registry/",
   forum: "http://www.miskanet-forums.org/board/folklore/",
   em: "http://www.geocities.com/em_bishop/photos/",
   tom: "http://www.geocities.com/tomalvarez_archive/",
+  "tom-guestbook": "http://www.geocities.com/tomalvarez_archive/guestbook.html",
   maintenance: "cache://miskatonic/facilities/B2/",
   downloads: "http://www.miskanet-files.org/archive-tools/",
   "false-lead": "http://search.miskatonic.net/search",
@@ -262,12 +266,20 @@ const RecoveredBrowser = ({
       visitAtmospherePage("tom", "tom-personal-page", "tom_homepage");
       return;
     }
+    if (compact.includes("TOMGUESTBOOK") || compact.includes("VISITOR0004") || compact.includes("GUESTBOOK")) {
+      visitAtmospherePage("tom-guestbook", "tom-guestbook");
+      return;
+    }
     if (compact.includes("LOOPBACK") || compact.includes("ARCHIVETOOLS") || compact.includes("DOWNLOADS")) {
       visitAtmospherePage("downloads", "miskanet-downloads");
       return;
     }
     if (compact.includes("ARMITAGE")) {
       visitAtmospherePage("staff", "library-staff-armitage");
+      return;
+    }
+    if (compact.includes("READERLOG") || compact.includes("READERNOTICE") || compact.includes("READINGROOM")) {
+      visitAtmospherePage("reader-log", "library-reader-notices");
       return;
     }
     if (compact.includes("GRAYMOOR")) {
@@ -378,8 +390,10 @@ const RecoveredBrowser = ({
             <button onClick={() => visitAtmospherePage("weather", "antarctic-weather")}>Lake Weather</button>
             <button onClick={() => visitAtmospherePage("families", "families-registry")}>Old Families of the Coast</button>
             <button onClick={() => visitAtmospherePage("forum", "miskanet-forum")}>MiskaNet Research Forum</button>
+            <button onClick={() => visitAtmospherePage("reader-log", "library-reader-notices")}>Orne Reader Notices</button>
             <button onClick={() => visitAtmospherePage("em", "em-personal-page")}>Em&apos;s Photos</button>
             <button onClick={() => visitAtmospherePage("tom", "tom-personal-page", "tom_homepage")}>Tom&apos;s Homepage</button>
+            <button onClick={() => visitAtmospherePage("tom-guestbook", "tom-guestbook")}>Tom&apos;s Guestbook</button>
             <div />
             <small>{t("linksImportedNote")}</small>
           </aside>
@@ -478,11 +492,13 @@ const RecoveredBrowser = ({
                 <button onClick={() => visitAtmospherePage("families", "families-registry")}>Genealogy</button>
                 <span> - </span>
                 <button onClick={() => visitAtmospherePage("forum", "miskanet-forum")}>Forums</button>
+                <span> - </span>
+                <button onClick={() => visitAtmospherePage("reader-log", "library-reader-notices")}>Reader Notices</button>
               </div>
               <footer>
                 © 2000 Miskatonic Network · About · Help · Add URL
                 <br />
-                <em>37 pages available offline</em>
+                <em>41 pages available offline</em>
               </footer>
             </div>
           )}
@@ -536,6 +552,11 @@ const RecoveredBrowser = ({
                   <span>Staff reference note compiled by M. Bishop in 1998.</span>
                   <small>www.miskatonic.edu/library/cryptography/</small>
                 </button>
+                <button onClick={() => visitAtmospherePage("reader-log", "library-reader-notices")}>
+                  <strong>Orne Library — Reading Room Notices</strong>
+                  <span>Reader policies, accession desk updates and a damaged sign-in export.</span>
+                  <small>www.miskatonic.edu/library/readers/</small>
+                </button>
                 <button onClick={() => visitAtmospherePage("families", "families-registry")}>
                   <strong>Innsmouth Historical &amp; Genealogical Society</strong>
                   <span>Family registry for the old coastal lines, compiled since 1952.</span>
@@ -545,6 +566,11 @@ const RecoveredBrowser = ({
                   <strong>MiskaNet Research Forum</strong>
                   <span>Folklore, cryptozoology and local history discussion board.</span>
                   <small>www.miskanet-forums.org/board/folklore/</small>
+                </button>
+                <button onClick={() => visitAtmospherePage("tom-guestbook", "tom-guestbook")}>
+                  <strong>Tom Alvarez&apos;s Guestbook</strong>
+                  <span>A personal homepage guestbook with one visitor too many.</span>
+                  <small>www.geocities.com/tomalvarez_archive/guestbook.html</small>
                 </button>
               </div>
               <p className="retro-search-help">
@@ -586,11 +612,12 @@ const RecoveredBrowser = ({
               <div className="site-columns">
                 <section>
                   <h2>Special Collections Gateway</h2>
-                  <p>This cached gateway contains 37 catalogue records and six staff reference pages.</p>
+                  <p>This cached gateway contains 41 catalogue records and eight staff reference pages.</p>
                   <h3>Quick links</h3>
                   <button className="web-link" onClick={() => visitAtmospherePage("bellaso", "bellaso-reference")}>Cryptography reference shelf: moving alphabets</button>
                   <button className="web-link" onClick={() => visitAtmospherePage("expedition", "pabodie-expedition")}>Departmental archive: Pabodie Expedition</button>
                   <button className="web-link" onClick={() => visitAtmospherePage("staff", "library-staff-armitage")}>Staff directory: Special Collections</button>
+                  <button className="web-link" onClick={() => visitAtmospherePage("reader-log", "library-reader-notices")}>Reading room notices and sign-in exports</button>
                   <button className="web-link" onClick={() => visitAtmospherePage("families", "families-registry")}>External reference: Innsmouth Historical &amp; Genealogical Society</button>
                   <h3>Restricted holdings register</h3>
                   <table className="browser-table"><tbody>
@@ -843,6 +870,37 @@ const RecoveredBrowser = ({
                 <aside>
                   <strong>Catalogue notice</strong>
                   <p>Direct inquiries regarding MS-WHA-1998-114 to the Director&apos;s office.</p>
+                </aside>
+              </div>
+            </article>
+          )}
+
+          {page === "reader-log" && (
+            <article className="site-library">
+              <header>
+                <div className="site-seal">MU</div>
+                <div><p>ORNE LIBRARY</p><h1>Reading Room Notices</h1></div>
+              </header>
+              <nav>HOME | CATALOGUE | COLLECTIONS | READER SERVICES | NOTICES</nav>
+              <div className="site-columns">
+                <section>
+                  <h2>Reader Services Bulletin</h2>
+                  <p>Recovered cache of public notices posted near the Special Collections desk.</p>
+                  <table className="browser-table"><tbody>
+                    <tr><th>Date</th><th>Notice</th></tr>
+                    <tr><td>2026-03-04</td><td>Readers may not photograph restricted accession slips without staff approval.</td></tr>
+                    <tr><td>2026-03-09</td><td>Temporary relocation of the B2 dehumidifier log to Facilities.</td></tr>
+                    <tr><td>2026-03-16</td><td>SB-ARCHIVE-02 removed from public terminal rotation.</td></tr>
+                  </tbody></table>
+                  <h3>Damaged export</h3>
+                  <p className="browser-redaction">
+                    SIGN-IN CSV recovered with a duplicate row. The duplicate has tomorrow&apos;s timestamp and no reader card number.
+                  </p>
+                </section>
+                <aside>
+                  <strong>Desk note</strong>
+                  <p>Do not complete blank shelfmark fields on behalf of readers. Escalate to R. Armitage.</p>
+                  <button className="web-link" onClick={() => visitAtmospherePage("staff", "library-staff-armitage")}>Open staff directory</button>
                 </aside>
               </div>
             </article>
@@ -1108,6 +1166,46 @@ const RecoveredBrowser = ({
                   <p className="tom-counter">YOU ARE VISITOR 0004. TOM EXPECTED 0003.</p>
                 </>
               )}
+              <p>
+                <button className="web-link web-link--inline" onClick={() => visitAtmospherePage("tom-guestbook", "tom-guestbook")}>Sign my guestbook</button>
+              </p>
+            </article>
+          )}
+
+          {page === "tom-guestbook" && (
+            <article className="site-geocities site-tom">
+              <h1>TOM&apos;S GUESTBOOK</h1>
+              <p className="blink">PLEASE BE NICE OR AT LEAST TECHNICALLY INTERESTING</p>
+              <div className="forum-thread">
+                <div className="forum-post">
+                  <div><span className="forum-handle">sarah_b</span> 2001 cache</div>
+                  <div className="forum-post-body">
+                    <time>2001-08-17</time>
+                    <p>This page has more animated envelopes than a federal mail crime.</p>
+                  </div>
+                </div>
+                <div className="forum-post">
+                  <div><span className="forum-handle">tom_admin</span> 2001 cache</div>
+                  <div className="forum-post-body">
+                    <time>2001-08-17</time>
+                    <p>Logged and ignored.</p>
+                  </div>
+                </div>
+                <div className="forum-post forum-post--orphan">
+                  <div>
+                    <span className="forum-handle">
+                      {resolveTokens("{PLAYER}", { playerName: state.playerName })}
+                    </span>
+                    cached visitor
+                  </div>
+                  <div className="forum-post-body">
+                    <time>{resolveTokens("{TOMORROW}")}</time>
+                    <p>visitor 0004 signed before the counter rendered visitor 0003.</p>
+                  </div>
+                </div>
+              </div>
+              <p className="tom-counter">COUNTER FILE: expected 0003 / displayed 0004 / archived 0004</p>
+              <button className="web-link" onClick={() => visitAtmospherePage("tom", "tom-personal-page", "tom_homepage")}>Back to homepage</button>
             </article>
           )}
 

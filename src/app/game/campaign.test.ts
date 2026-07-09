@@ -203,10 +203,60 @@ describe("campaign graph", () => {
     ).toContain("CHECKLIST DE UPLOAD");
   });
 
+  it("files the new emotional and relay artifacts in both locales", () => {
+    const expected = [
+      "calendar_0316",
+      "voicemail_to_em",
+      "reasons_to_stop",
+      "read_receipts",
+      "hash_manifest",
+      "blank_space",
+      "archived_observer",
+      "unsent_to_dad",
+      "desk_inventory",
+      "printer_alignment",
+      "browser_history_0316",
+      "em_draft_reply",
+      "field_04",
+      "do_not_catalogue",
+    ];
+
+    for (const evidenceId of expected) {
+      expect(EVIDENCE_CARDS[evidenceId]).toBeDefined();
+    }
+
+    expect(files.find((file) => file.id === "calendar_0316")?.content).toContain(
+      "leave archive"
+    );
+    expect(
+      localizedFileContent("calendar_0316", "", "pt-BR")
+    ).toContain("sair do arquivo");
+    expect(files.find((file) => file.id === "read_receipts")?.content).toContain(
+      "Sender choice not found"
+    );
+    expect(
+      localizedFileContent("read_receipts", "", "pt-BR")
+    ).toContain("Escolha do remetente não encontrada");
+    expect(files.find((file) => file.id === "hash_manifest")?.unlock).toEqual({
+      type: "evidenceOpened",
+      evidenceId: "tom_upload_notes",
+    });
+    expect(
+      localizedFileContent("archived_observer_after", "", "pt-BR")
+    ).toContain("OBSERVADOR ARQUIVADO");
+    expect(
+      localizedFileContent("desk_inventory", "", "pt-BR")
+    ).toContain("INVENTÁRIO TEMPORÁRIO");
+    expect(
+      localizedFileContent("do_not_catalogue", "", "pt-BR")
+    ).toContain("ARQUIVO SEM CORPO");
+  });
+
   it("plants Miriam's second-voice identity only through fields and metadata", () => {
     const marginMatch = files.find(
       (file) => file.id === "miriam_margin_match"
     );
+    const miriamDraft = files.find((file) => file.id === "miriam_draft");
     const transcript = files.find((file) => file.id === "counting");
     const todo = files.find((file) => file.id === "todo");
     const shutdownEmail = emails.find(
@@ -220,6 +270,9 @@ describe("campaign graph", () => {
     });
     expect(marginMatch?.content).toContain("ATTRIBUTED HAND: M. BISHOP");
     expect(marginMatch?.content).not.toMatch(/M\. BISHOP:\s+[A-Za-z]/);
+    expect(miriamDraft?.content).toContain("PROSE CHANNEL REFUSED");
+    expect(miriamDraft?.content).not.toContain("Robert —");
+    expect(miriamDraft?.content).not.toMatch(/M\. BISHOP:\s+[A-Za-z]/);
     expect(EVIDENCE_CARDS.miriam_margin_match).toBeDefined();
     expect(transcript?.content).toContain(
       "Closest match withheld by administrative order"

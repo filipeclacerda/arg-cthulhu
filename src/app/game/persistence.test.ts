@@ -16,6 +16,8 @@ describe("save v6", () => {
     state.locale = "pt-BR";
     state.insightsUnlocked = ["second_volume"];
     state.collectedTokens = ["time-six-thirty", "intent-go-home"];
+    state.ending = "archive_self";
+    state.flags.ending_archive_self = true;
     state.caseAnswers.sarah_intent = {
       slots: {
         time: "time-six-thirty",
@@ -44,6 +46,8 @@ describe("save v6", () => {
     );
     expect(imported.locale).toBe("pt-BR");
     expect(imported.insightsUnlocked).toEqual(["second_volume"]);
+    expect(imported.ending).toBe("archive_self");
+    expect(imported.flags.ending_archive_self).toBe(true);
     expect(imported.caseAnswers.sarah_intent?.lockedSlots).toEqual([
       "time",
       "intent",
@@ -82,6 +86,22 @@ describe("save v6", () => {
     expect(migrated?.ending).toBe("shutdown");
     expect(migrated?.puzzles.lineage.solvedAt).not.toBeNull();
     expect(migrated?.puzzles.future_log.solvedAt).toBeNull();
+  });
+
+  it("migrates legacy flags for the new endings", () => {
+    const leaveBlank = migrateProgress({
+      version: 2,
+      corruptionStage: 4,
+      flags: { ending_leave_blank: true },
+    });
+    const archiveSelf = migrateProgress({
+      version: 2,
+      corruptionStage: 4,
+      flags: { ending_archive_self: true },
+    });
+
+    expect(leaveBlank?.ending).toBe("leave_blank");
+    expect(archiveSelf?.ending).toBe("archive_self");
   });
 
   it("migrates a v3 puzzle state into v6 campaign fields", () => {

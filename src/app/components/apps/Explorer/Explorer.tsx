@@ -6,7 +6,8 @@ import { folders, files, isUnlocked, VFile } from "@/app/data/filesystem";
 import { useProgress } from "@/app/context/ProgressContext";
 import { useWindowManager } from "@/app/context/WindowManagerContext";
 import { IDENTITY_REVEAL_STAGE } from "@/app/utils/narrative";
-import { useI18n } from "@/app/i18n";
+import { TranslationKey, useI18n } from "@/app/i18n";
+import { ChapterId } from "@/app/game/progress";
 
 interface ExplorerProps {
   folderId?: string;
@@ -18,6 +19,14 @@ const EXTENSION_ICONS: Record<string, string> = {
   txt: "/icons/notepad.png",
   hlp: "/icons/help.png",
   wav: "/icons/sound-recorder.png",
+};
+const CHAPTER_TITLE_KEYS: Record<ChapterId, TranslationKey> = {
+  chapter_1: "chapter1Title",
+  chapter_2: "chapter2Title",
+  chapter_3: "chapter3Title",
+  chapter_4: "chapter4Title",
+  chapter_5: "chapter5Title",
+  chapter_6: "chapter6Title",
 };
 
 const extensionOf = (name: string) =>
@@ -41,6 +50,7 @@ const Explorer = ({ folderId = "my-computer" }: ExplorerProps) => {
     playerName,
     discoveredEvidenceIds,
     state,
+    currentChapter,
   } = useProgress();
   const { openWindow } = useWindowManager();
   const { t } = useI18n();
@@ -152,6 +162,10 @@ const Explorer = ({ folderId = "my-computer" }: ExplorerProps) => {
           {t("propertiesLabel")}
         </button>
         <span className="explorer-hint">{t("doubleClickToOpen")}</span>
+        <span className="explorer-chapter">
+          {t("chapterLabel")} {currentChapter.replace("chapter_", "")}:{" "}
+          {t(CHAPTER_TITLE_KEYS[currentChapter])}
+        </span>
       </div>
       <div className="explorer-address">
         <span className="explorer-address-label">{t("addressLabel")}</span>

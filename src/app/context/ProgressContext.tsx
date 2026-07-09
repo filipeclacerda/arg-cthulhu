@@ -12,6 +12,8 @@ import React, {
 } from "react";
 import {
   AttemptKind,
+  ChapterId,
+  currentChapter,
   createInitialProgress,
   EndingId,
   firstUnsolvedPuzzle,
@@ -19,6 +21,7 @@ import {
   InsightId,
   Locale,
   ProgressStateV4,
+  progressChapterSnapshot,
   puzzleCorruptionStage,
   PuzzleId,
 } from "../game/progress";
@@ -72,6 +75,7 @@ interface ProgressContextValue {
   absenceMs: number;
   caseNotes: string;
   activePuzzle: PuzzleId | null;
+  currentChapter: ChapterId;
   boardPositions: Record<string, { x: number; y: number }>;
   boardConnections: string[];
   confirmedConnections: string[];
@@ -159,6 +163,15 @@ const HINT_NOTICE = {
 const FIRST_FACT_NOTICE = {
   en: "Fact extracted — filed to Casefile.exe.",
   pt: "Fato extraído — arquivado no Casefile.exe.",
+};
+
+const CHAPTER_TITLES: Record<ChapterId, { en: string; pt: string }> = {
+  chapter_1: { en: "Sarah Meant to Return", pt: "Sarah Ia Voltar" },
+  chapter_2: { en: "The Volume Returned", pt: "O Volume Voltou" },
+  chapter_3: { en: "Miriam Left Blanks", pt: "Miriam Deixou Espaços" },
+  chapter_4: { en: "Not Counting Days", pt: "Não Contava Dias" },
+  chapter_5: { en: "The Observer Field", pt: "O Campo do Observador" },
+  chapter_6: { en: "Operations of Cost", pt: "Operações de Custo" },
 };
 
 export const ProgressProvider = ({
@@ -386,7 +399,9 @@ export const ProgressProvider = ({
       if (isReadOnly) return {};
       const beforeTokenCount = stateRef.current.collectedTokens.length;
       const beforeLocale = stateRef.current.locale;
+      const beforeChapter = currentChapter(progressChapterSnapshot(stateRef.current));
       const result = reduceGameEvent(stateRef.current, event);
+      const afterChapter = currentChapter(progressChapterSnapshot(result.state));
       dispatch(event);
 
       if (event.type === "MARK_FILE_READ") {
@@ -465,6 +480,17 @@ export const ProgressProvider = ({
         if (noticeTimer.current) clearTimeout(noticeTimer.current);
         noticeTimer.current = setTimeout(() => setSystemNotice(null), 3800);
       }
+      if (beforeChapter !== afterChapter) {
+        const copy = CHAPTER_TITLES[afterChapter];
+        const number = afterChapter.replace("chapter_", "");
+        setSystemNotice(
+          beforeLocale === "pt-BR"
+            ? `Capítulo ${number} arquivado: ${copy.pt}. Novos registros liberados.`
+            : `Chapter ${number} filed: ${copy.en}. New records released.`
+        );
+        if (noticeTimer.current) clearTimeout(noticeTimer.current);
+        noticeTimer.current = setTimeout(() => setSystemNotice(null), 4200);
+      }
       if (result.solvedPuzzle) {
         const puzzle = result.solvedPuzzle;
         captureTelemetry({
@@ -477,11 +503,13 @@ export const ProgressProvider = ({
           },
         });
         const reaction = SOLUTION_REACTIONS[puzzle];
-        setSystemNotice(
-          stateRef.current.locale === "pt-BR" ? reaction.pt : reaction.en
-        );
-        if (noticeTimer.current) clearTimeout(noticeTimer.current);
-        noticeTimer.current = setTimeout(() => setSystemNotice(null), 3800);
+        if (beforeChapter === afterChapter) {
+          setSystemNotice(
+            stateRef.current.locale === "pt-BR" ? reaction.pt : reaction.en
+          );
+          if (noticeTimer.current) clearTimeout(noticeTimer.current);
+          noticeTimer.current = setTimeout(() => setSystemNotice(null), 3800);
+        }
       }
 
       return {
@@ -688,6 +716,7 @@ export const ProgressProvider = ({
       absenceMs: state.absenceMs,
       caseNotes: state.caseNotes,
       activePuzzle: firstUnsolvedPuzzle(state),
+      currentChapter: currentChapter(progressChapterSnapshot(state)),
       boardPositions: state.boardPositions,
       boardConnections: state.boardConnections,
       confirmedConnections: state.confirmedConnections,

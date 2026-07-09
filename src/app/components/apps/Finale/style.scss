@@ -44,6 +44,7 @@
 
 .finale-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: calc(var(--ui-scale, 1) * 12px);
   justify-content: center;
   margin-top: calc(var(--ui-scale, 1) * 16px);

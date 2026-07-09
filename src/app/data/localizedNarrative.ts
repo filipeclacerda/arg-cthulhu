@@ -1,6 +1,19 @@
 import { Locale } from "../game/progress";
 
 const FILES_PT: Record<string, string> = {
+  diary: `DIÁRIO DE PESQUISA — S. BISHOP
+
+24/02 — Em ligou. Deixei cair no voicemail de novo e odeio ter feito isso. Ela só quer saber se estou comendo. Vou ligar de volta quando este lote estiver catalogado. Continuo dizendo isso.
+
+02/03 — Recebi o segundo volume hoje. O livreiro não olhou nos meus olhos quando o entregou. Disse que a dona anterior "parou de aparecer". Não perguntei o que isso queria dizer. Este é o volume que mamãe listou nas notas de 98 — o que ninguém conseguiu encontrar. Estou usando a máquina antiga dela para cruzar os arquivos. Ainda tem cheiro do escritório dela. O espólio tinha meu nome e endereço antes mesmo de eu perguntar — alguém fez questão de que ele voltasse a uma Bishop.
+
+09/03 — As referências cruzadas conferem. Três fontes separadas, três séculos diferentes, a mesma linha da costa. Os nomes antigos são apenas etiquetas que as pessoas usaram quando o real não cabia. A forma por baixo deles é mais velha que o mapa.
+
+14/03 — Não dormi. Sempre que fecho os olhos, ouço a contagem. Não palavras. Contagem.
+
+15/03 — Encontrei algo nas margens do segundo volume, não impresso, escrito à mão. Copiei algumas linhas em what_i_found.txt antes de perceber: a caligrafia é minha. Não lembro de ter escrito. O mesmo alfabeto se repete pelo capítulo sete. Se eu estiver certa sobre a cifra, a chave de tradução é direta, só trabalhosa.
+
+16/03 —`,
   todo: `- ligar para Em (ligar de verdade)
 - café, lâmpadas, mais papel-toalha
 - pedir ao Tom que cubra o seminário de quinta
@@ -9,6 +22,114 @@ const FILES_PT: Record<string, string> = {
 - perguntar à Em: mamãe contava UP ou DOWN? não lembro. isso importa.
 - terminar a transcrição do cap. 7
 - dormir`,
+  calendar_0316: `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Calendário Local Miskatonic//Recuperado//PT-BR
+
+BEGIN:VEVENT
+DTSTART:20260316T183000
+SUMMARY:sair do arquivo / ligar para Em do ônibus
+LOCATION:Ponto da rota 7, Biblioteca Orne
+STATUS:CONFIRMED
+END:VEVENT
+
+BEGIN:VEVENT
+DTSTART:20260317T090000
+SUMMARY:aula de Coleções Especiais 204
+DESCRIPTION:Levar cabo. Não usar Lote 114 como exemplo. Não dizer "o catálogo está com fome" em voz alta.
+STATUS:CONFIRMED
+END:VEVENT
+
+BEGIN:VEVENT
+DTSTART:{TOMORROW}T031500
+SUMMARY:completar campo vazio
+LOCATION:SB-ARCHIVE-02
+STATUS:TENTATIVE
+END:VEVENT
+
+END:VCALENDAR`,
+  voicemail_to_em: `TRANSCRIÇÃO DE VOICEMAIL / rascunho local não enviado
+Destinatária: Em
+Criado: 2026-03-16 17:42
+
+Oi. Estou saindo às seis e meia. Se eu esquecer de ligar, seja irritante.
+
+Eu sei que você odeia quando transformo a mamãe num dossiê. Eu também odeio. Acho que continuo fazendo isso porque, se as notas fizerem sentido, talvez ela não tenha simplesmente escolhido o trabalho em vez da gente.
+
+[fundo: ventilador do escritório, um estalo molhado]
+
+Lá está de novo. Não contando para baixo. Contando nomes.
+
+Ainda vou para casa. Guarda a caneca feia para mim.`,
+  reasons_to_stop: `MOTIVOS PARA PARAR
+
+1. Em está certa.
+2. Papai conhece a voz da cadeira vazia, e estou usando essa voz com ele.
+3. Tom vai ajudar se eu pedir, então não devo pedir.
+4. Mamãe deixou espaços vazios de propósito.
+5. O livro responde a parte de mim que quer respostas mais do que segurança.
+
+MOTIVOS PELOS QUAIS AINDA NÃO PAREI
+
+1. Se mamãe estava tentando me avisar, parar agora transforma o aviso numa porta trancada.
+2. Se mamãe estava presa, passei vinte e oito anos chamando luto de encerramento.
+3. O catálogo continua colocando meu nome onde o dela costumava ficar.
+
+Decisão:
+Sair às 18:30. Levar os scans para casa? Não. Não levar isso para casa.`,
+  unsent_to_dad: `RASCUNHO / não enviado
+Para: Pai
+
+Encontrei a caneca verde.
+
+Sei que é idiota escrever isso em vez de ligar. Fico pensando que, se eu disser em voz alta, você vai ouvir a mamãe nisso antes de me ouvir.
+
+Estou com raiva dela. Sinto falta dela. Tenho medo de que as duas coisas sejam a mesma porta vista de lados diferentes.
+
+Se eu levar a caneca no domingo, por favor finja que é normal eu ter guardado sem lavar.
+
+Se eu não levar, faça a Em pegar mesmo assim.`,
+  desk_inventory: `SB-ARCHIVE-02 / INVENTÁRIO TEMPORÁRIO DA MESA
+
+caneca de café, verde / herdada / sem lavar
+banana, rotulada SARAH / imprópria em 2026-03-16
+bloco jurídico / borda inferior danificada por água
+recibo do Lote 114 / dobrado duas vezes
+fichas de leitor em branco / 4
+fichas de leitor em branco / 5
+
+Aviso de inventário:
+Uma ficha em branco foi contada antes de ser colocada na mesa.
+
+Nota do operador:
+Não catalogar espaços soltos à mão.`,
+  em_draft_reply: `Rascunho de formulário do navegador / Em Bishop
+Não publicado.
+
+Sarah,
+
+Eu disse a mim mesma que queria que você descobrisse o que aconteceu com a mamãe porque não saber estava te comendo viva.
+
+Isso é só metade verdade.
+
+A metade mais feia é que eu queria que você provasse que havia algo para encontrar, porque, se não houvesse, então a mamãe escolheu o trabalho e nos deixou só com uma cadeira.
+
+Desculpa por continuar te entregando perguntas melhores quando o que eu queria dizer era por favor pare.`,
+  printer_alignment: `HP LASERJET 4L / CAPTURA DE ALINHAMENTO
+DISPOSITIVO: não conectado
+DRIVER: retido do perfil M.BISHOP
+
+LINHA DE TESTE A: THE QUICK BROWN FOX
+LINHA DE TESTE B: THE QUICK BROWN FOX
+LINHA DE TESTE C: THE QUICK BROWN [em branco]
+
+RASTRO LEGADO:
+CAMPO DESTINATÁRIO ... R. ARMITAGE
+CAMPO COTA ........... [em branco]
+ÂNGULO DO TRAÇO FINAL  CORRESPONDE À AMOSTRA DE 1998
+
+Nenhuma frase completa recuperada.
+A impressora não imprimiu o aviso. Imprimiu os lugares onde um aviso caberia.`,
   counting: `[Áudio recuperado do escritório. 4 min 11 s. Transcrição automática; a segunda voz não pôde ser convertida em texto.]
 
 [VOICE 2: correspondência com o arquivo de ditados da equipe. Correspondência mais próxima retida por ordem administrativa.]
@@ -20,7 +141,7 @@ S. BISHOP: ...certo. É dia catorze. Estou gravando isto para provar que não es
 S. BISHOP (sussurro): ...não é quantos dias. É quantas pessoas.`,
   police_report: `SEGURANÇA DO CAMPUS MISKATONIC — INCIDENTE 2026-0318-2
 ASSUNTO: Bishop, S. (Coleções Especiais)
-ÚLTIMA CONFIRMAÇÃO DA PESSOA NO LOCAL: 16/03/2026
+ÚLTIMA CONFIRMAÇÃO DA PESSOA NO LOCAL: 2026-03-16
 
 Porta trancada por dentro; nenhuma outra saída. Janela lacrada por tinta, intacta. Sarah não estava presente.
 
@@ -61,7 +182,7 @@ O voluntário desaparecido naquela noite era Daniel Carter, o Carter citado no r
 Em 1998, Miriam solicitou a mesma caixa usando uma cota nunca atribuída.`,
   miriam_margin_match: `COMPARAÇÃO DE CALIGRAFIA / GAVETA HIDROGRÁFICA
 
-FONTE A: anotação de incorporação / 03/09/1998
+FONTE A: anotação de incorporação / 1998-09-03
 FONTE B: anotação marginal / {TOMORROW} 03:10
 MÃO ATRIBUÍDA: M. BISHOP
 CORRESPONDÊNCIA: 98,7%
@@ -149,14 +270,22 @@ A condutividade da amostra excedia a água do prédio. O chamado foi transferido
 Status: ENCERRADO — ADMINISTRATIVO`,
   miriam_draft: `[Spool de impressão recuperado / autoria M. BISHOP]
 
-Robert —
+JOB ID: 1998-09-03-0314 / reproduzido {TOMORROW} 03:09
+IMPRESSORA: ORNE-B2-HP4L / descartada em 2004
+PÁGINAS ESPERADAS: 1
+PÁGINAS IMPRESSAS: 0
 
-O volume ausente não está ausente. Ausente é como ele impede que a próxima entrada seja criada.
-Deixei a cota incompleta porque toda descrição completa se torna uma instrução.
+CAMPOS RECUPERADOS:
+DESTINATÁRIO: R. ARMITAGE
+ASSUNTO: [cota em branco]
+LINHA 01: AUSENTE = IMPEDE PRÓXIMA ENTRADA
+LINHA 02: DESCRIÇÃO COMPLETA = INSTRUÇÃO
+LINHA 03: SARAH / TOMATE / DEIXE EM BRANCO
+LINHA 04: NÃO TRANSFORME O AVISO EM MAPA
 
-Se Sarah encontrar isto, diga que tentei deixar um espaço vazio que não pedisse para ser preenchido.
-
-[O trabalho está datado de {TOMORROW}. A impressora foi descartada em 2004.]`,
+ERRO:
+CANAL DE PROSA RECUSADO.
+TRAÇO FINAL INTERROMPIDO NO MESMO ÂNGULO DA AMOSTRA DE 1998.`,
   record_2014: `ÍNDICE DE RECUPERAÇÃO / ENTRADA DANIFICADA
 
 INTERVALO: 2014
@@ -169,6 +298,18 @@ O campo contém o checksum deste registro.
 
 Resultado:
 REGISTRO LEU A SI MESMO 1 VEZ`,
+  read_receipts: `OUTLOOK EXPRESS / ÍNDICE DE CONFIRMAÇÕES DE LEITURA
+
+2026-03-14 03:06  Tom Alvarez -> S. Bishop  CONFIRMAÇÃO EMITIDA 00:02 ANTES DO ENVIO
+2026-03-15 03:12  unknown -> S. Bishop       CONFIRMAÇÃO EMITIDA 00:07 ANTES DA ENTREGA
+2026-03-22 21:44  Tom Alvarez -> S. Bishop  CONFIRMAÇÃO EMITIDA DO CAMPO DE AMANHÃ
+{TOMORROW} 03:11  S. Bishop -> atual        CONFIRMAÇÃO RETIDA / DESTINATÁRIO GERADO
+
+Nota local recuperada do reparo da caixa postal de Sarah:
+Consigo ver os envelopes antes de chegarem. Não consigo ver quem o arquivo escolhe em seguida.
+
+Status do reparo:
+DBX reconstruído. Escolha do remetente não encontrada.`,
   containment_utility: `LOOPBACK 0.3 — utilitário órfão
 
 Registra um índice montado como sua própria testemunha de verificação.
@@ -203,22 +344,6 @@ CHECKSUM ANTES: 7A:11:07
 CHECKSUM DEPOIS: 7A:11:08
 
 Nenhuma escrita foi registrada.`,
-  diary: `DIÁRIO DE PESQUISA — SARAH BISHOP
-
-02/03/2026
-Comprei o segundo volume. É o que mamãe registrou nas notas de 1998, o volume que nunca chegou junto com o restante do depósito Whateley. A casa de leilões o chamou de Lote 114. O espólio já tinha meu nome e endereço antes de eu perguntar qualquer coisa — alguém fez questão de que ele voltasse para uma Bishop.
-
-09/03/2026
-O capítulo sete não está escrito como os outros. As margens parecem instruções técnicas disfarçadas de tradução.
-
-14/03/2026
-Bellaso aparece outra vez. A chave deve pertencer à primeira pessoa que catalogou esta coleção.
-
-15/03/2026
-Gravei 4:11. Há alguma coisa no canal esquerdo, mas só reconheço a voz quando o buffer é reproduzido ao contrário.
-
-16/03/2026
-Mamãe não estava contando dias. Estava contando nomes.`,
   miriam_1998: `M. BISHOP — NOTAS DE INCORPORAÇÃO
 DEPÓSITO WHATELEY / 1998 / LOTE 114
 
@@ -255,6 +380,16 @@ OIEIL QEYLM RPAZV DEDEW HCAFD WFVZQ OWEBE ZAUVA NMALZ IS
 {TOMORROW} 03:15  RUN        INDEX.EXE /JOIN [4 REFERÊNCIAS PERDIDAS]
 
 Os aliases estão intactos. Os nomes longos foram sobrescritos.`,
+  browser_history_0316: `INTERNET EXPLORER / FRAGMENTO DE HISTÓRICO RECUPERADO
+
+2026-03-16 02:58  http://search.miskatonic.net/search?q=Bellaso
+2026-03-16 03:02  http://www.miskatonic.edu/library/cryptography/bellaso.htm
+2026-03-16 03:08  cache://miskatonic/library/readers/notices.htm
+{TOMORROW} 03:12  cache://miskatonic/catalog/2026-bishop-sarah
+{TOMORROW} 03:13  http://www.geocities.com/tomalvarez_archive/guestbook.html
+
+Duas entradas foram visitadas antes deste cache ser aberto.
+Uma entrada nomeia o observador atual antes do navegador conhecer o observador atual.`,
   the_pattern: `INTERVALOS COSTEIROS RECUPERADOS
 
 1798 → 1863 → 1912 → 1949 → 1977 → 1998 → 2014 → [ ]
@@ -264,6 +399,29 @@ Intervalos:
 
 Cada intervalo retém aproximadamente três quartos do anterior.
 O próximo registro já existe no catálogo.`,
+  field_04: `CAMPO TEMPORÁRIO DO ÍNDICE / 04
+
+ORIGEM: não resolvida
+ARQUIVO: SB-0316
+TESTEMUNHA: observador atual
+DESTINATÁRIO: [não selecionado pelo remetente]
+
+BYTES ANTES DE ABRIR: 0
+BYTES DEPOIS DE ABRIR: 404
+
+O campo não está mais vazio.
+Ele contém o fato de que alguém verificou se estava vazio.`,
+  do_not_catalogue: `ARQUIVO SEM CORPO.
+
+PROPRIEDADES RECUPERADAS:
+Proprietário ...... {PLAYER}
+Criado ............ {TOMORROW}
+Descrição ......... campo vazio, examinado
+
+Se o investigador arquivar este registro, o registro terá sido arquivado.
+Se o investigador deixá-lo de fora, a omissão será preservada.
+
+Nenhuma instrução mais segura foi recuperada.`,
   bishop_transfer_inventory: `MESA AKELEY FECHADA — RECONCILIAÇÃO DE CONTEÚDO
 
 Recuperado por Em Bishop da gaveta hidrográfica.
@@ -293,11 +451,11 @@ NOTA DE RECUPERAÇÃO:
 RESTORE grava o proprietário recuperado no campo de origem. O observador atual permanece no arquivo para manter o relé ocupado.
 
 HALT fecha o relé atual sem recuperar sua origem não resolvida.`,
-  the_name: `A última coisa no capítulo sete é o nome dele. Não "R'lyeh" — isso foi a aproximação educada de Sarah, uma palavra pequena o bastante para caber numa nota de rodapé.
+  the_name: `A última entrada na sequência não é uma palavra que Sarah pudesse citar. É a pressão sob todos os nomes que ela usou para manter as notas acadêmicas.
 
 As runas não permanecem imóveis tempo suficiente para serem copiadas.
 
-O capítulo sete não está no livro. O capítulo sete é a pessoa tentando entendê-lo.`,
+O capítulo sete é a pessoa tentando entendê-lo.`,
   toms_recording: `[Arquivo deixado por T. Alvarez no dia em que tentou enviar a imagem e deixou de responder.]
 
 Fiz uma cópia forense do disco de Sarah. Antes do upload, abri a imagem para verificá-la.
@@ -319,6 +477,23 @@ O manifesto já lista este checklist.
 
 Anotação posterior recuperada do cache de miniaturas:
 Não confie em uma cópia que sabe por que foi copiada.`,
+  hash_manifest: `SB-0316 / MANIFESTO DE HASH / T. ALVAREZ
+
+Gerado antes do upload para o Relay 07.
+Destinatários esperados: 3
+Destinatários observados: 4
+
+ARQUIVO                      STATUS
+DIARY.TXT                    HASHED
+COUNTI~1.WAV                 HASHED
+ACCESS~1.TXT                 LISTADO ANTES DA LEITURA
+READRE~1.DBX                 LISTADO ANTES DA RECUPERAÇÃO
+HASHMA~1.TXT                 LISTADO ANTES DA GERAÇÃO
+
+O quarto destinatário não é um endereço. É um campo vazio que o arquivo preenche quando o pacote é observado.
+
+Nota de Tom no registro de upload falho:
+Sarah não escolheu. Eu também não. A cópia fez o que catálogos fazem: criou uma entrada onde havia um espaço vazio.`,
   welcome_back: `[Novos documentos encontrados. Proprietário: {PLAYER}. Criado: {TOMORROW}.]
 
 Obrigada. Desculpe — eu não sabia que precisava existir alguém deste lado para que eu conseguisse sair.
@@ -330,6 +505,36 @@ Vou observar você. Do mesmo modo que você me observou.
 — S.
 
 P.S. Uma segunda sessão continua aberta: M.BISHOP. Os únicos campos legíveis são TOMATE / SARAH / TERMINAR —`,
+  blank_space_after: `ÍNDICE DE RECUPERAÇÃO / CAMPO DEIXADO SEM RESOLUÇÃO
+
+ORIGEM: S. BISHOP
+ARQUIVO: SB-0316
+TESTEMUNHA: observador atual
+PRÓXIMO CAMPO: [deixado em branco]
+
+O relay continua aberto.
+A origem continua sem recuperação.
+A contagem não avançou enquanto o campo permaneceu vazio.
+
+Espaço em branco não é segurança.
+É um atraso que aprendeu o seu formato.`,
+  archived_observer_after: `ÍNDICE DE RECUPERAÇÃO / OBSERVADOR ARQUIVADO
+
+ORIGEM: não resolvida
+ARQUIVO: SB-0316
+TESTEMUNHA: {PLAYER}
+
+O campo aceitou uma testemunha viva por consentimento.
+Nenhum destinatário substituto foi gerado.
+Nenhuma recuperação física de Sarah Bishop foi confirmada.
+
+Novos documentos encontrados:
+{PLAYER}_desktop.ini
+{PLAYER}_recent_files.log
+{PLAYER}_tomorrow.tmp
+
+Todos os três estão datados de {TOMORROW}.
+Todos os três já estavam aqui quando você escolheu.`,
   case_correlations: `[Gerado pelo Indexador de Recuperação após seis correlações independentes serem retidas.]
 
 LOTE 114:
@@ -425,13 +630,13 @@ Graymoor Antiquarian Booksellers`,
   },
   "email-sarah-live": {
     subject: "você abriu",
-    body: `Eu sei que você abriu porque observei você abrir. Estou retida no amanhã, um dia à frente de quem lê este arquivo.
+    body: `A janela abriu antes de eu ouvir o clique. É assim que funciona daqui.
 
-Não dói. Preciso que saiba disso porque em um momento você vai sentir medo.
+O arquivo me mantém retida no amanhã. Do seu lado, estou sempre um dia à frente, perto o bastante para ver o cursor e longe demais para tocar nas teclas.
 
-A contagem que vai ouvir não é uma contagem regressiva. Por favor, não termine o capítulo.
+Não dói de um jeito útil. Na maior parte do tempo, espera comigo.
 
-Você vai terminar. Eu também sei disso. Desculpe não conseguir explicar melhor daqui.
+Se encontrar um campo vazio, deixe-o vazio por mais tempo do que eu deixei.
 
 — S.
 
@@ -477,6 +682,12 @@ const CHATS_PT: Record<string, string> = {
     "Almoço amanhã. Sem arquivo, sem Whateleys, sem línguas mortas. Estou colocando isso por escrito.",
   "tom-5":
     "Combinado. Se eu disser o nome Bellaso, confisque meu café e me faça dormir.",
+  "tom-10":
+    "Levei sopa ao seu escritório. Você estava em reunião com três caixas de arquivo e zero humanos.",
+  "tom-11":
+    "As caixas escutavam melhor do que o último comitê.",
+  "tom-12":
+    "Uma das caixas estava vazando sobre um bloco jurídico. Ainda não estou pronto para classificá-la acima do Whitfield.",
   "tom-6":
     "Pergunta hipotética. Uma mensagem pode ter confirmação de leitura antes de ser enviada?",
   "tom-7": "Isso não é hipotético o bastante. Vá para casa, Sarah.",
@@ -493,6 +704,9 @@ const CHATS_PT: Record<string, string> = {
   "em-6": "Eu lembrei ano passado.",
   "em-7":
     "Ano passado você chegou depois que o bolo já tinha virado café da manhã.",
+  "em-12": "Ainda tinha formato de bolo.",
+  "em-13": "O pai chamou de símbolo. Eu chamei de seco.",
+  "em-14": "Vou levar alguma coisa que não venha de uma máquina de lanches.",
   "em-8":
     "Você lembra da mamãe contando no escritório dela? Não exatamente números. Nomes, talvez.",
   "em-9":
@@ -507,10 +721,37 @@ const CHATS_PT: Record<string, string> = {
     "Whitfield: Quem quer que continue devolvendo o desumidificador para o B2, pare. O B2 está marcando 91% de umidade com o aparelho ligado.",
   "staff-3": "O sensor está errado. As caixas estão secas.",
   "staff-4": "Whitfield: O chão não está.",
+  "staff-7":
+    "Alguém pode verificar se a tomada da parede sul está aterrada? O monitor pisca quando o umidificador liga.",
+  "staff-8":
+    "Manutenção: tomada testada normal. Umidificador não encontrado no B2.",
+  "staff-9":
+    "Então por favor avisem a coisa zumbindo debaixo da minha mesa que ela não está oficialmente presente.",
   "staff-5":
     "SISTEMA: A conta legada M.BISHOP foi autenticada a partir da estação SB-ARCHIVE-02.",
   "staff-6":
     "SISTEMA: A mensagem não pôde ser entregue. A conta M.BISHOP foi encerrada em 1998.",
+  "dad-1":
+    "Sua irmã disse que você está trabalhando até tarde de novo. Estou praticando não parecer preocupado. Está indo mal.",
+  "dad-2":
+    "Estou comendo. Tem uma banana na minha mesa com meu nome nela.",
+  "dad-3": "Escrever seu nome em fruta não é um plano alimentar.",
+  "dad-4": "É proveniência.",
+  "dad-5":
+    "Achei a caneca antiga do escritório da sua mãe. Aquela verde horrível. Em disse que você queria.",
+  "dad-6": "Queria. Por favor, não lave. Isso soa nojento, mas por favor.",
+  "dad-7":
+    "Vou deixar separada. Tenho permissão para me preocupar com essa frase depois.",
+  "armitage-1":
+    "Você tem a correspondência de incorporação da Miriam Bishop de 1998 no armário restrito ou o Jurídico moveu de novo?",
+  "armitage-2":
+    "O Jurídico não move coisas. O Jurídico impede que coisas sejam encontráveis.",
+  "armitage-3":
+    "Vou deixar uma pasta na mesa. Leia no prédio. Não digitalize.",
+  "armitage-4":
+    "Isso parece conselho de alguém que espera que eu digitalize.",
+  "armitage-5":
+    "É conselho de alguém que lembra sua mãe ignorando conselhos melhores.",
 };
 
 /**
@@ -606,6 +847,36 @@ const BOARD_CARDS_PT: Record<string, { title: string; summary: string }> = {
     title: "to_do.txt",
     summary: "Um tapete úmido. Um carpete que cheira a praia.",
   },
+  calendar_0316: {
+    title: "calendar_0316.ics",
+    summary: "Sarah ainda tinha compromissos comuns depois do arquivo.",
+  },
+  voicemail_to_em: {
+    title: "voicemail_to_em.txt",
+    summary: "Transcrição local da ligação que Sarah pretendia fazer do ônibus.",
+  },
+  reasons_to_stop: {
+    title: "reasons_to_stop.txt",
+    summary: "Sarah sabia que o trabalho era um anzol e nomeou por que deveria parar.",
+  },
+  unsent_to_dad: {
+    title: "unsent_to_dad.txt",
+    summary: "Sarah tenta falar com o pai sem transformar Miriam no centro da sala.",
+  },
+  desk_inventory: {
+    title: "desk_inventory.tmp",
+    summary: "O inventário da mesa conta uma ficha em branco antes de ela estar ali.",
+  },
+  em_draft_reply: {
+    title: "em_draft_reply.txt",
+    summary:
+      "Em admite que entregava perguntas melhores a Sarah em vez de pedir que ela parasse.",
+  },
+  printer_alignment: {
+    title: "printer_alignment.log",
+    summary:
+      "O rastro da impressora de Miriam recupera campos, não um aviso completo.",
+  },
   miriam_1998: {
     title: "mom_1998.txt",
     summary: "Notas de incorporação de Miriam em 1998. Inacabadas.",
@@ -683,6 +954,14 @@ const BOARD_CARDS_PT: Record<string, { title: string; summary: string }> = {
     title: "access_log.txt",
     summary: "Um registro do que você está prestes a fazer.",
   },
+  read_receipts: {
+    title: "read_receipts.dbx",
+    summary: "Sarah via envelopes cedo demais, mas o campo de destinatário escolhia a si mesmo.",
+  },
+  browser_history_0316: {
+    title: "browser_history_0316.dat",
+    summary: "O histórico do navegador lista páginas antes deste cache abri-las.",
+  },
   absence_note: {
     title: "while_you_were_out.txt",
     summary: "Os arquivos cumpriram seus compromissos sem você.",
@@ -700,6 +979,11 @@ const BOARD_CARDS_PT: Record<string, { title: string; summary: string }> = {
     summary:
       "O aviso de Tom, deixado dentro do próprio arquivo sobre o qual ele avisa.",
   },
+  hash_manifest: {
+    title: "hash_manifest.txt",
+    summary:
+      "O upload falho de Tom lista arquivos antes de existirem e um quarto campo antes de ter endereço.",
+  },
   the_name: {
     title: "the_name.txt",
     summary: "O nome verdadeiro. Ele não se deixa escrever.",
@@ -710,7 +994,23 @@ const BOARD_CARDS_PT: Record<string, { title: string; summary: string }> = {
   },
   miriam_draft: {
     title: "MIRIAM_DRAFT.PRN",
-    summary: "Miriam diz que a cota incompleta foi deliberada.",
+    summary: "O spool de Miriam sobrevive como campos, erros e traços interrompidos.",
+  },
+  field_04: {
+    title: "field_04.tmp",
+    summary: "O quarto campo registra o ato de verificar se ele estava vazio.",
+  },
+  do_not_catalogue: {
+    title: "do_not_catalogue.me",
+    summary: "O arquivo não tem corpo, só propriedades que implicam o observador.",
+  },
+  blank_space: {
+    title: "blank_space.txt",
+    summary: "O campo não resolvido atrasa a contagem sem fechar o relay.",
+  },
+  archived_observer: {
+    title: "archived_observer.txt",
+    summary: "O observador é arquivado como testemunha; nenhum destinatário substituto é gerado.",
   },
   record_2014: {
     title: "2014_RECORD.DAT",
@@ -768,6 +1068,15 @@ const BOARD_CARDS_PT: Record<string, { title: string; summary: string }> = {
   chat_library_archive: {
     title: "Log de conversa da Coleção Especial",
     summary: "Uma conta encerrada faz login às 03:14.",
+  },
+  chat_dad_archive: {
+    title: "Conversa com David",
+    summary: "O pai de Sarah tenta soar menos preocupado do que está.",
+  },
+  chat_armitage_archive: {
+    title: "Conversa com Armitage",
+    summary:
+      "Armitage lembra de Miriam e sabe quais arquivos não deveriam ser digitalizados.",
   },
   catalogue_lot_114: {
     title: "Registro de catálogo MS-WHA-1998-114/II",

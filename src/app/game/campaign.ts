@@ -403,6 +403,17 @@ export const HYPOTHESES: Record<
         "Refutada: várias famílias conheciam o padrão, mas a cadeia de custódia aponta para o próprio catálogo.",
     },
   },
+  sarah_chose_observer: {
+    title: {
+      en: "Sarah chose the next observer",
+      "pt-BR": "Sarah escolheu o próximo observador",
+    },
+    truth: {
+      en: "Refuted: Sarah could see receipts arriving early, but Tom's manifest shows the copy created a recipient before any person chose one.",
+      "pt-BR":
+        "Refutada: Sarah via confirmações chegarem cedo demais, mas o manifesto de Tom mostra que a cópia criou um destinatário antes de qualquer pessoa escolher um.",
+    },
+  },
 };
 
 export const INSIGHT_LABELS: Record<InsightId, LocalizedCopy> = {

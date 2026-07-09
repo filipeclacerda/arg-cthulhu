@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import { isUnlocked, UnlockCondition } from "../data/filesystem";
 import {
   createInitialProgress,
+  currentChapter,
+  progressChapterSnapshot,
   puzzleCorruptionStage,
   PUZZLE_IDS,
 } from "./progress";
@@ -76,6 +78,35 @@ describe("ARG progression reducer", () => {
       puzzleId: "lineage",
     }).state;
     expect(puzzleCorruptionStage(state.puzzles)).toBe(2);
+  });
+
+  it("derives soft-gated chapters from existing progress", () => {
+    let state = createInitialProgress(1_700_000_000_000, "chapters");
+    const chapterOf = () => currentChapter(progressChapterSnapshot(state));
+
+    expect(chapterOf()).toBe("chapter_1");
+    expect(
+      isUnlocked(
+        { type: "chapter", chapterId: "chapter_2" },
+        { flags: state.flags, discoveredEvidenceIds: state.discoveredEvidenceIds, solvedPuzzleIds: [] }
+      )
+    ).toBe(false);
+
+    state = reduceGameEvent(state, { type: "SOLVE_PUZZLE", puzzleId: "lot_114" }).state;
+    expect(chapterOf()).toBe("chapter_2");
+
+    state = reduceGameEvent(state, { type: "SUBMIT_CASE_ANSWER", questionId: "sarah_intent", slotSelections: { time: "time-six-thirty", intent: "intent-go-home" }, evidenceIds: ["chat_em_archive", "todo"] }).state;
+    state = reduceGameEvent(state, { type: "SUBMIT_CASE_ANSWER", questionId: "locked_room_source", slotSelections: { place: "place-under-workstation", object: "object-pipe" }, evidenceIds: ["incident_report", "maintenance_record"] }).state;
+    expect(chapterOf()).toBe("chapter_3");
+
+    state = reduceGameEvent(state, { type: "SOLVE_PUZZLE", puzzleId: "counting_audio" }).state;
+    expect(chapterOf()).toBe("chapter_4");
+
+    state = reduceGameEvent(state, { type: "SOLVE_PUZZLE", puzzleId: "lineage" }).state;
+    expect(chapterOf()).toBe("chapter_5");
+
+    state = reduceGameEvent(state, { type: "SOLVE_PUZZLE", puzzleId: "index_name" }).state;
+    expect(chapterOf()).toBe("chapter_6");
   });
 
   it("resets only the future-log sequence after a recognized wrong action", () => {
@@ -391,6 +422,97 @@ describe("ARG progression reducer", () => {
     });
     expect(result.commandAccepted).toBe(true);
     expect(result.state.flags.secret_ending_available).toBe(true);
+  });
+
+  it("supports the expanded ending set without regressing the original endings", () => {
+    let state = retainObserverFindings(solveThroughFutureLog());
+    state = ["E7", "A1", "C4", "B9"].reduce(
+      (acc, reference) =>
+        reduceGameEvent(acc, { type: "COLLECT_REFERENCE", reference }).state,
+      state
+    );
+    state = reduceGameEvent(state, {
+      type: "RUN_COMMAND",
+      command: "INDEX /JOIN E7-A1-C4-B9",
+    }).state;
+
+    const restore = reduceGameEvent(state, {
+      type: "CHOOSE_ENDING",
+      ending: "restore",
+    }).state;
+    expect(restore.ending).toBe("restore");
+    expect(restore.flags.ending_restore).toBe(true);
+
+    const shutdown = reduceGameEvent(state, {
+      type: "CHOOSE_ENDING",
+      ending: "shutdown",
+    }).state;
+    expect(shutdown.ending).toBe("shutdown");
+    expect(shutdown.flags.ending_shutdown).toBe(true);
+
+    const leaveBlank = reduceGameEvent(state, {
+      type: "CHOOSE_ENDING",
+      ending: "leave_blank",
+    }).state;
+    expect(leaveBlank.ending).toBe("leave_blank");
+    expect(leaveBlank.flags.ending_leave_blank).toBe(true);
+    expect(leaveBlank.narrativeBeatsSeen).toContain("blank_left");
+  });
+
+  it("gates archive yourself behind secret containment, hash manifest and Sarah's break answer", () => {
+    let state = retainObserverFindings(solveThroughFutureLog());
+    state = reduceGameEvent(state, {
+      type: "SOLVE_PUZZLE",
+      puzzleId: "index_name",
+    }).state;
+    const theorySets = [
+      ["miriam_1998", "diary", "lot_114_order"],
+      ["person-miriam", "person-sarah", "lineage_pattern"],
+      ["person-sarah", "person-tom", "future_access_log"],
+      ["incident_report", "maintenance_record", "whitfield_memo"],
+      ["miriam_1998", "miriam_letter_1998", "miriam_notebook"],
+      ["future_access_log", "index_help", "record_2014"],
+    ];
+    for (const evidenceIds of theorySets) {
+      state = reduceGameEvent(state, {
+        type: "TEST_THEORY",
+        evidenceIds,
+      }).state;
+    }
+    state = reduceGameEvent(state, {
+      type: "RUN_COMMAND",
+      command: "INDEX /SEAL RELAY-07 /WITNESS ARCHIVE",
+    }).state;
+
+    const missingManifest = reduceGameEvent(state, {
+      type: "CHOOSE_ENDING",
+      ending: "archive_self",
+    }).state;
+    expect(missingManifest).toBe(state);
+
+    state = reduceGameEvent(state, {
+      type: "DISCOVER_EVIDENCE",
+      evidenceId: "hash_manifest",
+      resourceId: "hash_manifest",
+    }).state;
+    const missingBreak = reduceGameEvent(state, {
+      type: "CHOOSE_ENDING",
+      ending: "archive_self",
+    }).state;
+    expect(missingBreak).toBe(state);
+
+    state = reduceGameEvent(state, {
+      type: "RECORD_CHOICE",
+      choiceId: "sarah_live_question",
+      optionId: "break",
+    }).state;
+    const accepted = reduceGameEvent(state, {
+      type: "CHOOSE_ENDING",
+      ending: "archive_self",
+    }).state;
+    expect(accepted.ending).toBe("archive_self");
+    expect(accepted.flags.ending_archive_self).toBe(true);
+    expect(accepted.worldReactionsSeen).toContain("observer_filed");
   });
 });
 

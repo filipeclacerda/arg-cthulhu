@@ -60,17 +60,106 @@
       background: #f4ead0;
       box-shadow: inset 1px 1px #fff, inset -1px -1px #6e6a57;
     }
+
+    &.locked,
+    &:disabled {
+      cursor: not-allowed;
+      color: rgba(238, 247, 255, 0.42);
+      border-color: rgba(141, 174, 192, 0.42);
+      background: rgba(47, 56, 64, 0.32);
+      box-shadow: none;
+    }
   }
 }
 
 .casefile__toolbar {
+  min-height: 48px;
   flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+
+  > label {
+    flex: 0 1 260px;
+    min-width: 220px;
+  }
+
+  input[type="search"] {
+    width: min(100%, 180px);
+  }
 }
 
 .casefile__tools {
-  position: relative;
+  min-width: 0;
+  flex: 1 1 520px;
+  display: flex;
+  align-items: center;
+  gap: 8px 10px;
+  padding: 3px 5px;
+  border: 1px solid #9a9a9a;
+  box-shadow: inset 1px 1px #fff, inset -1px -1px #808080;
+  background: #c8c8c8;
   font: 11px Tahoma, Arial, sans-serif;
 
+  label {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+  }
+
+  select {
+    width: 135px;
+    min-height: 22px;
+    font: 11px Tahoma, Arial, sans-serif;
+  }
+}
+
+.casefile__tools-title {
+  flex: 0 0 auto;
+  height: 24px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0 10px;
+  border: 2px outset #efefef;
+  background: #d7d7d7;
+  white-space: nowrap;
+}
+
+.casefile__checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+
+  input {
+    width: 13px;
+    height: 13px;
+    min-height: 0;
+    flex: 0 0 auto;
+    padding: 0;
+  }
+}
+
+.casefile__tools .evidence-board__reset {
+  margin-left: auto;
+}
+
+@media (max-width: 760px) {
+  .casefile__toolbar > label,
+  .casefile__tools {
+    flex-basis: 100%;
+  }
+
+  .casefile__tools {
+    align-items: flex-start;
+  }
+
+  .casefile__tools .evidence-board__reset {
+    margin-left: 0;
+  }
+}
+
+details.casefile__tools {
   summary {
     height: 24px;
     display: inline-grid;
@@ -94,12 +183,6 @@
     margin-left: 5px;
     font: 11px Tahoma, Arial, sans-serif;
   }
-}
-
-.casefile__checkbox {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
 }
 
 .casefile__workspace {

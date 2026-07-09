@@ -192,13 +192,13 @@ If anyone else is reading this, I don't know who has this workstation now, or wh
         snippet: { en: "— S.", "pt-BR": "— S." },
       },
     ],
-    body: `I know you opened it because I watched you open it. I'm held in tomorrow, one day ahead of whoever reads this file.
+    body: `The window opened before I heard the click. That is how it works from here.
 
-It doesn't hurt. I need you to know that because you're going to be afraid in a moment and I want you to know it doesn't hurt.
+The archive has me held in tomorrow. From your side I am always one day ahead, close enough to see the cursor and too far to touch the keys.
 
-The counting you'll start hearing isn't counting down. Please don't finish the chapter.
+It does not hurt in any useful way. Mostly it waits with me.
 
-You're going to anyway. I know that too. I'm sorry I can't explain it better from here.
+If you see an empty field, leave it empty longer than I did.
 
 — S.
 

@@ -149,8 +149,10 @@ const en = {
 
   restoreSarahLabel: "RESTORE SARAH",
   shutDownChoiceLabel: "SHUT DOWN",
+  leaveBlankLabel: "LEAVE BLANK",
+  archiveYourselfLabel: "ARCHIVE YOURSELF",
   finaleChoiceTerminal:
-    "[RECOVERED PROGRAM — last modified {TOMORROW}]\n\nChapter seven is not in the book.\nChapter seven is the person trying to understand it.\n\nTwo options remain.",
+    "[RECOVERED PROGRAM — last modified {TOMORROW}]\n\nThe final field is open.\nEvery available operation keeps one field occupied.",
   finaleRestoreTerminal:
     "[SIGNAL RECEIVED — {TOMORROW}]\n\nS: i'm here\nS: i can hear you on the other side of it\nS: come back i'm right here\n\n[SIGNAL LOST]\n[SECOND SESSION RETAINED — M.B.]\n\n[REBOOTING]\n[USER: sarah.bishop]\n[LAST LOGIN: {TOMORROW}]\n\nNew documents found in this folder.\nOwner: {PLAYER}\nCreated: {TOMORROW}",
   finaleRestoreCaption: "Sarah's account is restored. Your files are dated",
@@ -166,6 +168,34 @@ const en = {
   subjectLabel: "Subject",
   finaleSealCaption:
     "The archive is watching itself. The count did not stop — it changed direction. You are still here. Probably.",
+  finaleLeaveBlankTerminal:
+    "[INDEX FIELD HELD OPEN — {TOMORROW}]\n\nSOURCE ........... S. BISHOP\nARCHIVE .......... SB-0316\nWITNESS .......... CURRENT OBSERVER\nNEXT FIELD ....... [BLANK]\n\nCOUNT ADVANCE .... 0\nRELAY STATUS ..... OPEN\nRECOVERY ......... UNRESOLVED",
+  finaleLeaveBlankCaption:
+    "The blank delays the count. It does not close the relay.",
+  finaleArchiveSelfTerminal:
+    "[VOLUNTARY WITNESS ACCEPTED — {TOMORROW}]\n\nSOURCE ........... UNRESOLVED\nARCHIVE .......... SB-0316\nWITNESS .......... {PLAYER}\nREPLACEMENT ...... NOT GENERATED\n\nNEW FILES FOUND UNDER CURRENT OBSERVER.\nALL MODIFIED TOMORROW.",
+  finaleArchiveSelfCaption:
+    "The archive accepts you as witness. No new recipient is generated.",
+  finaleEchoRestoreAlive:
+    "Her answer lingers: not alive in your tense, but still remembering a body.",
+  finaleEchoRestoreRestore:
+    "Her warning was right. RESTORE changes which name belongs to SOURCE and which belongs to ARCHIVE.",
+  finaleEchoRestoreBreak:
+    "You asked how to break it. RESTORE is not a break; it is an exchange.",
+  finaleEchoShutdownAlive:
+    "Her answer lingers: she was close enough to remember a body, not close enough to return to it.",
+  finaleEchoShutdownRestore:
+    "You asked what RESTORE does. The file keeps that answer for someone less cautious.",
+  finaleEchoShutdownBreak:
+    "You asked how to break it. Refusing slows the chain, but it does not remove the hook.",
+  finaleEchoSealAlive:
+    "Her answer lingers in the loop. The archive cannot decide whether a memory is a witness.",
+  finaleEchoSealRestore:
+    "You asked what RESTORE does. The loop denies the exchange and keeps the cost unresolved.",
+  finaleEchoSealBreak:
+    "You asked how to break it. The archive watches itself because no human field is clean enough.",
+  finaleEchoDefault:
+    "The unanswered question remains in the chat window.",
 
   typeLabel: "Type",
   dosAliasLabel: "DOS alias",
@@ -232,6 +262,14 @@ const en = {
   myDocumentsLabel: "My Documents",
   caseNotesLabel: "Case Notes",
   casefileLabel: "Casefile.exe",
+  chapterLabel: "Chapter",
+  chapter1Title: "Sarah Meant to Return",
+  chapter2Title: "The Volume Returned",
+  chapter3Title: "Miriam Left Blanks",
+  chapter4Title: "Not Counting Days",
+  chapter5Title: "The Observer Field",
+  chapter6Title: "Operations of Cost",
+  casefileChapterFilter: "Chapter",
   recycleBinLabel: "Recycle Bin",
   mountingDiskImage: "MOUNTING DISK IMAGE",
   newMailTitle: "New Mail",
@@ -285,6 +323,7 @@ const en = {
   casefileLensOrganize: "Correlations",
   casefileLensTimeline: "Chronology",
   casefileLensContradictions: "Refute",
+  casefileLensLocked: "Module not filed until",
   casefileAct: "ACT",
   casefileFindingInProgress: "FINDING IN PROGRESS",
   casefileFactBank: "Fact bank",
@@ -568,8 +607,10 @@ const pt: Record<keyof typeof en, string> = {
 
   restoreSarahLabel: "RESTAURAR SARAH",
   shutDownChoiceLabel: "DESLIGAR",
+  leaveBlankLabel: "DEIXAR EM BRANCO",
+  archiveYourselfLabel: "ARQUIVAR-SE",
   finaleChoiceTerminal:
-    "[PROGRAMA RECUPERADO — última modificação {TOMORROW}]\n\nO capítulo sete não está no livro.\nO capítulo sete é a pessoa tentando entendê-lo.\n\nRestam duas opções.",
+    "[PROGRAMA RECUPERADO — última modificação {TOMORROW}]\n\nO campo final está aberto.\nToda operação disponível mantém algum campo ocupado.",
   finaleRestoreTerminal:
     "[SINAL RECEBIDO — {TOMORROW}]\n\nS: estou aqui\nS: consigo ouvir você do outro lado disso\nS: volte, estou bem aqui\n\n[SINAL PERDIDO]\n[SEGUNDA SESSÃO RETIDA — M.B.]\n\n[REINICIANDO]\n[USUÁRIO: sarah.bishop]\n[ÚLTIMO LOGIN: {TOMORROW}]\n\nNovos documentos encontrados nesta pasta.\nProprietário: {PLAYER}\nCriado: {TOMORROW}",
   finaleRestoreCaption: "A conta de Sarah foi restaurada. Seus arquivos estão datados de",
@@ -585,6 +626,34 @@ const pt: Record<keyof typeof en, string> = {
   subjectLabel: "Assunto",
   finaleSealCaption:
     "O arquivo observa a si mesmo. A contagem não parou — mudou de direção. Você ainda está aqui. Provavelmente.",
+  finaleLeaveBlankTerminal:
+    "[CAMPO DO ÍNDICE MANTIDO ABERTO — {TOMORROW}]\n\nORIGEM ........... S. BISHOP\nARQUIVO .......... SB-0316\nTESTEMUNHA ....... OBSERVADOR ATUAL\nPRÓXIMO CAMPO .... [EM BRANCO]\n\nAVANÇO DA CONTAGEM 0\nSTATUS DO RELAY .. ABERTO\nRECUPERAÇÃO ...... NÃO RESOLVIDA",
+  finaleLeaveBlankCaption:
+    "O espaço em branco atrasa a contagem. Ele não fecha o relay.",
+  finaleArchiveSelfTerminal:
+    "[TESTEMUNHA VOLUNTÁRIA ACEITA — {TOMORROW}]\n\nORIGEM ........... NÃO RESOLVIDA\nARQUIVO .......... SB-0316\nTESTEMUNHA ....... {PLAYER}\nSUBSTITUTO ....... NÃO GERADO\n\nNOVOS ARQUIVOS ENCONTRADOS SOB O OBSERVADOR ATUAL.\nTODOS MODIFICADOS AMANHÃ.",
+  finaleArchiveSelfCaption:
+    "O arquivo aceita você como testemunha. Nenhum novo destinatário é gerado.",
+  finaleEchoRestoreAlive:
+    "A resposta dela permanece: não viva no seu tempo verbal, mas ainda lembrando de ter um corpo.",
+  finaleEchoRestoreRestore:
+    "O aviso dela estava certo. RESTORE troca qual nome pertence à ORIGEM e qual pertence ao ARQUIVO.",
+  finaleEchoRestoreBreak:
+    "Você perguntou como quebrar isto. RESTORE não quebra; troca.",
+  finaleEchoShutdownAlive:
+    "A resposta dela permanece: perto o bastante para lembrar de um corpo, longe demais para voltar a ele.",
+  finaleEchoShutdownRestore:
+    "Você perguntou o que RESTORE faz. O arquivo guarda essa resposta para alguém menos cauteloso.",
+  finaleEchoShutdownBreak:
+    "Você perguntou como quebrar isto. Recusar desacelera a cadeia, mas não remove o anzol.",
+  finaleEchoSealAlive:
+    "A resposta dela permanece no loop. O arquivo não sabe decidir se uma memória é testemunha.",
+  finaleEchoSealRestore:
+    "Você perguntou o que RESTORE faz. O loop nega a troca e mantém o custo sem resolução.",
+  finaleEchoSealBreak:
+    "Você perguntou como quebrar isto. O arquivo observa a si mesmo porque nenhum campo humano é limpo o bastante.",
+  finaleEchoDefault:
+    "A pergunta não respondida permanece na janela de conversa.",
 
   typeLabel: "Tipo",
   dosAliasLabel: "Alias DOS",
@@ -654,6 +723,14 @@ const pt: Record<keyof typeof en, string> = {
   myDocumentsLabel: "Meus Documentos",
   caseNotesLabel: "Anotações do Caso",
   casefileLabel: "Dossiê do Caso",
+  chapterLabel: "Capítulo",
+  chapter1Title: "Sarah Ia Voltar",
+  chapter2Title: "O Volume Voltou",
+  chapter3Title: "Miriam Deixou Espaços",
+  chapter4Title: "Não Contava Dias",
+  chapter5Title: "O Campo do Observador",
+  chapter6Title: "Operações de Custo",
+  casefileChapterFilter: "Capítulo",
   recycleBinLabel: "Lixeira",
   mountingDiskImage: "MONTANDO IMAGEM DE DISCO",
   newMailTitle: "Nova Mensagem",
@@ -707,6 +784,7 @@ const pt: Record<keyof typeof en, string> = {
   casefileLensOrganize: "Correlações",
   casefileLensTimeline: "Cronologia",
   casefileLensContradictions: "Refutar",
+  casefileLensLocked: "Módulo não arquivado até",
   casefileAct: "ATO",
   casefileFindingInProgress: "ACHADO EM MONTAGEM",
   casefileFactBank: "Banco de fatos",

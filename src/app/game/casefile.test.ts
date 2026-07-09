@@ -46,7 +46,7 @@ describe("casefile graph", () => {
   });
 
   it("keeps hypothesis refutation evidence explicit and two-source", () => {
-    expect(CASEFILE_HYPOTHESIS_CLAIMS).toHaveLength(3);
+    expect(CASEFILE_HYPOTHESIS_CLAIMS).toHaveLength(4);
     for (const claim of CASEFILE_HYPOTHESIS_CLAIMS) {
       expect(evidenceIdsForClaim(claim).length).toBeGreaterThanOrEqual(2);
       expect(HYPOTHESIS_EVIDENCE_REQUIREMENTS[claim.sourceId as keyof typeof HYPOTHESIS_EVIDENCE_REQUIREMENTS]).toEqual(

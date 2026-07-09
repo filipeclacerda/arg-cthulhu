@@ -1,10 +1,11 @@
-import { PuzzleId } from "../game/progress";
+import { ChapterId, PuzzleId, chapterUnlocked } from "../game/progress";
 import { ClueMarker } from "../game/campaign";
 
 export type UnlockCondition =
   | { type: "always" }
   | { type: "flag"; flag: string }
   | { type: "puzzleSolved"; puzzleId: PuzzleId }
+  | { type: "chapter"; chapterId: ChapterId }
   | { type: "evidenceOpened"; evidenceId: string }
   | { type: "allOf"; conditions: UnlockCondition[] }
   | { type: "anyOf"; conditions: UnlockCondition[] };
@@ -79,6 +80,8 @@ export function isUnlocked(
       return Boolean(context.flags[condition.flag]);
     case "puzzleSolved":
       return Boolean(context.solvedPuzzleIds?.includes(condition.puzzleId));
+    case "chapter":
+      return chapterUnlocked(context, condition.chapterId);
     case "evidenceOpened":
       return Boolean(
         context.discoveredEvidenceIds?.includes(condition.evidenceId)
@@ -578,7 +581,7 @@ Feb 24 — Em called. I let it go to voicemail again and I hate that I did. She 
 
 March 2 — Acquired the second volume today. The bookseller wouldn't meet my eyes when he handed it over. Said the previous owner "stopped coming around." I didn't ask what that meant. This is the volume Mom listed in her '98 notes — the one nobody could ever find. I'm using her old machine to cross-check her files. It still smells like her office. The estate had my name and address on file before I ever inquired — someone made sure it came back to a Bishop.
 
-March 9 — The cross-references check out. Three separate sources, three different centuries, the same coastline. Innsmouth isn't the only one. R'lyeh isn't a metaphor.
+March 9 — The cross-references check out. Three separate sources, three different centuries, the same coastline. The old names are only labels people used when the real one would not fit. The shape beneath them is older than the map.
 
 March 14 — I haven't slept. Every time I close my eyes I hear it counting. Not words. Counting.
 
@@ -601,6 +604,179 @@ March 16 —`,
 - ask Em: did Mom count UP or DOWN? can't remember. it matters.
 - finish ch. 7 transcription
 - sleep`,
+  },
+  {
+    id: "calendar_0316",
+    name: "calendar_0316.ics",
+    folderId: "sarah",
+    kind: "text",
+    unlock: { type: "always" },
+    evidenceId: "calendar_0316",
+    alias: "CALEND~1.ICS",
+    content: `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Miskatonic Local Calendar//Recovered//EN
+
+BEGIN:VEVENT
+DTSTART:20260316T183000
+SUMMARY:leave archive / call Em from bus
+LOCATION:Route 7 stop, Orne Library
+STATUS:CONFIRMED
+END:VEVENT
+
+BEGIN:VEVENT
+DTSTART:20260317T090000
+SUMMARY:Special Collections 204 lecture
+DESCRIPTION:Bring cable. Do not use Lot 114 as example. Do not say "the catalogue is hungry" out loud.
+STATUS:CONFIRMED
+END:VEVENT
+
+BEGIN:VEVENT
+DTSTART:{TOMORROW}T031500
+SUMMARY:complete blank field
+LOCATION:SB-ARCHIVE-02
+STATUS:TENTATIVE
+END:VEVENT
+
+END:VCALENDAR`,
+  },
+  {
+    id: "voicemail_to_em",
+    name: "voicemail_to_em.txt",
+    folderId: "sarah",
+    kind: "text",
+    unlock: { type: "always" },
+    evidenceId: "voicemail_to_em",
+    alias: "VOICEM~1.TXT",
+    content: `VOICEMAIL TRANSCRIPT / unsent local draft
+Recipient: Em
+Created: 2026-03-16 17:42
+
+Hey. I'm leaving at six-thirty. If I forget to call, be annoying.
+
+I know you hate when I make Mom into a case file. I hate it too. I think I keep doing it because if the notes make sense, then maybe she didn't just choose the work over us.
+
+[background: office fan, one wet click]
+
+There it is again. Not counting down. Counting names.
+
+I'm still coming home. Save me the ugly mug.`,
+  },
+  {
+    id: "reasons_to_stop",
+    name: "reasons_to_stop.txt",
+    folderId: "work",
+    kind: "text",
+    unlock: { type: "always" },
+    evidenceId: "reasons_to_stop",
+    alias: "REASON~1.TXT",
+    content: `REASONS TO STOP
+
+1. Em is right.
+2. Dad knows the empty-chair voice and I am using it on him.
+3. Tom will help if I ask, which means I should not ask.
+4. Mom left blanks on purpose.
+5. The book answers the part of me that wants answers more than safety.
+
+REASONS I HAVEN'T
+
+1. If Mom was trying to warn me, stopping now turns the warning into a locked door.
+2. If Mom was trapped, then I have been calling grief "closure" for twenty-eight years.
+3. The catalogue keeps putting my name where hers used to be.
+
+Decision:
+Leave by 6:30. Bring the scans home? No. Do not bring it home.`,
+  },
+  {
+    id: "unsent_to_dad",
+    name: "unsent_to_dad.txt",
+    folderId: "sarah",
+    kind: "text",
+    unlock: { type: "chapter", chapterId: "chapter_1" },
+    evidenceId: "unsent_to_dad",
+    alias: "UNSENT~1.TXT",
+    content: `DRAFT / not sent
+To: Dad
+
+I found the green mug.
+
+I know this is a stupid thing to write instead of calling. I keep thinking if I say it out loud you will hear Mom in it before you hear me.
+
+I am angry at her. I miss her. I am scared that both feelings are the same door from different sides.
+
+If I bring the mug Sunday, please pretend it is normal that I kept it unwashed.
+
+If I do not bring it, make Em take it anyway.`,
+  },
+  {
+    id: "desk_inventory",
+    name: "desk_inventory.tmp",
+    folderId: "work",
+    kind: "text",
+    unlock: { type: "chapter", chapterId: "chapter_2" },
+    evidenceId: "desk_inventory",
+    alias: "DESKIN~1.TMP",
+    modified: "2026-03-16 18:02",
+    content: `SB-ARCHIVE-02 / TEMPORARY DESK INVENTORY
+
+coffee mug, green / inherited / unwashed
+banana, labelled SARAH / inedible by 2026-03-16
+legal pad / water damage lower edge
+Lot 114 receipt / folded twice
+reader card blanks / 4
+reader card blanks / 5
+
+Inventory warning:
+One blank card was counted before it was placed on the desk.
+
+Operator note:
+Do not catalogue loose blanks by hand.`,
+  },
+  {
+    id: "em_draft_reply",
+    name: "em_draft_reply.txt",
+    folderId: "sarah",
+    kind: "text",
+    unlock: { type: "chapter", chapterId: "chapter_3" },
+    evidenceId: "em_draft_reply",
+    alias: "EMDRAF~1.TXT",
+    content: `Recovered browser form draft / Em Bishop
+Not posted.
+
+Sarah,
+
+I told myself I wanted you to find out what happened to Mom because not knowing was eating you alive.
+
+That is only half true.
+
+The uglier half is that I wanted you to prove there was something to find, because if there was not, then Mom chose the work and left us with nothing but a chair.
+
+I am sorry I kept handing you better questions when what I meant was please stop.`,
+  },
+  {
+    id: "printer_alignment",
+    name: "printer_alignment.log",
+    folderId: "restricted",
+    kind: "text",
+    unlock: { type: "chapter", chapterId: "chapter_3" },
+    evidenceId: "printer_alignment",
+    alias: "PRNALI~1.LOG",
+    modified: "{TOMORROW} 03:08",
+    content: `HP LASERJET 4L / ALIGNMENT CAPTURE
+DEVICE: not attached
+DRIVER: retained from M.BISHOP profile
+
+TEST LINE A: THE QUICK BROWN FOX
+TEST LINE B: THE QUICK BROWN FOX
+TEST LINE C: THE QUICK BROWN [blank]
+
+LEGACY TRACE:
+RECIPIENT FIELD ...... R. ARMITAGE
+SHELFMARK FIELD ...... [blank]
+FINAL STROKE ANGLE ... MATCHES 1998 SAMPLE
+
+No complete sentence recovered.
+The printer did not print the warning. It printed the places where a warning would fit.`,
   },
   {
     id: "miriam",
@@ -850,6 +1026,48 @@ The office was empty when this was taken. The monitor was off. You are looking a
 The aliases are intact. The long filenames were overwritten.`,
   },
   {
+    id: "browser_history_0316",
+    name: "browser_history_0316.dat",
+    folderId: "downloads",
+    kind: "text",
+    unlock: { type: "chapter", chapterId: "chapter_4" },
+    evidenceId: "browser_history_0316",
+    alias: "BROWSER.DAT",
+    modified: "{TOMORROW} 03:12",
+    content: `INTERNET EXPLORER / RECOVERED HISTORY FRAGMENT
+
+2026-03-16 02:58  http://search.miskatonic.net/search?q=Bellaso
+2026-03-16 03:02  http://www.miskatonic.edu/library/cryptography/bellaso.htm
+2026-03-16 03:08  cache://miskatonic/library/readers/notices.htm
+{TOMORROW} 03:12  cache://miskatonic/catalog/2026-bishop-sarah
+{TOMORROW} 03:13  http://www.geocities.com/tomalvarez_archive/guestbook.html
+
+Two entries were visited before this cache was opened.
+One entry names the current observer before the browser knows the current observer.`,
+  },
+  {
+    id: "read_receipts",
+    name: "read_receipts.dbx",
+    folderId: "restricted",
+    kind: "text",
+    unlock: { type: "puzzleSolved", puzzleId: "lineage" },
+    evidenceId: "read_receipts",
+    alias: "READRE~1.DBX",
+    modified: "{TOMORROW} 03:11",
+    content: `OUTLOOK EXPRESS / READ RECEIPT INDEX
+
+2026-03-14 03:06  Tom Alvarez -> S. Bishop  RECEIPT ISSUED 00:02 BEFORE SEND
+2026-03-15 03:12  unknown -> S. Bishop       RECEIPT ISSUED 00:07 BEFORE DELIVERY
+2026-03-22 21:44  Tom Alvarez -> S. Bishop  RECEIPT ISSUED FROM TOMORROW FIELD
+{TOMORROW} 03:11  S. Bishop -> current      RECEIPT HELD / RECIPIENT GENERATED
+
+Local note recovered from Sarah's mailbox repair log:
+I can see the envelopes before they arrive. I cannot see who the file picks next.
+
+Repair status:
+DBX rebuilt. Sender choice not found.`,
+  },
+  {
     id: "while_you_were_out",
     name: "while_you_were_out.txt",
     folderId: "restricted",
@@ -894,6 +1112,49 @@ I thought there might be a second name hidden the same way. There isn't. I check
 (9,3) (6,5) (1,3) (3,2) (4,6) (7,1) (2,1) (8,4)
 
 I'm not writing down what it spells. If you already found the first name, you'll get there faster than I did.`,
+  },
+  {
+    id: "field_04",
+    name: "field_04.tmp",
+    folderId: "chapter-seven",
+    kind: "text",
+    unlock: { type: "chapter", chapterId: "chapter_5" },
+    evidenceId: "field_04",
+    alias: "FIELD4~1.TMP",
+    modified: "{TOMORROW} 03:15",
+    content: `INDEX TEMPORARY FIELD / 04
+
+SOURCE: unresolved
+ARCHIVE: SB-0316
+WITNESS: current observer
+RECIPIENT: [not selected by sender]
+
+BYTES BEFORE OPEN: 0
+BYTES AFTER OPEN: 404
+
+The field is not empty anymore.
+It contains the fact that someone checked whether it was empty.`,
+  },
+  {
+    id: "do_not_catalogue",
+    name: "do_not_catalogue.me",
+    folderId: "chapter-seven",
+    kind: "text",
+    unlock: { type: "chapter", chapterId: "chapter_5" },
+    evidenceId: "do_not_catalogue",
+    alias: "DONOTC~1.ME",
+    modified: "{TOMORROW} 03:15",
+    content: `FILE HAS NO BODY.
+
+PROPERTIES RECOVERED:
+Owner ............ {PLAYER}
+Created .......... {TOMORROW}
+Description ...... blank field, examined
+
+If the investigator files this record, the record will have been filed.
+If the investigator leaves it out, the omission will be preserved.
+
+No safer instruction was recovered.`,
   },
   {
     id: "toms_recording",
@@ -963,6 +1224,33 @@ Later annotation recovered from the thumbnail cache:
 Do not trust a copy that knows why it was copied.`,
   },
   {
+    id: "hash_manifest",
+    name: "hash_manifest.txt",
+    folderId: "downloads",
+    kind: "text",
+    unlock: { type: "evidenceOpened", evidenceId: "tom_upload_notes" },
+    evidenceId: "hash_manifest",
+    alias: "HASHMA~1.TXT",
+    modified: "{TOMORROW} 03:15",
+    content: `SB-0316 / HASH MANIFEST / T. ALVAREZ
+
+Generated before Relay 07 upload.
+Expected recipients: 3
+Observed recipients: 4
+
+FILE                         STATUS
+DIARY.TXT                    HASHED
+COUNTI~1.WAV                 HASHED
+ACCESS~1.TXT                 LISTED BEFORE READ
+READRE~1.DBX                 LISTED BEFORE RECOVERY
+HASHMA~1.TXT                 LISTED BEFORE GENERATION
+
+The fourth recipient is not an address. It is an empty field the archive fills when the package is observed.
+
+Tom's note in the failed upload record:
+Sarah didn't choose them. I didn't either. The copy did what catalogues do: it made an entry where there was a blank.`,
+  },
+  {
     id: "the_name",
     name: "the_name.txt",
     folderId: "chapter-seven",
@@ -982,11 +1270,11 @@ Do not trust a copy that knows why it was copied.`,
         },
       },
     ],
-    content: `The last thing in chapter seven is its name. Not "R'lyeh" — that was Sarah's polite approximation, a word small enough to fit in a footnote. This is the thing underneath it.
+    content: `The last entry in the sequence is not a word Sarah could cite. It is the pressure underneath every name she used to keep the notes academic.
 
 The runes will not hold still long enough to copy. Try to write the name below and see for yourself.
 
-Chapter seven is not in the book. Chapter seven is the person trying to understand it.`,
+Chapter seven is the person trying to understand it.`,
   },
   {
     id: "index_help",
@@ -1264,6 +1552,56 @@ I'll watch for you. The way you watched for me.
 P.S. A second session is still open: M.BISHOP. The only readable fields are TOMATO / SARAH / FINISH —`,
   },
   {
+    id: "blank_space_after",
+    name: "blank_space.txt",
+    folderId: "sarah",
+    kind: "text",
+    unlock: { type: "flag", flag: "ending_leave_blank" },
+    evidenceId: "blank_space",
+    alias: "BLANKS~1.TXT",
+    modified: "{TOMORROW} 03:16",
+    content: `RECOVERY INDEX / FIELD LEFT UNRESOLVED
+
+SOURCE: S. BISHOP
+ARCHIVE: SB-0316
+WITNESS: current observer
+NEXT FIELD: [left blank]
+
+The relay remains open.
+The source remains unrecovered.
+The count did not advance while the field stayed empty.
+
+Blank space is not safety.
+It is a delay that has learned your shape.`,
+  },
+  {
+    id: "archived_observer_after",
+    name: "archived_observer.txt",
+    folderId: "sarah",
+    kind: "text",
+    unlock: { type: "flag", flag: "ending_archive_self" },
+    evidenceId: "archived_observer",
+    alias: "ARCHIV~1.TXT",
+    modified: "{TOMORROW} 03:16",
+    content: `RECOVERY INDEX / OBSERVER FILED
+
+SOURCE: unresolved
+ARCHIVE: SB-0316
+WITNESS: {PLAYER}
+
+The field accepted a living witness by consent.
+No replacement recipient was generated.
+No physical recovery of Sarah Bishop was confirmed.
+
+New documents found:
+{PLAYER}_desktop.ini
+{PLAYER}_recent_files.log
+{PLAYER}_tomorrow.tmp
+
+All three are dated {TOMORROW}.
+All three were already here when you chose.`,
+  },
+  {
     id: "miriam_draft",
     name: "MIRIAM_DRAFT.PRN",
     folderId: "restricted",
@@ -1274,14 +1612,22 @@ P.S. A second session is still open: M.BISHOP. The only readable fields are TOMA
     modified: "{TOMORROW} 03:09",
     content: `[Recovered printer spool / author field M. BISHOP]
 
-Robert —
+JOB ID: 1998-09-03-0314 / replayed {TOMORROW} 03:09
+PRINTER: ORNE-B2-HP4L / disposed 2004
+PAGES EXPECTED: 1
+PAGES PRINTED: 0
 
-The missing volume is not missing. Missing is how it prevents the next entry from being made.
-I left the shelfmark incomplete because every complete description becomes an instruction.
+FIELDS RECOVERED:
+RECIPIENT: R. ARMITAGE
+SUBJECT: [blank shelfmark]
+LINE 01: MISSING = PREVENTS NEXT ENTRY
+LINE 02: COMPLETE DESCRIPTION = INSTRUCTION
+LINE 03: SARAH / TOMATO / LEAVE BLANK
+LINE 04: DO NOT MAKE THE WARNING INTO A MAP
 
-If Sarah ever finds this, tell her I was trying to leave one blank space that did not ask to be filled.
-
-[The print job is dated {TOMORROW}. The printer connected to this workstation was disposed of in 2004.]`,
+ERROR:
+PROSE CHANNEL REFUSED.
+FINAL STROKE INTERRUPTED AT SAME ANGLE AS 1998 SAMPLE.`,
   },
   {
     id: "record_2014",

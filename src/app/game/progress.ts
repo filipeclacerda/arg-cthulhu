@@ -9,7 +9,21 @@ export const PUZZLE_IDS = [
 ] as const;
 
 export type PuzzleId = (typeof PUZZLE_IDS)[number];
-export type EndingId = "restore" | "shutdown" | "seal";
+export const CHAPTER_IDS = [
+  "chapter_1",
+  "chapter_2",
+  "chapter_3",
+  "chapter_4",
+  "chapter_5",
+  "chapter_6",
+] as const;
+export type ChapterId = (typeof CHAPTER_IDS)[number];
+export type EndingId =
+  | "restore"
+  | "shutdown"
+  | "seal"
+  | "leave_blank"
+  | "archive_self";
 export type Locale = "en" | "pt-BR";
 export type LeadId =
   | "sarah_last_day"
@@ -30,7 +44,8 @@ export type CaseQuestionId =
 export type HypothesisId =
   | "tom_forged_image"
   | "sarah_fled"
-  | "innsmouth_theft";
+  | "innsmouth_theft"
+  | "sarah_chose_observer";
 export type NarrativeBeatId =
   | "relay_referrer_lost"
   | "act1_partial_recovery"
@@ -38,7 +53,9 @@ export type NarrativeBeatId =
   | "miriam_draft_printed"
   | "sarah_msn_live"
   | "observer_reconstructed"
-  | "relay_sealed";
+  | "relay_sealed"
+  | "blank_left"
+  | "observer_archived";
 export type WorldReactionId =
   | "printer_wake"
   | "monitor_condensation"
@@ -51,7 +68,9 @@ export type WorldReactionId =
   | "contact_typing"
   | "tom_page_changed"
   | "case_code_drift"
-  | "self_indexed";
+  | "self_indexed"
+  | "blank_space"
+  | "observer_filed";
 export type OptionalDiscoveryId =
   | "paint_doodles"
   | "dad_recipe"
@@ -60,7 +79,19 @@ export type OptionalDiscoveryId =
   | "library_humor"
   | "solitaire_save"
   | "tom_homepage"
-  | "containment_utility";
+  | "containment_utility"
+  | "calendar_0316"
+  | "voicemail_to_em"
+  | "reasons_to_stop"
+  | "read_receipts"
+  | "hash_manifest"
+  | "unsent_to_dad"
+  | "desk_inventory"
+  | "printer_alignment"
+  | "browser_history_0316"
+  | "em_draft_reply"
+  | "field_04"
+  | "do_not_catalogue";
 export type InsightId =
   | "second_volume"
   | "cataloguer_lineage"
@@ -340,6 +371,68 @@ export const puzzleCorruptionStage = (
   if (puzzles.palimpsest.solvedAt) return 1;
   return 0;
 };
+
+export interface ChapterProgressSnapshot {
+  flags: Record<string, boolean>;
+  discoveredEvidenceIds?: readonly string[];
+  solvedPuzzleIds?: readonly PuzzleId[];
+}
+
+const solved = (
+  snapshot: ChapterProgressSnapshot,
+  puzzleId: PuzzleId
+): boolean => Boolean(snapshot.solvedPuzzleIds?.includes(puzzleId));
+
+export const currentChapter = (
+  snapshot: ChapterProgressSnapshot
+): ChapterId => {
+  if (snapshot.flags.endgame_available || solved(snapshot, "index_name")) {
+    return "chapter_6";
+  }
+  if (
+    snapshot.flags.sarah_email_arrived ||
+    snapshot.flags.sarah_msn_live ||
+    solved(snapshot, "lineage")
+  ) {
+    return "chapter_5";
+  }
+  if (
+    snapshot.flags.act1_reconstruction_complete ||
+    solved(snapshot, "counting_audio")
+  ) {
+    return "chapter_4";
+  }
+  if (snapshot.flags.act1_recovered_partial) {
+    return "chapter_3";
+  }
+  if (
+    solved(snapshot, "lot_114") ||
+    Boolean(
+      snapshot.discoveredEvidenceIds?.some((id) =>
+        ["catalogue_lot_114", "miriam_1998", "lot_114_order"].includes(id)
+      )
+    )
+  ) {
+    return "chapter_2";
+  }
+  return "chapter_1";
+};
+
+export const chapterIndex = (chapterId: ChapterId): number =>
+  CHAPTER_IDS.indexOf(chapterId);
+
+export const chapterUnlocked = (
+  snapshot: ChapterProgressSnapshot,
+  chapterId: ChapterId
+): boolean => chapterIndex(currentChapter(snapshot)) >= chapterIndex(chapterId);
+
+export const progressChapterSnapshot = (
+  state: ProgressStateV3
+): ChapterProgressSnapshot => ({
+  flags: state.flags,
+  discoveredEvidenceIds: state.discoveredEvidenceIds,
+  solvedPuzzleIds: PUZZLE_ORDER.filter((id) => Boolean(state.puzzles[id].solvedAt)),
+});
 
 export const isPuzzleSolved = (
   state: ProgressStateV3,

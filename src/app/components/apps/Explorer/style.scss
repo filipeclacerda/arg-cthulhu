@@ -65,6 +65,19 @@
     font-size: calc(var(--ui-scale, 1) * 13px);
   }
 
+  .explorer-chapter {
+    max-width: calc(var(--ui-scale, 1) * 230px);
+    overflow: hidden;
+    padding: calc(var(--ui-scale, 1) * 3px) calc(var(--ui-scale, 1) * 7px);
+    border: 1px solid #808080;
+    box-shadow: inset 1px 1px #fff, inset -1px -1px #707070;
+    color: #00124a;
+    background: #efefdf;
+    font-size: calc(var(--ui-scale, 1) * 12px);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
   .explorer-address {
     display: flex;
     align-items: center;

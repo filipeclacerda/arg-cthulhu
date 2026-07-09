@@ -4,10 +4,17 @@ import { createPortal } from "react-dom";
 import { useProgress } from "@/app/context/ProgressContext";
 import { useSound } from "@/app/context/SoundContext";
 import { resolveTokens, formatGameDate, tomorrow } from "@/app/utils/narrative";
-import { useI18n } from "@/app/i18n";
+import { TranslationKey, useI18n } from "@/app/i18n";
 import "./style.scss";
 
-type FinaleState = "choice" | "restore" | "shutdown" | "seal";
+type FinaleState =
+  | "choice"
+  | "restore"
+  | "shutdown"
+  | "seal"
+  | "leave_blank"
+  | "archive_self";
+type EchoEnding = "restore" | "shutdown" | "seal";
 
 const Finale = () => {
   const { chooseEnding, playerName, hasFlag, state } = useProgress();
@@ -17,6 +24,26 @@ const Finale = () => {
 
   const ctx = { playerName };
   const tomorrowStr = formatGameDate(tomorrow());
+  const liveQuestion =
+    state.playerChoices.find((choice) => choice.choiceId === "sarah_live_question")
+      ?.optionId ?? "default";
+  const archiveSelfAvailable =
+    hasFlag("secret_ending_available") &&
+    state.discoveredEvidenceIds.includes("hash_manifest") &&
+    liveQuestion === "break";
+  const echoKey = (ending: EchoEnding): TranslationKey => {
+    const suffix =
+      liveQuestion === "alive"
+        ? "Alive"
+        : liveQuestion === "restore"
+          ? "Restore"
+          : liveQuestion === "break"
+            ? "Break"
+            : null;
+    return suffix
+      ? (`finaleEcho${ending[0].toUpperCase()}${ending.slice(1)}${suffix}` as TranslationKey)
+      : "finaleEchoDefault";
+  };
 
   const handleRestore = () => {
     chooseEnding("restore");
@@ -36,6 +63,18 @@ const Finale = () => {
     setScreen("seal");
   };
 
+  const handleLeaveBlank = () => {
+    chooseEnding("leave_blank");
+    play("glitch");
+    setScreen("leave_blank");
+  };
+
+  const handleArchiveSelf = () => {
+    chooseEnding("archive_self");
+    play("glitch");
+    setScreen("archive_self");
+  };
+
   if (screen === "restore") {
     return (
       <div className="finale finale--restore">
@@ -45,6 +84,7 @@ const Finale = () => {
         <p className="finale-caption">
           {t("finaleRestoreCaption")} {tomorrowStr}.
         </p>
+        <p className="finale-caption">{t(echoKey("restore"))}</p>
       </div>
     );
   }
@@ -75,6 +115,7 @@ const Finale = () => {
               <dd>{t("finaleShutdownInboxSubject")}</dd>
             </dl>
             <pre>{resolveTokens(t("finaleShutdownInboxBody"), ctx)}</pre>
+            <p>{t(echoKey("shutdown"))}</p>
           </article>
         </section>
       </div>
@@ -119,6 +160,29 @@ NO WRITE OPERATION WAS RECORDED.`}</pre>
         <p className="finale-caption">
           {t("finaleSealCaption")}
         </p>
+        <p className="finale-caption">{t(echoKey("seal"))}</p>
+      </div>
+    );
+  }
+
+  if (screen === "leave_blank") {
+    return (
+      <div className="finale finale--seal">
+        <div className="finale-terminal">
+          <pre>{resolveTokens(t("finaleLeaveBlankTerminal"), ctx)}</pre>
+        </div>
+        <p className="finale-caption">{t("finaleLeaveBlankCaption")}</p>
+      </div>
+    );
+  }
+
+  if (screen === "archive_self") {
+    return (
+      <div className="finale finale--seal">
+        <div className="finale-terminal">
+          <pre>{resolveTokens(t("finaleArchiveSelfTerminal"), ctx)}</pre>
+        </div>
+        <p className="finale-caption">{t("finaleArchiveSelfCaption")}</p>
       </div>
     );
   }
@@ -144,6 +208,13 @@ NO WRITE OPERATION WAS RECORDED.`}</pre>
         >
           {t("shutDownChoiceLabel")}
         </button>
+        <button
+          className="button btn-lg"
+          type="button"
+          onClick={handleLeaveBlank}
+        >
+          {t("leaveBlankLabel")}
+        </button>
         {hasFlag("secret_ending_available") && (
           <button
             className="button btn-lg finale-seal-button"
@@ -152,6 +223,16 @@ NO WRITE OPERATION WAS RECORDED.`}</pre>
             title={`${state.insightsUnlocked.length}/6 correlations retained`}
           >
             {locale === "pt-BR" ? "SELAR RELAY" : "SEAL RELAY"}
+          </button>
+        )}
+        {archiveSelfAvailable && (
+          <button
+            className="button btn-lg finale-seal-button"
+            type="button"
+            onClick={handleArchiveSelf}
+            title="hash_manifest + break reply retained"
+          >
+            {t("archiveYourselfLabel")}
           </button>
         )}
       </div>

@@ -111,6 +111,48 @@ export const EVIDENCE_CARDS: Record<string, BoardCard> = {
     category: "document",
     summary: "A damp rug. A carpet that smells like the beach.",
   },
+  calendar_0316: {
+    id: "calendar_0316",
+    title: "calendar_0316.ics",
+    category: "document",
+    summary: "Sarah still had ordinary appointments after the archive.",
+  },
+  voicemail_to_em: {
+    id: "voicemail_to_em",
+    title: "voicemail_to_em.txt",
+    category: "document",
+    summary: "A local transcript for the call Sarah meant to make from the bus.",
+  },
+  reasons_to_stop: {
+    id: "reasons_to_stop",
+    title: "reasons_to_stop.txt",
+    category: "document",
+    summary: "Sarah knew the work was a hook and kept naming why she should stop.",
+  },
+  unsent_to_dad: {
+    id: "unsent_to_dad",
+    title: "unsent_to_dad.txt",
+    category: "document",
+    summary: "Sarah tries to talk to her father without making Miriam the whole room.",
+  },
+  desk_inventory: {
+    id: "desk_inventory",
+    title: "desk_inventory.tmp",
+    category: "record",
+    summary: "The desk inventory counts one blank card before it is placed there.",
+  },
+  em_draft_reply: {
+    id: "em_draft_reply",
+    title: "em_draft_reply.txt",
+    category: "document",
+    summary: "Em admits she kept giving Sarah better questions instead of asking her to stop.",
+  },
+  printer_alignment: {
+    id: "printer_alignment",
+    title: "printer_alignment.log",
+    category: "record",
+    summary: "Miriam's printer trace recovers fields, not a complete warning.",
+  },
   miriam_1998: {
     id: "miriam_1998",
     title: "mom_1998.txt",
@@ -257,6 +299,18 @@ export const EVIDENCE_CARDS: Record<string, BoardCard> = {
     category: "document",
     summary: "A record of what you're about to do.",
   },
+  read_receipts: {
+    id: "read_receipts",
+    title: "read_receipts.dbx",
+    category: "record",
+    summary: "Sarah saw envelopes early, but the recipient field chose itself.",
+  },
+  browser_history_0316: {
+    id: "browser_history_0316",
+    title: "browser_history_0316.dat",
+    category: "record",
+    summary: "The browser history lists pages before this cache has opened them.",
+  },
   absence_note: {
     id: "absence_note",
     title: "while_you_were_out.txt",
@@ -294,6 +348,12 @@ export const EVIDENCE_CARDS: Record<string, BoardCard> = {
     category: "document",
     summary: "Tom's checklist notices the manifest already includes itself.",
   },
+  hash_manifest: {
+    id: "hash_manifest",
+    title: "hash_manifest.txt",
+    category: "record",
+    summary: "Tom's failed upload lists files before they exist and a fourth field before it has an address.",
+  },
   the_name: {
     id: "the_name",
     title: "the_name.txt",
@@ -310,7 +370,31 @@ export const EVIDENCE_CARDS: Record<string, BoardCard> = {
     id: "miriam_draft",
     title: "MIRIAM_DRAFT.PRN",
     category: "document",
-    summary: "Miriam says the blank shelfmark was deliberate.",
+    summary: "Miriam's printer spool survives only as fields, errors and interrupted strokes.",
+  },
+  field_04: {
+    id: "field_04",
+    title: "field_04.tmp",
+    category: "record",
+    summary: "The fourth field records the act of checking whether it was empty.",
+  },
+  do_not_catalogue: {
+    id: "do_not_catalogue",
+    title: "do_not_catalogue.me",
+    category: "document",
+    summary: "The file has no body, only properties that implicate the observer.",
+  },
+  blank_space: {
+    id: "blank_space",
+    title: "blank_space.txt",
+    category: "document",
+    summary: "The unresolved field delays the count without closing the relay.",
+  },
+  archived_observer: {
+    id: "archived_observer",
+    title: "archived_observer.txt",
+    category: "document",
+    summary: "The observer is filed as witness; no replacement recipient is generated.",
   },
   lineage_1863: {
     id: "lineage_1863",
@@ -462,6 +546,18 @@ export const EVIDENCE_CARDS: Record<string, BoardCard> = {
     title: "Special Collections chat log",
     category: "conversation",
     summary: "A dead account logs in at 03:14.",
+  },
+  chat_dad_archive: {
+    id: "chat_dad_archive",
+    title: "Conversation with David",
+    category: "conversation",
+    summary: "Sarah's father tries to sound less worried than he is.",
+  },
+  chat_armitage_archive: {
+    id: "chat_armitage_archive",
+    title: "Conversation with Armitage",
+    category: "conversation",
+    summary: "Armitage remembers Miriam and knows which files should not be scanned.",
   },
   catalogue_lot_114: {
     id: "catalogue_lot_114",

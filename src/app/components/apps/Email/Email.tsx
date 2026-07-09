@@ -8,6 +8,16 @@ import { resolveTokens } from "@/app/utils/narrative";
 import ClueText from "@/app/components/ClueText/ClueText";
 import { localizedEmail } from "@/app/data/localizedNarrative";
 
+const formatEmailDate = (value: string) =>
+  value.replace(
+    /^(\d{1,2})\/(\d{1,2})\/(\d{4})(.*)$/,
+    (_match: string, month: string, day: string, year: string, rest: string) =>
+      `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}${rest}`
+  );
+
+const formatEmailListDate = (value: string) =>
+  formatEmailDate(value).replace(/^(\d{4}-\d{2}-\d{2}).*$/, "$1");
+
 const Email = () => {
   const {
     markEmailRead,
@@ -70,6 +80,10 @@ const Email = () => {
     playerName,
     absenceHours: absenceMs > 0 ? absenceMs / (1000 * 60 * 60) : undefined,
   };
+  const resolvedEmailDate = (date: string) => resolveTokens(date, ctx);
+  const displayEmailDate = (date: string) => formatEmailDate(resolvedEmailDate(date));
+  const displayEmailListDate = (date: string) =>
+    formatEmailListDate(resolvedEmailDate(date));
   const unreadCount = visibleEmails.filter(
     (email) => !readEmailIds.includes(email.id)
   ).length;
@@ -114,7 +128,7 @@ const Email = () => {
                 )}
               </div>
               <p className="email-subject">{email.subject}</p>
-              <p className="email-date">{resolveTokens(email.date, ctx)}</p>
+              <p className="email-date">{displayEmailListDate(email.date)}</p>
             </div>
           ))}
         </div>
@@ -126,7 +140,7 @@ const Email = () => {
                   <strong>{state.locale === "pt-BR" ? "De:" : "From:"}</strong> {selected.sender}
                 </p>
                 <p>
-                  <strong>{state.locale === "pt-BR" ? "Data:" : "Date:"}</strong> {resolveTokens(selected.date, ctx)}
+                  <strong>{state.locale === "pt-BR" ? "Data:" : "Date:"}</strong> {displayEmailDate(selected.date)}
                 </p>
                 <p>
                   <strong>{state.locale === "pt-BR" ? "Assunto:" : "Subject:"}</strong> {selected.subject}
@@ -140,7 +154,7 @@ const Email = () => {
               <ClueText
                 as="pre"
                 className="email-body"
-                text={resolveTokens(selected.body, ctx)}
+                text={formatEmailDate(resolveTokens(selected.body, ctx))}
                 clues={selected.clues}
               />
             </>

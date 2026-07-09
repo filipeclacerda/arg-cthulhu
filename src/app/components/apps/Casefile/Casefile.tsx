@@ -59,9 +59,13 @@ import {
 import { displayedEvidenceIds } from "@/app/game/casefile";
 import {
   CaseQuestionId,
+  CHAPTER_IDS,
+  ChapterId,
   HypothesisId,
   InsightId,
   TokenType,
+  chapterIndex,
+  type ProgressStateV5,
 } from "@/app/game/progress";
 import "../ArgTools/style.scss";
 import "./evidence-board.scss";
@@ -104,6 +108,79 @@ const LENS_LABEL_KEYS: Record<CasefileLens, TranslationKey> = {
   organize: "casefileLensOrganize",
   timeline: "casefileLensTimeline",
   contradictions: "casefileLensContradictions",
+};
+const CHAPTER_TITLE_KEYS: Record<ChapterId, TranslationKey> = {
+  chapter_1: "chapter1Title",
+  chapter_2: "chapter2Title",
+  chapter_3: "chapter3Title",
+  chapter_4: "chapter4Title",
+  chapter_5: "chapter5Title",
+  chapter_6: "chapter6Title",
+};
+const LENS_MIN_CHAPTERS: Record<CasefileLens, ChapterId> = {
+  reconstruct: "chapter_1",
+  organize: "chapter_3",
+  timeline: "chapter_4",
+  contradictions: "chapter_4",
+};
+const CASE_STATEMENT_MIN_CHAPTERS: Record<CaseQuestionId, ChapterId> = {
+  sarah_intent: "chapter_1",
+  volume_return: "chapter_1",
+  locked_room_source: "chapter_1",
+  lineage_ledger: "chapter_3",
+  future_displacement: "chapter_5",
+  relay_observer: "chapter_5",
+  chapter_ritual: "chapter_5",
+};
+const HYPOTHESIS_MIN_CHAPTERS: Record<HypothesisId, ChapterId> = {
+  innsmouth_theft: "chapter_4",
+  sarah_fled: "chapter_4",
+  tom_forged_image: "chapter_5",
+  sarah_chose_observer: "chapter_5",
+};
+const EVIDENCE_CHAPTERS: Partial<Record<string, ChapterId>> = {
+  "person-sarah": "chapter_1",
+  "person-miriam": "chapter_1",
+  "person-tom": "chapter_1",
+  "person-em": "chapter_1",
+  "person-david": "chapter_1",
+  photo_sarah_office: "chapter_1",
+  photo_miriam_sarah_1998: "chapter_1",
+  photo_sarah_em_coast: "chapter_1",
+  photo_sarah_tom_2024: "chapter_1",
+  photo_bishop_birthday_2025: "chapter_1",
+  diary: "chapter_1",
+  todo: "chapter_1",
+  calendar_0316: "chapter_1",
+  voicemail_to_em: "chapter_1",
+  reasons_to_stop: "chapter_1",
+  unsent_to_dad: "chapter_1",
+  lot_114_order: "chapter_2",
+  catalogue_lot_114: "chapter_2",
+  miriam_1998: "chapter_2",
+  miriam_letter_1998: "chapter_2",
+  whateley_accession_card: "chapter_2",
+  desk_inventory: "chapter_2",
+  miriam_notebook: "chapter_3",
+  printer_alignment: "chapter_3",
+  em_draft_reply: "chapter_3",
+  lineage_1977: "chapter_3",
+  incident_report: "chapter_3",
+  maintenance_record: "chapter_3",
+  counting_audio: "chapter_4",
+  hydrographic_chart: "chapter_4",
+  lineage_pattern: "chapter_4",
+  browser_history_0316: "chapter_4",
+  future_access_log: "chapter_5",
+  read_receipts: "chapter_5",
+  tom_last_message: "chapter_5",
+  hash_manifest: "chapter_5",
+  field_04: "chapter_5",
+  do_not_catalogue: "chapter_5",
+  the_name: "chapter_5",
+  index_help: "chapter_6",
+  blank_space: "chapter_6",
+  archived_observer: "chapter_6",
 };
 const CATEGORY_LABEL_KEYS: Record<CasefileCategory, TranslationKey> = {
   person: "people",
@@ -183,17 +260,31 @@ const isCorrelationCandidate = (card?: CasefileCard): boolean =>
         .includes(card.category)
   );
 
-const useVisibleStatements = () => {
-  const { state } = useProgress();
-  return CASE_STATEMENTS.filter(
-    (statement) =>
+const chapterAtLeast = (current: ChapterId, required: ChapterId): boolean =>
+  chapterIndex(current) >= chapterIndex(required);
+
+const visibleStatementsForChapter = (
+  state: ProgressStateV5,
+  currentChapter: ChapterId
+): typeof CASE_STATEMENTS =>
+  CASE_STATEMENTS.filter((statement) => {
+    if (
+      !chapterAtLeast(
+        currentChapter,
+        CASE_STATEMENT_MIN_CHAPTERS[statement.id]
+      )
+    ) {
+      return false;
+    }
+    return (
       statement.act === 1 ||
-      (statement.act === 2 && state.leadsUnlocked.includes(statement.leadId)) ||
+      (statement.act === 2 &&
+        state.leadsUnlocked.includes(statement.leadId)) ||
       (statement.act === 3 &&
         (state.leadsUnlocked.includes("observer") ||
           Boolean(state.puzzles.future_log.solvedAt)))
-  );
-};
+    );
+  });
 
 const Casefile = ({
   initialLens = "reconstruct",
@@ -212,11 +303,15 @@ const Casefile = ({
     setCaseNotes,
     state,
     dispatchGameEvent,
+    currentChapter,
   } = useProgress();
   const { locale, t } = useI18n();
   const { openWindow } = useWindowManager();
   const { play } = useSound();
-  const visibleStatements = useVisibleStatements();
+  const visibleStatements = useMemo(
+    () => visibleStatementsForChapter(state, currentChapter),
+    [currentChapter, state]
+  );
   const firstOpen =
     visibleStatements.find(
       (statement) => !state.caseAnswers[statement.id]?.solvedAt
@@ -227,6 +322,7 @@ const Casefile = ({
   const [theoryIds, setTheoryIds] = useState<string[]>([]);
   const [theoryFeedback, setTheoryFeedback] = useState("");
   const [filter, setFilter] = useState<"all" | CasefileCategory>("all");
+  const [chapterFilter, setChapterFilter] = useState<"all" | ChapterId>("all");
   const [showUnexplainedOnly, setShowUnexplainedOnly] = useState(false);
   const [query, setQuery] = useState("");
   const [dragPreview, setDragPreview] = useState<
@@ -278,10 +374,22 @@ const Casefile = ({
   const dossierDialogRef = useRef<HTMLDivElement>(null);
   const helpDialogRef = useRef<HTMLDivElement>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
+  const lensUnlocked = useCallback(
+    (candidate: CasefileLens) =>
+      chapterAtLeast(currentChapter, LENS_MIN_CHAPTERS[candidate]),
+    [currentChapter]
+  );
 
   useEffect(() => {
-    setLens(initialLens);
-  }, [initialLens]);
+    setLens(lensUnlocked(initialLens) ? initialLens : "reconstruct");
+  }, [initialLens, lensUnlocked]);
+
+  useEffect(() => {
+    if (lensUnlocked(lens)) return;
+    setLens("reconstruct");
+    setSelectedId(null);
+    setTheoryFeedback("");
+  }, [lens, lensUnlocked]);
 
   useEffect(() => {
     lastVisitIds = {
@@ -439,21 +547,35 @@ const Casefile = ({
   );
 
   const correlationCards = useMemo<CasefileCard[]>(
-    () =>
-      insightsUnlocked.map((insightId) => ({
+    () => {
+      if (!lensUnlocked("organize")) return [];
+      return insightsUnlocked.map((insightId) => ({
         id: `correlation:${insightId}`,
         title: localized(INSIGHT_LABELS[insightId], locale),
         summary: t("casefileCorrelationSummary"),
         category: "correlation",
         claimId: `correlation:${insightId}`,
         sourceId: insightId,
-      })),
-    [insightsUnlocked, locale, t]
+      }));
+    },
+    [insightsUnlocked, lensUnlocked, locale, t]
+  );
+
+  const visibleHypothesisIds = useMemo(
+    () =>
+      (Object.keys(HYPOTHESES) as HypothesisId[]).filter(
+        (hypothesisId) =>
+          chapterAtLeast(
+            currentChapter,
+            HYPOTHESIS_MIN_CHAPTERS[hypothesisId]
+          ) || state.hypotheses[hypothesisId]?.status === "refuted"
+      ),
+    [currentChapter, state.hypotheses]
   );
 
   const hypothesisCards = useMemo<CasefileCard[]>(
     () =>
-      (Object.keys(HYPOTHESES) as HypothesisId[]).map((hypothesisId) => {
+      visibleHypothesisIds.map((hypothesisId) => {
         const refuted = state.hypotheses[hypothesisId]?.status === "refuted";
         return {
           id: `hypothesis:${hypothesisId}`,
@@ -466,7 +588,7 @@ const Casefile = ({
           sourceId: hypothesisId,
         };
       }),
-    [locale, state.hypotheses, t]
+    [locale, state.hypotheses, t, visibleHypothesisIds]
   );
 
   const allPositioned: PositionedCard[] = useMemo(() => {
@@ -570,6 +692,8 @@ const Casefile = ({
   const cardMatchesView = useCallback(
     (card: CasefileCard) => {
       const matchesCategory = filter === "all" || card.category === filter;
+      const matchesChapter =
+        chapterFilter === "all" || EVIDENCE_CHAPTERS[card.id] === chapterFilter;
       const matchesQuery =
         !normalizedQuery ||
         card.title.toLowerCase().includes(normalizedQuery) ||
@@ -585,6 +709,7 @@ const Casefile = ({
         card.category === "person";
       return (
         matchesCategory &&
+        matchesChapter &&
         matchesQuery &&
         matchesExplanation &&
         matchesLens
@@ -592,6 +717,7 @@ const Casefile = ({
     },
     [
       explainedIds,
+      chapterFilter,
       filter,
       lens,
       normalizedQuery,
@@ -797,6 +923,10 @@ const Casefile = ({
         return counts;
       }, {} as Record<CasefileCategory, number>),
     [allPositioned]
+  );
+  const chapterOptions = useMemo(
+    () => CHAPTER_IDS.slice(0, CHAPTER_IDS.indexOf(currentChapter) + 1),
+    [currentChapter]
   );
   const solvedFindingsVisible = useMemo(
     () =>
@@ -1012,6 +1142,11 @@ const Casefile = ({
   };
 
   const submitTheory = () => {
+    if (!lensUnlocked("organize")) {
+      setTheoryFeedback(t("casefileLensLocked"));
+      play("error");
+      return;
+    }
     if (theoryIds.length === 0) {
       setTheoryFeedback(t("theoryEmpty"));
       return;
@@ -1029,6 +1164,14 @@ const Casefile = ({
   };
 
   const refuteHypothesis = (hypothesisId: HypothesisId) => {
+    if (
+      !lensUnlocked("contradictions") ||
+      !visibleHypothesisIds.includes(hypothesisId)
+    ) {
+      setTheoryFeedback(t("casefileLensLocked"));
+      play("error");
+      return;
+    }
     const ids = HYPOTHESIS_EVIDENCE_REQUIREMENTS[hypothesisId];
     if (!ids.every((id) => discoveredEvidenceIds.includes(id))) {
       setTheoryFeedback(t("casefileHypothesisEvidenceNeeded"));
@@ -1590,7 +1733,7 @@ const Casefile = ({
           <section className="casefile-contradictions">
             <strong>{t("casefileCompetingHypotheses")}</strong>
             <p>{t("casefileNeedTwoRecordsToRefute")}</p>
-            {(Object.keys(HYPOTHESES) as HypothesisId[]).map((hypothesisId) => {
+            {visibleHypothesisIds.map((hypothesisId) => {
               const record = state.hypotheses[hypothesisId];
               const requiredIds = HYPOTHESIS_EVIDENCE_REQUIREMENTS[hypothesisId];
               const readyCount = requiredIds.filter((id) =>
@@ -1946,29 +2089,51 @@ const Casefile = ({
 
       <header className="casefile__header">
         <div>
-          <p>MISKATONIC INCIDENT REVIEW / SB-0316</p>
+          <p>
+            MISKATONIC INCIDENT REVIEW / SB-0316 / {t("chapterLabel")}{" "}
+            {currentChapter.replace("chapter_", "")}
+          </p>
           <h2>{t("casefileLabel")}</h2>
         </div>
         <div className="casefile__lenses" role="tablist">
-          {(Object.keys(LENS_LABEL_KEYS) as CasefileLens[]).map((candidate) => (
-            <button
-              type="button"
-              key={candidate}
-              id={lensTabId(candidate)}
-              role="tab"
-              aria-controls={lensPanelId(candidate)}
-              aria-selected={lens === candidate}
-              tabIndex={lens === candidate ? 0 : -1}
-              className={lens === candidate ? "active" : ""}
-              onClick={() => {
-                setLens(candidate);
-                setSelectedId(null);
-                setTheoryFeedback("");
-              }}
-            >
-              {t(LENS_LABEL_KEYS[candidate])}
-            </button>
-          ))}
+          {(Object.keys(LENS_LABEL_KEYS) as CasefileLens[]).map((candidate) => {
+            const unlocked = lensUnlocked(candidate);
+            const requiredChapter = LENS_MIN_CHAPTERS[candidate];
+            return (
+              <button
+                type="button"
+                key={candidate}
+                id={lensTabId(candidate)}
+                role="tab"
+                aria-controls={lensPanelId(candidate)}
+                aria-selected={lens === candidate}
+                tabIndex={lens === candidate ? 0 : -1}
+                className={[
+                  lens === candidate ? "active" : "",
+                  unlocked ? "" : "locked",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+                disabled={!unlocked}
+                title={
+                  unlocked
+                    ? undefined
+                    : `${t("casefileLensLocked")} ${t("chapterLabel")} ${requiredChapter.replace(
+                        "chapter_",
+                        ""
+                      )}: ${t(CHAPTER_TITLE_KEYS[requiredChapter])}`
+                }
+                onClick={() => {
+                  if (!unlocked) return;
+                  setLens(candidate);
+                  setSelectedId(null);
+                  setTheoryFeedback("");
+                }}
+              >
+                {t(LENS_LABEL_KEYS[candidate])}
+              </button>
+            );
+          })}
         </div>
       </header>
 
@@ -1982,8 +2147,8 @@ const Casefile = ({
             placeholder={t("findPlaceholder")}
           />
         </label>
-        <details className="casefile__tools">
-          <summary>{t("casefileOptions")}</summary>
+        <div className="casefile__tools" aria-label={t("casefileOptions")}>
+          <span className="casefile__tools-title">{t("casefileOptions")}</span>
           <label>
             {t("casefileShow")}
             <select
@@ -2008,6 +2173,22 @@ const Casefile = ({
               )}
             </select>
           </label>
+          <label>
+            {t("casefileChapterFilter")}
+            <select
+              value={chapterFilter}
+              onChange={(event) =>
+                setChapterFilter(event.target.value as "all" | ChapterId)
+              }
+            >
+              <option value="all">{t("all")}</option>
+              {chapterOptions.map((chapterId) => (
+                <option key={chapterId} value={chapterId}>
+                  {chapterId.replace("chapter_", "")}. {t(CHAPTER_TITLE_KEYS[chapterId])}
+                </option>
+              ))}
+            </select>
+          </label>
           <label className="casefile__checkbox">
             <input
               type="checkbox"
@@ -2027,7 +2208,7 @@ const Casefile = ({
           >
             {t("resetLayout")}
           </button>
-        </details>
+        </div>
       </div>
 
       <div className="evidence-board__workspace casefile__workspace">

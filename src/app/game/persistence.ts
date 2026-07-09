@@ -285,6 +285,9 @@ export const migrateProgress = (value: unknown): ProgressStateV4 | null => {
   }
   if (legacy.flags?.ending_restore) migrated.ending = "restore";
   if (legacy.flags?.ending_shutdown) migrated.ending = "shutdown";
+  if (legacy.flags?.ending_seal) migrated.ending = "seal";
+  if (legacy.flags?.ending_leave_blank) migrated.ending = "leave_blank";
+  if (legacy.flags?.ending_archive_self) migrated.ending = "archive_self";
   migrated.corruptionStage = Math.min(4, Math.max(0, stage));
   migrated.revision = 1;
   migrated.updatedAt = now;

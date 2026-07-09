@@ -79,6 +79,7 @@ export const HYPOTHESIS_EVIDENCE_REQUIREMENTS: Record<
   tom_forged_image: ["tom_last_message", "future_access_log"],
   sarah_fled: ["incident_report", "chat_em_archive"],
   innsmouth_theft: ["lot_114_order", "catalogue_lot_114"],
+  sarah_chose_observer: ["read_receipts", "hash_manifest"],
 };
 
 export const CASEFILE_FINDING_CLAIMS: CasefileClaim[] = CASE_STATEMENTS.map(
