@@ -214,11 +214,21 @@ virar um conjunto de evidências:
   o desaparecimento dela no pacote forense que alcança o jogador.
 - `dads_65th.png` — Sarah, Em e o pai no último aniversário familiar anterior ao caso. A
   foto estabelece que havia uma vida esperando Sarah voltar.
+- `after_dads_65th.png` — foto de cozinha pós-aniversário. A imagem aciona
+  `fridge_postcard_note.txt`, que faz a ponte entre o cartão-postal herdado de Miriam e a forma
+  vista na foto costeira.
 - `office_after.jpg` — fotografia pericial na pasta `RECOVERED`. O monitor estava desligado,
   mas reflete Sarah sentada; o reflexo não existe nas imagens anterior e posterior.
 
 As fotos não resolvem enigmas. Legendas e metadados ampliam o luto, a relação entre as irmãs
 e a herança material de Miriam sem transformar cada objeto pessoal em pista obrigatória.
+
+Extras de lore posteriores:
+
+- `Downloads/relay07_upload_setup.jpg` e `upload_notes.txt` documentam a mesa de Tom e a
+  imagem forense que começou o Relay 07, sem transformar Tom em remetente consciente do jogador.
+- `RECOVERED/LINEAGE/akeley_box_1977.png` e `box_inventory_1977.txt` tornam visual a caixa
+  herdada por Miriam em 1977 e reforçam a regra do espaço em branco.
 
 ### MSN Messenger
 

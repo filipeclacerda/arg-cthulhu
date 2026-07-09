@@ -127,6 +127,16 @@ C:\\WINDOWS\\MEDIA\\em_sent_this_one.mid
 C:\\WINDOWS\\MEDIA\\track_07.mid
 
 [track_07 não existe no disco. Sua duração consta como 24:00:00.]`,
+  fridge_postcard_note: `NOTA DE FOTO DA EM — adicionada depois do aniversário do pai
+
+O cartão-postal na geladeira veio da gaveta da mamãe, não da viagem a Innsmouth.
+Sarah disse que o guardou porque a linha da costa parecia "mal arquivada".
+
+Nota posterior da Em:
+Mesma forma vertical. Mesmo ângulo. Ano diferente.
+
+Resposta de Sarah no comentário do arquivo:
+Então estava esperando antes de estarmos lá.`,
   maintenance_record: `MISKATONIC FACILITIES / CHAMADO F-2026-0311-88
 
 Local: Biblioteca Orne B2 / escritório Bishop
@@ -254,6 +264,22 @@ Intervalos:
 
 Cada intervalo retém aproximadamente três quartos do anterior.
 O próximo registro já existe no catálogo.`,
+  bishop_transfer_inventory: `MESA AKELEY FECHADA — RECONCILIAÇÃO DE CONTEÚDO
+
+Recuperado por Em Bishop da gaveta hidrográfica.
+Transferência original testemunhada por M. Bishop, 1977.
+
+1 caixa de madeira, salitre nos painéis inferiores
+3 fichas de leitor, apenas sobrenomes
+1 carta costeira dobrada, furos de alfinete na mesma marca ao largo
+1 livro-razão incompleto, última linha de catálogo em branco
+1 etiqueta solta, adesivo ainda ativo
+
+Conflito de inventário:
+A etiqueta solta está datada de {TOMORROW}. A caligrafia não corresponde a nenhuma amostra da equipe.
+
+Nota administrativa:
+Não complete a linha do livro-razão para resolver esta discrepância.`,
   index_help: `MISKATONIC RECOVERY INDEXER 0.7
 
 O indexador não aceita nomes. Ele une referências de objetos que já pertencem à imagem montada.
@@ -281,6 +307,18 @@ A imagem já continha este arquivo — o mesmo que estou escrevendo agora. O log
 Eu nunca entrei. Não vou concluir o upload. Se isto chegou até você, não chegou porque eu enviei.
 
 Não procure o próximo arquivo. Você vai abri-lo mesmo assim. O log já diz que abriu.`,
+  tom_upload_notes: `T. ALVAREZ — CHECKLIST DE UPLOAD
+
+1. Montar a imagem de disco de Sarah como somente leitura.
+2. Verificar a árvore de arquivos sem abrir CHAPTER_SEVEN.
+3. Exportar manifesto de hashes.
+4. Enviar cópia para alguém fora do campus.
+
+Tom acrescentou a caneta e depois fotografou a mesa:
+O manifesto já lista este checklist.
+
+Anotação posterior recuperada do cache de miniaturas:
+Não confie em uma cópia que sabe por que foi copiada.`,
   welcome_back: `[Novos documentos encontrados. Proprietário: {PLAYER}. Criado: {TOMORROW}.]
 
 Obrigada. Desculpe — eu não sabia que precisava existir alguém deste lado para que eu conseguisse sair.

@@ -143,6 +143,66 @@ describe("campaign graph", () => {
     ).toContain("Thread #7411");
   });
 
+  it("keeps optional lore images discoverable and filed to the casefile", () => {
+    const kitchenPhoto = files.find(
+      (file) => file.id === "photo_sarah_em_kitchen"
+    );
+    const fridgeNote = files.find((file) => file.id === "fridge_postcard_note");
+    const transferBox = files.find(
+      (file) => file.id === "bishop_transfer_box_photo"
+    );
+    const transferInventory = files.find(
+      (file) => file.id === "bishop_transfer_inventory"
+    );
+    const relayDisk = files.find((file) => file.id === "tom_relay_disk_photo");
+    const uploadNotes = files.find((file) => file.id === "tom_upload_notes");
+
+    expect(kitchenPhoto).toMatchObject({
+      folderId: "pictures",
+      kind: "image",
+      evidenceId: "photo_sarah_em_kitchen_2025",
+    });
+    expect(fridgeNote?.unlock).toEqual({
+      type: "evidenceOpened",
+      evidenceId: "photo_sarah_em_kitchen_2025",
+    });
+    expect(transferBox).toMatchObject({
+      folderId: "lineage-dossiers",
+      kind: "image",
+      evidenceId: "bishop_transfer_box_photo",
+    });
+    expect(transferInventory?.content).toContain("loose label is dated");
+    expect(relayDisk).toMatchObject({
+      folderId: "downloads",
+      kind: "image",
+      evidenceId: "tom_relay_disk_photo",
+    });
+    expect(uploadNotes?.unlock).toEqual({
+      type: "evidenceOpened",
+      evidenceId: "tom_relay_disk_photo",
+    });
+    for (const evidenceId of [
+      "photo_sarah_em_kitchen_2025",
+      "fridge_postcard_note",
+      "bishop_transfer_box_photo",
+      "bishop_transfer_inventory",
+      "tom_relay_disk_photo",
+      "tom_upload_notes",
+    ]) {
+      expect(EVIDENCE_CARDS[evidenceId]).toBeDefined();
+    }
+    expect(
+      localizedFileContent(
+        "bishop_transfer_inventory",
+        transferInventory?.content ?? "",
+        "pt-BR"
+      )
+    ).toContain("MESA AKELEY FECHADA");
+    expect(
+      localizedFileContent("tom_upload_notes", uploadNotes?.content ?? "", "pt-BR")
+    ).toContain("CHECKLIST DE UPLOAD");
+  });
+
   it("plants Miriam's second-voice identity only through fields and metadata", () => {
     const marginMatch = files.find(
       (file) => file.id === "miriam_margin_match"

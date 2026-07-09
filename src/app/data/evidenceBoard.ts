@@ -86,6 +86,19 @@ export const EVIDENCE_CARDS: Record<string, BoardCard> = {
     summary: "The last family birthday with Sarah present.",
     preview: "/photos/bishop_birthday_2025.png",
   },
+  photo_sarah_em_kitchen_2025: {
+    id: "photo_sarah_em_kitchen_2025",
+    title: "after_dads_65th.png",
+    category: "photo",
+    summary: "A late kitchen snapshot. The fridge keeps an older shoreline.",
+    preview: "/photos/sarah_em_kitchen_2025.png",
+  },
+  fridge_postcard_note: {
+    id: "fridge_postcard_note",
+    title: "fridge_postcard_note.txt",
+    category: "document",
+    summary: "Em compares a fridge postcard with the Innsmouth photograph.",
+  },
   diary: {
     id: "diary",
     title: "Research journal",
@@ -268,6 +281,19 @@ export const EVIDENCE_CARDS: Record<string, BoardCard> = {
     category: "document",
     summary: "Tom's warning, left inside the file it's warning about.",
   },
+  tom_relay_disk_photo: {
+    id: "tom_relay_disk_photo",
+    title: "relay07_upload_setup.jpg",
+    category: "photo",
+    summary: "Tom's upload setup, photographed before he stopped answering.",
+    preview: "/artifacts/tom_relay_disk_2026.png",
+  },
+  tom_upload_notes: {
+    id: "tom_upload_notes",
+    title: "upload_notes.txt",
+    category: "document",
+    summary: "Tom's checklist notices the manifest already includes itself.",
+  },
   the_name: {
     id: "the_name",
     title: "the_name.txt",
@@ -309,6 +335,19 @@ export const EVIDENCE_CARDS: Record<string, BoardCard> = {
     title: "Bishop transfer, 1977",
     category: "document",
     summary: "Miriam inherited an intentionally incomplete ledger from the Akeley desk.",
+  },
+  bishop_transfer_box_photo: {
+    id: "bishop_transfer_box_photo",
+    title: "akeley_box_1977.png",
+    category: "photo",
+    summary: "The salt-bloomed box Miriam accepted from the closed Akeley desk.",
+    preview: "/artifacts/bishop_transfer_box_1977.png",
+  },
+  bishop_transfer_inventory: {
+    id: "bishop_transfer_inventory",
+    title: "box_inventory_1977.txt",
+    category: "document",
+    summary: "The inventory finds a tomorrow-dated label among the 1977 contents.",
   },
   miriam_margin_match: {
     id: "miriam_margin_match",

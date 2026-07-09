@@ -59,7 +59,7 @@ O relatório é o incidente `2026-0318-2`, aberto em 18/03. Ele registra Sarah c
 última vez no prédio em 16/03; Tom avisa em 17/03 que a Segurança fará o welfare check na
 manhã seguinte.
 
-Conteúdo opcional recomendado: abra `My Pictures`. O Image Viewer permite navegar pelas cinco
+Conteúdo opcional recomendado: abra `My Pictures`. O Image Viewer permite navegar pelas
 fotografias e consultar **Properties** para ler datas, câmera, local e comentários pessoais.
 Elas não são necessárias para resolver os puzzles.
 
@@ -107,9 +107,9 @@ Duas frases completas fazem `RECOVERED` reaparecer. As três acordam a impressor
 criam `MIRIAM_DRAFT.PRN` e abrem `RECOVERED/LINEAGE`.
 
 Dentro de `LINEAGE`, leia os dossiês de 1863, 1912, 1949 e 1977, o registro de Eleanor
-Vale em 2014, `miriam_margin_match.txt` e o rastro particular da Em. O laudo compara uma
-anotação de 1998 a outra datada de amanhã e atribui ambas à mão de Miriam. O achado histórico
-opcional é:
+Vale em 2014, `miriam_margin_match.txt`, a foto `akeley_box_1977.png`, o inventário da
+caixa e o rastro particular da Em. O laudo compara uma anotação de 1998 a outra datada de
+amanhã e atribui ambas à mão de Miriam. O achado histórico opcional é:
 
 ```text
 1977 → Bishop → an intentionally incomplete ledger
@@ -643,8 +643,18 @@ Esses conteúdos não são necessários para concluir o jogo.
 - `tom_after_symposium.png` mostra Sarah e Tom antes do desaparecimento e ajuda a explicar por
   que Tom arriscou copiar a máquina.
 - `dads_65th.png` registra o último aniversário de família com Sarah presente.
+- `after_dads_65th.png` mostra Sarah e Em depois da festa. Ao abrir a foto, o bilhete
+  `fridge_postcard_note.txt` aparece na mesma pasta e conecta o cartão-postal da geladeira à
+  forma vista no litoral.
 - `RECOVERED/office_after.jpg` é a fotografia pericial descrita pela legenda homônima. Verifique
   **Properties**: o reflexo de Sarah aparece somente no frame 12.
+
+### Downloads e LINEAGE extras
+
+- Depois do achado de linhagem, `Downloads/relay07_upload_setup.jpg` mostra a mesa de Tom antes
+  do upload. Abrir a imagem libera `upload_notes.txt`.
+- Em `RECOVERED/LINEAGE`, `akeley_box_1977.png` e `box_inventory_1977.txt` expandem a caixa que
+  Miriam herdou em 1977 e o rastro que Em encontra depois.
 
 ### MSN Messenger
 

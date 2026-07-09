@@ -1,3 +1,17 @@
+// Corruption reads in three layers:
+//   1. Ambient  — static or slow, always on past a given stage. Safe to stare at.
+//   2. Pulse    — brief (250-400ms), rare bursts of movement, driven by
+//                 `useCorruptionPulse` toggling `[data-glitch]` on <html>.
+//   3. Reduced-motion — ambient stays, all movement is cut.
+// Nothing here should loop forever except slow, non-jittery drifts
+// (abyss-breathe, scanline-drift, shadow-drift) — those read as "wrong
+// atmosphere", not eye strain.
+
+$win98-bevel: inset -1px -1px #0a0a0a, inset 1px 1px #dfdfdf,
+  inset -2px -2px grey, inset 2px 2px #fff;
+
+// ===== Keyframes =====
+
 @keyframes corruption-jitter {
   0%,
   100% {
@@ -17,24 +31,57 @@
   }
 }
 
-@keyframes corruption-flicker {
+@keyframes pulse-jitter {
   0%,
-  92%,
   100% {
+    transform: translate(0, 0);
     opacity: 1;
   }
-  93%,
-  95% {
-    opacity: 0.8;
+  15% {
+    transform: translate(-2px, 1px);
   }
-  94% {
-    opacity: 1;
+  30% {
+    transform: translate(2px, -1px);
+    opacity: 0.85;
+  }
+  55% {
+    transform: translate(-1px, 2px);
+  }
+  80% {
+    transform: translate(1px, -2px);
+    opacity: 0.92;
+  }
+}
+
+@keyframes noneuclid-skew {
+  0%,
+  100% {
+    transform: skew(0deg, 0deg) rotate(0deg);
+  }
+  35% {
+    transform: skew(0.4deg, 0.2deg) rotate(0.35deg);
+  }
+  70% {
+    transform: skew(-0.3deg, 0deg) rotate(-0.25deg);
+  }
+}
+
+@keyframes afterimage-fade {
+  0% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 0;
   }
 }
 
 @keyframes scanline-drift {
-  0% { background-position: 0 0; }
-  100% { background-position: 0 80px; }
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 0 80px;
+  }
 }
 
 @keyframes abyss-breathe {
@@ -49,39 +96,45 @@
   }
 }
 
-@keyframes wrong-focus {
+@keyframes pulse-tear {
   0%,
-  100% {
-    filter: none;
-  }
-  50% {
-    filter: saturate(1.25) contrast(1.08);
-  }
-}
-
-@keyframes screen-tear {
-  0%,
-  92%,
   100% {
     clip-path: inset(0 0 0 0);
     transform: translate(0, 0);
   }
-  93% {
+  25% {
     clip-path: inset(22% 0 61% 0);
     transform: translate(6px, 0);
   }
-  94% {
+  55% {
     clip-path: inset(58% 0 12% 0);
     transform: translate(-8px, 0);
   }
-  95% {
+  75% {
     clip-path: inset(0 0 0 0);
     transform: translate(0, 0);
   }
 }
 
-// Stage 1 — applied to a single window's body via the `corrupted` className.
-// Window chrome (title bar, close button) stays stable and clickable.
+@keyframes shadow-drift {
+  0% {
+    box-shadow: $win98-bevel, 6px 10px 18px rgba(70, 0, 25, 0.45);
+  }
+  100% {
+    box-shadow: $win98-bevel, -14px -4px 22px rgba(70, 0, 25, 0.35);
+  }
+}
+
+// ===== Layer 1: ambient (static / slow) — applied to a single window's body
+// via the `corrupted` className. Window chrome (title bar, close button)
+// stays stable and clickable.
+.container.corrupted {
+  // Specificity must beat the base `.container { animation: window-appear }`
+  // rule in globals.scss (equal-specificity `.corrupted` alone loses the
+  // cascade tie since that rule comes later in the compiled stylesheet).
+  animation: shadow-drift 9s ease-in-out infinite alternate;
+}
+
 .corrupted {
   .title {
     background: linear-gradient(90deg, #4b0000 0%, #a00030 55%, #002b4b 100%);
@@ -89,9 +142,6 @@
 
   .body {
     position: relative;
-    animation: corruption-jitter 160ms infinite steps(2, end),
-      corruption-flicker 4s infinite;
-    text-shadow: -2px 0 rgba(255, 0, 60, 0.6), 2px 0 rgba(0, 200, 255, 0.6);
 
     &::after {
       content: "";
@@ -120,12 +170,12 @@
   }
 }
 
-// Stage 2 — the clock starts remembering the wrong time. Subtle jitter on it.
+// Stage 2 — the clock starts remembering the wrong time. Stable text with a
+// faint, permanent chromatic hint; jitter is reserved for pulses.
 :root[data-corruption="2"],
 :root[data-corruption="3"],
 :root[data-corruption="4"] {
   .clock {
-    animation: corruption-jitter 1200ms infinite steps(2, end);
     text-shadow: -1px 0 rgba(255, 0, 60, 0.4), 1px 0 rgba(0, 200, 255, 0.4);
   }
 
@@ -135,7 +185,8 @@
   }
 }
 
-// Stage 3 — the whole screen wrong: scanlines + jitter on desktop icons.
+// Stage 3 — the whole screen wrong: slow scanline drift + breathing vignette.
+// Both are slow enough to sit with; icons stay put outside a pulse.
 :root[data-corruption="3"],
 :root[data-corruption="4"] {
   body::after {
@@ -153,10 +204,6 @@
     animation: scanline-drift 3s linear infinite;
   }
 
-  .desktop-icon {
-    animation: corruption-jitter 2400ms infinite steps(2, end);
-  }
-
   #desktop-root::before {
     content: "";
     position: fixed;
@@ -170,16 +217,13 @@
   }
 }
 
-// Stage 4 — full chromatic aberration. The machine is completely wrong.
+// Stage 4 — full chromatic aberration, permanently, but as a fixed filter
+// rather than a pulsing one. The machine is completely, steadily wrong.
 :root[data-corruption="4"] {
   body,
   #desktop-root,
   .container {
-    animation: wrong-focus 3s ease-in-out infinite;
-  }
-
-  #taskbar {
-    animation: corruption-jitter 800ms infinite steps(2, end);
+    filter: saturate(1.12) contrast(1.04);
   }
 
   .title {
@@ -209,13 +253,97 @@
     z-index: 9997;
     background: rgba(0, 200, 255, 0.06);
     mix-blend-mode: screen;
-    animation: screen-tear 6s steps(1, end) infinite;
   }
 }
 
-// The untypeable cipher input glitches when the player types.
+// ===== Layer 2: pulse — brief bursts of movement, gated on [data-glitch]
+// (toggled by useCorruptionPulse). Everything here is a finite animation
+// (1-2 iterations, <= 400ms), so a stuck attribute can never jitter forever.
+:root[data-glitch] {
+  .corrupted {
+    // Shorthand `animation` overwrites the ambient shadow-drift, so redeclare
+    // it alongside the pulse animation or the shadow would freeze/flicker.
+    animation: noneuclid-skew 320ms ease-in-out 1,
+      shadow-drift 9s ease-in-out infinite alternate;
+
+    .body {
+      animation: pulse-jitter 160ms steps(2, end) 2;
+      text-shadow: -2px 0 rgba(255, 0, 60, 0.6), 2px 0 rgba(0, 200, 255, 0.6);
+    }
+
+    // Afterimage: a still, bevelled ghost of the window bleeding 4-6px out
+    // from behind it, as if it had briefly stood somewhere else.
+    &::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: #c0c0c0;
+      box-shadow: $win98-bevel;
+      transform: translate(5px, 4px);
+      z-index: -1;
+      pointer-events: none;
+      animation: afterimage-fade 350ms ease-out forwards;
+    }
+  }
+}
+
+:root[data-corruption="2"][data-glitch] .clock,
+:root[data-corruption="3"][data-glitch] .clock,
+:root[data-corruption="4"][data-glitch] .clock {
+  animation: pulse-jitter 200ms steps(2, end) 2;
+}
+
+:root[data-corruption="3"][data-glitch] .desktop-icon,
+:root[data-corruption="4"][data-glitch] .desktop-icon {
+  animation: pulse-jitter 180ms steps(2, end) 2;
+}
+
+:root[data-corruption="4"][data-glitch] {
+  #taskbar {
+    animation: pulse-jitter 200ms steps(2, end) 2;
+  }
+
+  #desktop-root::after {
+    animation: pulse-tear 350ms steps(1, end) 1;
+  }
+}
+
+// The untypeable cipher input glitches when the player types. Reactive and
+// short-lived (only while typing), so it stays outside the pulse system.
 .input-glitch {
   animation: corruption-jitter 60ms infinite steps(2, end);
   color: rgba(255, 0, 60, 0.8);
   text-shadow: -1px 0 rgba(0, 200, 255, 0.6);
+}
+
+// ===== Layer 3: reduced-motion — ambient corruption stays legible/present,
+// every form of movement is cut. useCorruptionPulse also skips scheduling
+// pulses (and their sound) entirely when this is set — this is a second,
+// CSS-level guarantee in case the attribute ever gets set some other way.
+@media (prefers-reduced-motion: reduce) {
+  .corrupted,
+  .corrupted .body,
+  .corrupted::after,
+  .clock,
+  .desktop-icon,
+  #taskbar,
+  #desktop-root::after,
+  .input-glitch {
+    animation: none !important;
+  }
+
+  .corrupted {
+    box-shadow: $win98-bevel;
+  }
+
+  :root[data-corruption="3"] #desktop-root::before,
+  :root[data-corruption="4"] #desktop-root::before {
+    animation: none;
+    opacity: 0.17;
+  }
+
+  :root[data-corruption="3"] body::after,
+  :root[data-corruption="4"] body::after {
+    animation: none;
+  }
 }

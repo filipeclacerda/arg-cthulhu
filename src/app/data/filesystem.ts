@@ -298,6 +298,47 @@ export const files: VFile[] = [
       "Em renamed the file three times before settling on this. The original name was everybody_act_normal.png.",
     content: "/photos/bishop_birthday_2025.png",
   },
+  {
+    id: "photo_sarah_em_kitchen",
+    name: "after_dads_65th.png",
+    folderId: "pictures",
+    kind: "image",
+    unlock: { type: "always" },
+    evidenceId: "photo_sarah_em_kitchen_2025",
+    alias: "AFTERD~1.PNG",
+    size: "2.2 MB",
+    modified: "2025-08-24 22:36",
+    taken: "2025-08-24 22:31",
+    dimensions: "1456 × 1092",
+    camera: "Em's compact camera / kitchen flash",
+    location: "Bishop family home, Arkham",
+    caption: "After the birthday dishes. Em kept taking pictures until Sarah laughed.",
+    comment:
+      "A coast postcard on the fridge matches the shape Em later noticed in the Innsmouth photograph.",
+    content: "/photos/sarah_em_kitchen_2025.png",
+  },
+  {
+    id: "fridge_postcard_note",
+    name: "fridge_postcard_note.txt",
+    folderId: "pictures",
+    kind: "text",
+    unlock: {
+      type: "evidenceOpened",
+      evidenceId: "photo_sarah_em_kitchen_2025",
+    },
+    evidenceId: "fridge_postcard_note",
+    alias: "FRIDGE~1.TXT",
+    content: `EM'S PHOTO NOTE — added after Dad's birthday
+
+The postcard on the fridge is from Mom's drawer, not from the Innsmouth trip.
+Sarah said she kept it because the shoreline looked "misfiled."
+
+Em's note, added later:
+Same vertical shape. Same angle. Different year.
+
+Sarah's reply in the file comment:
+Then it was waiting before we were there.`,
+  },
 
   // --- Act 1: the person (always visible in Sarah's home folder) ------------
   {
@@ -882,6 +923,46 @@ I never logged in. I'm not going to finish uploading this. If it reaches you any
 Don't look for the next file. You'll open it anyway. I know because the log already says you did.`,
   },
   {
+    id: "tom_relay_disk_photo",
+    name: "relay07_upload_setup.jpg",
+    folderId: "downloads",
+    kind: "image",
+    unlock: { type: "puzzleSolved", puzzleId: "lineage" },
+    evidenceId: "tom_relay_disk_photo",
+    alias: "RELAY0~1.JPG",
+    size: "1.9 MB",
+    modified: "2026-03-23 02:57",
+    taken: "2026-03-23 02:56",
+    dimensions: "1456 × 1092",
+    camera: "Tom's phone / recovered thumbnail",
+    location: "Tom Alvarez's office",
+    caption: "Tom's upload setup before he stopped answering.",
+    comment:
+      "The external drive is powered. The floppy label was unreadable before the photograph was compressed.",
+    content: "/artifacts/tom_relay_disk_2026.png",
+  },
+  {
+    id: "tom_upload_notes",
+    name: "upload_notes.txt",
+    folderId: "downloads",
+    kind: "text",
+    unlock: { type: "evidenceOpened", evidenceId: "tom_relay_disk_photo" },
+    evidenceId: "tom_upload_notes",
+    alias: "UPLOAD~1.TXT",
+    content: `T. ALVAREZ — UPLOAD CHECKLIST
+
+1. Mount Sarah's disk image read-only.
+2. Verify file tree without opening CHAPTER_SEVEN.
+3. Export hash manifest.
+4. Send copy to someone off campus.
+
+Tom added in pen and then photographed the desk:
+The manifest already lists this checklist.
+
+Later annotation recovered from the thumbnail cache:
+Do not trust a copy that knows why it was copied.`,
+  },
+  {
     id: "the_name",
     name: "the_name.txt",
     folderId: "chapter-seven",
@@ -1038,6 +1119,50 @@ M. Bishop refused to sign the final catalogue line. Her supervisor wrote "family
 The library volunteer reported missing that evening was Daniel Carter, the Carter named in the coastal registry.
 
 In 1998, Miriam requested this exact box by a shelfmark that had never been assigned.`,
+  },
+  {
+    id: "bishop_transfer_box_photo",
+    name: "akeley_box_1977.png",
+    folderId: "lineage-dossiers",
+    kind: "image",
+    unlock: { type: "flag", flag: "act1_reconstruction_complete" },
+    evidenceId: "bishop_transfer_box_photo",
+    alias: "AKELEY~1.PNG",
+    size: "2.8 MB",
+    modified: "2026-03-20 01:02",
+    taken: "2026-03-20 00:58",
+    dimensions: "1456 × 1092",
+    camera: "Orne Library evidence camera 04",
+    location: "Hydrographic drawer / closed Akeley desk",
+    caption: "The transfer box Miriam accepted in 1977, photographed after Em opened it.",
+    comment:
+      "The ledger inside is swollen from salt. The blank label is newer than the box.",
+    content: "/artifacts/bishop_transfer_box_1977.png",
+  },
+  {
+    id: "bishop_transfer_inventory",
+    name: "box_inventory_1977.txt",
+    folderId: "lineage-dossiers",
+    kind: "text",
+    unlock: { type: "flag", flag: "act1_reconstruction_complete" },
+    evidenceId: "bishop_transfer_inventory",
+    alias: "BOXINV~1.TXT",
+    content: `CLOSED AKELEY DESK — CONTENTS RECONCILIATION
+
+Recovered by Em Bishop from the hydrographic drawer.
+Original transfer witnessed by M. Bishop, 1977.
+
+1 wooden transfer box, salt bloom on lower panels
+3 reader cards, surnames only
+1 folded coastal chart, pinholes through the same offshore mark
+1 incomplete ledger, final catalogue line blank
+1 loose label, adhesive still active
+
+Inventory conflict:
+The loose label is dated {TOMORROW}. Its handwriting matches no staff sample.
+
+Administrative note:
+Do not complete the ledger line to resolve this discrepancy.`,
   },
   {
     id: "miriam_margin_match",

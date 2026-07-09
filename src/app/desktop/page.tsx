@@ -9,6 +9,7 @@ import { useWindowManager, AppType } from "../context/WindowManagerContext";
 import { useProgress } from "../context/ProgressContext";
 import { useSound } from "../context/SoundContext";
 import { useSubliminalGlitch } from "../hooks/useSubliminalGlitch";
+import { useCorruptionPulse } from "../hooks/useCorruptionPulse";
 import { useI18n, TranslationKey } from "../i18n";
 
 interface DesktopApp {
@@ -132,6 +133,7 @@ const Desktop = () => {
     corruptionStage >= 4,
     playerName
   );
+  useCorruptionPulse(corruptionStage, play);
 
   useEffect(() => {
     const timer = setTimeout(() => setBooted(true), 1700);
