@@ -158,7 +158,7 @@ partida. A pasta de usuário deixa de se chamar "Sarah Bishop" e passa a mostrar
 jogador — ou "NEXT USER". E o nome verdadeiro da Testemunha não pode ser digitado: a cifra que
 o jogador aprendeu a confiar se recusa a ser escrita.
 
-A frase-síntese (pode aparecer in-game, é enigma, não explicação):
+A frase-síntese é uma conclusão do jogador, não uma explicação que o arquivo entrega:
 
 > O capítulo sete não está no livro.
 > O capítulo sete é a pessoa tentando entendê-lo.
@@ -182,8 +182,8 @@ jogador é a última evidência do caso.
 - **SHUT DOWN** — o ritual fica incompleto. Após os créditos, um último e-mail de Sarah:
   > Obrigada por parar.
   > Sinto muito por precisar tentar de novo.
-  Data: amanhã. Destinatário: outra pessoa. Recusar não derrota a entidade — só faz o
-  computador procurar o próximo observador. A contagem pausa por uma respiração e recomeça.
+  Data: amanhã. O e-mail não explica o destino da cópia. Recusar não derrota a entidade — só
+  faz o computador procurar o próximo observador.
   Na reabertura do jogo, a tela do Relay 07 lista `RECIPIENTS: 5` — quarto campo arquivado
   com a designação do jogador, quinto “GERANDO”. O new game+ é o horror cumprindo a promessa.
 - **DEIXAR EM BRANCO** — final por omissão, sem botão. Se o jogador viu o campo final aberto
@@ -197,6 +197,10 @@ jogador é a última evidência do caso.
   incerto se houve contenção ou apenas uma nova forma de propagação. `COUNT: HELD` não
   esclarece se Miriam foi contida junto com a sequência. Este não é o “final correto”; é uma
   terceira consequência.
+- **ARCHIVE YOURSELF** — variação secreta de sacrifício. Só aparece quando o jogador reteve a
+  contenção, abriu o manifesto de hashes e perguntou a Sarah como quebrar a sequência. O índice
+  aceita o nome do observador, mas o campo de substituição permanece não resolvido. Não tratar
+  isso como solução limpa: o arquivo aceitou um nome, não ofereceu garantia alguma.
 
 ## Regras de contenção (tom)
 
@@ -398,7 +402,8 @@ final só é aceito depois que o jogador também retém as três conclusões sob
 
 ### 4. `counting_audio` — "A Contagem"
 
-- **Disponível:** ao abrir `counting.wav`, liberado por `margin_cipher`.
+- **Disponível:** depois de `palimpsest`. O áudio pode ser ouvido antes, mas a margem cifrada é
+  o que ensina a recuperar o canal e o sentido corretos.
 - **Passo A (Media Player):** selecionar **Channel = Left**, marcar **Reverse buffer** e
   apertar **Play**. Isso troca o áudio pelo buffer "recuperado" e revela uma transcrição com
   pares: `ONE-TWO / TWO-TWO / THREE-ONE / FOUR-SIX / FIVE-FOUR / SIX-FIVE / SEVEN-TWO /
@@ -489,6 +494,9 @@ final só é aceito depois que o jogador também retém as três conclusões sob
 - **Ferramenta e solução:** abrir **Run...** no Start Menu e digitar
   `INDEX /JOIN E7-A1-C4-B9` (case-insensitive, espaços extras tolerados). A sintaxe vem de
   `INDEX.HLP`: `INDEX /JOIN <REF-REF-REF-REF>`.
+- **Condição narrativa:** além das três conclusões sobre o observador, o Dossiê precisa reter
+  pelo menos dois achados do último dia de Sarah. O final não pode ser alcançado por alguém que
+  conheceu apenas o mecanismo e não a pessoa.
 - **Efeito ao resolver:** define `endgame_available`; o botão "Shut Down..." do Start Menu
   passa a se chamar "RECOVERED PROGRAM" e abre o **Finale**.
 - **Dicas (1/2/3):**

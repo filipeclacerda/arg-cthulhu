@@ -62,6 +62,37 @@ const retainObserverFindings = (
   );
 };
 
+const retainSarahFindings = (
+  state: ReturnType<typeof createInitialProgress>
+) => {
+  const answers = [
+    {
+      questionId: "sarah_intent" as const,
+      slotSelections: {
+        time: "time-six-thirty",
+        intent: "intent-go-home",
+      } as Record<string, string>,
+      evidenceIds: ["lecture_draft", "dad_email"],
+    },
+    {
+      questionId: "locked_room_source" as const,
+      slotSelections: {
+        place: "place-under-workstation",
+        object: "object-pipe",
+      } as Record<string, string>,
+      evidenceIds: ["incident_report", "maintenance_record"],
+    },
+  ];
+  return answers.reduce(
+    (current, answer) =>
+      reduceGameEvent(current, {
+        type: "SUBMIT_CASE_ANSWER",
+        ...answer,
+      }).state,
+    state
+  );
+};
+
 describe("ARG progression reducer", () => {
   it("derives corruption only from solved investigation milestones", () => {
     let state = createInitialProgress(1_700_000_000_000, "test-case");
@@ -163,7 +194,7 @@ describe("ARG progression reducer", () => {
     });
     expect(withoutFindings.commandError).toBe("case_incomplete");
 
-    state = retainObserverFindings(state);
+    state = retainSarahFindings(retainObserverFindings(state));
     const accepted = reduceGameEvent(state, {
       type: "RUN_COMMAND",
       command: "  index   /join e7-a1-c4-b9 ",
@@ -174,7 +205,7 @@ describe("ARG progression reducer", () => {
 
   it("normalizes command syntax while preserving required puzzle gates", () => {
     let state = solveThroughFutureLog();
-    state = retainObserverFindings(state);
+    state = retainSarahFindings(retainObserverFindings(state));
     state = ["E7", "A1", "C4", "B9"].reduce(
       (acc, reference) => reduceGameEvent(acc, { type: "COLLECT_REFERENCE", reference }).state,
       state
@@ -396,7 +427,7 @@ describe("ARG progression reducer", () => {
   });
 
   it("requires all six correlations before enabling relay containment", () => {
-    let state = retainObserverFindings(solveThroughFutureLog());
+    let state = retainSarahFindings(retainObserverFindings(solveThroughFutureLog()));
     state = reduceGameEvent(state, {
       type: "SOLVE_PUZZLE",
       puzzleId: "index_name",
@@ -425,7 +456,7 @@ describe("ARG progression reducer", () => {
   });
 
   it("supports the expanded ending set without regressing the original endings", () => {
-    let state = retainObserverFindings(solveThroughFutureLog());
+    let state = retainSarahFindings(retainObserverFindings(solveThroughFutureLog()));
     state = ["E7", "A1", "C4", "B9"].reduce(
       (acc, reference) =>
         reduceGameEvent(acc, { type: "COLLECT_REFERENCE", reference }).state,
@@ -460,7 +491,7 @@ describe("ARG progression reducer", () => {
   });
 
   it("gates archive yourself behind secret containment, hash manifest and Sarah's break answer", () => {
-    let state = retainObserverFindings(solveThroughFutureLog());
+    let state = retainSarahFindings(retainObserverFindings(solveThroughFutureLog()));
     state = reduceGameEvent(state, {
       type: "SOLVE_PUZZLE",
       puzzleId: "index_name",

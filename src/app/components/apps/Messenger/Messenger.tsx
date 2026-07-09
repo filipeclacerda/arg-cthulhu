@@ -284,16 +284,16 @@ const Messenger = () => {
     });
     const response: Record<string, { en: string; pt: string }> = {
       alive: {
-        en: "Not in the same tense as you. I still remember having a body.",
-        pt: "Não no mesmo tempo verbal que você. Ainda lembro de ter um corpo.",
+        en: "I still remember the weight of the green mug. I do not know if memory counts as being alive.",
+        pt: "Ainda lembro do peso da caneca verde. Não sei se memória conta como estar viva.",
       },
       restore: {
-        en: "It changes which name is in SOURCE and which one is in ARCHIVE. I did not understand that until your field appeared.",
-        pt: "Ele troca qual nome fica em SOURCE e qual fica em ARCHIVE. Eu não entendi isso até seu campo aparecer.",
+        en: "It has never restored the same field twice. That is all I can make it show me.",
+        pt: "Ele nunca restaurou o mesmo campo duas vezes. É tudo que consigo fazê-lo me mostrar.",
       },
       break: {
-        en: "Mom tried leaving a blank. Tom tried stopping the copy. Maybe the archive has to become the thing that watches.",
-        pt: "Mamãe tentou deixar um espaço vazio. Tom tentou parar a cópia. Talvez o arquivo precise se tornar aquilo que observa.",
+        en: "Mom left a line blank. The line learned to wait. I do not know what that means yet.",
+        pt: "Mamãe deixou uma linha em branco. A linha aprendeu a esperar. Ainda não sei o que isso significa.",
       },
     };
     window.setTimeout(() => {

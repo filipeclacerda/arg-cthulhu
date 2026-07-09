@@ -47,8 +47,12 @@ export const resolveTokens = (text: string, ctx: TokenContext = {}): string => {
 
 export const MAX_CORRUPTION_STAGE = 4;
 
-/** Real-time absence (ms) past which the "while you were gone" beat fires. */
-export const ABSENCE_THRESHOLD_MS = 60 * 1000; // 1 min — tune up for release.
+/**
+ * Real-time absence (ms) past which the archive reacts. Fifteen minutes keeps
+ * the beat practical while preventing an accidental tab switch from becoming
+ * a narrative ending.
+ */
+export const ABSENCE_THRESHOLD_MS = 15 * 60 * 1000;
 
 /** Stage at/after which Sarah's live email "arrives" mid-session. */
 export const SARAH_EMAIL_STAGE = 2;

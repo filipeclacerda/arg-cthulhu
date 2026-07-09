@@ -1078,7 +1078,9 @@ The key is not mine. It belongs to the first cataloguer."`,
     name: "counting.wav",
     folderId: "restricted",
     kind: "audio",
-    unlock: { type: "puzzleSolved", puzzleId: "margin_cipher" },
+    // Let the player hear the impossible recording before the margin explains
+    // how to recover it. The puzzle itself remains gated by progression.
+    unlock: { type: "puzzleSolved", puzzleId: "palimpsest" },
     evidenceId: "counting_audio",
     alias: "COUNTI~1.WAV",
     size: "43.1 MB",
@@ -1113,11 +1115,15 @@ The key is not mine. It belongs to the first cataloguer."`,
     unlock: { type: "always" },
     evidenceId: "do_not_open",
     alias: "DONOTO~1.TXT",
-    content: `[The text resists being read. Every time your eyes settle on a line, it has already become a different line.]
+    content: `FILE BODY UNSTABLE
+HASH: UNCHANGED
+RENDER VARIANTS RECOVERED: 17
 
-She didn't disappear. She finished the working. The date on this file is {TOMORROW}.
+Earliest modification: {TOMORROW}
+Latest modification: {TOMORROW}
+Write operations recorded: 0
 
-If you are reading this, the desktop is already starting to remember things that haven't happened yet. Close it now, while you still believe you decided to.`,
+The body cannot be reproduced consistently.`,
   },
   {
     id: "counting",
@@ -1467,16 +1473,16 @@ Sarah didn't choose them. I didn't either. The copy did what catalogues do: it m
       {
         tokenId: "cause-act-of-reconstruction",
         snippet: {
-          en: "person trying to understand it",
-          "pt-BR": "pessoa tentando entendê-lo",
+          en: "act of reconstruction",
+          "pt-BR": "ato de reconstrução",
         },
       },
     ],
-    content: `The last entry in the sequence is not a word Sarah could cite. It is the pressure underneath every name she used to keep the notes academic.
+    content: `The final entry in the sequence is not a word Sarah could quote.
 
-The runes will not hold still long enough to copy. Try to write the name below and see for yourself.
+The marks do not remain still long enough to copy.
 
-Chapter seven is the person trying to understand it.`,
+Chapter Seven is an act of reconstruction, not a page in the volume.`,
   },
   {
     id: "index_help",
@@ -1498,10 +1504,11 @@ Reference order is chronological. Object properties may change after a
 successful future-log replay.
 
 RECOVERY NOTE:
-RESTORE writes the recovered owner into the source field. The current observer
-is retained in the archive field so that the relay remains occupied.
+RESTORE writes a recovered owner into the source field.
 
-HALT closes the current relay without recovering its unresolved source.`,
+HALT closes the current relay without recovering its unresolved source.
+
+No disposition for the current observer was retained.`,
   },
 
   // --- Historical branch: four custodians and the damaged 2014 mirror -----

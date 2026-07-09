@@ -163,7 +163,7 @@ const en = {
   finaleShutdownInboxTitle: "OUTLOOK EXPRESS / MESSAGE RECEIVED",
   finaleShutdownInboxSubject: "Thank you for stopping.",
   finaleShutdownInboxBody:
-    "Thank you for stopping.\n\nI'm sorry I have to try again.\n\nThe file will go to someone else now. I don't choose them. The curiosity is the address.\n\nMaybe this time someone will stop sooner.\n\nTom asked me to say: the coffee was never that bad.\n\nThe counting paused when you chose. One breath. That's how I know she heard it too.\n\n— S.",
+    "Thank you for stopping.\n\nI'm sorry I have to try again.\n\n— S.",
   fromLabel: "From",
   subjectLabel: "Subject",
   finaleSealCaption:
@@ -173,9 +173,9 @@ const en = {
   finaleLeaveBlankCaption:
     "The blank delays the count. It does not close the relay.",
   finaleArchiveSelfTerminal:
-    "[VOLUNTARY WITNESS ACCEPTED — {TOMORROW}]\n\nSOURCE ........... UNRESOLVED\nARCHIVE .......... SB-0316\nWITNESS .......... {PLAYER}\nREPLACEMENT ...... NOT GENERATED\n\nNEW FILES FOUND UNDER CURRENT OBSERVER.\nALL MODIFIED TOMORROW.",
+    "[VOLUNTARY WITNESS ACCEPTED — {TOMORROW}]\n\nSOURCE ........... UNRESOLVED\nARCHIVE .......... SB-0316\nWITNESS .......... {PLAYER}\nREPLACEMENT ...... FIELD UNRESOLVED\n\nNEW FILES FOUND UNDER CURRENT OBSERVER.\nALL MODIFIED TOMORROW.",
   finaleArchiveSelfCaption:
-    "The archive accepts you as witness. No new recipient is generated.",
+    "The archive accepts your name. The next field does not answer.",
   finaleEchoRestoreAlive:
     "Her answer lingers: not alive in your tense, but still remembering a body.",
   finaleEchoRestoreRestore:
@@ -621,7 +621,7 @@ const pt: Record<keyof typeof en, string> = {
   finaleShutdownInboxTitle: "OUTLOOK EXPRESS / MENSAGEM RECEBIDA",
   finaleShutdownInboxSubject: "Obrigada por parar.",
   finaleShutdownInboxBody:
-    "Obrigada por parar.\n\nDesculpe. Vou precisar tentar de novo.\n\nO arquivo vai para outra pessoa agora. Eu não escolho quem. A curiosidade é o endereço.\n\nTalvez desta vez alguém pare mais cedo.\n\nTom pediu para dizer: o café nunca foi tão ruim assim.\n\nA contagem pausou quando você escolheu. Uma respiração. É assim que sei que ela também ouviu.\n\n— S.",
+    "Obrigada por parar.\n\nDesculpe. Vou precisar tentar de novo.\n\n— S.",
   fromLabel: "De",
   subjectLabel: "Assunto",
   finaleSealCaption:
@@ -631,9 +631,9 @@ const pt: Record<keyof typeof en, string> = {
   finaleLeaveBlankCaption:
     "O espaço em branco atrasa a contagem. Ele não fecha o relay.",
   finaleArchiveSelfTerminal:
-    "[TESTEMUNHA VOLUNTÁRIA ACEITA — {TOMORROW}]\n\nORIGEM ........... NÃO RESOLVIDA\nARQUIVO .......... SB-0316\nTESTEMUNHA ....... {PLAYER}\nSUBSTITUTO ....... NÃO GERADO\n\nNOVOS ARQUIVOS ENCONTRADOS SOB O OBSERVADOR ATUAL.\nTODOS MODIFICADOS AMANHÃ.",
+    "[TESTEMUNHA VOLUNTÁRIA ACEITA — {TOMORROW}]\n\nORIGEM ........... NÃO RESOLVIDA\nARQUIVO .......... SB-0316\nTESTEMUNHA ....... {PLAYER}\nSUBSTITUTO ....... CAMPO NÃO RESOLVIDO\n\nNOVOS ARQUIVOS ENCONTRADOS SOB O OBSERVADOR ATUAL.\nTODOS MODIFICADOS AMANHÃ.",
   finaleArchiveSelfCaption:
-    "O arquivo aceita você como testemunha. Nenhum novo destinatário é gerado.",
+    "O arquivo aceita seu nome. O próximo campo não responde.",
   finaleEchoRestoreAlive:
     "A resposta dela permanece: não viva no seu tempo verbal, mas ainda lembrando de ter um corpo.",
   finaleEchoRestoreRestore:

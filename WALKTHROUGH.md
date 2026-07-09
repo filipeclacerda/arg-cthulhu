@@ -1,7 +1,7 @@
 # Walkthrough completo — O Arquivo de Amanhã
 
 > **SPOILERS TOTAIS.** Este guia revela todas as respostas, a ordem exata dos enigmas,
-> o significado dos acontecimentos e os três finais. Para uma primeira partida sem spoilers,
+> o significado dos acontecimentos e os finais. Para uma primeira partida sem spoilers,
 > feche este documento agora.
 
 ## Respostas rápidas
@@ -33,8 +33,8 @@
 1. A primeira tela é o **Orne Library Dark Archive / Relay 07**. Ela está fora do computador
    de Sarah. Aguarde o relay identificar o pacote `SB-0316`.
 2. Leia o envelope de upload de Tom e clique em **OPEN SEALED ATTACHMENT**.
-3. Em **Observer designation**, escreva seu nome ou deixe em branco. O relay gera o
-   destinatário somente agora; em branco, o jogo usará `NEXT USER`.
+3. Em **Session designation**, escreva seu nome ou deixe em branco. O relay ainda não explica
+   por que precisa de uma designação; em branco, o jogo usará `NEXT USER`.
 4. Use as credenciais recuperadas:
    - usuário: `sarah.bishop`
    - senha: `password`
@@ -474,10 +474,10 @@ Os metadados dão a ordem cronológica usada pelo Indexer:
 
 ## 9. O nome que não pode ser escrito
 
-Antes de executar o Indexer, volte ao **Casefile.exe → Achados**. Três novos achados
-estão visíveis no Ato 3:
+Antes de executar o Indexer, volte ao **Casefile.exe → Achados**. Além de pelo menos dois dos
+três achados iniciais sobre Sarah, três novos achados estão visíveis no Ato 3:
 
-1. **Sarah está retida em `tomorrow`, sempre `one day ahead` do observador.**
+1. **A data de Sarah é `tomorrow`, sempre `one day ahead` do observador.**
    - extraia ambos do e-mail `you opened it`;
    - anexe o e-mail e `access_log.txt` ou `DO_NOT_OPEN.txt`.
 2. **Um `observer` vivo ocupa o `archive field`.**
@@ -489,8 +489,8 @@ estão visíveis no Ato 3:
    - reutilize `observer`;
    - anexe `the_name.txt` e ao menos um componente do ritual.
 
-Sem as três frases completas, o comando responde que a reconstrução do caso está
-incompleta, mesmo que todas as referências estejam corretas.
+Sem as três frases do observador e dois achados do último dia de Sarah, o comando responde que
+a reconstrução do caso está incompleta, mesmo que todas as referências estejam corretas.
 
 1. Leia `INDEX.HLP`. Ele informa:
 
@@ -551,8 +551,6 @@ e-mail de Sarah:
 ```text
 Thank you for stopping.
 I'm sorry I have to try again.
-Tom asked me to say: the coffee was never that bad.
-The counting paused when you chose. One breath. That's how I know she heard it too.
 ```
 
 **Significado:** o jogador não é substituído, mas Sarah continua presa. O arquivo procura
@@ -567,7 +565,7 @@ cumprida na reabertura.
 
 Não existe mais um botão “LEAVE BLANK”. O final acontece por inação: se o jogador **viu** a
 tela de escolha (`finale_choice_seen`), não escolheu nada e abandonou a sessão (fechou a aba
-ou a janela), o retorno após ausência (`ABSENCE_THRESHOLD_MS`) grava `ending_leave_blank`
+ou a janela), o retorno após quinze minutos de ausência (`ABSENCE_THRESHOLD_MS`) grava `ending_leave_blank`
 silenciosamente na hidratação. Nada anuncia o final: `blank_space.txt` simplesmente passa a
 existir na pasta de Sarah, com uma nova verificação agendada para amanhã. O relay continua
 aberto — o jogador ainda pode voltar e escolher um final ativo depois.
@@ -594,11 +592,19 @@ INDEX /SEAL RELAY-07 /WITNESS ARCHIVE
 
 O arquivo passa a ocupar simultaneamente os campos de arquivo e testemunha. Sarah não é
 restaurada, mas nenhum novo observador humano parece ser exigido. Depois, o checksum muda
-sem operação de escrita. `RELAY_07.SEALED` acrescenta `COUNT: HELD`; a legenda informa que
-a contagem não parou, apenas mudou de direção.
+sem operação de escrita. `RELAY_07.SEALED` acrescenta `COUNT: HELD`, sem interpretar o que
+isso significa.
 
 **Significado:** a contenção pode ter formado um circuito fechado — ou ensinado o arquivo a
 se reproduzir sem pessoas. O jogo deliberadamente não confirma qual leitura é correta.
+
+### ARCHIVE YOURSELF — variação secreta
+
+Depois de liberar a contenção, abra `hash_manifest.txt` e, na conversa ao vivo com Sarah,
+escolha **Como quebramos isso?**. O botão **ARCHIVE YOURSELF** aparece no Finale.
+
+Ele aceita o nome do jogador como testemunha, mas mostra `REPLACEMENT: FIELD UNRESOLVED`.
+Sarah não volta e o jogo não confirma que a cadeia terminou. É um sacrifício, não uma vitória.
 
 ## Sistema de dicas
 

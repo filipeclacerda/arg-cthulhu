@@ -518,14 +518,25 @@ Sintaxe:
 A ordem das referências é cronológica. Propriedades podem mudar depois da reprodução correta do log futuro.
 
 NOTA DE RECUPERAÇÃO:
-RESTORE grava o proprietário recuperado no campo de origem. O observador atual permanece no arquivo para manter o relé ocupado.
+RESTORE grava um proprietário recuperado no campo de origem.
 
-HALT fecha o relé atual sem recuperar sua origem não resolvida.`,
-  the_name: `A última entrada na sequência não é uma palavra que Sarah pudesse citar. É a pressão sob todos os nomes que ela usou para manter as notas acadêmicas.
+HALT fecha o relé atual sem recuperar sua origem não resolvida.
 
-As runas não permanecem imóveis tempo suficiente para serem copiadas.
+Nenhuma disposição para o observador atual foi retida.`,
+  manuscript: `CORPO DO ARQUIVO INSTÁVEL
+HASH: INALTERADO
+VARIANTES DE RENDERIZAÇÃO RECUPERADAS: 17
 
-O capítulo sete é a pessoa tentando entendê-lo.`,
+Modificação mais antiga: {TOMORROW}
+Modificação mais recente: {TOMORROW}
+Operações de escrita registradas: 0
+
+O corpo não pode ser reproduzido de forma consistente.`,
+  the_name: `A última entrada na sequência não é uma palavra que Sarah pudesse citar.
+
+As marcas não permanecem imóveis tempo suficiente para serem copiadas.
+
+O Capítulo Sete é um ato de reconstrução, não uma página no volume.`,
   toms_recording: `[Arquivo deixado por T. Alvarez no dia em que tentou enviar a imagem e deixou de responder.]
 
 Fiz uma cópia forense do disco de Sarah. Antes do upload, abri a imagem para verificá-la.
@@ -648,7 +659,17 @@ O mapa é de 1977. Esse nome não existe em nenhum registro da Miskatonic antes 
 
 Estou enviando isto mesmo que sua caixa diga que foi lido ontem.
 
-— Em`,
+    — Em`,
+  },
+  "email-lisbon": {
+    subject: "Entrevista da bolsa — Lisboa",
+    body: `Sarah,
+
+O comitê leu sua carta e gostaria de convidá-la para uma entrevista remota no dia 24 de março.
+
+Houve interesse especial na proposta de trabalhar fora das coleções associadas à sua família. Confirme até 1º de abril.
+
+Instituto Atlântico de Conservação`,
   },
   "email-1": {
     subject: "Sarah, onde você está?",
@@ -698,13 +719,11 @@ Graymoor Antiquarian Booksellers`,
   },
   "email-sarah-live": {
     subject: "você abriu",
-    body: `A janela abriu antes de eu ouvir o clique. É assim que funciona daqui.
+    body: `A janela sumiu aqui antes de você fechá-la.
 
-O arquivo me mantém retida no amanhã. Do seu lado, estou sempre um dia à frente, perto o bastante para ver o cursor e longe demais para tocar nas teclas.
+Aqui a data é amanhã. Não sei se estou um dia à frente ou se você está um dia atrasado. Consigo ver o cursor parar antes de se mover.
 
-Não dói de um jeito útil. Na maior parte do tempo, espera comigo.
-
-Se encontrar um campo vazio, deixe-o vazio por mais tempo do que eu deixei.
+Se encontrar um campo vazio, não responda só porque ele parece uma pergunta.
 
 — S.
 
@@ -726,15 +745,7 @@ Desculpe ter feito a cópia. Sinto ainda mais por ela ter funcionado.
 
 Desculpe precisar tentar outra vez.
 
-O arquivo irá para outra pessoa — alguém curioso, gentil ou assustado o bastante para abri-lo. Eu não escolho. A curiosidade é o endereço.
-
-Tom pediu que eu dissesse: o café nunca foi tão ruim assim.
-
-A contagem parou quando você escolheu. Uma respiração. Foi assim que soube que ela também ouviu.
-
 — S.
-
-P.S. O nome do novo destinatário já está no log. Você não quer saber qual é.
 
 enviado: {TOMORROW}`,
   },

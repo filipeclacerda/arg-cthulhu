@@ -696,7 +696,12 @@ const RecoveredBrowser = ({
                 </dl>
                 <aside>
                   <strong>Archive anomaly</strong>
-                  <p>Danforth&apos;s final camera plate contains peaks behind the recorded range. The emulsion date is tomorrow.</p>
+                  <p>
+                    Danforth&apos;s final camera plate contains peaks behind the recorded range.
+                    {state.puzzles.lineage.solvedAt
+                      ? " The emulsion date is tomorrow."
+                      : " The emulsion date is missing from the cache."}
+                  </p>
                   <button className="web-link damaged-frame" onClick={() => visitAtmospherePage("danforth", "danforth-personal-cache", "danforth_cache")}>View damaged frame 7</button>
                   <button className="web-link" onClick={() => visitAtmospherePage("families", "families-registry")}>Dyer family record (Historical Society)</button>
                 </aside>
@@ -737,7 +742,11 @@ const RecoveredBrowser = ({
                 <p>CREW ........... 0 ON STATION / 17 ON RECORD</p>
                 <p>LAST RELIEF .... UNSCHEDULED, 1931</p>
               </div>
-              <small>Station clocks are synchronized by shortwave. Current station date: {resolveTokens("{TOMORROW}")}</small>
+              <small>
+                Station clocks are synchronized by shortwave. Current station date: {state.puzzles.lineage.solvedAt
+                  ? resolveTokens("{TOMORROW}")
+                  : "1931-02-18"}
+              </small>
             </article>
           )}
 
@@ -759,7 +768,10 @@ const RecoveredBrowser = ({
               </p>
               <p>They took my recommendation off the department site in 1932. It is still true. I have not changed one word since.</p>
               <hr />
-              <small>Last updated: {resolveTokens("{TOMORROW}")} — webmaster email returned: USER DOES NOT EXIST YET</small>
+              <small>
+                Last updated: {state.puzzles.lineage.solvedAt ? resolveTokens("{TOMORROW}") : "1932-01-04"}
+                {state.puzzles.lineage.solvedAt && " — webmaster email returned: USER DOES NOT EXIST YET"}
+              </small>
             </article>
           )}
 
@@ -1100,7 +1112,8 @@ const RecoveredBrowser = ({
                     </p>
                   </div>
                 </div>
-                <div className="forum-post forum-post--orphan">
+                {state.puzzles.future_log.solvedAt && (
+                  <div className="forum-post forum-post--orphan">
                   <div>
                     <span className="forum-handle">
                       {resolveTokens("{PLAYER}", {
@@ -1113,7 +1126,8 @@ const RecoveredBrowser = ({
                     <time>{resolveTokens("{TOMORROW}")}</time>
                     <p>i think i found the same pattern independently too</p>
                   </div>
-                </div>
+                  </div>
+                )}
               </div>
             </article>
           )}

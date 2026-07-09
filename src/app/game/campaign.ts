@@ -518,7 +518,10 @@ export const observerAnswerCount = (state: ProgressStateV5): number =>
   ).length;
 
 export const canRunFinalIndex = (state: ProgressStateV5): boolean =>
-  observerAnswerCount(state) === 3;
+  // The last operation is not just a technical checklist. The observer must
+  // have retained enough of Sarah's ordinary life to understand what recovery
+  // would cost, as well as the three conclusions about the relay.
+  observerAnswerCount(state) === 3 && actOneAnswerCount(state) >= 2;
 
 export const hasAllInsights = (state: ProgressStateV5): boolean =>
   Object.keys(INSIGHT_LABELS).every((id) =>

@@ -278,9 +278,7 @@ describe("campaign graph", () => {
       "Closest match withheld by administrative order"
     );
     expect(todo?.content).toContain("did Mom count UP or DOWN?");
-    expect(shutdownEmail?.body).toContain(
-      "The counting paused when you chose"
-    );
+    expect(shutdownEmail?.body).toContain("I'm sorry I have to try again.");
     expect(
       localizedFileContent(
         marginMatch?.id ?? "",

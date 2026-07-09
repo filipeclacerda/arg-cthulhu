@@ -218,8 +218,8 @@ const StartMenu = () => {
           ? t("wrongOrder")
           : result.commandError === "case_incomplete"
             ? locale === "pt-BR"
-              ? "O índice recusou a operação. Três conclusões sobre o observador ainda não foram retidas no Dossiê do Caso."
-              : "The index refused the operation. Three observer findings have not been retained in Casefile.exe."
+              ? "O índice recusou a operação. Retenha três conclusões sobre o observador e pelo menos dois achados sobre o último dia de Sarah no Dossiê do Caso."
+              : "The index refused the operation. Retain three observer findings and at least two findings about Sarah's last day in Casefile.exe."
             : result.commandError === "seal_unavailable"
               ? locale === "pt-BR"
                 ? "O arquivo não reconhece a si mesmo como testemunha. Seis correlações independentes são necessárias."

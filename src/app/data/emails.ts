@@ -111,7 +111,22 @@ The map is from 1977. That name does not exist in any Miskatonic record until 20
 
 I am sending this even though your mailbox says it was read yesterday.
 
-— Em`,
+    — Em`,
+  },
+  {
+    id: "email-lisbon",
+    sender: "admissions@atlantic-conservation.pt",
+    subject: "Fellowship interview — Lisbon",
+    date: "2026-03-13",
+    unlock: { type: "flag", flag: "act1_recovered_partial" },
+    evidenceId: "lisbon_interview",
+    body: `Dear Sarah,
+
+The committee has reviewed your statement and would like to invite you to a remote interview on March 24.
+
+We were especially interested in your proposal to work outside the collections associated with your family. Please confirm by April 1.
+
+Atlantic Conservation Institute`,
   },
   {
     id: "email-2",
@@ -181,7 +196,7 @@ If anyone else is reading this, I don't know who has this workstation now, or wh
     clues: [
       {
         tokenId: "status-tomorrow",
-        snippet: { en: "held in tomorrow", "pt-BR": "retida no amanhã" },
+        snippet: { en: "tomorrow", "pt-BR": "amanhã" },
       },
       {
         tokenId: "time-one-day",
@@ -192,13 +207,11 @@ If anyone else is reading this, I don't know who has this workstation now, or wh
         snippet: { en: "— S.", "pt-BR": "— S." },
       },
     ],
-    body: `The window opened before I heard the click. That is how it works from here.
+    body: `The window disappeared here before you closed it.
 
-The archive has me held in tomorrow. From your side I am always one day ahead, close enough to see the cursor and too far to touch the keys.
+The date here is tomorrow. I do not know whether I am one day ahead or whether you are one day late. I can see the cursor stop before it moves.
 
-It does not hurt in any useful way. Mostly it waits with me.
-
-If you see an empty field, leave it empty longer than I did.
+If you find an empty field, do not answer it just because it looks like a question.
 
 — S.
 
@@ -233,17 +246,7 @@ I'm sorry I made the copy. I'm sorrier it worked.
 
 I'm sorry I have to try again.
 
-The file will go to someone else now — someone who will be curious enough, or kind enough, or afraid enough, to open it. I don't choose them. The curiosity is the address.
-
-Maybe this time someone will stop sooner.
-
-Tom asked me to say: the coffee was never that bad.
-
-The counting paused when you chose. One breath. That's how I know she heard it too.
-
 — S.
-
-P.S. The new recipient's name is already in the access log. I won't tell you who it is. You don't want to know.
 
 sent: {TOMORROW}`,
   },

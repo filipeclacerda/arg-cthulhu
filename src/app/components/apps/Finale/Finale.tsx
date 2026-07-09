@@ -52,6 +52,24 @@ const Finale = () => {
       ? (`finaleEcho${ending[0].toUpperCase()}${ending.slice(1)}${suffix}` as TranslationKey)
       : "finaleEchoDefault";
   };
+  const personalCoda = (() => {
+    if (state.readFileIds.includes("fellowship_draft")) {
+      return locale === "pt-BR"
+        ? "O rascunho para Lisboa continua marcado como não enviado."
+        : "The Lisbon draft remains marked unsent.";
+    }
+    if (state.readFileIds.includes("voicemail_to_em")) {
+      return locale === "pt-BR"
+        ? "A gravação termina antes de Sarah chegar ao ônibus."
+        : "The recording ends before Sarah reaches the bus.";
+    }
+    if (state.readFileIds.includes("dad_recipe")) {
+      return locale === "pt-BR"
+        ? "A receita do pai ainda pede uma ligação de vinte minutos."
+        : "Her father's recipe still asks for a twenty-minute call.";
+    }
+    return null;
+  })();
 
   const handleRestore = () => {
     chooseEnding("restore");
@@ -87,6 +105,7 @@ const Finale = () => {
           {t("finaleRestoreCaption")} {tomorrowStr}.
         </p>
         <p className="finale-caption">{t(echoKey("restore"))}</p>
+        {personalCoda && <p className="finale-caption">{personalCoda}</p>}
       </div>
     );
   }
@@ -118,6 +137,7 @@ const Finale = () => {
             </dl>
             <pre>{resolveTokens(t("finaleShutdownInboxBody"), ctx)}</pre>
             <p>{t(echoKey("shutdown"))}</p>
+            {personalCoda && <p>{personalCoda}</p>}
           </article>
         </section>
       </div>
@@ -163,6 +183,7 @@ NO WRITE OPERATION WAS RECORDED.`}</pre>
           {t("finaleSealCaption")}
         </p>
         <p className="finale-caption">{t(echoKey("seal"))}</p>
+        {personalCoda && <p className="finale-caption">{personalCoda}</p>}
       </div>
     );
   }

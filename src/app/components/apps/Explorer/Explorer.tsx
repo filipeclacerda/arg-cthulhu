@@ -72,6 +72,11 @@ const Explorer = ({ folderId = "my-computer" }: ExplorerProps) => {
 
   // Act 3: when the rot is deep enough, the user folder takes the player's name.
   const displayName = (folder: { id: string; name: string }) => {
+    // RESTORE is only meaningful if the desktop itself accepts Sarah's account
+    // again after the terminal reboots.
+    if (folder.id === "sarah" && flags.ending_restore) {
+      return "Sarah Bishop";
+    }
     if (
       folder.id === "sarah" &&
       corruptionStage >= IDENTITY_REVEAL_STAGE

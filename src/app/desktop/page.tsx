@@ -582,7 +582,7 @@ const Desktop = () => {
         ) : (
           <>
             <span>MISKATONIC DISK IMAGE</span>
-            <span>READ ONLY / VOL_114</span>
+            <span>READ ONLY / VOL_114 / WRITES: 0</span>
           </>
         )}
       </div>

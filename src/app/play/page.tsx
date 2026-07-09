@@ -11,7 +11,6 @@ import {
   TelemetryConsent,
 } from "../game/telemetry";
 import { useI18n } from "../i18n";
-import { resolveTokens } from "../utils/narrative";
 import "./page.scss";
 
 const SARAH_USERNAME = "sarah.bishop";
@@ -20,20 +19,18 @@ const SARAH_PASSWORD = "password";
 const BOOT_LINES: Record<Locale, string[]> = {
   en: [
     "ORNE LIBRARY DARK ARCHIVE // RELAY 07",
-    "HANDSHAKE ACCEPTED FROM UNLISTED OBSERVER",
+    "HANDSHAKE ACCEPTED FROM UNLISTED CLIENT",
     "CHECKING CHAIN OF CUSTODY ........ FAILED",
     "CHECKING SOURCE SIGNATURE .... T. ALVAREZ",
-    "CHECKING RECIPIENT FIELD ......... [BLANK]",
-    "COMPARING SYSTEM CLOCK ........... +24:00:00",
+    "CHECKING RECIPIENT FIELD ......... UNRESOLVED",
     "SEALED IMAGE SB-0316 FOUND",
   ],
   "pt-BR": [
     "ARQUIVO ESCURO DA BIBLIOTECA ORNE // RELÉ 07",
-    "CONEXÃO ACEITA DE OBSERVADOR NÃO LISTADO",
+    "CONEXÃO ACEITA DE CLIENTE NÃO LISTADO",
     "VERIFICANDO CADEIA DE CUSTÓDIA .... FALHOU",
     "VERIFICANDO ASSINATURA DE ORIGEM .. T. ALVAREZ",
-    "VERIFICANDO DESTINATÁRIO .......... [VAZIO]",
-    "COMPARANDO RELÓGIO DO SISTEMA ..... +24:00:00",
+    "VERIFICANDO DESTINATÁRIO .......... NÃO RESOLVIDO",
     "IMAGEM SELADA SB-0316 ENCONTRADA",
   ],
 };
@@ -57,7 +54,6 @@ export default function Home() {
   const [username, setUsername] = useState(SARAH_USERNAME);
   const [password, setPassword] = useState(SARAH_PASSWORD);
   const [authError, setAuthError] = useState("");
-  const [tomorrowStamp, setTomorrowStamp] = useState("--/--/----");
   const [showImport, setShowImport] = useState(false);
   const [caseCode, setCaseCode] = useState("");
   const [casePreview, setCasePreview] = useState<ProgressStateV4 | null>(null);
@@ -72,7 +68,6 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    setTomorrowStamp(resolveTokens("{TOMORROW}"));
     if (!preferencesReady) return;
     setVisibleLines(0);
     const timer = window.setInterval(() => {
@@ -231,7 +226,7 @@ export default function Home() {
           </div>
           <div className="relay-terminal__tools">
             <span className="relay-terminal__date">
-              {isPt ? "DATA DA FILA" : "QUEUE DATE"} {tomorrowStamp}
+              {isPt ? "FILA" : "QUEUE"} {isPt ? "ASSINATURA INVÁLIDA" : "SIGNATURE INVALID"}
             </span>
             <div
               className="relay-terminal__languages"
@@ -280,10 +275,10 @@ export default function Home() {
                 </>
               ) : (
                 <>
-                  <dt>{isPt ? "Destinatário" : "Recipient"}</dt><dd className="relay-unstable">{isPt ? "GERADO AO ABRIR" : "GENERATED AT OPEN"}</dd>
+                  <dt>{isPt ? "Destinatário" : "Recipient"}</dt><dd className="relay-unstable">{isPt ? "NÃO RESOLVIDO" : "UNRESOLVED"}</dd>
                 </>
               )}
-              <dt>{isPt ? "Horário" : "Timestamp"}</dt><dd>{tomorrowStamp}</dd>
+              <dt>{isPt ? "Horário" : "Timestamp"}</dt><dd>{isPt ? "NÃO CONFIÁVEL" : "UNRELIABLE"}</dd>
               <dt>Referrer</dt>
               <dd className={phase === "mount" ? "relay-unstable" : ""}>
                 {phase === "sealed"
@@ -357,13 +352,13 @@ export default function Home() {
                 <div className="relay-warning">
                   <strong>
                     {isPt
-                      ? "SESSÃO DE OBSERVADOR CRIADA"
-                      : "OBSERVER SESSION CREATED"}
+                      ? "SESSÃO NÃO LISTADA CRIADA"
+                      : "UNLISTED SESSION CREATED"}
                   </strong>
                   <span>
                     {isPt
-                      ? "O relé não possui registro de ter convidado você. Abrir a imagem é a única credencial que ele possui."
-                      : "The relay has no record of inviting you. Opening the image is the only credential it has for you."}
+                      ? "O relé não conseguiu validar um destinatário para esta sessão. A designação é opcional."
+                      : "The relay could not validate a recipient for this session. A designation is optional."}
                   </span>
                 </div>
 
@@ -374,7 +369,7 @@ export default function Home() {
                   }}
                 >
                   <label>
-                    {isPt ? "Designação do observador" : "Observer designation"}
+                    {isPt ? "Designação da sessão" : "Session designation"}
                     <input
                       value={observerName}
                       onChange={(event) => setObserverName(event.target.value)}
@@ -526,7 +521,7 @@ export default function Home() {
 
         <footer className="relay-terminal__footer">
           <span>{isPt ? "SEM CAMINHO DE RETORNO" : "NO RETURN PATH"}</span>
-          <span>{isPt ? "ENDEREÇO DO OBSERVADOR: CURIOSIDADE" : "OBSERVER ADDRESS: CURIOSITY"}</span>
+          <span>{isPt ? "CAMPO DE DESTINATÁRIO: NÃO RESOLVIDO" : "RECIPIENT FIELD: UNRESOLVED"}</span>
           <span>{isPt ? "INTEGRIDADE DO LINK 07%" : "LINK INTEGRITY 07%"}</span>
         </footer>
       </section>
