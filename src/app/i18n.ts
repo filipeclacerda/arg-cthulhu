@@ -157,6 +157,13 @@ const en = {
   finaleShutdownTerminal:
     "Windows 98 is shutting down.\n\nIt is now safe to turn off your computer.\n\n...\n\n...\n\n...",
   finaleShutdownCaption: "Check your inbox.",
+  finaleShutdownTerminalTitle: "MISKATONIC RECOVERY CONSOLE",
+  finaleShutdownInboxTitle: "OUTLOOK EXPRESS / MESSAGE RECEIVED",
+  finaleShutdownInboxSubject: "Thank you for stopping.",
+  finaleShutdownInboxBody:
+    "Thank you for stopping.\n\nI'm sorry I have to try again.\n\nThe file will go to someone else now. I don't choose them. The curiosity is the address.\n\nMaybe this time someone will stop sooner.\n\nTom asked me to say: the coffee was never that bad.\n\nThe counting paused when you chose. One breath. That's how I know she heard it too.\n\n— S.",
+  fromLabel: "From",
+  subjectLabel: "Subject",
   finaleSealCaption:
     "The archive is watching itself. The count did not stop — it changed direction. You are still here. Probably.",
 
@@ -562,6 +569,13 @@ const pt: Record<keyof typeof en, string> = {
   finaleShutdownTerminal:
     "O Windows 98 está sendo desligado.\n\nAgora é seguro desligar o computador.\n\n...\n\n...\n\n...",
   finaleShutdownCaption: "Verifique sua caixa de entrada.",
+  finaleShutdownTerminalTitle: "CONSOLE DE RECUPERAÇÃO MISKATONIC",
+  finaleShutdownInboxTitle: "OUTLOOK EXPRESS / MENSAGEM RECEBIDA",
+  finaleShutdownInboxSubject: "Obrigada por parar.",
+  finaleShutdownInboxBody:
+    "Obrigada por parar.\n\nDesculpe. Vou precisar tentar de novo.\n\nO arquivo vai para outra pessoa agora. Eu não escolho quem. A curiosidade é o endereço.\n\nTalvez desta vez alguém pare mais cedo.\n\nTom pediu para dizer: o café nunca foi tão ruim assim.\n\nA contagem pausou quando você escolheu. Uma respiração. É assim que sei que ela também ouviu.\n\n— S.",
+  fromLabel: "De",
+  subjectLabel: "Assunto",
   finaleSealCaption:
     "O arquivo observa a si mesmo. A contagem não parou — mudou de direção. Você ainda está aqui. Provavelmente.",
 

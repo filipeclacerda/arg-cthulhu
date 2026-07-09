@@ -73,21 +73,6 @@
   }
 }
 
-.finale--shutdown {
-  position: fixed;
-  inset: 0;
-  z-index: 99999;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  width: 100vw;
-  height: 100vh;
-  padding: 0;
-  background: #000;
-  animation: shutdown-fade 700ms ease-in;
-}
-
 .finale--seal {
   background:
     repeating-linear-gradient(90deg, rgba(20, 70, 74, .12) 0 1px, transparent 1px 6px),
@@ -108,16 +93,175 @@
   border-color: #85b9b9 #071a1b #071a1b #85b9b9;
 }
 
-.finale--shutdown .finale-terminal {
-  width: min(640px, 90vw);
-  min-height: calc(var(--ui-scale, 1) * 290px);
-  color: #d8d8d8;
+.finale-shutdown-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: 0;
+  padding: calc(var(--ui-scale, 1) * 24px);
+  overflow: auto;
+  color: #d8ffd8;
   background: #000;
-  box-shadow: none;
+  animation: shutdown-fade 700ms ease-in;
+
+  &::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      0deg,
+      rgba(255, 255, 255, 0.07) 0,
+      rgba(255, 255, 255, 0.07) 1px,
+      transparent 1px,
+      transparent 5px
+    );
+    opacity: 0.18;
+  }
 }
 
-.finale--shutdown .finale-caption {
-  color: #888;
+.finale-shutdown-screen__glow {
+  position: fixed;
+  inset: 18% 18%;
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(78, 255, 110, 0.09), transparent 58%);
+  filter: blur(16px);
+}
+
+.finale-shutdown-panel {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: min(calc(var(--ui-scale, 1) * 760px), calc(100vw - 40px));
+  max-height: calc(100vh - 48px);
+  box-sizing: border-box;
+  flex-direction: column;
+  gap: calc(var(--ui-scale, 1) * 14px);
+}
+
+.finale-shutdown-terminal {
+  text-align: center;
+  color: #b8ffbd;
+  text-shadow: 0 0 5px rgba(80, 255, 110, 0.65);
+
+  p {
+    margin: 0 0 calc(var(--ui-scale, 1) * 10px);
+    color: #6cff7c;
+    font-size: calc(var(--ui-scale, 1) * 12px);
+    letter-spacing: 1px;
+  }
+
+  pre {
+    margin: 0;
+    white-space: pre-wrap;
+    font-family: win98, monospace;
+    font-size: calc(var(--ui-scale, 1) * 15px);
+    line-height: 1.45;
+  }
+}
+
+.finale-shutdown-mail {
+  box-sizing: border-box;
+  padding: 3px;
+  color: #111;
+  background: #c0c0c0;
+  box-shadow: inset -1px -1px #0a0a0a, inset 1px 1px #dfdfdf,
+    inset -2px -2px #808080, inset 2px 2px #fff,
+    0 12px 40px rgba(0, 0, 0, 0.75);
+}
+
+.finale-shutdown-mail__titlebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(var(--ui-scale, 1) * 12px);
+  padding: 3px 5px;
+  color: #fff;
+  background: linear-gradient(90deg, #000080 0%, #1084d0 100%);
+  font-size: calc(var(--ui-scale, 1) * 13px);
+  font-weight: bold;
+
+  span:last-child {
+    flex: 0 0 auto;
+    font-weight: normal;
+  }
+}
+
+.finale-shutdown-mail__meta {
+  display: grid;
+  grid-template-columns: calc(var(--ui-scale, 1) * 76px) minmax(0, 1fr);
+  gap: 0;
+  margin: 0;
+  padding: calc(var(--ui-scale, 1) * 10px) calc(var(--ui-scale, 1) * 12px);
+  background: #dfdfdf;
+  border-right: 1px solid #808080;
+  border-left: 1px solid #fff;
+
+  dt,
+  dd {
+    min-width: 0;
+    margin: 0;
+    padding: calc(var(--ui-scale, 1) * 2px) 0;
+    font-size: calc(var(--ui-scale, 1) * 13px);
+  }
+
+  dt {
+    color: #333;
+  }
+
+  dd {
+    overflow-wrap: anywhere;
+  }
+}
+
+.finale-shutdown-mail pre {
+  max-height: calc(100vh - calc(var(--ui-scale, 1) * 350px));
+  min-height: calc(var(--ui-scale, 1) * 210px);
+  box-sizing: border-box;
+  margin: 0;
+  padding: calc(var(--ui-scale, 1) * 14px);
+  overflow: auto;
+  white-space: pre-wrap;
+  color: #111;
+  background: #fff;
+  box-shadow: inset -1px -1px #fff, inset 1px 1px #808080,
+    inset -2px -2px #dfdfdf, inset 2px 2px #0a0a0a;
+  font-family: win98, monospace;
+  font-size: calc(var(--ui-scale, 1) * 14px);
+  line-height: 1.35;
+}
+
+@media (max-width: 680px) {
+  .finale-shutdown-screen {
+    padding: calc(var(--ui-scale, 1) * 14px);
+  }
+
+  .finale-shutdown-panel {
+    width: calc(100vw - 20px);
+  }
+
+  .finale-shutdown-mail__titlebar {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .finale-shutdown-mail__meta {
+    grid-template-columns: 1fr;
+
+    dt {
+      padding-top: calc(var(--ui-scale, 1) * 6px);
+      font-weight: bold;
+    }
+  }
+
+  .finale-shutdown-mail pre {
+    max-height: none;
+  }
 }
 
 @keyframes shutdown-fade {

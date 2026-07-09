@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from "react";
+import { createPortal } from "react-dom";
 import { useProgress } from "@/app/context/ProgressContext";
 import { useSound } from "@/app/context/SoundContext";
 import { resolveTokens, formatGameDate, tomorrow } from "@/app/utils/narrative";
@@ -49,16 +50,38 @@ const Finale = () => {
   }
 
   if (screen === "shutdown") {
-    return (
-      <div className="finale finale--shutdown">
-        <div className="finale-terminal">
-          <pre>{t("finaleShutdownTerminal")}</pre>
-        </div>
-        <p className="finale-caption">
-          {t("finaleShutdownCaption")}
-        </p>
+    const shutdownScreen = (
+      <div
+        className="finale-shutdown-screen"
+        role="dialog"
+        aria-modal="true"
+        aria-label={t("finaleShutdownCaption")}
+      >
+        <div className="finale-shutdown-screen__glow" aria-hidden="true" />
+        <section className="finale-shutdown-panel">
+          <div className="finale-shutdown-terminal" aria-hidden="true">
+            <p>{t("finaleShutdownTerminalTitle")}</p>
+            <pre>{t("finaleShutdownTerminal")}</pre>
+          </div>
+          <article className="finale-shutdown-mail">
+            <div className="finale-shutdown-mail__titlebar">
+              <span>{t("finaleShutdownInboxTitle")}</span>
+              <span>{tomorrowStr}</span>
+            </div>
+            <dl className="finale-shutdown-mail__meta">
+              <dt>{t("fromLabel")}</dt>
+              <dd>sarah.bishop@miskatonic-research.org</dd>
+              <dt>{t("subjectLabel")}</dt>
+              <dd>{t("finaleShutdownInboxSubject")}</dd>
+            </dl>
+            <pre>{resolveTokens(t("finaleShutdownInboxBody"), ctx)}</pre>
+          </article>
+        </section>
       </div>
     );
+    return typeof document === "undefined"
+      ? null
+      : createPortal(shutdownScreen, document.body);
   }
 
   if (screen === "seal") {
