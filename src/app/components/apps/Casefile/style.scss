@@ -789,6 +789,11 @@ details.casefile__tools {
       border-color: #9c7418;
       background: #fff6d2;
     }
+
+    &.inconclusive {
+      border-color: #6b6458;
+      background: #eeeae1;
+    }
   }
 
   h4 {

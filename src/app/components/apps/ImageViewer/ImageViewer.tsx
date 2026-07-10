@@ -3,7 +3,7 @@
 import Image from "next/image";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useProgress } from "@/app/context/ProgressContext";
-import { files } from "@/app/data/filesystem";
+import { files, isUnlocked } from "@/app/data/filesystem";
 import { resolveTokens } from "@/app/utils/narrative";
 import "../ArgTools/style.scss";
 import "./style.scss";
@@ -23,6 +23,7 @@ const ImageViewer = ({ fileId }: { fileId: string }) => {
     collectReference,
     recordNearMiss,
     dispatchGameEvent,
+    setFlag,
   } = useProgress();
   const [mirrored, setMirrored] = useState(false);
   const [inverted, setInverted] = useState(false);
@@ -30,6 +31,13 @@ const ImageViewer = ({ fileId }: { fileId: string }) => {
   const [zoom, setZoom] = useState(100);
   const [properties, setProperties] = useState(false);
   const [compareMode, setCompareMode] = useState(false);
+  const [temporalLayers, setTemporalLayers] = useState({
+    past: false,
+    present: true,
+    future: false,
+  });
+  const [temporalBlend, setTemporalBlend] = useState<"normal" | "difference">("normal");
+  const [temporalAttempted, setTemporalAttempted] = useState(false);
   const partialRecorded = useRef(false);
   const { t } = useI18n();
 
@@ -39,17 +47,36 @@ const ImageViewer = ({ fileId }: { fileId: string }) => {
         ? files.filter(
             (candidate) =>
               candidate.kind === "image" &&
-              candidate.folderId === file.folderId
+              candidate.folderId === file.folderId &&
+              isUnlocked(candidate.unlock, {
+                flags: progress.flags,
+                discoveredEvidenceIds: progress.discoveredEvidenceIds,
+                solvedPuzzleIds: Object.entries(progress.puzzles)
+                  .filter(([, puzzle]) => Boolean(puzzle.solvedAt))
+                  .map(([id]) => id as keyof typeof progress.puzzles),
+              })
           )
         : file
           ? [file]
           : [],
-    [file]
+    [file, progress]
   );
   const galleryIndex = gallery.findIndex(
     (candidate) => candidate.id === currentFileId
   );
   const isPalimpsest = file?.id === "lot_114_scan";
+  const temporalFileIds = [
+    "office_1998_overlay",
+    "office_after_photo",
+    "office_tomorrow_overlay",
+  ];
+  const isTemporalPhoto = Boolean(file && temporalFileIds.includes(file.id));
+  const temporalSolved = Boolean(progress.flags.three_times_solved);
+  const temporalAvailable = {
+    past: progress.discoveredEvidenceIds.includes("office_1998_overlay"),
+    present: progress.discoveredEvidenceIds.includes("office_after_photo"),
+    future: progress.discoveredEvidenceIds.includes("office_tomorrow_overlay"),
+  };
   const recovered =
     Boolean(isPalimpsest) && mirrored && inverted && contrast >= 90;
   const palimpsestSolved = Boolean(progress.puzzles.palimpsest.solvedAt);
@@ -90,6 +117,13 @@ const ImageViewer = ({ fileId }: { fileId: string }) => {
     setZoom(100);
     setProperties(false);
     setCompareMode(false);
+    setTemporalLayers({
+      past: currentFileId === "office_1998_overlay",
+      present: currentFileId === "office_after_photo",
+      future: currentFileId === "office_tomorrow_overlay",
+    });
+    setTemporalBlend("normal");
+    setTemporalAttempted(false);
   }, [currentFileId]);
 
   useEffect(() => {
@@ -145,6 +179,15 @@ const ImageViewer = ({ fileId }: { fileId: string }) => {
           progress.puzzles.lineage.solvedAt
         ? "/photos/bishop_birthday_empty_chair_2025.png"
         : file.content;
+  const allTemporalLayers = Object.values(temporalLayers).every(Boolean);
+  const solveTemporalOverlay = () => {
+    setTemporalAttempted(true);
+    if (!allTemporalLayers || temporalBlend !== "difference") return;
+    if (!temporalSolved) {
+      setFlag("three_times_solved");
+      discoverEvidence("three_times_alignment", "office-temporal-alignment");
+    }
+  };
 
   return (
     <div className="arg-tool image-viewer">
@@ -208,6 +251,71 @@ const ImageViewer = ({ fileId }: { fileId: string }) => {
         </div>
       )}
 
+      {isTemporalPhoto && (
+        <div className="image-viewer__temporal-controls">
+          <strong>
+            {progress.locale === "pt-BR" ? "ALINHAMENTO TEMPORAL" : "TEMPORAL ALIGNMENT"}
+          </strong>
+          <label>
+            <input
+              type="checkbox"
+              checked={temporalLayers.past}
+              disabled={!temporalAvailable.past}
+              onChange={(event) =>
+                setTemporalLayers((value) => ({ ...value, past: event.target.checked }))
+              }
+            />
+            1998
+          </label>
+          <label>
+            <input
+              type="checkbox"
+              checked={temporalLayers.present}
+              disabled={!temporalAvailable.present}
+              onChange={(event) =>
+                setTemporalLayers((value) => ({ ...value, present: event.target.checked }))
+              }
+            />
+            2026
+          </label>
+          <label>
+            <input
+              type="checkbox"
+              checked={temporalLayers.future}
+              disabled={!temporalAvailable.future}
+              onChange={(event) =>
+                setTemporalLayers((value) => ({ ...value, future: event.target.checked }))
+              }
+            />
+            {progress.locale === "pt-BR" ? "AMANHÃ" : "TOMORROW"}
+          </label>
+          <select
+            aria-label={progress.locale === "pt-BR" ? "Modo de mesclagem" : "Blend mode"}
+            value={temporalBlend}
+            onChange={(event) =>
+              setTemporalBlend(event.target.value as "normal" | "difference")
+            }
+          >
+            <option value="normal">NORMAL</option>
+            <option value="difference">DIFFERENCE</option>
+          </select>
+          <button className="button" type="button" onClick={solveTemporalOverlay}>
+            {progress.locale === "pt-BR" ? "Alinhar exposições" : "Align exposures"}
+          </button>
+        </div>
+      )}
+
+      {isTemporalPhoto &&
+        temporalAttempted &&
+        !temporalSolved &&
+        (!allTemporalLayers || temporalBlend !== "difference") && (
+          <div className="arg-tool__result arg-tool__warning">
+            {progress.locale === "pt-BR"
+              ? "Nenhuma exposição contém a forma sozinha. Compare o que muda entre as três."
+              : "No exposure contains the shape alone. Compare what changes across all three."}
+          </div>
+        )}
+
       <div
         className={`arg-tool__content image-viewer__stage ${
           isPalimpsest ? "" : "image-viewer__stage--photo"
@@ -232,13 +340,39 @@ const ImageViewer = ({ fileId }: { fileId: string }) => {
                 }
           }
         >
-          <Image
-            src={displayedSource}
-            alt={file.caption ?? file.name}
-            fill
-            sizes="900px"
-            priority
-          />
+          {isTemporalPhoto ? (
+            <div
+              className={`image-viewer__temporal-stack image-viewer__temporal-stack--${temporalBlend}`}
+            >
+              {temporalLayers.past && (
+                <Image src="/photos/office_1998_overlay.png" alt="Office exposure, 1998" fill sizes="900px" priority />
+              )}
+              {temporalLayers.present && (
+                <Image src="/photos/office_after_2026.png" alt="Office exposure, 2026" fill sizes="900px" priority />
+              )}
+              {temporalLayers.future && (
+                <Image src="/photos/office_tomorrow_overlay.png" alt="Office exposure, tomorrow" fill sizes="900px" priority />
+              )}
+              {temporalSolved && (
+                <div className="image-viewer__temporal-reveal" aria-live="polite">
+                  <i aria-hidden="true" />
+                  <span>
+                    {progress.locale === "pt-BR"
+                      ? "NENHUMA IMAGEM CONTÉM A FIGURA. A DIFERENÇA CONTÉM."
+                      : "NO IMAGE CONTAINS THE FIGURE. THE DIFFERENCE DOES."}
+                  </span>
+                </div>
+              )}
+            </div>
+          ) : (
+            <Image
+              src={displayedSource}
+              alt={file.caption ?? file.name}
+              fill
+              sizes="900px"
+              priority
+            />
+          )}
           {compareMode && comparisonFile && (
             <div className="image-viewer__comparison">
               <Image

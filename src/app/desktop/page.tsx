@@ -7,7 +7,7 @@ import Clock from "../components/Clock/Clock";
 import StartMenu from "../components/StartMenu/StartMenu";
 import { useWindowManager, AppType } from "../context/WindowManagerContext";
 import { useProgress } from "../context/ProgressContext";
-import { useSound } from "../context/SoundContext";
+import { useSound, type AmbientStage } from "../context/SoundContext";
 import { useSubliminalGlitch } from "../hooks/useSubliminalGlitch";
 import { useCorruptionPulse } from "../hooks/useCorruptionPulse";
 import { useI18n, TranslationKey } from "../i18n";
@@ -81,6 +81,68 @@ const desktopApps: DesktopApp[] = [
   },
 ];
 
+// Manifestation: the printer wakes on its own a few seconds after lot_114 is
+// solved and answers a query nobody typed. This is a distinct artifact from
+// the Casefile printer_wake/MIRIAM_DRAFT.PRN flow — do not conflate them.
+// PRESENT -> DUPLICATED happens live here (data-driven off the persisted
+// flag, not a local-only animation) so the swap survives even if the alert
+// window is closed mid-flicker; STATUS_QUERY.PRN only ever shows the
+// resolved line on reread.
+const StatusSheetAlert = () => {
+  const { flags, state } = useProgress();
+  const { play } = useSound();
+  const { openWindow } = useWindowManager();
+  const { t } = useI18n();
+  const duplicated = Boolean(flags.status_sheet_duplicated);
+  const [flashed, setFlashed] = useState(false);
+  const wasDuplicated = useRef(duplicated);
+
+  useEffect(() => {
+    if (duplicated && !wasDuplicated.current) {
+      setFlashed(true);
+      play("glitch");
+      const timer = setTimeout(() => setFlashed(false), 220);
+      wasDuplicated.current = true;
+      return () => clearTimeout(timer);
+    }
+    wasDuplicated.current = duplicated;
+  }, [duplicated, play]);
+
+  return (
+    <div className="new-mail-alert status-sheet-alert" role="status" aria-live="polite">
+      <p className="new-mail-alert__kicker">PRINT SPOOL / UNSCHEDULED JOB</p>
+      <h2>STATUS_QUERY.PRN</h2>
+      <pre
+        className={`status-sheet-alert__line ${
+          flashed ? "status-sheet-alert__line--flicker" : ""
+        }`}
+      >
+        {"SARAH BISHOP — STATUS: "}
+        <span>{duplicated ? "DUPLICATED" : "PRESENT"}</span>
+      </pre>
+      <p>
+        {state.locale === "pt-BR"
+          ? "Nenhum aplicativo solicitou esta impressão. Uma linha foi capturada antes de o spooler ser liberado."
+          : "No application requested this print job. One line was captured before the spooler cleared."}
+      </p>
+      <button
+        className="button"
+        type="button"
+        onClick={() =>
+          openWindow({
+            id: "notepad-status_query_sheet",
+            appType: "notepad",
+            title: "STATUS_QUERY.PRN - Notepad",
+            props: { fileId: "status_query_sheet" },
+          })
+        }
+      >
+        {t("openFileLabel")}
+      </button>
+    </div>
+  );
+};
+
 const appIcon = (appType: AppType) => {
   if (appType === "browser") return "/icons/internet-explorer.png";
   if (appType === "email") return "/icons/outlook-express.png";
@@ -108,7 +170,7 @@ const Desktop = () => {
     playerName,
     state,
   } = useProgress();
-  const { play, setAmbientActive, muted, toggleMuted } = useSound();
+  const { play, setAmbientStage, muted, toggleMuted } = useSound();
   const { t } = useI18n();
   const appLabel = (app: DesktopApp) => (app.labelKey ? t(app.labelKey) : app.label);
   const windowTitle = (win: (typeof windows)[number]) =>
@@ -128,12 +190,122 @@ const Desktop = () => {
   const [selectedDesktopAppId, setSelectedDesktopAppId] = useState<
     string | null
   >(null);
+  // Manifestation: for ~7s the machine "becomes" Miriam's 1998 desktop. Two
+  // possible attempts (palimpsest, then margin_cipher as a second chance) —
+  // whichever the player takes, or neither.
+  const [flash1998, setFlash1998] = useState<1 | 2 | null>(null);
   const previousCorruptionStage = useRef<number | null>(null);
   const { labelGlitch, cursorEcho } = useSubliminalGlitch(
     corruptionStage >= 4,
     playerName
   );
   useCorruptionPulse(corruptionStage, play);
+
+  useEffect(() => {
+    if (!isHydrated) return;
+    const blockingIds = new Set([
+      "new-mail-alert",
+      "printer-recovery-alert",
+      "restricted-folder-alert",
+      "chapter-seven-alert",
+      "margin-file-alert",
+      "counting-file-alert",
+      "voicemail-alert",
+      "recovered-program-alert",
+      "status-sheet-alert",
+      "indexer-result",
+      "msn-messenger",
+    ]);
+    const manifestationBusy =
+      flash1998 !== null ||
+      windows.some(
+        (win) =>
+          !win.minimized &&
+          (blockingIds.has(win.id) || win.id.startsWith("optional-recovery-"))
+      );
+    if (manifestationBusy) return;
+    const recovery =
+      state.puzzles.margin_cipher.solvedAt &&
+      !flags.directory_comparison_notice_shown
+        ? {
+            flag: "directory_comparison_notice_shown",
+            title: "CHKDSK / ORPHANED DIRECTORY",
+            fileId: "directory_comparison",
+            appType: "notepad" as const,
+            fileName: "BISHOP_TREE.CMP",
+            en: "Two user snapshots disagree about an entry neither source contains.",
+            pt: "Duas imagens de usuário discordam sobre uma entrada que nenhuma origem contém.",
+          }
+        : state.puzzles.counting_audio.solvedAt &&
+            !flags.temporal_photos_notice_shown
+          ? {
+              flag: "temporal_photos_notice_shown",
+              title: "EVIDENCE CAMERA / FRAME COLLISION",
+              fileId: "office_1998_overlay",
+              appType: "image" as const,
+              fileName: "office_1998.jpg",
+              en: "Three exposures share one frame checksum and three incompatible dates.",
+              pt: "Três exposições compartilham o mesmo checksum e três datas incompatíveis.",
+            }
+          : state.puzzles.lineage.solvedAt && !flags.silent_call_notice_shown
+            ? {
+                flag: "silent_call_notice_shown",
+                title: "PBX RECOVERY / NO ROUTE",
+                fileId: "silent_call",
+                appType: "audio" as const,
+                fileName: "CALL_0314.WAV",
+                en: "A call with no caller contains two channels that are almost identical.",
+                pt: "Uma chamada sem origem contém dois canais quase idênticos.",
+              }
+            : null;
+    if (!recovery) return;
+    const timer = setTimeout(() => {
+      setFlag(recovery.flag);
+      play(recovery.appType === "audio" ? "future" : "disk");
+      openWindow({
+        id: `optional-recovery-${recovery.fileId}`,
+        appType: "generic",
+        title: recovery.title,
+        props: {
+          children: (
+            <div className="new-mail-alert optional-recovery-alert">
+              <p className="new-mail-alert__kicker">OPTIONAL RECOVERY THREAD</p>
+              <h2>{recovery.fileName}</h2>
+              <p>{state.locale === "pt-BR" ? recovery.pt : recovery.en}</p>
+              <button
+                className="button"
+                type="button"
+                onClick={() =>
+                  openWindow({
+                    id: `${recovery.appType}-${recovery.fileId}`,
+                    appType: recovery.appType,
+                    title: recovery.fileName,
+                    props: { fileId: recovery.fileId, windowClassName: "corrupted" },
+                  })
+                }
+              >
+                {t("openFileLabel")}
+              </button>
+            </div>
+          ),
+        },
+      });
+    }, 2400);
+    return () => clearTimeout(timer);
+  }, [
+    flags,
+    flash1998,
+    isHydrated,
+    openWindow,
+    play,
+    setFlag,
+    state.locale,
+    state.puzzles.counting_audio.solvedAt,
+    state.puzzles.lineage.solvedAt,
+    state.puzzles.margin_cipher.solvedAt,
+    t,
+    windows,
+  ]);
 
   useEffect(() => {
     const timer = setTimeout(() => setBooted(true), 1700);
@@ -145,15 +317,26 @@ const Desktop = () => {
       previousCorruptionStage.current !== null &&
       corruptionStage > previousCorruptionStage.current
     ) {
-      play("glitch");
+      const transitionSound =
+        corruptionStage === 1
+          ? "disk"
+          : corruptionStage === 2
+            ? "wet"
+            : corruptionStage === 3
+              ? "future"
+              : "glitch";
+      play(transitionSound);
     }
     previousCorruptionStage.current = corruptionStage;
   }, [corruptionStage, play]);
 
   useEffect(() => {
-    setAmbientActive(corruptionStage >= 3);
-    return () => setAmbientActive(false);
-  }, [corruptionStage, setAmbientActive]);
+    const normalizedStage = booted
+      ? (Math.min(4, Math.max(0, corruptionStage)) as Exclude<AmbientStage, null>)
+      : null;
+    setAmbientStage(normalizedStage);
+    return () => setAmbientStage(null);
+  }, [booted, corruptionStage, setAmbientStage]);
 
   useEffect(() => {
     document.body.classList.add("desktop-mode");
@@ -166,7 +349,7 @@ const Desktop = () => {
 
     const timer = setTimeout(() => {
       setFlag("sarah_email_notice_shown");
-      play("chime");
+      play("future");
       openWindow({
         id: "new-mail-alert",
         appType: "generic",
@@ -208,6 +391,33 @@ const Desktop = () => {
     t,
   ]);
 
+  // Sarah's live window is a chapter event, not a contact the player must
+  // happen to check. It starts only once the mail alert is out of the way and
+  // the Messenger window can actually receive focus.
+  useEffect(() => {
+    if (!isHydrated || !flags.sarah_msn_live || flags.sarah_msn_notice_shown) return;
+    if (windows.some((win) => !win.minimized && win.id === "new-mail-alert")) return;
+    const timer = setTimeout(() => {
+      setFlag("sarah_msn_notice_shown");
+      play("future");
+      openWindow({
+        id: "msn-messenger",
+        appType: "messenger",
+        title: "MSN Messenger",
+        props: { windowClassName: "corrupted" },
+      });
+    }, 1200);
+    return () => clearTimeout(timer);
+  }, [
+    flags.sarah_msn_live,
+    flags.sarah_msn_notice_shown,
+    isHydrated,
+    openWindow,
+    play,
+    setFlag,
+    windows,
+  ]);
+
   useEffect(() => {
     if (!isHydrated) return;
     if (
@@ -218,7 +428,7 @@ const Desktop = () => {
     }
     const timer = setTimeout(() => {
       setFlag("printer_reaction_shown");
-      play("chime");
+      play("disk");
       openWindow({
         id: "printer-recovery-alert",
         appType: "generic",
@@ -272,7 +482,7 @@ const Desktop = () => {
 
     const timer = setTimeout(() => {
       setFlag("restricted_folder_notice_shown");
-      play("chime");
+      play("disk");
       openWindow({
         id: "restricted-folder-alert",
         appType: "generic",
@@ -321,7 +531,7 @@ const Desktop = () => {
 
     const timer = setTimeout(() => {
       setFlag("chapter_seven_notice_shown");
-      play("chime");
+      play("disk");
       openWindow({
         id: "chapter-seven-alert",
         appType: "generic",
@@ -375,7 +585,7 @@ const Desktop = () => {
 
     const timer = setTimeout(() => {
       setFlag("margin_file_notice_shown");
-      play("chime");
+      play("disk");
       openWindow({
         id: "margin-file-alert",
         appType: "generic",
@@ -430,7 +640,7 @@ const Desktop = () => {
 
     const timer = setTimeout(() => {
       setFlag("counting_file_notice_shown");
-      play("chime");
+      play("wet");
       openWindow({
         id: "counting-file-alert",
         appType: "generic",
@@ -473,13 +683,68 @@ const Desktop = () => {
     t,
   ]);
 
+  // The everyday reward: a banal voicemail arrives a beat after the
+  // counting.wav set piece (post_end_transcript), never immediately — the
+  // contrast lands better once the ghost transcript has had time to fade.
   useEffect(() => {
     if (!isHydrated) return;
-    if (!flags.endgame_available || flags.endgame_notice_shown) return;
+    if (!flags.post_end_transcript_seen || flags.voicemail_notice_shown) return;
+
+    const timer = setTimeout(() => {
+      setFlag("voicemail_notice_shown");
+      play("chime");
+      openWindow({
+        id: "voicemail-alert",
+        appType: "generic",
+        title: t("newFileRecoveredTitle"),
+        props: {
+          children: (
+            <div className="new-mail-alert">
+              <p className="new-mail-alert__kicker">{t("voicemailAttachmentKicker")}</p>
+              <h2>voicemail_to_em.wav</h2>
+              <p>{t("voicemailRecoveredLine")}</p>
+              <button
+                className="button"
+                type="button"
+                onClick={() =>
+                  openWindow({
+                    id: "audio-voicemail_to_em",
+                    appType: "audio",
+                    title: "voicemail_to_em.wav",
+                    props: { fileId: "voicemail_to_em" },
+                  })
+                }
+              >
+                {t("openRecordingLabel")}
+              </button>
+            </div>
+          ),
+        },
+      });
+    }, 26_000);
+
+    return () => clearTimeout(timer);
+  }, [
+    flags.post_end_transcript_seen,
+    flags.voicemail_notice_shown,
+    isHydrated,
+    openWindow,
+    play,
+    setFlag,
+    t,
+  ]);
+
+  useEffect(() => {
+    if (!isHydrated) return;
+    if (
+      !flags.endgame_available ||
+      !flags.indexer_sequence_seen ||
+      flags.endgame_notice_shown
+    ) return;
 
     const timer = setTimeout(() => {
       setFlag("endgame_notice_shown");
-      play("chime");
+      play("future");
       openWindow({
         id: "recovered-program-alert",
         appType: "generic",
@@ -514,12 +779,120 @@ const Desktop = () => {
   }, [
     flags.endgame_available,
     flags.endgame_notice_shown,
+    flags.indexer_sequence_seen,
     isHydrated,
     openWindow,
     play,
     setFlag,
     t,
   ]);
+
+  // Manifestation: the printer wakes on its own 3-6s after lot_114 is solved.
+  useEffect(() => {
+    if (!isHydrated) return;
+    if (
+      !state.worldReactionsSeen.includes("status_sheet") ||
+      flags.status_sheet_notice_shown
+    ) {
+      return;
+    }
+    const wakeDelay = 3000 + Math.random() * 3000;
+    const timer = setTimeout(() => {
+      setFlag("status_sheet_notice_shown");
+      play("disk");
+      openWindow({
+        id: "status-sheet-alert",
+        appType: "generic",
+        title: "EPSON Stylus COLOR 600",
+        props: { children: <StatusSheetAlert /> },
+      });
+    }, wakeDelay);
+    return () => clearTimeout(timer);
+  }, [
+    flags.status_sheet_notice_shown,
+    isHydrated,
+    openWindow,
+    play,
+    setFlag,
+    state.worldReactionsSeen,
+  ]);
+
+  // A few seconds after the sheet is visible, PRESENT flickers to DUPLICATED.
+  // Driven by a persisted flag (not local component state) so the swap holds
+  // even if the alert window was closed mid-wait.
+  useEffect(() => {
+    if (!isHydrated) return;
+    if (!flags.status_sheet_notice_shown || flags.status_sheet_duplicated) return;
+    const flipDelay = 4000 + Math.random() * 3000;
+    const timer = setTimeout(() => setFlag("status_sheet_duplicated"), flipDelay);
+    return () => clearTimeout(timer);
+  }, [
+    flags.status_sheet_duplicated,
+    flags.status_sheet_notice_shown,
+    isHydrated,
+    setFlag,
+  ]);
+
+  // Manifestation: the 1998 desktop flash. First chance after palimpsest;
+  // if missed, a second chance after margin_cipher. Once the file is
+  // recovered (or both chances are spent), it never triggers again.
+  useEffect(() => {
+    if (!isHydrated) return;
+    if (flags.miriam_1998_file_recovered || flash1998 != null) return;
+    if (windows.some((win) => !win.minimized && win.id === "margin-file-alert")) return;
+    const attempt1Ready =
+      Boolean(state.puzzles.palimpsest.solvedAt) &&
+      !flags.flash_1998_attempt_1_shown;
+    const attempt2Ready =
+      Boolean(state.puzzles.margin_cipher.solvedAt) &&
+      Boolean(flags.flash_1998_attempt_1_shown) &&
+      !flags.flash_1998_attempt_2_shown;
+    if (!attempt1Ready && !attempt2Ready) return;
+    const attempt = attempt1Ready ? 1 : 2;
+    const timer = setTimeout(() => {
+      setFlag(`flash_1998_attempt_${attempt}_shown`);
+      setFlag("1998_flash_seen");
+      play("disk");
+      setFlash1998(attempt);
+    }, 1600);
+    return () => clearTimeout(timer);
+  }, [
+    flags.flash_1998_attempt_1_shown,
+    flags.flash_1998_attempt_2_shown,
+    flags.miriam_1998_file_recovered,
+    flash1998,
+    isHydrated,
+    play,
+    setFlag,
+    state.puzzles.margin_cipher.solvedAt,
+    state.puzzles.palimpsest.solvedAt,
+    windows,
+  ]);
+
+  // Generous, fixed 7s window, then a hard cut back to normal.
+  useEffect(() => {
+    if (flash1998 == null) return;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const timer = setTimeout(() => {
+      if (flash1998 === 2) setFlag("miriam_1998_file_recovered");
+      play("disk");
+      setFlash1998(null);
+    }, reducedMotion ? 20_000 : 7000);
+    return () => clearTimeout(timer);
+  }, [flash1998, play, setFlag]);
+
+  const openMiriamAccessionFile = () => {
+    setFlag("miriam_1998_file_recovered");
+    play("disk");
+    openWindow({
+      id: "notepad-miriam_accession_notes_wk3",
+      appType: "notepad",
+      title: "accession_notes_wk3.txt - Notepad",
+      props: { fileId: "miriam_accession_notes_wk3" },
+    });
+    // The window survives; only the overlay cuts away.
+    setFlash1998(null);
+  };
 
   const onClickOffsideIcon = (
     ev: React.MouseEvent<HTMLDivElement, MouseEvent>
@@ -696,6 +1069,32 @@ const Desktop = () => {
             </button>
           </div>
         )}
+      {flash1998 != null && (
+        <div
+          className="desktop-1998-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-label={
+            state.locale === "pt-BR"
+              ? "Sessão legada de 1998 detectada"
+              : "Legacy 1998 session detected"
+          }
+        >
+          <div className="desktop-1998-overlay__taskbar">
+            <span className="desktop-1998-overlay__user">M. BISHOP</span>
+            <span className="desktop-1998-overlay__clock">03:14</span>
+          </div>
+          <button
+            type="button"
+            className="desktop-1998-overlay__icon"
+            onClick={openMiriamAccessionFile}
+            autoFocus
+          >
+            <Image src="/icons/notepad.png" alt="" width={40} height={40} />
+            <p>accession_notes_wk3.txt</p>
+          </button>
+        </div>
+      )}
     </main>
   );
 };

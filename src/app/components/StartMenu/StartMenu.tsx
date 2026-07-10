@@ -96,9 +96,30 @@ const ACCESSORIES: ProgramEntry[] = [
 
 const INDEX_FRAGMENTS = ["E7", "A1", "C4", "B9"];
 
-const IndexerResult = ({ locale }: { locale: "en" | "pt-BR" }) => {
-  const [visible, setVisible] = useState(0);
+// Dry system tally, phase 2 of the IDENTITY COLLISION sequence. Kept in
+// English in both locales — this is system output, same convention as
+// "INDEX /JOIN" itself never being translated.
+const PHASE_TWO_LINES = [
+  "4 REFERENCES FOUND",
+  "3 RECIPIENTS CLOSED",
+  "1 RECIPIENT ACTIVE",
+];
 
+const IndexerResult = ({
+  locale,
+  playerName,
+}: {
+  locale: "en" | "pt-BR";
+  playerName: string | null;
+}) => {
+  const { setFlag } = useProgress();
+  const [visible, setVisible] = useState(0);
+  const [phase2Visible, setPhase2Visible] = useState(0);
+  const [showBridgeLine, setShowBridgeLine] = useState(false);
+  const [showCollision, setShowCollision] = useState(false);
+  const [showStartMenuNote, setShowStartMenuNote] = useState(false);
+
+  // Phase 1 (existing): the four collected references acknowledge one by one.
   useEffect(() => {
     const timer = window.setInterval(() => {
       setVisible((count) => {
@@ -111,6 +132,27 @@ const IndexerResult = ({ locale }: { locale: "en" | "pt-BR" }) => {
     }, 420);
     return () => window.clearInterval(timer);
   }, []);
+
+  // Once all four are acknowledged and the unreadable runes appear, the rest
+  // of the sequence plays out in fixed beats: a dry recipient tally (phase 2),
+  // the bridge line that already existed, then the IDENTITY COLLISION block
+  // itself (phase 3), then the pointer to the Start Menu. Placed after the
+  // runes rather than before them — the runes are the mystery beat, the tally
+  // is the system's administrative comedown from it, and the collision block
+  // is the sentence that comedown was building toward.
+  useEffect(() => {
+    if (visible < INDEX_FRAGMENTS.length) return;
+    const timers = [
+      window.setTimeout(() => setPhase2Visible(1), 900),
+      window.setTimeout(() => setPhase2Visible(2), 1600),
+      window.setTimeout(() => setPhase2Visible(3), 2300),
+      window.setTimeout(() => setShowBridgeLine(true), 3200),
+      window.setTimeout(() => setShowCollision(true), 4400),
+      window.setTimeout(() => setShowStartMenuNote(true), 5700),
+      window.setTimeout(() => setFlag("indexer_sequence_seen"), 6500),
+    ];
+    return () => timers.forEach((timer) => window.clearTimeout(timer));
+  }, [setFlag, visible]);
 
   return (
     <div className="indexer-result">
@@ -128,14 +170,47 @@ const IndexerResult = ({ locale }: { locale: "en" | "pt-BR" }) => {
       </ol>
       {visible === INDEX_FRAGMENTS.length && (
         <>
-          <div aria-label="The assembled name cannot be displayed">
+          <div
+            className="indexer-result__runes"
+            aria-label="The assembled name cannot be displayed"
+          >
             ᚱᛚᛇ·ᚦᛟᚾ·ᚷᚨᛏ·ᛞᛉ
           </div>
-          <strong>
-            {locale === "pt-BR"
-              ? "O índice contém seu leitor atual."
-              : "The index contains its current reader."}
-          </strong>
+          {phase2Visible > 0 && (
+            <ol className="indexer-result__system-log">
+              {PHASE_TWO_LINES.slice(0, phase2Visible).map((line) => (
+                <li key={line}>{line}</li>
+              ))}
+            </ol>
+          )}
+          {showBridgeLine && (
+            <strong className="indexer-result__bridge">
+              {locale === "pt-BR"
+                ? "O índice contém seu leitor atual."
+                : "The index contains its current reader."}
+            </strong>
+          )}
+          {showCollision && (
+            <div className="indexer-result__collision">
+              <p className="indexer-result__collision-label">
+                IDENTITY COLLISION:
+              </p>
+              <p className="indexer-result__collision-record">SARAH BISHOP</p>
+              <p className="indexer-result__collision-record">
+                {(playerName?.trim() || "NEXT USER").toUpperCase()}
+              </p>
+              <p className="indexer-result__collision-select">
+                SELECT CANONICAL RECORD
+              </p>
+            </div>
+          )}
+          {showStartMenuNote && (
+            <p className="indexer-result__note">
+              {locale === "pt-BR"
+                ? "RECOVERED PROGRAM disponível no Menu Iniciar."
+                : "RECOVERED PROGRAM available from the Start Menu."}
+            </p>
+          )}
         </>
       )}
     </div>
@@ -148,7 +223,7 @@ const StartMenu = () => {
   const [showRun, setShowRun] = useState(false);
   const [runInput, setRunInput] = useState("");
   const { openWindow } = useWindowManager();
-  const { hasFlag, runCommand } = useProgress();
+  const { hasFlag, runCommand, playerName } = useProgress();
   const { play } = useSound();
   const { locale, t } = useI18n();
 
@@ -180,9 +255,11 @@ const StartMenu = () => {
 
   const executeRunCommand = () => {
     const command = runInput.trim();
+    const normalizedCommand = command.toUpperCase().replace(/\s+/g, " ");
     const sealCommand =
-      command.toUpperCase().replace(/\s+/g, " ") ===
-      "INDEX /SEAL RELAY-07 /WITNESS ARCHIVE";
+      normalizedCommand === "INDEX /SEAL RELAY-07 /WITNESS ARCHIVE";
+    const incompleteRestoreCommand =
+      normalizedCommand === "INDEX /RESTORE /INCOMPLETE";
     setRunInput("");
     setShowRun(false);
     const result = runCommand(command);
@@ -198,13 +275,39 @@ const StartMenu = () => {
         });
         return;
       }
+      if (incompleteRestoreCommand) {
+        openWindow({
+          id: "counter-index-ready",
+          appType: "generic",
+          title: "Miskatonic Recovery Indexer / STAGED OPERATION",
+          props: {
+            windowClassName: "corrupted",
+            children: (
+              <div className="indexer-result">
+                <p>INDEX /RESTORE /INCOMPLETE</p>
+                <ol className="indexer-result__system-log">
+                  <li>3 SOURCE RECORDS HELD</li>
+                  <li>1 FIELD WITHHELD</li>
+                  <li>OPERATION STAGED / NOT EXECUTED</li>
+                </ol>
+                <strong className="indexer-result__bridge">
+                  {locale === "pt-BR"
+                    ? "Uma operação adicional está disponível no RECOVERED PROGRAM."
+                    : "An additional operation is available in RECOVERED PROGRAM."}
+                </strong>
+              </div>
+            ),
+          },
+        });
+        return;
+      }
       openWindow({
         id: "indexer-result",
         appType: "generic",
         title: "Miskatonic Recovery Indexer",
         props: {
           windowClassName: "corrupted",
-          children: <IndexerResult locale={locale} />,
+          children: <IndexerResult locale={locale} playerName={playerName} />,
         },
       });
       return;

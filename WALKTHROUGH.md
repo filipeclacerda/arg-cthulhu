@@ -16,7 +16,7 @@
 | Achado: Relay 07 | `observer` + `archive field` |
 | Achado: capítulo sete | `act of reconstruction` + `observer` |
 | Casefile — cronologia | Miriam 1998 → lote enviado → áudio → Sarah desaparece → foto do escritório → Tom monta a imagem → log futuro |
-| Casefile — refutações | Tom falsificou: `tom_last_message` + `future_access_log`; Sarah fugiu: `incident_report` + `chat_em_archive`; Innsmouth roubou: `lot_114_order` + `catalogue_lot_114` |
+| Casefile — refutações | Tom falsificou: `tom_last_message` + `future_access_log`; Sarah fugiu: `incident_report` + `chat_em_archive`; Innsmouth roubou: `lot_114_order` + `catalogue_lot_114`; Sarah escolheu o observador (INCONCLUSIVA): `read_receipts` + `hash_manifest` |
 | Catálogo | Pesquisar `WHATELEY 1998 114 VOLUME II` |
 | Palimpsesto | `Mirror` + `Invert` + contraste em 90 ou mais |
 | Cifra | Vigenère, chave `MIRIAM` |
@@ -59,9 +59,11 @@ O relatório é o incidente `2026-0318-2`, aberto em 18/03. Ele registra Sarah c
 última vez no prédio em 16/03; Tom avisa em 17/03 que a Segurança fará o welfare check na
 manhã seguinte.
 
-Conteúdo opcional recomendado: abra `My Pictures`. O Image Viewer permite navegar pelas
-fotografias e consultar **Properties** para ler datas, câmera, local e comentários pessoais.
-Elas não são necessárias para resolver os puzzles.
+Conteúdo opcional recomendado: abra `My Pictures`. No início há apenas três fotografias —
+Sarah trabalhando, Sarah com Miriam em 1998 e o último aniversário de família. O computador
+libera o restante do álbum aos poucos nos Atos 2 e 3. O Image Viewer permite navegar pelas
+imagens disponíveis e consultar **Properties** para ler datas, câmera, local e comentários
+pessoais. Nenhuma foto é necessária para resolver os puzzles.
 
 Abra também o **MSN Messenger**. As três conversas arquivadas são opcionais, mas reforçam as
 relações entre Sarah, Tom, Em e Miriam. O campo de mensagem está desativado de propósito.
@@ -198,7 +200,9 @@ dourado e conta para o final secreto.
 
 #### Refutar — hipóteses refutadas
 
-Na lente **Refutar**, cada hipótese falsa exige dois registros independentes:
+Na lente **Refutar**, cada hipótese exige dois registros independentes. Três se refutam por
+completo; a quarta, disponível a partir do capítulo 5, trava como **INCONCLUSIVA** em vez de
+refutada — os registros provam a agência de Sarah, não a intenção dela:
 
 1. **Tom forged the forensic image**
    - Refute com `tom_last_message` + `future_access_log`.
@@ -206,6 +210,9 @@ Na lente **Refutar**, cada hipótese falsa exige dois registros independentes:
    - Refute com `incident_report` + `chat_em_archive`.
 3. **The Innsmouth society stole Volume II**
    - Refute com `lot_114_order` + `catalogue_lot_114`.
+4. **Sarah chose the next observer** (inconclusiva, não refutada)
+   - Teste com `read_receipts` + `hash_manifest`. O veredito confirma que o campo de
+     destinatário foi deixado vazio de propósito, mas não decide entre socorro e substituição.
 
 #### Cronologia — cronologia do caso
 
@@ -345,6 +352,23 @@ Isso abre o registro hidrográfico e libera `CHAPTER_SEVEN`.
 
 Neste momento, o transcript só informa que a segunda voz corresponde ao arquivo de ditados
 da equipe; a identidade mais próxima foi retida administrativamente.
+
+### O set piece pós-4:11 (uma vez só)
+
+Na primeira vez que a gravação recuperada (Left + Reverse) chega ao fim, o player não para
+no marcador de 04:11: o contador continua avançando (04:12, 04:13…) e uma segunda transcrição
+— que não existe no arquivo — começa a se escrever sozinha, linha por linha, abaixo dos pares
+já revelados:
+
+- `THE OBSERVER IS STILL WATCHING.` / `O OBSERVADOR AINDA ESTÁ OLHANDO.`
+- `DO NOT CLOSE THE WINDOW.` / `NÃO FECHE A JANELA.`
+
+Se você pausou a gravação em algum momento antes dela terminar, uma linha extra aparece
+primeiro: `THE OBSERVER STOPPED THE RECORDING.` / `O OBSERVADOR PAROU A GRAVAÇÃO.` Depois da
+última linha, o cursor continua piscando por alguns segundos sem escrever mais nada. Fechar a
+janela do Media Player durante ou logo depois disso não interrompe o som — o buffer continua
+tocando baixinho por fora da janela. Isso acontece só uma vez por save; reabrir e tocar de
+novo volta ao comportamento normal (o zumbido residual de `minimized_audio`, como antes).
 
 ## 6. A linhagem
 
@@ -510,23 +534,54 @@ Maiúsculas e espaços extras são tolerados, mas a ordem das referências não 
 Se o Windows responder que não encontrou o arquivo, normalmente falta coletar uma das quatro
 referências. Volte à seção anterior.
 
-Quando o comando funciona:
+Quando o comando funciona, o **Miskatonic Recovery Indexer** abre e encena a sequência completa,
+em fases:
 
-- a máquina monta o nome sem você digitá-lo;
-- o nome aparece brevemente em runas e se corrompe;
+1. As quatro referências (`E7`, `A1`, `C4`, `B9`) são reconhecidas uma a uma (`ACKNOWLEDGED`).
+2. O nome montado aparece brevemente em runas ilegíveis e se corrompe.
+3. Uma contagem administrativa em voz de sistema seca (sempre em inglês, nas duas línguas):
+
+   ```text
+   4 REFERENCES FOUND
+   3 RECIPIENTS CLOSED
+   1 RECIPIENT ACTIVE
+   ```
+
+4. A linha "O índice contém seu leitor atual." (ponte para a fase final).
+5. O bloco **IDENTITY COLLISION**, listando os dois registros lado a lado e uma instrução
+   pulsante:
+
+   ```text
+   IDENTITY COLLISION:
+   SARAH BISHOP
+   [seu nome ou NEXT USER]
+
+   SELECT CANONICAL RECORD
+   ```
+
+6. Uma nota final aponta que o **RECOVERED PROGRAM** já está disponível no Start Menu.
+
+Em paralelo:
+
 - a pasta `Sarah Bishop` passa a usar o seu nome ou `NEXT USER`;
 - o relógio mostra amanhã;
 - a corrupção chega ao estágio 4;
-- surge o **RECOVERED PROGRAM**.
+- o aviso de instalação do **RECOVERED PROGRAM** aparece no desktop (não duplicado pelo
+  Indexer — é a mesma notificação de sempre).
 
 ## 10. Os finais
 
 Abra o programa pelo aviso ou pelo Start Menu.
 
-A tela de escolha agora encerra com um bloco `WITNESS`, preenchido com dados reais do save:
-o nome do observador, a data/hora reais da primeira abertura do caso (`createdAt`) e o tempo
-total de observação ativa (soma de `activeMs` dos enigmas). É a conduta do próprio jogador
-lida de volta como autos do processo — nenhuma dessas linhas é decorativa.
+A tela de escolha agora abre com o mesmo enquadramento do Indexer: os dois registros em
+colisão — `SARAH BISHOP` e a sua designação (ou `NEXT USER`) — sob `SELECT CANONICAL RECORD`.
+Nenhuma linha explica o que a seleção faz; RESTORE SARAH e SHUT DOWN continuam sendo os
+mesmos botões, com os mesmos IDs e finais de sempre — apenas o texto do terminal muda o
+enquadramento, de "o campo final está aberto" para "escolha o registro canônico". Logo
+abaixo, a tela encerra com um bloco `WITNESS`, preenchido com dados reais do save: o nome do
+observador, a data/hora reais da primeira abertura do caso (`createdAt`) e o tempo total de
+observação ativa (soma de `activeMs` dos enigmas). É a conduta do próprio jogador lida de
+volta como autos do processo — nenhuma dessas linhas é decorativa.
 
 ### RESTORE SARAH
 
@@ -627,6 +682,53 @@ parte do save.
 - Resolver `lot_114`, `palimpsest` e `counting_audio` também pode gerar avisos de pasta nova
   (`RECOVERED`, `CHAPTER_SEVEN`), além do alerta da impressora quando `MIRIAM_DRAFT.PRN` é
   restaurado.
+- **A folha impressa (pós-`lot_114`):** 3–6 segundos depois de resolver o Lote 114, a
+  impressora virtual desperta sozinha e mostra `STATUS_QUERY.PRN`: uma única linha,
+  `SARAH BISHOP — STATUS: PRESENT`. Alguns segundos depois, `PRESENT` sofre um flicker
+  curto e vira `DUPLICATED`, ao vivo na tela. É um artefato distinto do fluxo
+  `printer_wake`/`MIRIAM_DRAFT.PRN` do Casefile — não o substitui. Reler o arquivo depois
+  mostra direto o texto final; a animação não se repete.
+- **O desktop de 1998 (ao revelar BELLASO no palimpsesto):** por ~7 segundos o computador
+  "vira" o desktop de Miriam em 1998 — papel de parede deslocado, usuário `M. BISHOP` e
+  relógio `03:14` na barra de tarefas fixa da sobreposição. A pasta de Sarah some; em seu
+  lugar, um único ícone clicável: `accession_notes_wk3.txt`. Clicar a tempo abre o arquivo
+  e ele permanece aberto quando o desktop volta ao normal em um corte seco; não clicar não
+  perde nada — o evento pode reocorrer uma vez mais ao resolver `margin_cipher`, como
+  segunda chance. Depois de recuperado uma vez, o arquivo passa a existir normalmente na
+  pasta de Sarah para releitura.
+- **O voicemail cotidiano (após o set piece pós-4:11):** cerca de 26 segundos depois de ver o
+  set piece pela primeira vez, um aviso de barra de tarefas ("1 anexo recuperado") anuncia
+  `voicemail_to_em.wav` nos Documentos de Sarah. É uma secretária eletrônica banal — café da
+  sala dos professores, promessa de chegar para o jantar, uma risada sobre algo que Em disse —
+  sem nenhum horror, encerrada em `[4 SECONDS OF LINE NOISE]`. O contraste com a cena anterior
+  é a recompensa.
+- **Sarah ao vivo no MSN (após `lineage`):** um som toca quando a thread abre sozinha pela
+  primeira vez (Sarah entrando online) e a cada mensagem que chega dela. A janela de contato
+  dura cerca de 2 minutos; a presença cai sozinha para offline ao fim dela ou ~34 segundos
+  depois da última mensagem de resposta, o que vier primeiro.
+- **A degradação do nome (corrupção em estágio 3+, após `future_log`):** o nome "Sarah
+  Bishop" — no bloco de identidade do MSN Messenger e no título da pasta do usuário no
+  Explorer — ocasionalmente falha por ~1 segundo: `S. BISHOP`, mais raramente
+  `SAR H BISHOP` (letra faltando) e, raríssimamente, `M. BISHOP`. Irregular de propósito
+  (primeiro evento entre 20–60s, depois a cada 3–7 minutos); nunca aparece em controles de
+  enigma. Some sozinho quando a pasta já foi renomeada para o observador (estágio 4) ou
+  depois de RESTORE SARAH.
+
+### Investigações opcionais com recompensa de final
+
+1. No Capítulo 3, abra `RECOVERED/BISHOP_TREE.CMP`. Selecione a linha
+   `\USERS\[sua designação]`, a única marcada como ausente nas duas árvores. Um diretório
+   com sua designação aparece em `My Computer → C: → Users`.
+2. No Capítulo 4, abra qualquer uma das três fotos do escritório. Marque `1998`, `2026` e
+   `AMANHÃ`, escolha o modo `DIFFERENCE` e clique **Alinhar exposições**.
+3. Depois de `lineage`, abra `CALL_0314.WAV`. Selecione `SUM L+R`, ative
+   **Invert R phase** e reproduza. A diferença recupera uma fala e cria
+   `DO_NOT_COMPLETE.NFO` no diretório sem proprietário.
+4. Abra e leia `DO_NOT_COMPLETE.NFO`. Em **Iniciar → Executar**, digite
+   `INDEX /RESTORE /INCOMPLETE` para preparar a operação.
+5. O Finale passa a oferecer **RESTAURAR INCOMPLETA**. Sarah retorna, mas usa primeiro a
+   designação do observador ao dizer o próprio nome; o destinatário permanece não resolvido
+   e os diretórios convergem. A variante tem coda e custo próprios.
 
 ## Save e continuação
 
@@ -661,17 +763,17 @@ Esses conteúdos não são necessários para concluir o jogo.
 
 ### My Pictures
 
-- `late_again.png` mostra Sarah trabalhando no mesmo computador que pertenceu a Miriam.
-- `mom_and_me_1998.png` confirma que Sarah tinha sete anos quando a mãe desapareceu.
-- `innsmouth_trip.png` mostra Sarah e Em no litoral; as propriedades registram uma forma no
+- **Disponíveis no início:** `late_again.png` mostra Sarah trabalhando no mesmo computador
+  que pertenceu a Miriam; `mom_and_me_1998.png` confirma que Sarah tinha sete anos quando a
+  mãe desapareceu; `dads_65th.png` registra o último aniversário de família com Sarah presente.
+- **Liberadas no Ato 2:** `innsmouth_trip.png` mostra Sarah e Em no litoral; as propriedades registram uma forma no
   mar que Em não se lembra de ter visto.
 - `tom_after_symposium.png` mostra Sarah e Tom antes do desaparecimento e ajuda a explicar por
   que Tom arriscou copiar a máquina.
-- `dads_65th.png` registra o último aniversário de família com Sarah presente.
 - `after_dads_65th.png` mostra Sarah e Em depois da festa. Ao abrir a foto, o bilhete
   `fridge_postcard_note.txt` aparece na mesma pasta e conecta o cartão-postal da geladeira à
   forma vista no litoral.
-- `RECOVERED/office_after.jpg` é a fotografia pericial descrita pela legenda homônima. Verifique
+- **Liberada com os recuperados:** `RECOVERED/office_after.jpg` é a fotografia pericial descrita pela legenda homônima. Verifique
   **Properties**: o reflexo de Sarah aparece somente no frame 12.
 
 ### Downloads e LINEAGE extras
@@ -688,8 +790,24 @@ Esses conteúdos não são necessários para concluir o jogo.
 - **Orne Library Desk** registra um login de `M.BISHOP` às 03:14, apesar de a conta ter sido
   encerrada em 1998.
 
-As conversas arquivadas não são obrigatórias. No Ato 3, Sarah aparece online por poucos
-segundos e permite uma resposta predefinida; a escolha altera a fala, não bloqueia conteúdo.
+As três conversas arquivadas não são obrigatórias e permanecem somente leitura.
+
+**Sarah ao vivo (pós-`lineage`):** a thread "Sarah Bishop (tomorrow)" se abre sozinha na
+primeira vez e Sarah fica **online por cerca de 2 minutos** — a única janela de contato ao
+vivo do jogo. Dentro dela, escolha **uma** pergunta sugerida:
+
+- "Você está viva?" / "O que RESTORE faz?" / "Como quebramos isso?" — cada uma responde com
+  uma única mensagem.
+- **"Você criou o quarto destinatário?"** — a resposta chega em três mensagens curtas, com
+  "digitando..." entre elas: "Eu deixei o campo vazio." / "Não é a mesma coisa." / "você
+  escreveu seu nome nele?" (a última em minúscula, de propósito).
+
+Depois da resposta, "digitando..." reaparece uma última vez e some sem que nenhuma mensagem
+chegue; a presença então cai para offline e não volta. Se nenhuma pergunta for feita a tempo,
+a mesma queda de presença acontece sozinha, sem penalidade — a escolha é simplesmente
+registrada como "perdida". A janela não reabre depois de expirar de verdade (um recarregamento
+feito enquanto ela ainda está aberta a encontra aberta; depois de fechada, fica fechada). A
+thread permanece legível como arquivo depois disso, igual às outras três.
 
 ## Lore adicional
 
@@ -703,10 +821,20 @@ O jogador não é amigo de Tom, colega de Sarah ou destinatário de um e-mail de
 É a pessoa que abriu um link anônimo para o relay. Nesse instante, o quarto destinatário é
 gerado retroativamente e a sessão recebe a designação do observador.
 
-O jogo não confirma se Sarah, agindo a partir de amanhã, contaminou a fila do relay ou se o
-próprio arquivo fabricou essa explicação depois de ser observado. Tom nunca escolheu
-pessoalmente o jogador. A imagem chega a qualquer pessoa que demonstre a disposição de
-abri-la. Por isso:
+`RECOVERED/CHAPTER_SEVEN/split_record.txt` (liberado depois do enigma `lineage`) mostra que o
+campo vazio não foi um acidente de upload: são as notas de Sarah testando espalhar o próprio
+nome em três grafias truncadas diferentes antes de deixar o campo de destinatário do relay em
+branco de propósito. O arquivo prova a **agência** dela — ela sabia o que estava fazendo — mas
+a nota se corta antes do verbo final, sem dizer se ela queria ser encontrada ou substituída.
+
+O jogo não confirma se Sarah, agindo a partir de amanhã, deixou o campo vazio para pedir
+socorro ou para colocar outra pessoa em seu lugar. O manifesto de hashes de Tom
+(`hash_manifest.txt`) e o índice de confirmações (`read_receipts.dbx`) concordam apenas que
+"a cópia criou um destinatário antes de qualquer pessoa escolher um" — os mesmos registros
+sustentam as duas leituras. No Casefile.exe, testar a hipótese "Sarah escolheu o próximo
+observador" não a refuta: ela fica marcada como **INCONCLUSIVA**, porque nenhum registro
+decide a intenção. Tom nunca escolheu pessoalmente o jogador. A imagem chega a qualquer
+pessoa que demonstre a disposição de abri-la. Por isso:
 
 > A curiosidade é o endereço.
 
@@ -780,6 +908,8 @@ histórias sem afirmar que a Testemunha e os seres antárticos são a mesma cria
 Nenhum é moralmente limpo:
 
 - **RESTORE SARAH** salva uma pessoa conhecida sacrificando o observador.
+- **RESTAURAR INCOMPLETA** devolve Sarah sem confirmar uma substituição, mas mistura o nome
+  dela ao do observador e mantém o destinatário ativo como não resolvido.
 - **SHUT DOWN** preserva o jogador, abandona Sarah e deixa a máquina procurar outra vítima.
 - **DEIXAR EM BRANCO** (por omissão, sem botão) atrasa a contagem sem fechar nada — a
   recusa de escolher também é registrada.

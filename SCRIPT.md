@@ -23,7 +23,10 @@ armadilha (observar o padrão é o que o torna real — e você está observando
 - **Sarah Bishop, 35** — pesquisa folclore marítimo e preservação de documentos na
   Universidade Miskatonic. Tinha sete anos quando Miriam desapareceu. Não é "a pesquisadora
   que enlouqueceu": é uma pessoa, com irmã, compromissos, humor, lembranças concretas da mãe
-  e um luto que a acompanha desde a infância.
+  e um luto que a acompanha desde a infância. Ao perceber que a entidade reconstrói mentes a
+  partir de registros, não de pessoas, ela tenta fragmentar deliberadamente o próprio nome
+  pelos arquivos do computador da mãe e deixa vazio o campo de destinatário do relay — uma
+  estratégia de ilegibilidade, não um acidente.
 - **Miriam Bishop** — mãe de Sarah, desaparecida em 1998 catalogando uma coleção ligada aos
   Whateley. O Windows 98 era dela; Sarah o mantém vivo porque parte do arquivo da mãe só
   existe ali. (Isso explica, sem uma linha de exposição, por que uma pesquisadora de 2026 usa
@@ -59,16 +62,53 @@ marcado como **não pertencente ao disco de Sarah** — contém a última nota d
 > Agora existe um quarto destinatário. Eu não adicionei ninguém.
 > O campo está vazio na minha tela. Talvez não esteja quando alguém abrir isto.
 
-A revelação posterior permanece deliberadamente ambígua: Tom nunca escolheu o jogador.
-Sarah pode ter contaminado a fila a partir de "amanhã", ou o arquivo pode ter usado a
-presença dela para alcançar o próximo observador. Nenhum artefato separa essas duas leituras.
+A revelação posterior permanece deliberadamente ambígua, mas não mais por falta de agência:
+os registros provam que Sarah deixou o campo de destinatário vazio de propósito, como parte
+da mesma estratégia de fragmentação com que espalhou o próprio nome pelos arquivos da mãe —
+ela sabia que um campo vazio não é indexado. O que nenhum artefato resolve é a **intenção**
+por trás desse ato: Sarah criou o quarto destinatário para **pedir socorro** ou para
+**colocar outra pessoa no seu lugar**? As duas leituras usam exatamente os mesmos registros.
 O que é demonstrável é que o arquivo chega a **qualquer pessoa disposta a abri-lo**; o ato de
-abrir cria retroativamente o destinatário. A curiosidade do jogador é o endereço.
+abrir cria retroativamente o destinatário — e completa, ao mesmo tempo, o registro dela e o
+do jogador. A curiosidade do jogador é o endereço.
 
 Depois de montar a imagem, a moldura desaparece completamente. O Outlook Express contém
 somente a caixa postal de Sarah; nenhum tutorial ou explicação de entrega fala diretamente
 com o jogador dentro do computador. A primeira comunicação verdadeiramente dirigida a ele é
 o e-mail sobrenatural de Sarah, depois que a máquina já demonstrou conhecer o futuro.
+
+## A fragmentação (regra interna da nova premissa)
+
+> Regra de equipe, não de jogo: nada abaixo vira parágrafo expositivo em nenhum artefato.
+> O jogador deduz isso cruzando notas operacionais, aliases truncados e o campo vazio — nunca
+> lê a explicação.
+
+- A Testemunha Submersa não reconhece **pessoas**; reconhece **registros** — nomes, datas,
+  relações, categorias. Uma mente é reconstruível quando registros suficientes sobre ela se
+  relacionam e se deixam indexar.
+- Fragmentar ou omitir registros é a única defesa conhecida: um nome espalhado em grafias
+  truncadas, uma linha deixada em branco, um campo sem destinatário — nada disso é indexável
+  sozinho. É **ilegibilidade**, não desaparecimento.
+- **Miriam → Sarah:** os espaços em branco que Miriam deixava nos registros em 1977/1998
+  ("deixe a linha em branco", o livro-razão "deliberadamente incompleto") eram a mesma
+  técnica que Sarah usa depois. Sarah não inventou a fragmentação; herdou-a observando o
+  arquivo da própria mãe, sem necessariamente saber que era isso que estava aprendendo.
+- Quando o jogador restaura os arquivos e resolve `INDEX /JOIN`, o sistema preenche **dois
+  registros ao mesmo tempo**: o de Sarah e o do observador. O comando pode estar
+  reconstruindo Sarah, completando a inclusão do jogador, ou ambos — essa simultaneidade é a
+  colisão de identidade do final. A entidade não "possui" o computador: o sistema é só uma
+  máquina eficiente de classificar relações, exatamente o que ela precisa. O Indexer mostra
+  isso literalmente, em voz de sistema seca (termos invariantes nos dois idiomas): depois das
+  quatro referências reconhecidas e das runas, uma contagem administrativa (`4 REFERENCES
+  FOUND` / `3 RECIPIENTS CLOSED` / `1 RECIPIENT ACTIVE`) leva a um bloco `IDENTITY COLLISION:`
+  listando `SARAH BISHOP` e a designação do observador lado a lado sob `SELECT CANONICAL
+  RECORD` — sem explicar o que a seleção fará. O Finale reformula a escolha nesses termos: o
+  terminal de decisão mostra os dois registros em colisão antes do bloco `WITNESS`; RESTORE e
+  SHUT DOWN continuam com os mesmos IDs, flags e finais — só o enquadramento textual muda.
+- A agência de Sarah (o campo vazio foi deliberado) é demonstrável; a intenção dela
+  (socorro vs. substituição) permanece indecidível — nenhum artefato novo deve fechar essa
+  leitura. "A curiosidade é o endereço" continua valendo: o campo vazio só vira alguém quando
+  alguém abre o link.
 
 ## Travas de continuidade
 
@@ -232,10 +272,13 @@ jogador é a última evidência do caso.
   (relatório policial, fotos, a mãe Miriam/1998); Ato 2 com a linhagem e os artefatos
   recuperados; Ato 3 com a cifra que não se digita e a renomeação da pasta de usuário.
 
-### Fotografias pessoais
+### Fotografias pessoais e revelação progressiva
 
-A pasta `My Pictures` existe desde o início para que Sarah seja vista como pessoa antes de
-virar um conjunto de evidências:
+A pasta `My Pictures` existe desde o início, mas não despeja o álbum inteiro. O jogador
+começa com `late_again.png`, `mom_and_me_1998.png` e `dads_65th.png`: trabalho, mãe e família,
+respectivamente. O Ato 2 acrescenta as fotos com Em, Tom, o ônibus e a cozinha; o Ato 3
+acrescenta materiais herdados e recuperados. Assim Sarah aparece como pessoa antes de virar
+um conjunto de evidências, sem transformar a primeira hora numa leitura de inventário:
 
 - `late_again.png` — Sarah trabalhando tarde no arquivo, fotografada por Em. O velho
   computador de Miriam aparece atrás dela, ligando visualmente as duas investigações.
@@ -256,6 +299,23 @@ virar um conjunto de evidências:
 
 As fotos não resolvem enigmas. Legendas e metadados ampliam o luto, a relação entre as irmãs
 e a herança material de Miriam sem transformar cada objeto pessoal em pista obrigatória.
+
+### Cadência de conteúdo
+
+- **Prólogo / Ato 1:** somente o núcleo humano e as quatro fontes necessárias para o Lote
+  114. O jogador entende quem era Sarah, o que sumiu e qual contradição investigar.
+- **Ato 2:** o computador devolve objetos cotidianos (fotos com Em e Tom, calendário,
+  voicemail, rascunhos e Messenger da biblioteca) como recompensa pela primeira dedução.
+- **Ato 3:** entram o caderno de Miriam, o material Bellaso e caches históricos do navegador.
+  O horror deixa de parecer um crime estranho e passa a sugerir recorrência geracional.
+- **Ato 4:** caches polares, páginas mais profundas e o guestbook de Tom só aparecem quando
+  o jogador já possui contexto para perceber as relações, não como enciclopédia inicial.
+- **Pós-log futuro:** `OUTBOX_04.EML` enumera três anexos que o jogador realmente abriu. Ao
+  reler o rascunho de Miriam, uma linha antes legível está irrecuperável. O sistema reage ao
+  percurso sem explicar se prevê, copia ou provoca a leitura.
+
+O princípio é: cada gate adiciona uma nova pergunta, não apenas mais texto. Conteúdo opcional
+continua opcional, mas sua chegada é uma batida narrativa visível.
 
 Extras de lore posteriores:
 
@@ -288,9 +348,33 @@ antecipam o Lote 114, a contagem de nomes e o login impossível de Miriam às 03
 uma solução completa. A interface está em modo de arquivo: o jogador pode selecionar e ler
 conversas, mas não enviar mensagens.
 
-O modelo de dados já prevê três modos (`readonly`, `choices` e `freeform`), respostas sugeridas,
-rascunhos e mensagens recebidas. Assim, uma etapa futura pode fazer um contato voltar a ficar
-online sem substituir a interface nem reescrever o histórico já existente.
+O modelo de dados prevê três modos (`readonly`, `choices` e `freeform`), respostas sugeridas,
+rascunhos e mensagens recebidas — e é isso que sustenta a thread "Sarah Bishop (tomorrow)"
+descrita abaixo, sem substituir a interface nem reescrever o histórico já existente.
+
+#### Sarah ao vivo (pós-`lineage`)
+
+Ao resolver `lineage`, a thread "Sarah Bishop (tomorrow)" aparece e se abre sozinha uma vez.
+A partir desse instante, Sarah fica **online por uma janela de ~2 minutos** — o único contato
+vivo do jogo inteiro. Dentro da janela, quatro perguntas sugeridas ficam disponíveis; o
+sistema aceita **uma só**:
+
+- "Você está viva?" / "O que RESTORE faz?" / "Como quebramos isso?" (existentes, intocadas —
+  `break` continua sendo o gate de `ARCHIVE YOURSELF`).
+- **"Você criou o quarto destinatário?"** — a pergunta central da fragmentação. A resposta
+  chega em três mensagens curtas, cada uma precedida por "digitando...": *"Eu deixei o campo
+  vazio."* / *"Não é a mesma coisa."* / *"você escreveu seu nome nele?"* (minúscula
+  proposital, como quem digita rápido demais). Ela morde porque é verdade: o jogador escreveu
+  a própria designação no relay, no prólogo — o artefato prova a agência de Sarah (campo vazio
+  deliberado), nunca a intenção (socorro vs. substituição), que continua indecidível.
+
+Depois da resposta escolhida, "digitando..." reaparece uma última vez (~4s depois da última
+mensagem), fica visível por ~30s e some sem que nenhuma mensagem chegue; a presença então cai
+para offline e não volta. Se o jogador não perguntar nada dentro da janela, a presença cai da
+mesma forma e as sugestões somem — sem punição de campanha (o Finale usa o eco padrão). A
+janela nunca reabre depois de expirar de verdade; um reload feito **durante** a janela ainda
+aberta a encontra aberta, o que é a única leniência aceita. A thread continua legível como
+arquivo depois que a janela fecha, igual às outras três.
 
 ---
 
@@ -309,10 +393,14 @@ Referência rápida de como cada batida vira código (ver também o plano de imp
 | Curiosidade é o endereço | Relay 07 gera o destinatário no momento da abertura | `page.tsx`, `page.scss` |
 | O nome que não se digita | `untypeable` rejeita o input | `data/filesystem.ts`, `Notepad` |
 | A pasta vira você | designação coletada no relay; renome no estágio 4 (`IDENTITY_REVEAL_STAGE`) | `page.tsx`, `Explorer` |
-| Os três finais | flags `ending_restore` / `ending_shutdown` / `ending_seal` | `components/apps/Finale`, `StartMenu` |
+| Desfechos e variantes | flags `ending_restore` / `ending_restore_incomplete` / `ending_shutdown` / `ending_seal` / `ending_archive_self` / `ending_leave_blank` | `components/apps/Finale`, `StartMenu`, `ProgressContext` |
 | Conversas recuperadas e chat futuro | threads com modos `readonly` / `choices` / `freeform` | `data/chats.ts`, `game/chat.ts`, `components/apps/Messenger` |
 | Save resiliente entre abas/sessões | IndexedDB + fallback localStorage + `BroadcastChannel` | `game/persistence.ts`, `ProgressContext` |
 | Exportar/importar o caso como texto | código `MISK6.<payload>.<checksum>` | `game/persistence.ts` (`exportCaseCode`/`importCaseCode`) |
+| A entidade reconhece registros, não pessoas: folha impressa PRESENT→DUPLICATED, desktop de 1998 de Miriam, degradação do nome de Sarah | `WorldReaction` `status_sheet`/`name_degraded`, flags `1998_flash_seen`/`miriam_1998_file_recovered`, hook `useNameDegradation` | `desktop/page.tsx` (`StatusSheetAlert`, overlay `desktop-1998-overlay`), `hooks/useNameDegradation.ts`, `Messenger.tsx`, `Explorer.tsx` |
+| A gravação não para em 04:11 e um observador seco escreve por cima dela (uma vez); o voicemail cotidiano chega depois, sem horror | `WorldReaction` `post_end_transcript` (substitui a 1ª ocorrência de `minimized_audio`, que segue valendo depois), flag `post_end_transcript_seen` gateando `voicemail_to_em` (agora `kind: "audio"`) | `MediaPlayer.tsx`, `desktop/page.tsx` (aviso "1 anexo recuperado"), `data/filesystem.ts`, `data/localizedNarrative.ts` (`localizedTranscript`) |
+| Sarah ao vivo por uma janela de ~2 min; 4ª pergunta sobre o quarto destinatário em 3 mensagens com "digitando..." entre elas; presença cai para offline sem nova mensagem | `playerChoices` `sarah_live_seen` (abre a janela) e `sarah_live_question` (`alive`/`restore`/`break`/`fourth`/`missed`), estado derivado por timestamp (sem timers persistidos) | `Messenger.tsx` (`LIVE_WINDOW_MS`, `LIVE_REPLY_RESPONSES`, `LIVE_REPLY_DELAYS`) |
+| IDENTITY COLLISION: tally seco de destinatários, bloco SARAH BISHOP × designação do observador, "SELECT CANONICAL RECORD" pulsando; Finale reformula RESTORE/SHUT DOWN como escolha de registro canônico | `IndexerResult` com fases encadeadas por `setTimeout`; `finaleChoiceTerminal` (i18n) inclui o bloco de colisão antes do `WITNESS` | `StartMenu.tsx` (`IndexerResult`), `i18n.ts` (`finaleChoiceTerminal`), `Finale.tsx` |
 
 **Escala de corrupção (estágios, função `puzzleCorruptionStage`):**
 
@@ -555,6 +643,30 @@ de observadores, supressão institucional, interrupção deliberada de Miriam e 
 As três últimas dependem de novos artefatos — manutenção/Whitfield, caderno de Miriam e
 registro de 2014/LOOPBACK. Com todas as correlações, `CONTAIN.HLP` aparece. O comando secreto
 é `INDEX /SEAL RELAY-07 /WITNESS ARCHIVE`.
+
+### Três investigações opcionais de contra-índice
+
+Essas investigações chegam uma por capítulo e usam interfaces diferentes. Não bloqueiam a
+espinha dos sete enigmas e não acrescentam uma nova versão de save; registram flags e cartas
+de evidência dentro do estado existente.
+
+- **Pós-`margin_cipher` — `BISHOP_TREE.CMP`:** compara as árvores M.BISHOP/1998 e S.BISHOP/2026.
+  A única entrada sem proprietário em nenhuma origem é `C:\USERS\{PLAYER}`. Selecioná-la
+  materializa de fato esse diretório sob `Users`, com `FIRST_SEEN.DIR` registrando que ele
+  foi criado pela comparação, não por uma escrita no disco.
+- **Pós-`counting_audio` — fotografia em três tempos:** `office_1998.jpg`, `office_after.jpg` e
+  `office_tomorrow.jpg` compartilham enquadramento. Ativar as três exposições e usar
+  `DIFFERENCE` revela uma ausência que não pertence a nenhuma foto isolada. A conclusão
+  arquivada é comportamental: a diferença contém o contorno; não se nomeia uma entidade.
+- **Pós-`lineage` — `CALL_0314.WAV`:** os dois canais são quase iguais. Somar L+R depois de
+  inverter a fase direita cancela o ruído comum e recupera uma fala anterior à própria
+  gravação. A recompensa é `DO_NOT_COMPLETE.NFO`, o protocolo incompleto de Sarah.
+
+Concluir as três investigações cria `DO_NOT_COMPLETE.NFO`; o jogador ainda precisa lê-lo e
+executar `INDEX /RESTORE /INCOMPLETE`. Só então **RESTORE INCOMPLETE** aparece no Finale.
+Ele usa a disposição RESTORE e acrescenta `ending_restore_incomplete`: Sarah retorna, mas
+responde primeiro com o nome do observador, o destinatário continua não resolvido e o
+diretório de ambos converge para `S. BISHOP`. A operação interrompeu algo; não prova o quê.
 
 ### Sistema de dicas (todas as etapas)
 

@@ -18,7 +18,7 @@ export const THEORY_DEFINITIONS: TheoryDefinition[] = [
   {
     insightId: "observer_relay",
     required: ["person-sarah", "person-tom"],
-    anyOf: ["future_access_log", "sarah_live_email"],
+    anyOf: ["future_access_log", "sarah_live_email", "split_record"],
   },
   {
     insightId: "institutional_suppression",

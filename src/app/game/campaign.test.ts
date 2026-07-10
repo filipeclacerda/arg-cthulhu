@@ -4,6 +4,7 @@ import { emails } from "../data/emails";
 import { EVIDENCE_CARDS } from "../data/evidenceBoard";
 import { files } from "../data/filesystem";
 import {
+  localizedBoardCard,
   localizedChatMessage,
   localizedBrowserText,
   localizedEmail,
@@ -12,8 +13,10 @@ import {
 import { translate } from "../i18n";
 import {
   CASE_STATEMENTS,
+  HYPOTHESES,
   TOKEN_SOURCE_EVIDENCE,
   TOKENS,
+  hypothesisVerdict,
   validateCampaignGraph,
   validateStatement,
 } from "./campaign";
@@ -294,5 +297,85 @@ describe("campaign graph", () => {
     expect(translate("pt-BR", "finaleSealCaption")).toContain(
       "mudou de direção"
     );
+  });
+
+  it("keeps the observer hypothesis inconclusive instead of flatly refuted", () => {
+    expect(hypothesisVerdict("sarah_chose_observer")).toBe("inconclusive");
+    expect(hypothesisVerdict("tom_forged_image")).toBe("refuted");
+    expect(hypothesisVerdict("sarah_fled")).toBe("refuted");
+    expect(hypothesisVerdict("innsmouth_theft")).toBe("refuted");
+    expect(HYPOTHESES.sarah_chose_observer.truth.en).not.toMatch(/^Refuted/);
+    expect(HYPOTHESES.sarah_chose_observer.truth["pt-BR"]).not.toMatch(
+      /^Refutada/
+    );
+    expect(HYPOTHESES.sarah_chose_observer.truth.en).toContain(
+      "Inconclusive"
+    );
+    expect(HYPOTHESES.sarah_chose_observer.truth["pt-BR"]).toContain(
+      "Inconclusiva"
+    );
+  });
+
+  it("plants Sarah's fragmentation strategy as a late, dirty operational note", () => {
+    const splitRecord = files.find((file) => file.id === "split_record");
+
+    expect(splitRecord).toMatchObject({
+      folderId: "chapter-seven",
+      evidenceId: "split_record",
+      unlock: { type: "puzzleSolved", puzzleId: "lineage" },
+    });
+    expect(splitRecord?.content).toContain("SPLITR~1.TXT");
+    expect(splitRecord?.content).toContain("recipient field: left blank");
+    expect(splitRecord?.content).not.toContain("find me");
+    expect(splitRecord?.content).not.toContain("replace me");
+    expect(EVIDENCE_CARDS.split_record).toBeDefined();
+    expect(
+      localizedFileContent("split_record", splitRecord?.content ?? "", "pt-BR")
+    ).toContain("SPLITR~1.TXT");
+    expect(
+      localizedBoardCard(
+        "split_record",
+        { title: "split_record.txt", summary: "" },
+        "pt-BR"
+      ).summary
+    ).toContain("destinatário");
+  });
+
+  it("supports three optional counter-index investigations without save schema changes", () => {
+    const directory = files.find((file) => file.id === "directory_comparison");
+    const pastPhoto = files.find((file) => file.id === "office_1998_overlay");
+    const futurePhoto = files.find((file) => file.id === "office_tomorrow_overlay");
+    const silentCall = files.find((file) => file.id === "silent_call");
+    const counterIndex = files.find((file) => file.id === "counter_index_note");
+
+    expect(directory?.unlock).toEqual({ type: "puzzleSolved", puzzleId: "margin_cipher" });
+    expect(pastPhoto?.content).toBe("/photos/office_1998_overlay.png");
+    expect(futurePhoto?.content).toBe("/photos/office_tomorrow_overlay.png");
+    expect(silentCall).toMatchObject({
+      kind: "audio",
+      unlock: { type: "puzzleSolved", puzzleId: "lineage" },
+    });
+    expect(counterIndex?.unlock).toEqual({
+      type: "flag",
+      flag: "silent_call_solved",
+    });
+    [
+      "directory_comparison",
+      "observer_directory",
+      "office_1998_overlay",
+      "office_tomorrow_overlay",
+      "three_times_alignment",
+      "silent_call",
+      "counter_index_note",
+    ].forEach((id) => expect(EVIDENCE_CARDS[id]).toBeDefined());
+  });
+
+  it("keeps Tom uncertain about whether Sarah or the copy filled the blank", () => {
+    const manifest = files.find((file) => file.id === "hash_manifest");
+    expect(manifest?.content).toContain("I cannot prove which happened first");
+    expect(manifest?.content).not.toContain("Sarah didn't choose them");
+    expect(
+      localizedFileContent("hash_manifest", manifest?.content ?? "", "pt-BR")
+    ).toContain("Não consigo provar o que aconteceu primeiro");
   });
 });

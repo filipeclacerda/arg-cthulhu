@@ -9,27 +9,58 @@ import React, {
 
 const STORAGE_KEY = "arg-cthulhu-muted";
 
-export type SoundName = "click" | "error" | "chime" | "glitch";
+export type SoundName =
+  | "click"
+  | "error"
+  | "chime"
+  | "glitch"
+  | "disk"
+  | "wet"
+  | "future";
+
+export type AmbientStage = 0 | 1 | 2 | 3 | 4 | null;
 
 const SOUND_FILES: Record<SoundName, string> = {
   click: "/sounds/click.wav",
   error: "/sounds/error.wav",
   chime: "/sounds/chime.wav",
   glitch: "/sounds/glitch.wav",
+  disk: "/sounds/disk-seek.wav",
+  wet: "/sounds/wet-click.wav",
+  future: "/sounds/future-chime.wav",
 };
 
 const SOUND_VOLUME: Record<SoundName, number> = {
-  click: 0.35,
-  error: 0.5,
-  chime: 0.5,
-  glitch: 0.45,
+  click: 0.4,
+  error: 0.56,
+  chime: 0.56,
+  glitch: 0.52,
+  disk: 0.33,
+  wet: 0.4,
+  future: 0.45,
+};
+
+const AMBIENT_FILES: Record<Exclude<AmbientStage, null>, string> = {
+  0: "/sounds/room-tone.wav",
+  1: "/sounds/room-tone.wav",
+  2: "/sounds/room-tone-wet.wav",
+  3: "/sounds/ambient-hum.wav",
+  4: "/sounds/ambient-void.wav",
+};
+
+const AMBIENT_VOLUME: Record<Exclude<AmbientStage, null>, number> = {
+  0: 0.1,
+  1: 0.11,
+  2: 0.13,
+  3: 0.15,
+  4: 0.13,
 };
 
 interface SoundContextValue {
   muted: boolean;
   toggleMuted: () => void;
   play: (name: SoundName) => void;
-  setAmbientActive: (active: boolean) => void;
+  setAmbientStage: (stage: AmbientStage) => void;
   playHauntedLoop: (id: string, src: string, durationMs: number) => void;
   stopHauntedLoop: (id: string) => void;
 }
@@ -41,7 +72,7 @@ export const SoundProvider = ({ children }: { children: React.ReactNode }) => {
   const mutedRef = useRef(muted);
   const poolRef = useRef<Partial<Record<SoundName, HTMLAudioElement>>>({});
   const ambientRef = useRef<HTMLAudioElement | null>(null);
-  const ambientWantedRef = useRef(false);
+  const ambientStageRef = useRef<AmbientStage>(null);
   const hauntedLoopsRef = useRef<
     Partial<Record<string, { audio: HTMLAudioElement; timer: ReturnType<typeof setTimeout> }>>
   >({});
@@ -68,7 +99,7 @@ export const SoundProvider = ({ children }: { children: React.ReactNode }) => {
       ambientRef.current?.pause();
       Object.values(hauntedLoopsRef.current).forEach((entry) => entry?.audio.pause());
     } else {
-      if (ambientWantedRef.current) ambientRef.current?.play().catch(() => {});
+      if (ambientStageRef.current !== null) ambientRef.current?.play().catch(() => {});
       Object.values(hauntedLoopsRef.current).forEach((entry) =>
         entry?.audio.play().catch(() => {})
       );
@@ -86,24 +117,35 @@ export const SoundProvider = ({ children }: { children: React.ReactNode }) => {
       audio.currentTime = 0;
       audio.volume = SOUND_VOLUME[name];
       void audio.play().catch(() => {});
+      // Browsers often block ambience until the first deliberate interaction.
+      // Any successful interface sound is also a safe point to retry the room.
+      if (ambientStageRef.current !== null && ambientRef.current?.paused) {
+        void ambientRef.current.play().catch(() => {});
+      }
     } catch {
       // Audio unavailable in this environment — fail silently.
     }
   };
 
-  const setAmbientActive = (active: boolean) => {
-    ambientWantedRef.current = active;
-    if (active) {
-      if (!ambientRef.current) {
-        const audio = new Audio("/sounds/ambient-hum.wav");
-        audio.loop = true;
-        audio.volume = 0.16;
-        ambientRef.current = audio;
-      }
-      if (!mutedRef.current) ambientRef.current.play().catch(() => {});
-    } else {
+  const setAmbientStage = (stage: AmbientStage) => {
+    ambientStageRef.current = stage;
+    if (stage === null) {
       ambientRef.current?.pause();
+      ambientRef.current = null;
+      return;
     }
+    const nextSrc = AMBIENT_FILES[stage];
+    const currentSrc = ambientRef.current?.getAttribute("src");
+    if (!ambientRef.current || currentSrc !== nextSrc) {
+      ambientRef.current?.pause();
+      const audio = new Audio(nextSrc);
+      audio.loop = true;
+      audio.volume = AMBIENT_VOLUME[stage];
+      ambientRef.current = audio;
+    } else {
+      ambientRef.current.volume = AMBIENT_VOLUME[stage];
+    }
+    if (!mutedRef.current) ambientRef.current.play().catch(() => {});
   };
 
   // A window the player minimized keeps producing sound for a while after it is
@@ -134,7 +176,7 @@ export const SoundProvider = ({ children }: { children: React.ReactNode }) => {
     muted,
     toggleMuted: () => setMuted((m) => !m),
     play,
-    setAmbientActive,
+    setAmbientStage,
     playHauntedLoop,
     stopHauntedLoop,
   };

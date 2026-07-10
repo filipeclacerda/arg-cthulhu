@@ -3,7 +3,8 @@
 import Image from "next/image";
 import React, { FormEvent, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { useProgress } from "@/app/context/ProgressContext";
-import { ChatThread, chats } from "@/app/data/chats";
+import { useSound } from "@/app/context/SoundContext";
+import { ChatMessage, ChatThread, chats, MessengerPresence } from "@/app/data/chats";
 import { isUnlocked } from "@/app/data/filesystem";
 import {
   createMessengerState,
@@ -16,6 +17,7 @@ import { resolveTokens } from "@/app/utils/narrative";
 import ClueText from "@/app/components/ClueText/ClueText";
 import { useI18n } from "@/app/i18n";
 import { localizedChatMessage } from "@/app/data/localizedNarrative";
+import { useNameDegradation } from "@/app/hooks/useNameDegradation";
 
 const PRESENCE_LABELS = {
   online: "presenceOnline",
@@ -23,6 +25,70 @@ const PRESENCE_LABELS = {
   offline: "presenceOffline",
   busy: "presenceBusy",
 } as const;
+
+// Sarah stays reachable for a bounded window from the first time this thread
+// opens. The timestamp is read back from the "sarah_live_seen" playerChoice
+// (recorded once, on first open) so the window never resets on reload — but
+// a reload that happens *inside* the still-open window sees the same open
+// window, which is an intentional one-time leniency: nothing is persisted
+// about reload count, only about the window's real start time.
+const LIVE_WINDOW_MS = 120_000;
+// How long the "is typing..." ghost lingers after Sarah's reply is fully
+// delivered before presence drops to offline (no further message ever
+// arrives during this stretch).
+const LIVE_GHOST_TYPING_DELAY_MS = 4_000;
+const LIVE_GHOST_TYPING_DURATION_MS = 30_000;
+
+type LiveQuestionId = "alive" | "restore" | "break" | "fourth";
+
+const LIVE_REPLY_RESPONSES: Record<LiveQuestionId, { en: string; pt: string }[]> = {
+  alive: [
+    {
+      en: "I still remember the weight of the green mug. I do not know if memory counts as being alive.",
+      pt: "Ainda lembro do peso da caneca verde. Não sei se memória conta como estar viva.",
+    },
+  ],
+  restore: [
+    {
+      en: "It has never restored the same field twice. That is all I can make it show me.",
+      pt: "Ele nunca restaurou o mesmo campo duas vezes. É tudo que consigo fazê-lo me mostrar.",
+    },
+  ],
+  break: [
+    {
+      en: "Mom left a line blank. The line learned to wait. I do not know what that means yet.",
+      pt: "Mamãe deixou uma linha em branco. A linha aprendeu a esperar. Ainda não sei o que isso significa.",
+    },
+  ],
+  // The centerpiece reveal: three short messages, typed fast enough that the
+  // last one loses its capital letter. She bites on the follow-up question —
+  // the player did write a designation into the relay, back in the prologue.
+  fourth: [
+    {
+      en: "I left the field empty.",
+      pt: "Eu deixei o campo vazio.",
+    },
+    {
+      en: "That is not the same thing.",
+      pt: "Não é a mesma coisa.",
+    },
+    {
+      en: "did you write your name in it?",
+      pt: "você escreveu seu nome nele?",
+    },
+  ],
+};
+
+// Delay (ms) from the previous point (question sent, or previous message
+// delivered) to each message's arrival. Kept deterministic — not randomized —
+// so the schedule can be re-derived the same way after a reload, with the
+// "is typing..." ghost filling every gap.
+const LIVE_REPLY_DELAYS: Record<LiveQuestionId, number[]> = {
+  alive: [900],
+  restore: [950],
+  break: [900],
+  fourth: [1100, 2300, 2700],
+};
 
 const Messenger = () => {
   const {
@@ -34,12 +100,28 @@ const Messenger = () => {
     dispatchGameEvent,
   } = useProgress();
   const { t } = useI18n();
+  const { play } = useSound();
   const presenceLabel = (presence: keyof typeof PRESENCE_LABELS | undefined) =>
     t(PRESENCE_LABELS[presence ?? "offline"]);
   const [presencePulse, setPresencePulse] = useState(false);
   const [ghostTyping, setGhostTyping] = useState(false);
   const [hesitating, setHesitating] = useState(false);
   const ghostTypingShown = useRef(false);
+  // Ticking clock driving the live thread's derived state (window countdown,
+  // staged message delivery, the post-answer typing ghost). Everything about
+  // the live conversation is computed from timestamps stored in
+  // playerChoices, never from local-only timers, so a reload mid-window or
+  // mid-reply reconstructs the exact same state instead of losing it.
+  const [now, setNow] = useState(() => Date.now());
+  // `null` until the first delivery effect runs, so a reload that lands after
+  // messages already arrived (or a reopen of an old thread) does not replay a
+  // "ding" for history that was never actually new.
+  const deliveredCountRef = useRef<number | null>(null);
+  // The record loses integrity once the pattern is deep enough (future_log
+  // solved / stage 3+). Never shown anywhere the player must act on it.
+  const identityName = useNameDegradation("Sarah Bishop", corruptionStage >= 3, () =>
+    dispatchGameEvent({ type: "TRIGGER_WORLD_REACTION", reactionId: "name_degraded" })
+  );
   const solvedPuzzleIds = Object.entries(progress.puzzles)
     .filter(([, puzzle]) => Boolean(puzzle.solvedAt))
     .map(([id]) => id as keyof typeof progress.puzzles);
@@ -103,6 +185,17 @@ const Messenger = () => {
                 label: progress.locale === "pt-BR" ? "Como quebramos isso?" : "How do we break it?",
                 body: progress.locale === "pt-BR" ? "Como quebramos isso?" : "How do we break it?",
               },
+              {
+                id: "fourth",
+                label:
+                  progress.locale === "pt-BR"
+                    ? "Você criou o quarto destinatário?"
+                    : "Did you create the fourth recipient?",
+                body:
+                  progress.locale === "pt-BR"
+                    ? "Você criou o quarto destinatário?"
+                    : "Did you create the fourth recipient?",
+              },
             ],
           }
         : null,
@@ -128,6 +221,82 @@ const Messenger = () => {
     visibleThreads.find((thread) => thread.id === runtime.selectedThreadId) ??
     visibleThreads[0];
 
+  const liveWindowOpenedAt =
+    progress.playerChoices.find((choice) => choice.choiceId === "sarah_live_seen")
+      ?.chosenAt ?? null;
+  const liveQuestionChoice = progress.playerChoices.find(
+    (choice) => choice.choiceId === "sarah_live_question"
+  );
+  const liveWindowExpired =
+    liveWindowOpenedAt != null && now - liveWindowOpenedAt >= LIVE_WINDOW_MS;
+  const liveMissed = liveQuestionChoice?.optionId === "missed";
+  const liveAnsweredId: LiveQuestionId | null =
+    liveQuestionChoice && !liveMissed
+      ? (liveQuestionChoice.optionId as LiveQuestionId)
+      : null;
+  const liveWindowOpen =
+    Boolean(liveThread) &&
+    liveWindowOpenedAt != null &&
+    !liveWindowExpired &&
+    !liveQuestionChoice;
+
+  const liveResponses = liveAnsweredId ? LIVE_REPLY_RESPONSES[liveAnsweredId] : null;
+  const liveDelays = liveAnsweredId ? LIVE_REPLY_DELAYS[liveAnsweredId] : null;
+  let liveArrivalOffsets: number[] = [];
+  if (liveDelays) {
+    let cumulative = 0;
+    liveArrivalOffsets = liveDelays.map((delay) => (cumulative += delay));
+  }
+  const liveChosenAt = liveQuestionChoice?.chosenAt ?? 0;
+  const liveElapsedSinceAnswer = liveAnsweredId ? now - liveChosenAt : 0;
+  const liveDeliveredCount = liveResponses
+    ? liveArrivalOffsets.filter((offset) => liveElapsedSinceAnswer >= offset).length
+    : 0;
+  const liveTyping = Boolean(
+    liveResponses && liveDeliveredCount < liveResponses.length
+  );
+  const liveAllDelivered = Boolean(
+    liveResponses && liveDeliveredCount === liveResponses.length && liveResponses.length > 0
+  );
+  const liveLastArrivalOffset = liveArrivalOffsets[liveArrivalOffsets.length - 1] ?? 0;
+  const liveSinceLastMessage = liveAllDelivered
+    ? liveElapsedSinceAnswer - liveLastArrivalOffset
+    : 0;
+  const liveGhostTypingAfterAnswer =
+    liveAllDelivered &&
+    liveSinceLastMessage >= LIVE_GHOST_TYPING_DELAY_MS &&
+    liveSinceLastMessage < LIVE_GHOST_TYPING_DELAY_MS + LIVE_GHOST_TYPING_DURATION_MS;
+  const liveOfflineAfterAnswer =
+    liveAllDelivered &&
+    liveSinceLastMessage >= LIVE_GHOST_TYPING_DELAY_MS + LIVE_GHOST_TYPING_DURATION_MS;
+  // Presence drops offline either once the post-answer typing ghost has run
+  // its course, or — if no question was ever asked — once the two-minute
+  // window itself elapses. Whichever applies, it never comes back online.
+  const liveOffline = liveWindowExpired || liveOfflineAfterAnswer;
+
+  const liveQaMessages: ChatMessage[] = [];
+  if (liveThread && liveAnsweredId) {
+    const chosenReply = liveThread.suggestedReplies?.find(
+      (reply) => reply.id === liveAnsweredId
+    );
+    if (chosenReply) {
+      liveQaMessages.push({
+        id: `sarah-live-question-${liveAnsweredId}`,
+        senderId: "sarah",
+        timestamp: resolveTokens("{TOMORROW} 03:14"),
+        body: chosenReply.body,
+      });
+    }
+    liveResponses?.slice(0, liveDeliveredCount).forEach((response, index) => {
+      liveQaMessages.push({
+        id: `sarah-live-response-${liveAnsweredId}-${index}`,
+        senderId: "future-sarah",
+        timestamp: resolveTokens("{TOMORROW} 03:15"),
+        body: progress.locale === "pt-BR" ? response.pt : response.en,
+      });
+    });
+  }
+
   useEffect(() => {
     if (liveThread && !progress.playerChoices.some((choice) => choice.choiceId === "sarah_live_seen")) {
       dispatch({ type: "OPEN_THREAD", threadId: liveThread.id });
@@ -136,8 +305,39 @@ const Messenger = () => {
         choiceId: "sarah_live_seen",
         optionId: "opened",
       });
+      play("chime");
     }
-  }, [dispatchGameEvent, liveThread, progress.playerChoices]);
+  }, [dispatchGameEvent, liveThread, progress.playerChoices, play]);
+
+  // Drives every derived timestamp above. Only ticks while the live thread
+  // exists, since nothing else in the component needs sub-second updates.
+  useEffect(() => {
+    if (!liveThread) return;
+    const interval = window.setInterval(() => setNow(Date.now()), 500);
+    return () => window.clearInterval(interval);
+  }, [liveThread]);
+
+  // The chance passes without penalty to the campaign, but it is still
+  // recorded so the window can never reopen after it truly expires.
+  useEffect(() => {
+    if (!liveThread || liveQuestionChoice || liveWindowOpenedAt == null) return;
+    if (now - liveWindowOpenedAt < LIVE_WINDOW_MS) return;
+    dispatchGameEvent({
+      type: "RECORD_CHOICE",
+      choiceId: "sarah_live_question",
+      optionId: "missed",
+    });
+  }, [dispatchGameEvent, liveThread, liveQuestionChoice, liveWindowOpenedAt, now]);
+
+  useEffect(() => {
+    if (
+      deliveredCountRef.current !== null &&
+      liveDeliveredCount > deliveredCountRef.current
+    ) {
+      play("chime");
+    }
+    deliveredCountRef.current = liveDeliveredCount;
+  }, [liveDeliveredCount, play]);
 
   useEffect(() => {
     if (selected?.evidenceId) {
@@ -252,6 +452,7 @@ const Messenger = () => {
       body: localizedChatMessage(message.id, message.body, progress.locale),
     })),
     ...derivedMessages,
+    ...(liveThread && selected.id === liveThread.id ? liveQaMessages : []),
     ...(runtime.localMessages[selected.id] ?? []),
   ];
   const draft = runtime.drafts[selected.id] ?? "";
@@ -260,57 +461,22 @@ const Messenger = () => {
     dispatch({ type: "SEND_MESSAGE", threadId: selected.id });
   };
 
-  const chooseLiveReply = (replyId: string, body: string) => {
-    if (
-      progress.playerChoices.some(
-        (choice) => choice.choiceId === "sarah_live_question"
-      )
-    ) {
-      return;
-    }
+  // The question itself and every reply are derived from the persisted
+  // playerChoice (see liveQaMessages above), so this only has to record the
+  // choice — the message bubbles and their staged arrival are computed from
+  // that single timestamp on every render, reload included.
+  const chooseLiveReply = (replyId: string) => {
+    if (!liveWindowOpen) return;
     // The pointer visibly stalls before the click registers — the one moment the
     // interface admits something is reading the choice before it is made.
     setHesitating(true);
     window.setTimeout(() => setHesitating(false), 550);
-    dispatch({
-      type: "SEND_MESSAGE",
-      threadId: selected.id,
-      body,
-    });
+    play("chime");
     dispatchGameEvent({
       type: "RECORD_CHOICE",
       choiceId: "sarah_live_question",
       optionId: replyId,
     });
-    const response: Record<string, { en: string; pt: string }> = {
-      alive: {
-        en: "I still remember the weight of the green mug. I do not know if memory counts as being alive.",
-        pt: "Ainda lembro do peso da caneca verde. Não sei se memória conta como estar viva.",
-      },
-      restore: {
-        en: "It has never restored the same field twice. That is all I can make it show me.",
-        pt: "Ele nunca restaurou o mesmo campo duas vezes. É tudo que consigo fazê-lo me mostrar.",
-      },
-      break: {
-        en: "Mom left a line blank. The line learned to wait. I do not know what that means yet.",
-        pt: "Mamãe deixou uma linha em branco. A linha aprendeu a esperar. Ainda não sei o que isso significa.",
-      },
-    };
-    window.setTimeout(() => {
-      dispatch({
-        type: "RECEIVE_MESSAGE",
-        threadId: selected.id,
-        message: {
-          id: `sarah-live-response-${replyId}`,
-          senderId: "future-sarah",
-          timestamp: resolveTokens("{TOMORROW} 03:15"),
-          body:
-            progress.locale === "pt-BR"
-              ? response[replyId].pt
-              : response[replyId].en,
-        },
-      });
-    }, 850);
   };
 
   return (
@@ -322,7 +488,7 @@ const Messenger = () => {
         <Image src="/icons/msn-messenger.png" alt="" width={38} height={38} />
         <div>
           <strong>
-            Sarah Bishop ({presencePulse ? t("presenceOnline") : t("presenceAway")})
+            {identityName} ({presencePulse ? t("presenceOnline") : t("presenceAway")})
           </strong>
           <span>sarah.bishop@miskatonic-research.org</span>
         </div>
@@ -338,10 +504,16 @@ const Messenger = () => {
             const threadContact = thread.participants.find(
               (participant) => participant.id === thread.contactId
             );
+            const isLive = liveThread != null && thread.id === liveThread.id;
             const isPulsingOnline =
               presencePulse &&
               corruptionStage >= 3 &&
               thread.id === "chat-tom";
+            const rowPresence: MessengerPresence | undefined = isLive
+              ? liveOffline
+                ? "offline"
+                : "online"
+              : threadContact?.presence;
             return (
               <button
                 key={thread.id}
@@ -352,17 +524,13 @@ const Messenger = () => {
               >
                 <i
                   className={`presence presence--${
-                    isPulsingOnline
-                      ? "online"
-                      : threadContact?.presence ?? "offline"
+                    isPulsingOnline ? "online" : rowPresence ?? "offline"
                   }`}
                 />
                 <span>
                   <strong>{thread.title}</strong>
                   <small>
-                    {isPulsingOnline
-                      ? t("presenceOnline")
-                      : presenceLabel(threadContact?.presence)}
+                    {isPulsingOnline ? t("presenceOnline") : presenceLabel(rowPresence)}
                   </small>
                 </span>
               </button>
@@ -382,7 +550,15 @@ const Messenger = () => {
               <strong>{t("conversationWith")} {selected.title}</strong>
               <span>{contact?.address}</span>
             </div>
-            <small>{presenceLabel(contact?.presence)}</small>
+            <small>
+              {presenceLabel(
+                liveThread && selected.id === liveThread.id
+                  ? liveOffline
+                    ? "offline"
+                    : "online"
+                  : contact?.presence
+              )}
+            </small>
           </header>
 
           <div className="messenger__history">
@@ -425,9 +601,22 @@ const Messenger = () => {
                 </p>
               </div>
             )}
+            {liveThread &&
+              selected.id === liveThread.id &&
+              (liveTyping || liveGhostTypingAfterAnswer) && (
+                <div className="messenger__message messenger__message--ghost-typing">
+                  <div>
+                    <strong>Sarah Bishop</strong>
+                    <time>{presenceLabel("online")}</time>
+                  </div>
+                  <p>
+                    <i>{t("isTypingLabel")}</i>
+                  </p>
+                </div>
+              )}
           </div>
 
-          {selected.mode === "choices" && (
+          {selected.mode === "choices" && liveWindowOpen && (
             <div
               className={`messenger__suggested-replies ${
                 hesitating ? "messenger__suggested-replies--hesitating" : ""
@@ -437,14 +626,24 @@ const Messenger = () => {
                 <button
                   key={reply.id}
                   className="button"
-                  disabled={progress.playerChoices.some(
-                    (choice) => choice.choiceId === "sarah_live_question"
-                  )}
-                  onClick={() => chooseLiveReply(reply.id, reply.body)}
+                  onClick={() => chooseLiveReply(reply.id)}
                 >
                   {reply.label}
                 </button>
               ))}
+            </div>
+          )}
+          {selected.mode === "choices" && !liveWindowOpen && liveWindowOpenedAt != null && (
+            <div className="messenger__suggested-replies messenger__suggested-replies--closed">
+              <p>
+                {progress.locale === "pt-BR"
+                  ? liveMissed
+                    ? "A janela fechou. Nenhuma pergunta foi feita a tempo."
+                    : "A janela se fechou depois da resposta."
+                  : liveMissed
+                    ? "The window closed. No question was asked in time."
+                    : "The window closed after the reply."}
+              </p>
             </div>
           )}
 

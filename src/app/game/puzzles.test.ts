@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isUnlocked, UnlockCondition } from "../data/filesystem";
+import { files, isUnlocked, UnlockCondition } from "../data/filesystem";
 import {
   createInitialProgress,
   currentChapter,
@@ -122,6 +122,13 @@ describe("ARG progression reducer", () => {
         { flags: state.flags, discoveredEvidenceIds: state.discoveredEvidenceIds, solvedPuzzleIds: [] }
       )
     ).toBe(false);
+    expect(
+      currentChapter({
+        flags: state.flags,
+        discoveredEvidenceIds: ["catalogue_lot_114", "miriam_1998", "lot_114_order"],
+        solvedPuzzleIds: [],
+      })
+    ).toBe("chapter_1");
 
     state = reduceGameEvent(state, { type: "SOLVE_PUZZLE", puzzleId: "lot_114" }).state;
     expect(chapterOf()).toBe("chapter_2");
@@ -138,6 +145,59 @@ describe("ARG progression reducer", () => {
 
     state = reduceGameEvent(state, { type: "SOLVE_PUZZLE", puzzleId: "index_name" }).state;
     expect(chapterOf()).toBe("chapter_6");
+  });
+
+  it("reveals personal and mythos files in narrative layers", () => {
+    let state = createInitialProgress(1_700_000_000_000, "layered-files");
+    const fileUnlocked = (fileId: string) => {
+      const file = files.find((candidate) => candidate.id === fileId);
+      expect(file, `missing fixture ${fileId}`).toBeDefined();
+      return isUnlocked(file!.unlock, {
+        flags: state.flags,
+        discoveredEvidenceIds: state.discoveredEvidenceIds,
+        solvedPuzzleIds: PUZZLE_IDS.filter(
+          (puzzleId) => Boolean(state.puzzles[puzzleId].solvedAt)
+        ),
+      });
+    };
+
+    expect(fileUnlocked("photo_sarah_em_coast")).toBe(false);
+    expect(fileUnlocked("miriam_notebook_scan")).toBe(false);
+    expect(fileUnlocked("directory_comparison")).toBe(false);
+    expect(fileUnlocked("office_1998_overlay")).toBe(false);
+    expect(fileUnlocked("silent_call")).toBe(false);
+    expect(fileUnlocked("observer_outbox")).toBe(false);
+
+    state = reduceGameEvent(state, {
+      type: "SOLVE_PUZZLE",
+      puzzleId: "lot_114",
+    }).state;
+    expect(fileUnlocked("photo_sarah_em_coast")).toBe(true);
+    expect(fileUnlocked("miriam_notebook_scan")).toBe(false);
+
+    state = retainSarahFindings(state);
+    expect(fileUnlocked("miriam_notebook_scan")).toBe(true);
+
+    state = reduceGameEvent(state, {
+      type: "SOLVE_PUZZLE",
+      puzzleId: "margin_cipher",
+    }).state;
+    expect(fileUnlocked("directory_comparison")).toBe(true);
+
+    state = reduceGameEvent(state, {
+      type: "SOLVE_PUZZLE",
+      puzzleId: "counting_audio",
+    }).state;
+    expect(fileUnlocked("office_1998_overlay")).toBe(true);
+
+    state = reduceGameEvent(state, {
+      type: "SOLVE_PUZZLE",
+      puzzleId: "lineage",
+    }).state;
+    expect(fileUnlocked("silent_call")).toBe(true);
+
+    state = solveThroughFutureLog();
+    expect(fileUnlocked("observer_outbox")).toBe(true);
   });
 
   it("resets only the future-log sequence after a recognized wrong action", () => {
@@ -473,6 +533,12 @@ describe("ARG progression reducer", () => {
     }).state;
     expect(restore.ending).toBe("restore");
     expect(restore.flags.ending_restore).toBe(true);
+    const immutableRestore = reduceGameEvent(restore, {
+      type: "CHOOSE_ENDING",
+      ending: "shutdown",
+    }).state;
+    expect(immutableRestore.ending).toBe("restore");
+    expect(immutableRestore.flags.ending_shutdown).not.toBe(true);
 
     const shutdown = reduceGameEvent(state, {
       type: "CHOOSE_ENDING",
@@ -488,6 +554,33 @@ describe("ARG progression reducer", () => {
     expect(leaveBlank.ending).toBe("leave_blank");
     expect(leaveBlank.flags.ending_leave_blank).toBe(true);
     expect(leaveBlank.narrativeBeatsSeen).toContain("blank_left");
+  });
+
+  it("stages incomplete restore only after all optional work and the note are retained", () => {
+    let state = createInitialProgress(1_700_000_000_000, "incomplete-restore");
+    const rejected = reduceGameEvent(state, {
+      type: "RUN_COMMAND",
+      command: "INDEX /RESTORE /INCOMPLETE",
+    });
+    expect(rejected.commandAccepted).not.toBe(true);
+
+    for (const flag of [
+      "directory_gap_solved",
+      "three_times_solved",
+      "silent_call_solved",
+    ]) {
+      state = reduceGameEvent(state, { type: "SET_FLAG", flag }).state;
+    }
+    state = reduceGameEvent(state, {
+      type: "MARK_FILE_READ",
+      fileId: "counter_index_note",
+    }).state;
+    const accepted = reduceGameEvent(state, {
+      type: "RUN_COMMAND",
+      command: "index   /restore   /incomplete",
+    });
+    expect(accepted.commandAccepted).toBe(true);
+    expect(accepted.state.flags.incomplete_restore_prepared).toBe(true);
   });
 
   it("gates archive yourself behind secret containment, hash manifest and Sarah's break answer", () => {

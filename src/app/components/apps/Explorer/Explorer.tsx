@@ -8,6 +8,7 @@ import { useWindowManager } from "@/app/context/WindowManagerContext";
 import { IDENTITY_REVEAL_STAGE } from "@/app/utils/narrative";
 import { TranslationKey, useI18n } from "@/app/i18n";
 import { ChapterId } from "@/app/game/progress";
+import { useNameDegradation } from "@/app/hooks/useNameDegradation";
 
 interface ExplorerProps {
   folderId?: string;
@@ -51,11 +52,24 @@ const Explorer = ({ folderId = "my-computer" }: ExplorerProps) => {
     discoveredEvidenceIds,
     state,
     currentChapter,
+    dispatchGameEvent,
   } = useProgress();
   const { openWindow } = useWindowManager();
   const { t } = useI18n();
   const [currentFolderId, setCurrentFolderId] = useState(folderId);
   const [selectedFileId, setSelectedFileId] = useState<string | null>(null);
+  // Stage 3 only: at IDENTITY_REVEAL_STAGE the folder is already renamed to
+  // the player, and RESTORE already put "Sarah Bishop" back — degrading the
+  // name in either of those states would fight the manifestation it's part of.
+  const sarahNameDegrading =
+    corruptionStage >= 3 &&
+    corruptionStage < IDENTITY_REVEAL_STAGE &&
+    !flags.ending_restore;
+  const degradedSarahName = useNameDegradation(
+    "Sarah Bishop",
+    sarahNameDegrading,
+    () => dispatchGameEvent({ type: "TRIGGER_WORLD_REACTION", reactionId: "name_degraded" })
+  );
 
   const solvedPuzzleIds = Object.entries(state.puzzles)
     .filter(([, progress]) => Boolean(progress.solvedAt))
@@ -72,6 +86,9 @@ const Explorer = ({ folderId = "my-computer" }: ExplorerProps) => {
 
   // Act 3: when the rot is deep enough, the user folder takes the player's name.
   const displayName = (folder: { id: string; name: string }) => {
+    if (folder.id === "observer-cache") {
+      return playerName?.trim() || "NEXT USER";
+    }
     // RESTORE is only meaningful if the desktop itself accepts Sarah's account
     // again after the terminal reboots.
     if (folder.id === "sarah" && flags.ending_restore) {
@@ -82,6 +99,9 @@ const Explorer = ({ folderId = "my-computer" }: ExplorerProps) => {
       corruptionStage >= IDENTITY_REVEAL_STAGE
     ) {
       return playerName?.trim() || "NEXT USER";
+    }
+    if (folder.id === "sarah" && sarahNameDegrading) {
+      return degradedSarahName;
     }
     return folder.name;
   };

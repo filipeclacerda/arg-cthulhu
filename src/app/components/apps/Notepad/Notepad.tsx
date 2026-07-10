@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import "./style.scss";
 import { files } from "@/app/data/filesystem";
 import { useProgress } from "@/app/context/ProgressContext";
@@ -23,15 +23,19 @@ const Notepad = ({ fileId }: NotepadProps) => {
     discoverEvidence,
     recordSequenceAction,
     isPuzzleSolved,
+    setFlag,
     state,
   } = useProgress();
   const { openWindow } = useWindowManager();
   const { t } = useI18n();
   const file = files.find((f) => f.id === fileId);
+  const [wasReadBeforeOpen] = useState(() => state.readFileIds.includes(fileId));
   const [answer, setAnswer] = useState("");
   const [wrongAttempt, setWrongAttempt] = useState(false);
+  const [directoryAttempt, setDirectoryAttempt] = useState<string | null>(null);
   // The untypeable cipher: each keystroke rewrites itself.
   const [untypeableGlitch, setUntypeableGlitch] = useState(false);
+  const untypeableTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (!file) return;
@@ -43,19 +47,50 @@ const Notepad = ({ fileId }: NotepadProps) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fileId]);
 
+  useEffect(
+    () => () => {
+      if (untypeableTimer.current) clearTimeout(untypeableTimer.current);
+    },
+    []
+  );
+
   if (!file) {
     return <div className="notepad">File not found.</div>;
   }
 
   const solved = file.unlocksFlag ? hasFlag(file.unlocksFlag) : false;
 
-  const baseContent = resolveTokens(
+  let baseContent = resolveTokens(
     localizedFileContent(file.id, file.content, state.locale),
     {
     playerName,
     absenceHours: absenceMs > 0 ? absenceMs / (1000 * 60 * 60) : undefined,
     }
   );
+  if (file.id === "observer_outbox") {
+    const attachmentNames = state.readFileIds
+      .filter((id) => id !== file.id)
+      .slice(-3)
+      .map((id) => files.find((candidate) => candidate.id === id)?.name ?? id);
+    baseContent = baseContent.replace(
+      "{RECENT_ATTACHMENTS}",
+      attachmentNames.length > 0
+        ? attachmentNames.map((name) => `- ${name}`).join("\n")
+        : state.locale === "pt-BR"
+          ? "- [nenhum arquivo local resolvido]"
+          : "- [no local file resolved]"
+    );
+  }
+  if (file.id === "status_query_sheet" && hasFlag("status_sheet_duplicated")) {
+    // The printed sheet keeps the resolved line after the live swap on the
+    // spool alert; rereads never show PRESENT again.
+    baseContent = baseContent.replace("STATUS: PRESENT", "STATUS: DUPLICATED");
+  }
+  if (file.id === "miriam_draft" && wasReadBeforeOpen) {
+    baseContent = baseContent
+      .replace(/LINE 04:.*(?:\n|$)/, "LINE 04: [UNRECOVERABLE AFTER LAST READ]\n")
+      .replace(/LINHA 04:.*(?:\n|$)/, "LINHA 04: [IRRECUPERÁVEL APÓS A ÚLTIMA LEITURA]\n");
+  }
   const sequenceEcho =
     file.id === "access_log" && state.futureSequenceStep > 0
       ? `\n\n--- LIVE VERIFICATION ---\n${[
@@ -115,7 +150,8 @@ const Notepad = ({ fileId }: NotepadProps) => {
     setAnswer(scrambled);
     setUntypeableGlitch(true);
     // Erase it again after a beat — it won't hold.
-    setTimeout(() => {
+    if (untypeableTimer.current) clearTimeout(untypeableTimer.current);
+    untypeableTimer.current = setTimeout(() => {
       setAnswer("");
       setUntypeableGlitch(false);
     }, 400);
@@ -138,6 +174,35 @@ const Notepad = ({ fileId }: NotepadProps) => {
       appType: "cipher-lab",
       title: t("cipherLabLabel"),
       props: { initialCiphertext: resolvedContent },
+    });
+  };
+
+  const isDirectoryComparison = file.id === "directory_comparison";
+  const directorySolved = hasFlag("directory_gap_solved");
+  const directoryRows = [
+    { id: "accession", label: "\\ACCESSION", left: "DIR", right: "DIR" },
+    { id: "correspondence", label: "\\CORRESPONDENCE", left: "DIR", right: "DIR" },
+    { id: "temp", label: "\\TEMP\\~CACHE", left: "DIR", right: "DIR" },
+    {
+      id: "observer",
+      label: `\\USERS\\${playerName?.trim() || "NEXT USER"}`,
+      left: "—",
+      right: "—",
+    },
+  ];
+
+  const inspectDirectoryEntry = (entryId: string) => {
+    setDirectoryAttempt(entryId);
+    if (entryId !== "observer") return;
+    if (!directorySolved) {
+      setFlag("directory_gap_solved");
+      discoverEvidence("observer_directory", "observer_first_seen");
+    }
+    openWindow({
+      id: "explorer-observer-cache",
+      appType: "explorer",
+      title: playerName?.trim() || "NEXT USER",
+      props: { folderId: "observer-cache", windowClassName: "corrupted" },
     });
   };
 
@@ -177,6 +242,41 @@ const Notepad = ({ fileId }: NotepadProps) => {
           text={resolvedContent}
           clues={file.clues}
         />
+        {isDirectoryComparison && (
+          <section className="directory-compare" aria-label="Directory comparison">
+            <div className="directory-compare__header" aria-hidden="true">
+              <span>{state.locale === "pt-BR" ? "ENTRADA" : "ENTRY"}</span>
+              <span>M.BISHOP / 1998</span>
+              <span>S.BISHOP / 2026</span>
+            </div>
+            {directoryRows.map((row) => (
+              <button
+                key={row.id}
+                type="button"
+                className={directoryAttempt === row.id ? "selected" : ""}
+                onClick={() => inspectDirectoryEntry(row.id)}
+              >
+                <span>{row.label}</span>
+                <span>{row.left}</span>
+                <span>{row.right}</span>
+              </button>
+            ))}
+            {directoryAttempt && directoryAttempt !== "observer" && (
+              <p className="directory-compare__feedback">
+                {state.locale === "pt-BR"
+                  ? "PROPRIEDADE DE ORIGEM CONFIRMADA. A entrada pertence às duas imagens."
+                  : "SOURCE OWNERSHIP CONFIRMED. The entry belongs to both images."}
+              </p>
+            )}
+            {directorySolved && (
+              <p className="directory-compare__feedback directory-compare__feedback--solved">
+                {state.locale === "pt-BR"
+                  ? "SEM PROPRIETÁRIO DE ORIGEM. DIRETÓRIO MATERIALIZADO EM C:\\USERS."
+                  : "NO SOURCE OWNER. DIRECTORY MATERIALIZED UNDER C:\\USERS."}
+              </p>
+            )}
+          </section>
+        )}
       </div>
       {file.kind === "cipher" && !solved && (
         <div className="notepad-answer">

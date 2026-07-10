@@ -15,6 +15,15 @@
     gap: calc(var(--ui-scale, 1) * 6px);
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .indexer-result__runes,
+  .indexer-result__collision-select,
+  .indexer-result__bridge {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
 .start-menu-scrim {
     position: fixed;
     inset: 0;
@@ -172,7 +181,7 @@
 .indexer-result {
     text-align: center;
 
-    div {
+    &__runes {
         margin: calc(var(--ui-scale, 1) * 16px) 0;
         color: #fff;
         background: #000;
@@ -181,6 +190,54 @@
         letter-spacing: calc(var(--ui-scale, 1) * 4px);
         text-shadow: -2px 0 #f03, 2px 0 #0cf;
         animation: index-name 600ms steps(2, end) infinite;
+    }
+
+    &__system-log {
+        list-style: none;
+        margin: calc(var(--ui-scale, 1) * 10px) 0 0;
+        padding: 0;
+        font: calc(var(--ui-scale, 1) * 13px) monospace;
+        color: #0c0;
+        text-align: left;
+
+        li {
+            padding: calc(var(--ui-scale, 1) * 2px) 0;
+        }
+    }
+
+    &__bridge {
+        display: block;
+        margin-top: calc(var(--ui-scale, 1) * 12px);
+    }
+
+    &__collision {
+        margin-top: calc(var(--ui-scale, 1) * 16px);
+        border: 1px solid #999;
+        padding: calc(var(--ui-scale, 1) * 10px);
+        font-family: monospace;
+    }
+
+    &__collision-label {
+        margin: 0 0 calc(var(--ui-scale, 1) * 6px);
+        font-weight: bold;
+    }
+
+    &__collision-record {
+        margin: calc(var(--ui-scale, 1) * 2px) 0;
+        font-weight: bold;
+        letter-spacing: calc(var(--ui-scale, 1) * 1px);
+    }
+
+    &__collision-select {
+        margin-top: calc(var(--ui-scale, 1) * 10px);
+        font-weight: bold;
+        animation: collision-pulse 1.1s ease-in-out infinite;
+    }
+
+    &__note {
+        margin-top: calc(var(--ui-scale, 1) * 10px);
+        font-size: calc(var(--ui-scale, 1) * 12px);
+        opacity: 0.85;
     }
 }
 
@@ -196,5 +253,11 @@
     50% {
         filter: blur(2px);
         transform: translateX(3px);
+    }
+}
+
+@keyframes collision-pulse {
+    50% {
+        opacity: 0.35;
     }
 }

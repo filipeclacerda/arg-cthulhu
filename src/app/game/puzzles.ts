@@ -284,7 +284,9 @@ const solve = (
             uniquePushTyped(state.worldReactionsSeen, "clock_lost_second"),
             "contact_typing"
           )
-        : state.worldReactionsSeen,
+        : puzzleId === "lot_114"
+          ? uniquePushTyped(state.worldReactionsSeen, "status_sheet")
+          : state.worldReactionsSeen,
     flags: {
       ...state.flags,
       [`puzzle_${puzzleId}_solved`]: true,
@@ -546,6 +548,25 @@ export const reduceGameEvent = (
     }
     case "RUN_COMMAND": {
       const command = normalizeCommand(event.command);
+      const incompleteRestoreCommand = "INDEX /RESTORE /INCOMPLETE";
+      if (command === incompleteRestoreCommand) {
+        if (
+          state.flags.directory_gap_solved &&
+          state.flags.three_times_solved &&
+          state.flags.silent_call_solved &&
+          state.readFileIds.includes("counter_index_note")
+        ) {
+          state = {
+            ...state,
+            flags: {
+              ...state.flags,
+              incomplete_restore_prepared: true,
+            },
+          };
+          return { state: touch(state), commandAccepted: true };
+        }
+        return { state: current, commandError: "case_incomplete" };
+      }
       const sealCommand = "INDEX /SEAL RELAY-07 /WITNESS ARCHIVE";
       if (command === sealCommand) {
         if (
@@ -624,6 +645,9 @@ export const reduceGameEvent = (
       };
     }
     case "CHOOSE_ENDING":
+      // The first disposition is canonical. Reopening the recovered program
+      // may replay its result, but cannot accumulate mutually exclusive flags.
+      if (state.ending) break;
       if (
         event.ending === "seal" &&
         (!state.flags.secret_ending_available || !hasAllInsights(state))
@@ -646,7 +670,6 @@ export const reduceGameEvent = (
       ) {
         break;
       }
-      if (state.ending === event.ending) break;
       state = {
         ...state,
         ending: event.ending,

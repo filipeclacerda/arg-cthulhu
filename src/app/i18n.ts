@@ -152,7 +152,7 @@ const en = {
   leaveBlankLabel: "LEAVE BLANK",
   archiveYourselfLabel: "ARCHIVE YOURSELF",
   finaleChoiceTerminal:
-    "[RECOVERED PROGRAM — last modified {TOMORROW}]\n\nThe final field is open.\nEvery available operation keeps one field occupied.",
+    "[RECOVERED PROGRAM — last modified {TOMORROW}]\n\nIDENTITY COLLISION:\nSARAH BISHOP\n{PLAYER}\n\nSELECT CANONICAL RECORD",
   finaleRestoreTerminal:
     "[SIGNAL RECEIVED — {TOMORROW}]\n\nS: i'm here\nS: i can hear you on the other side of it\nS: come back i'm right here\n\n[SIGNAL LOST]\n[SECOND SESSION RETAINED — M.B.]\n\n[REBOOTING]\n[USER: sarah.bishop]\n[LAST LOGIN: {TOMORROW}]\n\nNew documents found in this folder.\nOwner: {PLAYER}\nCreated: {TOMORROW}",
   finaleRestoreCaption: "Sarah's account is restored. Your files are dated",
@@ -194,6 +194,12 @@ const en = {
     "You asked what RESTORE does. The sealed index filed the question under UNANSWERED.",
   finaleEchoSealBreak:
     "You asked how to break it. Something inside the loop is still counting, more slowly now.",
+  finaleEchoRestoreFourth:
+    "The field did not stay empty. You filled it the moment you opened this.",
+  finaleEchoShutdownFourth:
+    "The field did not stay empty. No one said with what name.",
+  finaleEchoSealFourth:
+    "The field is still listed as empty. And also as filled.",
   finaleEchoDefault:
     "The unanswered question remains in the chat window.",
 
@@ -288,6 +294,9 @@ const en = {
   openFileLabel: "Open File",
   marginAudioLine: "A recording surfaced inside RECOVERED: counting.wav.",
   openRecordingLabel: "Open Recording",
+  voicemailAttachmentKicker: "1 recovered attachment",
+  voicemailRecoveredLine:
+    "A voicemail surfaced inside Sarah Bishop's Documents: voicemail_to_em.wav.",
   newFolderAppearedInside: "A new folder has appeared inside RECOVERED.",
   recoveredProgramInstalledTitle: "Recovered Program Installed",
   recoveredExecutableKicker: "Recovered executable",
@@ -367,6 +376,7 @@ const en = {
     "Find two independent records to collapse this hypothesis.",
   casefileRecordsFound: "records found",
   casefileRefuted: "REFUTED",
+  casefileInconclusive: "INCONCLUSIVE",
   casefileRefute: "Refute",
   casefileCorrelationTray: "Correlation tray",
   casefileCorrelationHint:
@@ -610,7 +620,7 @@ const pt: Record<keyof typeof en, string> = {
   leaveBlankLabel: "DEIXAR EM BRANCO",
   archiveYourselfLabel: "ARQUIVAR-SE",
   finaleChoiceTerminal:
-    "[PROGRAMA RECUPERADO — última modificação {TOMORROW}]\n\nO campo final está aberto.\nToda operação disponível mantém algum campo ocupado.",
+    "[PROGRAMA RECUPERADO — última modificação {TOMORROW}]\n\nIDENTITY COLLISION:\nSARAH BISHOP\n{PLAYER}\n\nSELECT CANONICAL RECORD",
   finaleRestoreTerminal:
     "[SINAL RECEBIDO — {TOMORROW}]\n\nS: estou aqui\nS: consigo ouvir você do outro lado disso\nS: volte, estou bem aqui\n\n[SINAL PERDIDO]\n[SEGUNDA SESSÃO RETIDA — M.B.]\n\n[REINICIANDO]\n[USUÁRIO: sarah.bishop]\n[ÚLTIMO LOGIN: {TOMORROW}]\n\nNovos documentos encontrados nesta pasta.\nProprietário: {PLAYER}\nCriado: {TOMORROW}",
   finaleRestoreCaption: "A conta de Sarah foi restaurada. Seus arquivos estão datados de",
@@ -652,6 +662,12 @@ const pt: Record<keyof typeof en, string> = {
     "Você perguntou o que RESTORE faz. O índice selado arquivou a pergunta sob NÃO RESPONDIDA.",
   finaleEchoSealBreak:
     "Você perguntou como quebrar isto. Algo dentro do loop ainda está contando, mais devagar agora.",
+  finaleEchoRestoreFourth:
+    "O campo não ficou vazio. Você o preencheu quando abriu.",
+  finaleEchoShutdownFourth:
+    "O campo não ficou vazio. Ninguém disse com que nome.",
+  finaleEchoSealFourth:
+    "O campo segue listado como vazio. E também como preenchido.",
   finaleEchoDefault:
     "A pergunta não respondida permanece na janela de conversa.",
 
@@ -749,6 +765,9 @@ const pt: Record<keyof typeof en, string> = {
   openFileLabel: "Abrir Arquivo",
   marginAudioLine: "Uma gravação surgiu dentro de RECOVERED: counting.wav.",
   openRecordingLabel: "Abrir Gravação",
+  voicemailAttachmentKicker: "1 anexo recuperado",
+  voicemailRecoveredLine:
+    "Uma mensagem de voz surgiu nos Documentos de Sarah Bishop: voicemail_to_em.wav.",
   newFolderAppearedInside: "Uma nova pasta apareceu dentro de RECOVERED.",
   recoveredProgramInstalledTitle: "Programa Recuperado Instalado",
   recoveredExecutableKicker: "Executável recuperado",
@@ -824,6 +843,7 @@ const pt: Record<keyof typeof en, string> = {
     "Encontre dois registros independentes para derrubar esta hipótese.",
   casefileRecordsFound: "registros encontrados",
   casefileRefuted: "REFUTADA",
+  casefileInconclusive: "INCONCLUSIVA",
   casefileRefute: "Refutar",
   casefileCorrelationTray: "Bandeja de correlação",
   casefileCorrelationHint:

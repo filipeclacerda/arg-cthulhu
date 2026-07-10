@@ -216,7 +216,7 @@ export const ProgressProvider = ({
         !flags.ending_seal &&
         !flags.ending_archive_self &&
         !flags.ending_leave_blank;
-      const hydrated = {
+      const hydratedBase = {
         ...result.state,
         absenceMs: gap > ABSENCE_THRESHOLD_MS ? gap : 0,
         flags: {
@@ -228,6 +228,12 @@ export const ProgressProvider = ({
         },
         lastSeenAt: now,
       };
+      const hydrated = leftFieldBlank
+        ? reduceGameEvent(hydratedBase, {
+            type: "CHOOSE_ENDING",
+            ending: "leave_blank",
+          }).state
+        : hydratedBase;
       dispatch({ type: "HYDRATE", state: hydrated });
       setPersistenceAvailable(result.persistenceAvailable);
       setRecoveredFromCheckpoint(result.recovered);

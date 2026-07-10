@@ -40,6 +40,7 @@ import {
   INSIGHT_LABELS,
   TOKENS_BY_ID,
   collectedTokensOfType,
+  hypothesisVerdict,
   localized,
 } from "@/app/game/campaign";
 import {
@@ -152,7 +153,9 @@ const EVIDENCE_CHAPTERS: Partial<Record<string, ChapterId>> = {
   diary: "chapter_1",
   todo: "chapter_1",
   calendar_0316: "chapter_1",
-  voicemail_to_em: "chapter_1",
+  // Elevated to an audio artifact gated well past chapter_1 (counting_audio +
+  // the post_end_transcript set piece) — filed under chapter_4 to match.
+  voicemail_to_em: "chapter_4",
   reasons_to_stop: "chapter_1",
   unsent_to_dad: "chapter_1",
   lot_114_order: "chapter_2",
@@ -163,6 +166,8 @@ const EVIDENCE_CHAPTERS: Partial<Record<string, ChapterId>> = {
   desk_inventory: "chapter_2",
   miriam_notebook: "chapter_3",
   printer_alignment: "chapter_3",
+  directory_comparison: "chapter_3",
+  observer_directory: "chapter_3",
   em_draft_reply: "chapter_3",
   lineage_1977: "chapter_3",
   incident_report: "chapter_3",
@@ -170,13 +175,19 @@ const EVIDENCE_CHAPTERS: Partial<Record<string, ChapterId>> = {
   counting_audio: "chapter_4",
   hydrographic_chart: "chapter_4",
   lineage_pattern: "chapter_4",
+  office_1998_overlay: "chapter_4",
+  office_tomorrow_overlay: "chapter_4",
+  three_times_alignment: "chapter_4",
   browser_history_0316: "chapter_4",
   future_access_log: "chapter_5",
   read_receipts: "chapter_5",
   tom_last_message: "chapter_5",
   hash_manifest: "chapter_5",
+  split_record: "chapter_5",
   field_04: "chapter_5",
   do_not_catalogue: "chapter_5",
+  silent_call: "chapter_5",
+  counter_index_note: "chapter_5",
   the_name: "chapter_5",
   index_help: "chapter_6",
   blank_space: "chapter_6",
@@ -1740,10 +1751,18 @@ const Casefile = ({
                 discoveredEvidenceIds.includes(id)
               ).length;
               const refuted = record?.status === "refuted";
+              const verdict = hypothesisVerdict(hypothesisId);
+              const isInconclusive = refuted && verdict === "inconclusive";
               return (
                 <article
                   key={hypothesisId}
-                  className={refuted ? "refuted" : "locked"}
+                  className={
+                    refuted
+                      ? isInconclusive
+                        ? "refuted inconclusive"
+                        : "refuted"
+                      : "locked"
+                  }
                 >
                   <h4>{localized(HYPOTHESES[hypothesisId].title, locale)}</h4>
                   {refuted ? (
@@ -1789,7 +1808,9 @@ const Casefile = ({
                     onClick={() => refuteHypothesis(hypothesisId)}
                   >
                     {refuted
-                      ? t("casefileRefuted")
+                      ? isInconclusive
+                        ? t("casefileInconclusive")
+                        : t("casefileRefuted")
                       : t("casefileRefute")}
                   </button>
                 </article>

@@ -298,14 +298,14 @@ export const CASE_STATEMENTS: CaseStatementDefinition[] = [
     act: 3,
     leadId: "observer",
     context: {
-      en: "Use the moving date, her live message and the files that predate your actions.",
+      en: "Compare the moving date with files that predate your actions. Record the behavior, not its cause.",
       "pt-BR":
-        "Use a data móvel, a mensagem ao vivo e os arquivos anteriores às suas ações.",
+        "Compare a data móvel aos arquivos anteriores às suas ações. Registre o comportamento, não a causa.",
     },
     template: {
-      en: "Sarah is not gone: she is held in {status}, always {time} of whoever observes.",
+      en: "Sarah's message and related records are dated {status}, consistently {time} of whoever observes.",
       "pt-BR":
-        "Sarah não se foi: ela está retida em {status}, sempre {time} de quem observa.",
+        "A mensagem de Sarah e os registros relacionados estão datados de {status}, sempre {time} de quem observa.",
     },
     slots: [
       { key: "status", type: "status", correctTokenId: "status-tomorrow" },
@@ -322,8 +322,8 @@ export const CASE_STATEMENTS: CaseStatementDefinition[] = [
     act: 3,
     leadId: "observer",
     context: {
-      en: "Tom describes delivery; Sarah describes the cost of recovery.",
-      "pt-BR": "Tom descreve a entrega; Sarah descreve o custo da recuperação.",
+      en: "Compare Tom's custody record with the fields created by the index.",
+      "pt-BR": "Compare o registro de custódia de Tom aos campos criados pelo índice.",
     },
     template: {
       en: "The Relay 07 stays open only while a living {person} occupies the {object}.",
@@ -336,7 +336,7 @@ export const CASE_STATEMENTS: CaseStatementDefinition[] = [
     ],
     evidence: {
       allOf: ["tom_last_message"],
-      anyOf: ["sarah_live_email", "future_access_log", "index_help"],
+      anyOf: ["sarah_live_email", "future_access_log", "index_help", "split_record"],
       minimum: 2,
     },
   },
@@ -345,14 +345,14 @@ export const CASE_STATEMENTS: CaseStatementDefinition[] = [
     act: 3,
     leadId: "observer",
     context: {
-      en: "The book contains components. The completed chapter exists somewhere else.",
+      en: "The volume contains components, but no complete Chapter Seven can be located inside it.",
       "pt-BR":
-        "O livro contém componentes. O capítulo completo existe em outro lugar.",
+        "O volume contém componentes, mas nenhum Capítulo Sete completo pode ser localizado nele.",
     },
     template: {
-      en: "Chapter Seven is not in the book — it is the {cause} carried out by the {person} who reconstructs it.",
+      en: "The evidence behaves as though Chapter Seven is the {cause} carried out by the {person} who reconstructs it.",
       "pt-BR":
-        "O Capítulo Sete não está no livro — é o {cause} realizado pelo {person} que o reconstrói.",
+        "A evidência se comporta como se o Capítulo Sete fosse o {cause} realizado pelo {person} que o reconstrói.",
     },
     slots: [
       { key: "cause", type: "cause", correctTokenId: "cause-act-of-reconstruction" },
@@ -366,9 +366,19 @@ export const CASE_STATEMENTS: CaseStatementDefinition[] = [
   },
 ];
 
+/**
+ * Most tested hypotheses collapse into a plain refutation. One does not: the
+ * records prove Sarah acted (she left the relay's recipient field blank on
+ * purpose, the same fragmentation technique traced to Miriam's incomplete
+ * ledger) but never settle *why*. `verdict` lets the Casefile UI show that
+ * distinction without inventing a new lens. Absent verdict defaults to
+ * "refuted" so existing entries don't need to be touched.
+ */
+export type HypothesisVerdict = "refuted" | "inconclusive";
+
 export const HYPOTHESES: Record<
   HypothesisId,
-  { title: LocalizedCopy; truth: LocalizedCopy }
+  { title: LocalizedCopy; truth: LocalizedCopy; verdict?: HypothesisVerdict }
 > = {
   tom_forged_image: {
     title: {
@@ -408,10 +418,11 @@ export const HYPOTHESES: Record<
       en: "Sarah chose the next observer",
       "pt-BR": "Sarah escolheu o próximo observador",
     },
+    verdict: "inconclusive",
     truth: {
-      en: "Refuted: Sarah could see receipts arriving early, but Tom's manifest shows the copy created a recipient before any person chose one.",
+      en: "Inconclusive: Sarah's split record shows the recipient field was left blank deliberately. The receipts and Tom's manifest cannot establish whether that blank was a rescue route, a replacement, or something the copy learned to use.",
       "pt-BR":
-        "Refutada: Sarah via confirmações chegarem cedo demais, mas o manifesto de Tom mostra que a cópia criou um destinatário antes de qualquer pessoa escolher um.",
+        "Inconclusiva: o registro fragmentado de Sarah mostra que o campo de destinatário foi deixado vazio de propósito. As confirmações e o manifesto de Tom não estabelecem se o espaço era uma rota de socorro, uma substituição ou algo que a cópia aprendeu a usar.",
     },
   },
 };
@@ -445,6 +456,10 @@ export const INSIGHT_LABELS: Record<InsightId, LocalizedCopy> = {
 
 export const localized = (copy: LocalizedCopy, locale: Locale): string =>
   copy[locale];
+
+/** Defaults to "refuted" so hypotheses without an authored verdict need no change. */
+export const hypothesisVerdict = (id: HypothesisId): HypothesisVerdict =>
+  HYPOTHESES[id].verdict ?? "refuted";
 
 export const findStatement = (
   id: CaseQuestionId

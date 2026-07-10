@@ -1,6 +1,55 @@
 import { Locale } from "../game/progress";
 
 const FILES_PT: Record<string, string> = {
+  directory_comparison: `COMPARADOR DE DIRETÓRIOS DE RECUPERAÇÃO 0.4
+
+Duas imagens de usuário foram montadas como somente leitura. Selecione a entrada que não pertence a nenhuma das árvores de origem.
+
+M.BISHOP / 1998                 S.BISHOP / 2026
+INCORPORAÇÃO                    INCORPORAÇÃO
+CORRESPONDÊNCIA                 CORRESPONDÊNCIA
+TEMP                            TEMP
+[entrada não resolvida]         [entrada não resolvida]`,
+  silent_call_transcript: `[CAPTURA PABX / SEM CHAMADOR / SEM ROTA]
+
+Os canais esquerdo e direito contêm o mesmo ruído de sala com erros de fase opostos.
+A transcrição automática não encontrou voz.`,
+  observer_first_seen: `ENTRADA DE DIRETÓRIO / PROPRIETÁRIO NÃO RESOLVIDO
+
+Caminho .......... C:\\USERS\\{PLAYER}
+Criado ........... quando BISHOP_TREE.CMP foi comparado
+Árvore de origem . nenhuma
+ACL herdada ...... M.BISHOP / S.BISHOP
+
+Este diretório não estava presente em nenhuma imagem.
+Ele estava presente no resultado da comparação.`,
+  counter_index_note: `FRAGMENTO DE CONTRA-ÍNDICE / DIFERENÇA DE CANAIS
+
+CORRESPONDÊNCIA DE VOZ: BISHOP / GERAÇÃO NÃO RESOLVIDA
+
+Não restaure o registro inteiro.
+Deixe um campo sem resposta.
+Não sei se o campo ausente impede que ele nos siga ou lhe dá um lugar para esperar.
+
+OPERAÇÃO RECUPERADA:
+INDEX /RESTORE /INCOMPLETE`,
+  miriam_accession_notes_wk3: `NOTAS DE TRABALHO DE INCORPORAÇÃO — SEMANA 3
+CATALOGADORA: M. BISHOP
+
+PRATELEIRA ........ B2-114
+VOLUME ............ I de II
+CONDIÇÃO ..........
+CONTAGEM DE FÓLIOS  212
+MÃO DA MARGEM .....
+
+REFERÊNCIA CRUZADA:
+CAIXA DE 1977 ..... CONFIRMADA
+FICHA DE 1949 .....
+PRÓXIMA ENTRADA ...
+
+LINHA 04 ... DEIXAR EM BRANCO ATÉ O VOL. II CHEGAR
+
+Nenhum campo adicional recuperado desta sessão.`,
   diary: `DIÁRIO DE PESQUISA — S. BISHOP
 
 24/02 — Em ligou. Deixei cair no voicemail de novo e odeio ter feito isso. Ela só quer saber se estou comendo. Vou ligar de volta quando este lote estiver catalogado. Continuo dizendo isso.
@@ -52,21 +101,19 @@ STATUS:TENTATIVE
 END:VEVENT
 
 END:VCALENDAR`,
-  voicemail_to_em: `TRANSCRIÇÃO DE VOICEMAIL / rascunho local não enviado
-Destinatária: Em
-Criado: 2026-03-16 17:42
+  voicemail_to_em_transcript: `[SECRETÁRIA ELETRÔNICA. Gravação recebida, 13/02/2026 17h44. Duração 00:41.]
 
-Oi. Estou saindo às seis e meia. Se eu esquecer de ligar, seja irritante.
+*bip* *bip*
 
-Eu sei que você odeia quando transformo a mamãe num dossiê. Eu também odeio. Acho que continuo fazendo isso porque, se as notas fizerem sentido, talvez ela não tenha simplesmente escolhido o trabalho em vez da gente.
+Oi, sou eu. O café da sala dos professores é um crime — tenho certeza de que o Whitfield está reaproveitando o mesmo pó desde terça.
 
-[fundo: ventilador do escritório, um estalo molhado]
+Vou chegar para o jantar. Jantar de verdade, sentada à mesa, prometo.
 
-Lá está de novo. Espera.
+[rindo] Ainda não acredito que você disse aquilo bem na cara do papai. Fiquei rindo sozinha por duas saídas da rodovia.
 
-[quatro segundos de silêncio na gravação]
+Meu ônibus chegou — tá, tchau, ainda estou rin—
 
-Ainda vou para casa. Guarda a caneca feia para mim.`,
+[4 SEGUNDOS DE RUÍDO DE LINHA]`,
   reasons_to_stop: `MOTIVOS PARA PARAR
 
 1. Em está certa.
@@ -523,6 +570,17 @@ RESTORE grava um proprietário recuperado no campo de origem.
 HALT fecha o relé atual sem recuperar sua origem não resolvida.
 
 Nenhuma disposição para o observador atual foi retida.`,
+  observer_outbox: `OUTLOOK EXPRESS / ITEM RECUPERADO DA CAIXA DE SAÍDA
+
+DE: {PLAYER}@relay07.local
+PARA: [não resolvido]
+DATA: {TOMORROW} 03:15
+BYTES DO CORPO: 0
+
+ANEXOS REGISTRADOS ANTES DA COMPOSIÇÃO:
+{RECENT_ATTACHMENTS}
+
+Nenhuma operação de envio foi registrada.`,
   manuscript: `CORPO DO ARQUIVO INSTÁVEL
 HASH: INALTERADO
 VARIANTES DE RENDERIZAÇÃO RECUPERADAS: 17
@@ -546,6 +604,18 @@ A imagem já continha este arquivo — o mesmo que estou escrevendo agora. O log
 Eu nunca entrei. Não vou concluir o upload. Se isto chegou até você, não chegou porque eu enviei.
 
 Não procure o próximo arquivo. Você vai abri-lo mesmo assim. O log já diz que abriu.`,
+  split_record: `S_split.wkg — rascunho, não é pra impressora
+
+Separei meu próprio nome em três arquivos hoje pra ver se o índice ainda junta tudo numa entrada só:
+S.BISHOP -> SPLITR~1.TXT
+BISHOP, S -> BISHOP~1.TXT
+S B I S H O P (espaçado) -> S_BISH~2.TXT
+
+Não importa como eu quebro o nome antes de salvar. Ele se remonta na leitura, não na escrita. Mesmo número de incorporação, em todos os arquivos, 03:11.
+
+Pacote do relay, campo de destinatário: deixei vazio dessa vez. De propósito. O vazio sobrevive à cópia. Depois que o relay abre, o campo deixa de constar como vazio.
+
+Tom não sabe que eu fiz isso. Quem abrir o campo vazio depois de mim, eu preciso que essa pessoa —`,
   tom_upload_notes: `T. ALVAREZ — CHECKLIST DE UPLOAD
 
 1. Montar a imagem de disco de Sarah como somente leitura.
@@ -571,10 +641,10 @@ ACCESS~1.TXT                 LISTADO ANTES DA LEITURA
 READRE~1.DBX                 LISTADO ANTES DA RECUPERAÇÃO
 HASHMA~1.TXT                 LISTADO ANTES DA GERAÇÃO
 
-O quarto destinatário não é um endereço. É um campo vazio que o arquivo preenche quando o pacote é observado.
+DESTINATÁRIO 04: ENDEREÇO NULO / CRIADO APÓS A PRIMEIRA ABERTURA
 
 Nota de Tom no registro de upload falho:
-Sarah não escolheu. Eu também não. A cópia fez o que catálogos fazem: criou uma entrada onde havia um espaço vazio.`,
+Eu não escolhi o quarto. Sarah não deixou endereço. A cópia preencheu o espaço — ou obedeceu a algo que ela deixou dentro dele. Não consigo provar o que aconteceu primeiro.`,
   welcome_back: `[Novos documentos encontrados. Proprietário: {PLAYER}. Criado: {TOMORROW}.]
 
 Obrigada. Desculpe.
@@ -931,8 +1001,8 @@ const BOARD_CARDS_PT: Record<string, { title: string; summary: string }> = {
     summary: "Sarah ainda tinha compromissos comuns depois do arquivo.",
   },
   voicemail_to_em: {
-    title: "voicemail_to_em.txt",
-    summary: "Transcrição local da ligação que Sarah pretendia fazer do ônibus.",
+    title: "voicemail_to_em.wav",
+    summary: "Uma secretária eletrônica banal, gravada semanas antes de o caso começar.",
   },
   reasons_to_stop: {
     title: "reasons_to_stop.txt",
@@ -955,6 +1025,34 @@ const BOARD_CARDS_PT: Record<string, { title: string; summary: string }> = {
     title: "printer_alignment.log",
     summary:
       "O rastro da impressora de Miriam recupera campos, não um aviso completo.",
+  },
+  directory_comparison: {
+    title: "BISHOP_TREE.CMP",
+    summary: "Duas árvores de usuário produzem um diretório que não existia em nenhuma origem.",
+  },
+  observer_directory: {
+    title: "FIRST_SEEN.DIR",
+    summary: "O diretório do observador foi criado pelo ato de comparar os dois registros Bishop.",
+  },
+  office_1998_overlay: {
+    title: "office_1998.jpg",
+    summary: "O mesmo escritório em 1998, com um espaço de etiqueta sem objeto correspondente.",
+  },
+  office_tomorrow_overlay: {
+    title: "office_tomorrow.jpg",
+    summary: "O escritório datado de amanhã parece décadas mais velho e contém uma ausência vertical.",
+  },
+  three_times_alignment: {
+    title: "Alinhamento em três tempos",
+    summary: "As três exposições não mostram uma figura; a diferença entre elas preserva seu contorno.",
+  },
+  silent_call: {
+    title: "CALL_0314.WAV",
+    summary: "Uma chamada sem rota contém canais quase idênticos que escondem uma diferença.",
+  },
+  counter_index_note: {
+    title: "DO_NOT_COMPLETE.NFO",
+    summary: "Sarah deixou uma operação de restauração que preserva deliberadamente um campo incompleto.",
   },
   miriam_1998: {
     title: "mom_1998.txt",
@@ -1099,6 +1197,10 @@ const BOARD_CARDS_PT: Record<string, { title: string; summary: string }> = {
     title: "do_not_catalogue.me",
     summary: "O arquivo não tem corpo, só propriedades que implicam o observador.",
   },
+  split_record: {
+    title: "split_record.txt",
+    summary: "Sarah testou espalhar o próprio nome antes de deixar o destinatário do relay em branco.",
+  },
   blank_space: {
     title: "blank_space.txt",
     summary: "O campo não resolvido atrasa a contagem sem fechar o relay.",
@@ -1229,6 +1331,14 @@ export const localizedFileContent = (
   const localizedId = fileId === "cipher_1" ? "margin_ciphertext" : fileId;
   return locale === "pt-BR" ? FILES_PT[localizedId] ?? original : original;
 };
+
+/** Localized diegetic transcript for an audio file (see VFile.transcript). */
+export const localizedTranscript = (
+  fileId: string,
+  original: string,
+  locale: Locale
+): string =>
+  locale === "pt-BR" ? FILES_PT[`${fileId}_transcript`] ?? original : original;
 
 export const localizedEmail = (
   emailId: string,

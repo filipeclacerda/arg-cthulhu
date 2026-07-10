@@ -82,7 +82,7 @@ Come if you can. Don't if you can't. I love you regardless.
     sender: "em.bishop@gmail.com",
     subject: "Mom's box (I opened it)",
     date: "2026-03-13",
-    unlock: { type: "always" },
+    unlock: { type: "chapter", chapterId: "chapter_2" },
     evidenceId: "em_box_email",
     body: `Sarah,
 
@@ -150,7 +150,7 @@ Graymoor Antiquarian Booksellers`,
     sender: "unknown",
     subject: "(no subject)",
     date: "2026-03-15 03:12",
-    unlock: { type: "always" },
+    unlock: { type: "chapter", chapterId: "chapter_3" },
     messageId: "<SB-?????-0312-??@miskatonic-research.org>",
     body: `you are reading the wrong book in the wrong order
 
@@ -163,7 +163,7 @@ it is not too late for you`,
     sender: "sarah.bishop@miskatonic-research.org",
     subject: "Draft — never sent",
     date: "2026-03-16",
-    unlock: { type: "always" },
+    unlock: { type: "chapter", chapterId: "chapter_3" },
     body: `Tom — if you're reading this I didn't send it on purpose, I keep starting it and deleting it. I need you to know I didn't imagine the
 
 [draft ends here]`,

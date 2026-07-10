@@ -104,3 +104,71 @@
   background: #e6f0c9;
   font: 10px "Courier New", monospace;
 }
+
+.media-player__transcript--voicemail pre {
+  margin: 0;
+  white-space: pre-wrap;
+  font: 12px "Courier New", monospace;
+  color: #d6ffe0;
+}
+
+.media-player__transcript--silent-call {
+  color: #c7f9ff;
+  border-color: #68bbc5;
+  background: rgba(0, 22, 28, 0.9);
+  box-shadow: 0 0 18px rgba(71, 206, 223, 0.12);
+
+  pre {
+    white-space: pre-wrap;
+    color: #e3fdff;
+    font: 12px "Courier New", monospace;
+  }
+
+  small { color: #8bd0d8; }
+}
+
+@keyframes media-player-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+// Set piece (post_end_transcript): the timer keeps advancing past 04:11.
+.media-player__timer--overtime {
+  color: #ff6b6b !important;
+  text-shadow: 0 0 8px rgba(255, 107, 107, 0.65);
+}
+
+// Set piece (post_end_transcript): a second, dry system transcript writes
+// itself in below the puzzle transcript, line by line.
+.media-player__ghost-transcript {
+  margin: 14px auto;
+  max-width: 620px;
+  padding: 12px;
+  text-align: left;
+  color: #ff6b6b;
+  background: rgba(20, 0, 0, 0.85);
+  border: 1px solid #ff4d4d;
+  font: 12px "Courier New", monospace;
+
+  p {
+    margin: 4px 0;
+    letter-spacing: 0.02em;
+  }
+}
+
+.media-player__ghost-cursor {
+  display: inline-block;
+  width: 8px;
+  height: 12px;
+  margin-top: 4px;
+  background: #ff6b6b;
+  animation: media-player-blink 1s step-end infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .media-player__ghost-cursor,
+  .media-player__timer--overtime {
+    animation: none !important;
+    transition: none !important;
+  }
+}

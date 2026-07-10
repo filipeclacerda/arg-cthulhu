@@ -283,6 +283,17 @@
       pointer-events: none;
     }
   }
+
+  &--closed {
+    display: block;
+
+    p {
+      margin: 0;
+      color: #6b7686;
+      font-size: 11px;
+      font-style: italic;
+    }
+  }
 }
 
 .messenger__message--ghost-typing {

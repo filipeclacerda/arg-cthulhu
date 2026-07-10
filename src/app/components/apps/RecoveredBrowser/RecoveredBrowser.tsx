@@ -91,8 +91,12 @@ const RecoveredBrowser = ({
     recordNearMiss,
     activePuzzle,
     dispatchGameEvent,
+    currentChapter,
   } = useProgress();
   const { locale, t } = useI18n();
+  const chapterNumber = Number(currentChapter.replace("chapter_", ""));
+  const historicalCacheUnlocked = chapterNumber >= 3;
+  const deepCacheUnlocked = chapterNumber >= 4;
   const initialPage: BrowserPage = initialAddress
     ? ((Object.entries(PAGE_ADDRESS) as [BrowserPage, string][]).find(
         ([, addr]) => addr === initialAddress
@@ -386,14 +390,22 @@ const RecoveredBrowser = ({
             <strong>{t("menuFavorites")}</strong>
             <button onClick={() => visitAtmospherePage("library", "miskatonic-library-home")}>Miskatonic Library</button>
             <button onClick={() => visitAtmospherePage("gazette", "arkham-gazette")}>Arkham Gazette</button>
-            <button onClick={() => visitAtmospherePage("expedition", "pabodie-expedition")}>1930 Expedition</button>
-            <button onClick={() => visitAtmospherePage("weather", "antarctic-weather")}>Lake Weather</button>
-            <button onClick={() => visitAtmospherePage("families", "families-registry")}>Old Families of the Coast</button>
+            {deepCacheUnlocked && (
+              <>
+                <button onClick={() => visitAtmospherePage("expedition", "pabodie-expedition")}>1930 Expedition</button>
+                <button onClick={() => visitAtmospherePage("weather", "antarctic-weather")}>Lake Weather</button>
+              </>
+            )}
+            {historicalCacheUnlocked && (
+              <button onClick={() => visitAtmospherePage("families", "families-registry")}>Old Families of the Coast</button>
+            )}
             <button onClick={() => visitAtmospherePage("forum", "miskanet-forum")}>MiskaNet Research Forum</button>
             <button onClick={() => visitAtmospherePage("reader-log", "library-reader-notices")}>Orne Reader Notices</button>
             <button onClick={() => visitAtmospherePage("em", "em-personal-page")}>Em&apos;s Photos</button>
             <button onClick={() => visitAtmospherePage("tom", "tom-personal-page", "tom_homepage")}>Tom&apos;s Homepage</button>
-            <button onClick={() => visitAtmospherePage("tom-guestbook", "tom-guestbook")}>Tom&apos;s Guestbook</button>
+            {deepCacheUnlocked && (
+              <button onClick={() => visitAtmospherePage("tom-guestbook", "tom-guestbook")}>Tom&apos;s Guestbook</button>
+            )}
             <div />
             <small>{t("linksImportedNote")}</small>
           </aside>
@@ -427,10 +439,10 @@ const RecoveredBrowser = ({
               </header>
               <pre>{`<!-- RECOVERED CACHE COPY -->
 <meta name="archived" content="${snapshot}" />
-<meta name="reader" content="${state.playerName || "NEXT USER"}" />
-<meta name="next-read" content="${resolveTokens("{TOMORROW}")}" />
+<meta name="reader" content="${state.puzzles.future_log.solvedAt ? state.playerName || "NEXT USER" : "[unresolved]"}" />
+<meta name="next-read" content="${state.puzzles.future_log.solvedAt ? resolveTokens("{TOMORROW}") : "[not indexed]"}" />
 <body data-page="${page}">
-  <!-- The source contains one more visitor than the counter. -->
+  <!-- ${state.puzzles.future_log.solvedAt ? "The source contains one more visitor than the counter." : "Recovered cache body incomplete."} -->
 </body>`}</pre>
             </div>
           )}
@@ -459,18 +471,20 @@ const RecoveredBrowser = ({
                 />
                 <div>
                   <button type="submit">{t("miskatonicSearchButton")}</button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      visitAtmospherePage(
-                        "danforth",
-                        "danforth-personal-cache",
-                        "danforth_cache"
-                      )
-                    }
-                  >
-                    {t("feelingUnlucky")}
-                  </button>
+                  {deepCacheUnlocked && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        visitAtmospherePage(
+                          "danforth",
+                          "danforth-personal-cache",
+                          "danforth_cache"
+                        )
+                      }
+                    >
+                      {t("feelingUnlucky")}
+                    </button>
+                  )}
                 </div>
               </form>
               <p className="retro-search-tip">{t("searchTip")}</p>
@@ -485,12 +499,20 @@ const RecoveredBrowser = ({
                 <span> - </span>
                 <button onClick={() => visitAtmospherePage("gazette", "arkham-gazette")}>News</button>
                 <span> - </span>
-                <button onClick={() => visitAtmospherePage("expedition", "pabodie-expedition")}>Science</button>
-                <span> - </span>
-                <button onClick={() => visitAtmospherePage("weather", "antarctic-weather")}>Weather</button>
-                <span> - </span>
-                <button onClick={() => visitAtmospherePage("families", "families-registry")}>Genealogy</button>
-                <span> - </span>
+                {deepCacheUnlocked && (
+                  <>
+                    <button onClick={() => visitAtmospherePage("expedition", "pabodie-expedition")}>Science</button>
+                    <span> - </span>
+                    <button onClick={() => visitAtmospherePage("weather", "antarctic-weather")}>Weather</button>
+                    <span> - </span>
+                  </>
+                )}
+                {historicalCacheUnlocked && (
+                  <>
+                    <button onClick={() => visitAtmospherePage("families", "families-registry")}>Genealogy</button>
+                    <span> - </span>
+                  </>
+                )}
                 <button onClick={() => visitAtmospherePage("forum", "miskanet-forum")}>Forums</button>
                 <span> - </span>
                 <button onClick={() => visitAtmospherePage("reader-log", "library-reader-notices")}>Reader Notices</button>
@@ -542,11 +564,13 @@ const RecoveredBrowser = ({
                   <span>University news, missing-person reports and searchable editions from 1823 onward.</span>
                   <small>www.arkham-gazette.com/archive/</small>
                 </button>
-                <button onClick={() => visitAtmospherePage("expedition", "pabodie-expedition")}>
-                  <strong>Pabodie Antarctic Expedition, 1930–31</strong>
-                  <span>Department of Geology photographs, personnel records and field notes.</span>
-                  <small>www.miskatonic.edu/geology/pabodie/</small>
-                </button>
+                {deepCacheUnlocked && (
+                  <button onClick={() => visitAtmospherePage("expedition", "pabodie-expedition")}>
+                    <strong>Pabodie Antarctic Expedition, 1930–31</strong>
+                    <span>Department of Geology photographs, personnel records and field notes.</span>
+                    <small>www.miskatonic.edu/geology/pabodie/</small>
+                  </button>
+                )}
                 <button onClick={() => visitAtmospherePage("bellaso", "bellaso-reference")}>
                   <strong>Cryptography Reference Shelf: Moving Alphabets</strong>
                   <span>Staff reference note compiled by M. Bishop in 1998.</span>
@@ -557,21 +581,25 @@ const RecoveredBrowser = ({
                   <span>Reader policies, accession desk updates and a damaged sign-in export.</span>
                   <small>www.miskatonic.edu/library/readers/</small>
                 </button>
-                <button onClick={() => visitAtmospherePage("families", "families-registry")}>
-                  <strong>Innsmouth Historical &amp; Genealogical Society</strong>
-                  <span>Family registry for the old coastal lines, compiled since 1952.</span>
-                  <small>www.innsmouth-historical.org/registry/</small>
-                </button>
+                {historicalCacheUnlocked && (
+                  <button onClick={() => visitAtmospherePage("families", "families-registry")}>
+                    <strong>Innsmouth Historical &amp; Genealogical Society</strong>
+                    <span>Family registry for the old coastal lines, compiled since 1952.</span>
+                    <small>www.innsmouth-historical.org/registry/</small>
+                  </button>
+                )}
                 <button onClick={() => visitAtmospherePage("forum", "miskanet-forum")}>
                   <strong>MiskaNet Research Forum</strong>
                   <span>Folklore, cryptozoology and local history discussion board.</span>
                   <small>www.miskanet-forums.org/board/folklore/</small>
                 </button>
-                <button onClick={() => visitAtmospherePage("tom-guestbook", "tom-guestbook")}>
-                  <strong>Tom Alvarez&apos;s Guestbook</strong>
-                  <span>A personal homepage guestbook with one visitor too many.</span>
-                  <small>www.geocities.com/tomalvarez_archive/guestbook.html</small>
-                </button>
+                {deepCacheUnlocked && (
+                  <button onClick={() => visitAtmospherePage("tom-guestbook", "tom-guestbook")}>
+                    <strong>Tom Alvarez&apos;s Guestbook</strong>
+                    <span>A personal homepage guestbook with one visitor too many.</span>
+                    <small>www.geocities.com/tomalvarez_archive/guestbook.html</small>
+                  </button>
+                )}
               </div>
               <p className="retro-search-help">
                 Not the record you expected? Older accessions are indexed by
@@ -760,11 +788,15 @@ const RecoveredBrowser = ({
               <p>The city was not built for bodies that walk forward. The carvings were a history, and the history was afraid of something lower in the ice.</p>
               <p className="tekeli">TEKELI—LI&nbsp;&nbsp; TEKELI—LI&nbsp;&nbsp; TEKELI—LI</p>
               <p>
-                {localizedBrowserText(
-                  "danforth_sarah_photo",
-                  "I saw Sarah Bishop in the photograph attached to the scan. The photograph was taken before she was born.",
-                  locale
-                )}
+                {state.puzzles.lineage.solvedAt
+                  ? localizedBrowserText(
+                      "danforth_sarah_photo",
+                      "I saw Sarah Bishop in the photograph attached to the scan. The photograph was taken before she was born.",
+                      locale
+                    )
+                  : locale === "pt-BR"
+                    ? "Há uma figura no scan que o índice não consegue nomear."
+                    : "There is a figure in the scan the index cannot name."}
               </p>
               <p>They took my recommendation off the department site in 1932. It is still true. I have not changed one word since.</p>
               <hr />

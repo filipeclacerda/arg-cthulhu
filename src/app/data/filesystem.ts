@@ -58,6 +58,13 @@ export interface VFile {
   raisesCorruptionTo?: number;
   /** Opening this file sets a flag — used to unlock the finale, etc. */
   setsFlagOnOpen?: string;
+  /**
+   * Diegetic transcript shown under the Media Player once an audio file has
+   * been played. Distinct from `content` (the audio src path). English text
+   * lives here; the pt-BR variant lives in `localizedNarrative.ts` under
+   * `<fileId>_transcript`.
+   */
+  transcript?: string;
 }
 
 const isUnlockContext = (
@@ -154,6 +161,12 @@ export const folders: VFolder[] = [
   },
   { id: "users", name: "Users", parentId: "c", unlock: { type: "always" } },
   {
+    id: "observer-cache",
+    name: "[CURRENT OBSERVER]",
+    parentId: "users",
+    unlock: { type: "flag", flag: "directory_gap_solved" },
+  },
+  {
     id: "sarah",
     name: "Sarah Bishop",
     parentId: "users",
@@ -249,7 +262,7 @@ export const files: VFile[] = [
     name: "innsmouth_trip.png",
     folderId: "pictures",
     kind: "image",
-    unlock: { type: "always" },
+    unlock: { type: "chapter", chapterId: "chapter_2" },
     evidenceId: "photo_sarah_em_coast",
     alias: "INNSMO~1.PNG",
     size: "2.6 MB",
@@ -268,7 +281,7 @@ export const files: VFile[] = [
     name: "tom_after_symposium.png",
     folderId: "pictures",
     kind: "image",
-    unlock: { type: "always" },
+    unlock: { type: "chapter", chapterId: "chapter_2" },
     evidenceId: "photo_sarah_tom_2024",
     alias: "TOMAF~1.PNG",
     size: "2.9 MB",
@@ -306,7 +319,7 @@ export const files: VFile[] = [
     name: "after_dads_65th.png",
     folderId: "pictures",
     kind: "image",
-    unlock: { type: "always" },
+    unlock: { type: "chapter", chapterId: "chapter_2" },
     evidenceId: "photo_sarah_em_kitchen_2025",
     alias: "AFTERD~1.PNG",
     size: "2.2 MB",
@@ -364,7 +377,7 @@ Then it was waiting before we were there.`,
     name: "groceries_on_the_7.png",
     folderId: "pictures",
     kind: "image",
-    unlock: { type: "always" },
+    unlock: { type: "chapter", chapterId: "chapter_2" },
     evidenceId: "photo_sarah_bus_2025",
     alias: "GROCER~1.PNG",
     size: "2.1 MB",
@@ -402,7 +415,7 @@ Then it was waiting before we were there.`,
     name: "miriam_working_notes_1998.png",
     folderId: "work",
     kind: "image",
-    unlock: { type: "always" },
+    unlock: { type: "chapter", chapterId: "chapter_3" },
     evidenceId: "miriam_notebook",
     alias: "MIRIAM~2.PNG",
     size: "2.0 MB",
@@ -471,7 +484,7 @@ When a description survives longer than the thing it describes, which one become
     name: "SOLITAIRE.SAV",
     folderId: "sarah",
     kind: "text",
-    unlock: { type: "always" },
+    unlock: { type: "chapter", chapterId: "chapter_2" },
     evidenceId: "solitaire_save",
     alias: "SOLITA~1.SAV",
     content: `[Windows Solitaire saved game]
@@ -491,7 +504,7 @@ Sarah's reply:
     name: "playlist.m3u",
     folderId: "downloads",
     kind: "text",
-    unlock: { type: "always" },
+    unlock: { type: "chapter", chapterId: "chapter_3" },
     evidenceId: "midi_collection",
     alias: "PLAYLI~1.M3U",
     content: `C:\\WINDOWS\\MEDIA\\passport.mid
@@ -731,7 +744,7 @@ March 16 —`,
     name: "calendar_0316.ics",
     folderId: "sarah",
     kind: "text",
-    unlock: { type: "always" },
+    unlock: { type: "chapter", chapterId: "chapter_2" },
     evidenceId: "calendar_0316",
     alias: "CALEND~1.ICS",
     content: `BEGIN:VCALENDAR
@@ -762,35 +775,46 @@ END:VEVENT
 END:VCALENDAR`,
   },
   {
+    // Elevated from a text draft to a played artifact: the everyday reward
+    // that follows the counting.wav set piece. Gated on the set piece having
+    // been seen (post_end_transcript), not just the puzzle — see
+    // isUnlocked's "allOf" below and MediaPlayer.tsx / desktop/page.tsx for
+    // the arrival notice. Keeps the id `voicemail_to_em` so existing save
+    // fields (evidenceId, Finale.personalCoda's readFileIds check) still work.
     id: "voicemail_to_em",
-    name: "voicemail_to_em.txt",
+    name: "voicemail_to_em.wav",
     folderId: "sarah",
-    kind: "text",
-    unlock: { type: "always" },
+    kind: "audio",
+    unlock: {
+      type: "allOf",
+      conditions: [
+        { type: "puzzleSolved", puzzleId: "counting_audio" },
+        { type: "flag", flag: "post_end_transcript_seen" },
+      ],
+    },
     evidenceId: "voicemail_to_em",
-    alias: "VOICEM~1.TXT",
-    content: `VOICEMAIL TRANSCRIPT / unsent local draft
-Recipient: Em
-Created: 2026-03-16 17:42
+    alias: "VOICEM~1.WAV",
+    content: "/artifacts/voicemail-to-em.wav",
+    transcript: `[VOICEMAIL. Answering machine pickup, 2026-02-13 17:44. Duration 00:41.]
 
-Hey. I'm leaving at six-thirty. If I forget to call, be annoying.
+*beep* *beep*
 
-I know you hate when I make Mom into a case file. I hate it too. I think I keep doing it because if the notes make sense, then maybe she didn't just choose the work over us.
+Hey, it's me. The coffee in the faculty lounge is a war crime — I'm fairly sure Whitfield's been refilling the same pot since Tuesday.
 
-[background: office fan, one wet click]
+I'll be home for dinner. An actual dinner, at an actual table, I promise.
 
-There it is again. Hold on.
+[laughing] I still can't believe you said that to Dad's face. I've been laughing about it for two exits on the highway.
 
-[four seconds of silence on the recording]
+My bus is here — okay, bye, I'm still lau—
 
-I'm still coming home. Save me the ugly mug.`,
+[4 SECONDS OF LINE NOISE]`,
   },
   {
     id: "reasons_to_stop",
     name: "reasons_to_stop.txt",
     folderId: "work",
     kind: "text",
-    unlock: { type: "always" },
+    unlock: { type: "chapter", chapterId: "chapter_2" },
     evidenceId: "reasons_to_stop",
     alias: "REASON~1.TXT",
     content: `REASONS TO STOP
@@ -815,7 +839,7 @@ Leave by 6:30. Bring the scans home? No. Do not bring it home.`,
     name: "fellowship_draft.txt",
     folderId: "work",
     kind: "text",
-    unlock: { type: "always" },
+    unlock: { type: "chapter", chapterId: "chapter_3" },
     evidenceId: "fellowship_draft",
     alias: "FELLOW~1.TXT",
     modified: "2026-03-07 22:19",
@@ -859,7 +883,7 @@ The hold entry itself is in blue accession pencil.
     name: "unsent_to_dad.txt",
     folderId: "sarah",
     kind: "text",
-    unlock: { type: "chapter", chapterId: "chapter_1" },
+    unlock: { type: "chapter", chapterId: "chapter_2" },
     evidenceId: "unsent_to_dad",
     alias: "UNSENT~1.TXT",
     content: `DRAFT / not sent
@@ -968,7 +992,7 @@ If anyone reads this after me: the counting is not a countdown. Do not finish th
     name: "to_robert_1998.txt",
     folderId: "sarah",
     kind: "text",
-    unlock: { type: "always" },
+    unlock: { type: "chapter", chapterId: "chapter_2" },
     evidenceId: "miriam_letter_1998",
     alias: "TORICH~1.TXT",
     content: `[Recovered from an old local mail archive on Mom's profile — a sent copy she kept for herself.]
@@ -1057,6 +1081,49 @@ XMWBC TMVEM LDQDV ZSQRW LZEXQ DVVCA GVKVA YQAEW TPMGJ
 Sarah's note in the margin:
 "Not substitution. The alphabet moves under the word. G.B. knew why.
 The key is not mine. It belongs to the first cataloguer."`,
+  },
+  {
+    // A dry system artifact, not the Casefile printer_wake/MIRIAM_DRAFT flow:
+    // the spooler answers a query nobody sent about a name it treats as a
+    // record, not a person. See the taskbar alert triggered from the
+    // status_sheet world reaction for the live PRESENT -> DUPLICATED swap;
+    // this static body only ever shows the resolved state on reread.
+    id: "status_query_sheet",
+    name: "STATUS_QUERY.PRN",
+    folderId: "sarah",
+    kind: "text",
+    unlock: { type: "puzzleSolved", puzzleId: "lot_114" },
+    alias: "STATUS~1.PRN",
+    content: `SARAH BISHOP — STATUS: PRESENT`,
+  },
+  {
+    // Only exists once the 1998 desktop flash (see desktop/page.tsx) has been
+    // opened once — the flag also gates its reappearance in this folder so a
+    // missed or already-seen flash doesn't leave a dangling reference.
+    id: "miriam_accession_notes_wk3",
+    name: "accession_notes_wk3.txt",
+    folderId: "sarah",
+    kind: "text",
+    unlock: { type: "flag", flag: "miriam_1998_file_recovered" },
+    alias: "ACCESS~2.TXT",
+    modified: "1998-09-03",
+    content: `ACCESSION WORKING NOTES — WEEK 3
+CATALOGUER: M. BISHOP
+
+SHELF ............ B2-114
+VOLUME ........... I of II
+CONDITION ........
+FOLIO COUNT ...... 212
+MARGIN HAND ......
+
+CROSS-REFERENCE:
+1977 BOX ......... CONFIRMED
+1949 CARD ........
+NEXT ENTRY .......
+
+LINE 04 ... LEAVE BLANK UNTIL VOL. II ARRIVES
+
+No further fields recovered from this session.`,
   },
 
   // --- Act 2: the pattern (RECOVERED, unlocked by cipher_1) -----------------
@@ -1191,6 +1258,118 @@ The office was empty when this was taken. The monitor was off. You are looking a
     comment:
       "The evidence index describes the monitor as powered off. The seated reflection does not appear in frames 11 or 13.",
     content: "/photos/office_after_2026.png",
+  },
+  {
+    id: "office_1998_overlay",
+    name: "office_1998.jpg",
+    folderId: "restricted",
+    kind: "image",
+    unlock: { type: "puzzleSolved", puzzleId: "counting_audio" },
+    evidenceId: "office_1998_overlay",
+    alias: "OFFICE~8.JPG",
+    size: "2.1 MB",
+    modified: "1998-09-03 03:14",
+    taken: "1998-09-03 03:14 / recovered scan",
+    dimensions: "1536 × 1024",
+    camera: "Unknown 35 mm negative / frame alignment inferred",
+    location: "Orne Library, basement archive B2",
+    caption: "The same office twenty-eight years before frame 12.",
+    comment:
+      "The filing cabinet label is blank. Its outline does not align with any object in this exposure.",
+    content: "/photos/office_1998_overlay.png",
+  },
+  {
+    id: "office_tomorrow_overlay",
+    name: "office_tomorrow.jpg",
+    folderId: "restricted",
+    kind: "image",
+    unlock: { type: "puzzleSolved", puzzleId: "counting_audio" },
+    evidenceId: "office_tomorrow_overlay",
+    alias: "OFFICE~0.JPG",
+    size: "2.5 MB",
+    modified: "{TOMORROW} 03:14",
+    taken: "{TOMORROW} 03:14",
+    dimensions: "1536 × 1024",
+    camera: "Miskatonic Campus Security / device not yet issued",
+    location: "Orne Library, basement archive B2",
+    caption: "A third exposure indexed one day ahead of the mounted session.",
+    comment:
+      "The room appears older, not later. The pale vertical absence is not visible in either source alone.",
+    content: "/photos/office_tomorrow_overlay.png",
+  },
+  {
+    id: "directory_comparison",
+    name: "BISHOP_TREE.CMP",
+    folderId: "restricted",
+    kind: "text",
+    unlock: { type: "puzzleSolved", puzzleId: "margin_cipher" },
+    evidenceId: "directory_comparison",
+    alias: "BISHOP~1.CMP",
+    modified: "{TOMORROW} 03:10",
+    content: `RECOVERY DIRECTORY COMPARATOR 0.4
+
+Two user snapshots were mounted read-only. Select the entry that belongs to neither source tree.
+
+M.BISHOP / 1998                 S.BISHOP / 2026
+ACCESSION                       ACCESSION
+CORRESPONDENCE                  CORRESPONDENCE
+TEMP                            TEMP
+[unresolved entry]              [unresolved entry]`,
+  },
+  {
+    id: "silent_call",
+    name: "CALL_0314.WAV",
+    folderId: "restricted",
+    kind: "audio",
+    unlock: { type: "puzzleSolved", puzzleId: "lineage" },
+    evidenceId: "silent_call",
+    alias: "CALL03~1.WAV",
+    size: "1.7 MB",
+    modified: "{TOMORROW} 03:14",
+    content: "/artifacts/call-without-voice.wav",
+    transcript: `[PBX CAPTURE / NO CALLER / NO ROUTE]
+
+The left and right channels contain the same room tone with opposite phase errors.
+Automatic transcription found no voice.`,
+  },
+  {
+    id: "observer_first_seen",
+    name: "FIRST_SEEN.DIR",
+    folderId: "observer-cache",
+    kind: "text",
+    unlock: { type: "always" },
+    evidenceId: "observer_directory",
+    alias: "FIRSTS~1.DIR",
+    modified: "{TOMORROW} 03:10",
+    content: `DIRECTORY ENTRY / OWNER UNRESOLVED
+
+Path ............. C:\\USERS\\{PLAYER}
+Created .......... when BISHOP_TREE.CMP was compared
+Source tree ...... none
+Inherited ACL .... M.BISHOP / S.BISHOP
+
+This directory was not present in either snapshot.
+It was present in the comparison result.`,
+  },
+  {
+    id: "counter_index_note",
+    name: "DO_NOT_COMPLETE.NFO",
+    folderId: "observer-cache",
+    kind: "text",
+    unlock: { type: "flag", flag: "silent_call_solved" },
+    evidenceId: "counter_index_note",
+    alias: "DONOTC~2.NFO",
+    modified: "{TOMORROW} 03:15",
+    content: `COUNTER-INDEX FRAGMENT / CHANNEL DIFFERENCE
+
+VOICE MATCH: BISHOP / GENERATION UNRESOLVED
+
+Do not restore the whole record.
+Leave one field unanswered.
+I cannot tell whether the missing field stops it following us or gives it somewhere to wait.
+
+RECOVERED OPERATION:
+INDEX /RESTORE /INCOMPLETE`,
   },
   {
     id: "access_log",
@@ -1392,6 +1571,28 @@ I never logged in. I'm not going to finish uploading this. If it reaches you any
 Don't look for the next file. You'll open it anyway. I know because the log already says you did.`,
   },
   {
+    id: "split_record",
+    name: "split_record.txt",
+    folderId: "chapter-seven",
+    kind: "text",
+    unlock: { type: "puzzleSolved", puzzleId: "lineage" },
+    evidenceId: "split_record",
+    alias: "SPLITR~1.TXT",
+    modified: "2026-03-15 23:47",
+    content: `S_split.wkg — scratch, not for the printer
+
+Split my own name across three files today to see if the index still folds them into one entry:
+S.BISHOP -> SPLITR~1.TXT
+BISHOP, S -> BISHOP~1.TXT
+S B I S H O P (spaced) -> S_BISH~2.TXT
+
+Doesn't matter how I break the name up before saving it. It reassembles on read, not on write. Same accession number, every file, 03:11.
+
+Relay packet, recipient field: left blank this time. On purpose. The blank survives the copy. After the relay opens, the field no longer tests as empty.
+
+Tom doesn't know I did this. Whoever opens the blank field after me, I need them to —`,
+  },
+  {
     id: "tom_relay_disk_photo",
     name: "relay07_upload_setup.jpg",
     folderId: "downloads",
@@ -1453,10 +1654,10 @@ ACCESS~1.TXT                 LISTED BEFORE READ
 READRE~1.DBX                 LISTED BEFORE RECOVERY
 HASHMA~1.TXT                 LISTED BEFORE GENERATION
 
-The fourth recipient is not an address. It is an empty field the archive fills when the package is observed.
+RECIPIENT 04: ADDRESS NULL / CREATED AFTER FIRST OPEN
 
 Tom's note in the failed upload record:
-Sarah didn't choose them. I didn't either. The copy did what catalogues do: it made an entry where there was a blank.`,
+I didn't choose the fourth. Sarah left no address. The copy filled the blank — or obeyed something she left inside it. I cannot prove which happened first.`,
   },
   {
     id: "the_name",
@@ -1509,6 +1710,27 @@ RESTORE writes a recovered owner into the source field.
 HALT closes the current relay without recovering its unresolved source.
 
 No disposition for the current observer was retained.`,
+  },
+  {
+    id: "observer_outbox",
+    name: "OUTBOX_04.EML",
+    folderId: "chapter-seven",
+    kind: "text",
+    unlock: { type: "puzzleSolved", puzzleId: "future_log" },
+    evidenceId: "observer_outbox",
+    alias: "OUTBOX~1.EML",
+    modified: "{TOMORROW} 03:15",
+    content: `OUTLOOK EXPRESS / RECOVERED OUTBOX ITEM
+
+FROM: {PLAYER}@relay07.local
+TO: [unresolved]
+DATE: {TOMORROW} 03:15
+BODY BYTES: 0
+
+ATTACHMENTS RECORDED BEFORE COMPOSITION:
+{RECENT_ATTACHMENTS}
+
+No send operation was recorded.`,
   },
 
   // --- Historical branch: four custodians and the damaged 2014 mirror -----
@@ -1747,7 +1969,7 @@ The shape in our coast photograph is not a piling. I found it in Mom's 1977 map.
     name: "welcome_back.txt",
     folderId: "sarah",
     kind: "text",
-    unlock: { type: "flag", flag: "ending_restore" },
+    unlock: { type: "flag", flag: "ending_restore_complete" },
     content: `[New documents found in this account. Owner: {PLAYER}. Created: {TOMORROW}.]
 
 Thank you. I'm sorry.

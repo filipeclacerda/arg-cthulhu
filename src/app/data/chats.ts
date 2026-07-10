@@ -258,7 +258,7 @@ export const chats: ChatThread[] = [
     title: "Special Collections Staff",
     contactId: "staff",
     mode: "readonly",
-    unlock: { type: "always" },
+    unlock: { type: "puzzleSolved", puzzleId: "lot_114" },
     evidenceId: "chat_library_archive",
     participants: [
       {

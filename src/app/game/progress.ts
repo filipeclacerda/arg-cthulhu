@@ -63,6 +63,7 @@ export type WorldReactionId =
   | "future_search"
   | "photo_changed"
   | "minimized_audio"
+  | "post_end_transcript"
   | "cursor_hesitation"
   | "empty_chair"
   | "contact_typing"
@@ -70,7 +71,9 @@ export type WorldReactionId =
   | "case_code_drift"
   | "self_indexed"
   | "blank_space"
-  | "observer_filed";
+  | "observer_filed"
+  | "status_sheet"
+  | "name_degraded";
 export type OptionalDiscoveryId =
   | "paint_doodles"
   | "dad_recipe"
@@ -405,14 +408,9 @@ export const currentChapter = (
   if (snapshot.flags.act1_recovered_partial) {
     return "chapter_3";
   }
-  if (
-    solved(snapshot, "lot_114") ||
-    Boolean(
-      snapshot.discoveredEvidenceIds?.some((id) =>
-        ["catalogue_lot_114", "miriam_1998", "lot_114_order"].includes(id)
-      )
-    )
-  ) {
+  // Reading the source files is preparation, not a solved investigation.
+  // Chapter 2 advances only after the player submits the Lot 114 browser query.
+  if (solved(snapshot, "lot_114")) {
     return "chapter_2";
   }
   return "chapter_1";

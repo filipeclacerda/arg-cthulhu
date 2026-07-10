@@ -94,6 +94,25 @@
   border-color: #85b9b9 #071a1b #071a1b #85b9b9;
 }
 
+.finale-incomplete-button {
+  color: #e5ffe6;
+  background:
+    repeating-linear-gradient(90deg, rgba(255,255,255,.08) 0 1px, transparent 1px 5px),
+    #28552b;
+  border-color: #9bd09d #102412 #102412 #9bd09d;
+}
+
+.finale--restore-incomplete .finale-terminal {
+  background:
+    linear-gradient(90deg, transparent 49.7%, rgba(190, 255, 205, 0.08) 50%, transparent 50.3%),
+    radial-gradient(circle at 50% 0%, rgba(110, 255, 136, 0.13), transparent 38%),
+    #050b07;
+
+  pre {
+    text-shadow: 0 0 6px rgba(125, 255, 151, 0.55);
+  }
+}
+
 .finale-shutdown-screen {
   position: fixed;
   inset: 0;
@@ -271,5 +290,11 @@
   }
   to {
     background: #000;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .finale-shutdown-screen {
+    animation: none !important;
   }
 }
