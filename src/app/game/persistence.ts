@@ -3,6 +3,8 @@ import {
   CaseAnswer,
   CaseQuestionId,
   createInitialProgress,
+  LIVE_CONTACT_WINDOW_MS,
+  LiveContactState,
   puzzleAct,
   ProgressStateV4,
   PuzzleId,
@@ -70,6 +72,50 @@ const normalizeCaseAnswers = (
     }
   });
   return normalized;
+};
+
+const isLiveContactState = (value: unknown): value is LiveContactState => {
+  if (!value || typeof value !== "object") return false;
+  const parsed = value as Partial<LiveContactState>;
+  return (
+    typeof parsed.activeMs === "number" &&
+    (parsed.status === "unseen" ||
+      parsed.status === "active" ||
+      parsed.status === "closed")
+  );
+};
+
+/**
+ * Saves written before `liveContact` existed derive it from the persisted
+ * Messenger choices: never seen → unseen; opened but never answered →
+ * active (elapsed time recovered from the recorded open timestamp when
+ * possible); question chosen or expired → closed with the window spent.
+ */
+const deriveLiveContact = (legacy: Record<string, any>): LiveContactState => {
+  if (isLiveContactState(legacy.liveContact)) return legacy.liveContact;
+  const choices: { choiceId?: string; chosenAt?: number }[] = Array.isArray(
+    legacy.playerChoices
+  )
+    ? legacy.playerChoices
+    : [];
+  const question = choices.find(
+    (choice) => choice?.choiceId === "sarah_live_question"
+  );
+  if (question) return { status: "closed", activeMs: LIVE_CONTACT_WINDOW_MS };
+  const seen = choices.find(
+    (choice) => choice?.choiceId === "sarah_live_seen"
+  );
+  if (seen) {
+    const reference =
+      typeof legacy.updatedAt === "number" ? legacy.updatedAt : Date.now();
+    const elapsed =
+      typeof seen.chosenAt === "number" ? reference - seen.chosenAt : 0;
+    return {
+      status: "active",
+      activeMs: Math.max(0, Math.min(LIVE_CONTACT_WINDOW_MS, elapsed)),
+    };
+  }
+  return { status: "unseen", activeMs: 0 };
 };
 
 export interface SaveHeader {
@@ -160,6 +206,7 @@ export const migrateProgress = (value: unknown): ProgressStateV4 | null => {
       collectedTokens: Array.isArray(value.collectedTokens)
         ? value.collectedTokens
         : [],
+      liveContact: deriveLiveContact(value as Record<string, any>),
       caseAnswers: normalizeCaseAnswers(value.caseAnswers),
       puzzles: Object.fromEntries(
         PUZZLE_IDS.map((id) => [
@@ -230,6 +277,7 @@ export const migrateProgress = (value: unknown): ProgressStateV4 | null => {
       assetVariantsSeen: Array.isArray(legacy.assetVariantsSeen)
         ? legacy.assetVariantsSeen
         : [],
+      liveContact: deriveLiveContact(legacy),
     };
   }
   if (legacy.version !== 1 && legacy.version !== 2) return null;
@@ -289,6 +337,7 @@ export const migrateProgress = (value: unknown): ProgressStateV4 | null => {
   if (legacy.flags?.ending_leave_blank) migrated.ending = "leave_blank";
   if (legacy.flags?.ending_archive_self) migrated.ending = "archive_self";
   migrated.corruptionStage = Math.min(4, Math.max(0, stage));
+  migrated.liveContact = deriveLiveContact(legacy);
   migrated.revision = 1;
   migrated.updatedAt = now;
   return migrated;

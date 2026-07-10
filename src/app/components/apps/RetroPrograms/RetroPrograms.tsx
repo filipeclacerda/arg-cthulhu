@@ -4,6 +4,10 @@ import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react";
 import { useWindowManager } from "@/app/context/WindowManagerContext";
 import { useI18n } from "@/app/i18n";
+import { useProgress } from "@/app/context/ProgressContext";
+import { isUnlocked } from "@/app/game/unlock";
+import { RECYCLE_ENTRIES } from "@/app/data/recycleBin";
+import { resolveTokens } from "@/app/utils/narrative";
 import {
   getTelemetryConsent,
   setTelemetryConsent,
@@ -232,21 +236,36 @@ export const SystemProperties = () => {
 
 export const RecycleBin = () => {
   const { openWindow } = useWindowManager();
+  const { state } = useProgress();
+  const entries = RECYCLE_ENTRIES.filter((entry) => isUnlocked(entry.unlock, {
+    flags: state.flags,
+    discoveredEvidenceIds: state.discoveredEvidenceIds,
+    solvedPuzzleIds: Object.entries(state.puzzles).filter(([, puzzle]) => puzzle.solvedAt).map(([id]) => id) as import("@/app/game/progress").PuzzleId[],
+  }));
+  const emptyExpanded = state.playerChoices.some(
+    (choice) => choice.choiceId === "sarah_live_question"
+  );
+  const entrySize = (entry: (typeof RECYCLE_ENTRIES)[number]) =>
+    entry.id === "empty" && emptyExpanded ? "1 KB" : entry.size;
+  const openEntry = (entry: (typeof RECYCLE_ENTRIES)[number]) => {
+    if (entry.target.type === "browser") {
+      openWindow({ id: `recycle-${entry.id}`, appType: "browser", title: "Internet Explorer", props: { initialAddress: entry.target.address } });
+      return;
+    }
+    openWindow({ id: `recycle-${entry.id}`, appType: "notepad", title: `${entry.name} - Notepad`, props: { fileId: entry.target.fileId } });
+  };
   return (
     <div className="recycle-bin">
       <div className="recycle-bin__toolbar">File&nbsp;&nbsp; Edit&nbsp;&nbsp; View&nbsp;&nbsp; Help</div>
       <div className="recycle-bin__address"><strong>Address</strong><span>Recycle Bin</span></div>
       <div className="recycle-bin__files">
-        <button onDoubleClick={() => openWindow({ id: "danforth-cache", appType: "browser", title: "Internet Explorer", props: { initialAddress: "http://www.geocities.com/arkham_heights/danforth.html" } })}>
-          <Image src="/icons/internet-explorer.png" alt="" width={34} height={34} />
-          <span>DANFORTH.URL</span>
-        </button>
-        <button onDoubleClick={() => openWindow({ id: "expedition-scrap", appType: "notepad", title: "EXPEDITION.TMP - Notepad", props: { fileId: "expedition_tmp" } })}>
-          <Image src="/icons/notepad.png" alt="" width={34} height={34} />
-          <span>EXPEDITION.TMP</span>
-        </button>
+        {entries.map((entry) => <button key={entry.id} title={`${entrySize(entry)} · ${resolveTokens(entry.deletedAt)}\n${entry.originalPath}`} onDoubleClick={() => openEntry(entry)}>
+          <Image src={entry.icon === "browser" ? "/icons/internet-explorer.png" : "/icons/notepad.png"} alt="" width={34} height={34} />
+          <span>{entry.name}</span>
+          <small>{entrySize(entry)}</small>
+        </button>)}
       </div>
-      <div className="recycle-bin__status">2 object(s) — deletion date unavailable</div>
+      <div className="recycle-bin__status">{entries.length} object(s) — dates retained where available</div>
     </div>
   );
 };

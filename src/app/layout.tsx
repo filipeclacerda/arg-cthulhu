@@ -11,9 +11,9 @@ import SystemToast from "./components/SystemToast/SystemToast";
 import { PHProvider } from "./components/PHProvider/PHProvider";
 
 export const metadata: Metadata = {
-  title: "The Fourth Recipient",
+  title: "The Archive of Tomorrow",
   description:
-    "A forensic disk image with four recipients. Three were chosen. You opened the link.",
+    "A forensic disk image, an unresolved delivery table, and a missing researcher.",
 };
 
 export default function RootLayout({

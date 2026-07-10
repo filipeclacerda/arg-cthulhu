@@ -7,8 +7,13 @@ import { AppType, useWindowManager } from "@/app/context/WindowManagerContext";
 import { useProgress } from "@/app/context/ProgressContext";
 import { useSound } from "@/app/context/SoundContext";
 import { useI18n, TranslationKey } from "@/app/i18n";
+import {
+  OBSERVER_CONCLUSION_LABELS,
+  localized,
+  pendingObserverConclusions,
+} from "@/app/game/campaign";
 
-type MenuView = "root" | "programs" | "accessories";
+type MenuView = "root" | "programs" | "accessories" | "recent";
 
 interface ProgramEntry {
   label: string;
@@ -92,6 +97,17 @@ const ACCESSORIES: ProgramEntry[] = [
     icon: "/icons/favorites.png",
     appType: "paint",
   },
+];
+
+// A deliberately small first-reading surface. These are shortcuts, not a
+// replacement for Explorer: the rest of Sarah's disk remains discoverable.
+const RECENT_DOCUMENTS: ProgramEntry[] = [
+  { id: "recent-incident", label: "incident_report.txt", icon: "/icons/notepad.png", appType: "notepad", props: { fileId: "incident_report" } },
+  { id: "recent-diary", label: "diary.txt", icon: "/icons/notepad.png", appType: "notepad", props: { fileId: "diary" } },
+  { id: "recent-miriam", label: "mom_1998.txt", icon: "/icons/notepad.png", appType: "notepad", props: { fileId: "mom_1998" } },
+  { id: "recent-borrowers", label: "borrower_index.txt", icon: "/icons/notepad.png", appType: "notepad", props: { fileId: "borrower_index" } },
+  { id: "recent-todo", label: "to_do.txt", icon: "/icons/notepad.png", appType: "notepad", props: { fileId: "todo" } },
+  { id: "recent-lecture", label: "lecture_draft.txt", icon: "/icons/notepad.png", appType: "notepad", props: { fileId: "lecture_draft" } },
 ];
 
 const INDEX_FRAGMENTS = ["E7", "A1", "C4", "B9"];
@@ -223,7 +239,7 @@ const StartMenu = () => {
   const [showRun, setShowRun] = useState(false);
   const [runInput, setRunInput] = useState("");
   const { openWindow } = useWindowManager();
-  const { hasFlag, runCommand, playerName } = useProgress();
+  const { hasFlag, runCommand, playerName, state } = useProgress();
   const { play } = useSound();
   const { locale, t } = useI18n();
 
@@ -314,15 +330,20 @@ const StartMenu = () => {
     }
 
     play("error");
+    // The refusal names what is missing instead of counting it: the pending
+    // observer conclusion(s) are quoted by their Casefile titles.
+    const pendingConclusionNames = pendingObserverConclusions(state)
+      .map((id) => `"${localized(OBSERVER_CONCLUSION_LABELS[id], locale)}"`)
+      .join("; ");
     const errorMessage =
       result.commandError === "missing_references"
         ? t("missingReferences")
         : result.commandError === "wrong_order"
           ? t("wrongOrder")
           : result.commandError === "case_incomplete"
-            ? locale === "pt-BR"
-              ? "O índice recusou a operação. Retenha três conclusões sobre o observador e pelo menos dois achados sobre o último dia de Sarah no Dossiê do Caso."
-              : "The index refused the operation. Retain three observer findings and at least two findings about Sarah's last day in Casefile.exe."
+            ? incompleteRestoreCommand
+              ? t("stagedOperationIncomplete")
+              : `${t("caseIncompleteLead")} ${pendingConclusionNames}`
             : result.commandError === "seal_unavailable"
               ? locale === "pt-BR"
                 ? "O arquivo não reconhece a si mesmo como testemunha. Seis correlações independentes são necessárias."
@@ -421,6 +442,13 @@ const StartMenu = () => {
                   </button>
                   <button
                     className="startMenuButton button"
+                    onClick={() => setView("recent")}
+                  >
+                    <Image src="/icons/notepad.png" alt="" width={30} height={30} />
+                    <span>{locale === "pt-BR" ? "Documentos recentes" : "Recent Documents"}</span><b>▶</b>
+                  </button>
+                  <button
+                    className="startMenuButton button"
                     onClick={() => launch({
                       id: "system-properties",
                       label: "System Properties",
@@ -497,6 +525,7 @@ const StartMenu = () => {
               )}
 
               {view === "accessories" && ACCESSORIES.map(renderProgramEntry)}
+              {view === "recent" && RECENT_DOCUMENTS.map(renderProgramEntry)}
             </div>
           </div>
         </>

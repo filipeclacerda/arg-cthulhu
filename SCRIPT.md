@@ -54,13 +54,15 @@ O jogador chega ao relay por uma thread antiga do MiskaNet, `thread/7411`, index
 imagem forense de uma workstation desaparecida. Quando o pacote começa a montar, o referrer
 é apagado da própria tela.
 
-O relay encontra o pacote `SB-0316`, assinado por Tom, mas mostra quatro destinatários. O
-quarto campo só é gerado quando alguém abre o link. Um envelope externo — explicitamente
-marcado como **não pertencente ao disco de Sarah** — contém a última nota de Tom:
+O relay encontra o pacote `SB-0316`, assinado por Tom, e verifica **três** destinatários. Uma
+linha administrativa não indexada deixa o checksum da tabela inválido. O quarto campo só é
+revelado no terceiro ato, quando os recibos e o Indexer deixam de permitir outra leitura. Um
+envelope externo — explicitamente marcado como **não pertencente ao disco de Sarah** — contém
+a última nota de Tom, deliberadamente truncada antes da contagem mudar:
 
 > Fiz uma cópia forense e a coloquei na fila para três colegas.
-> Agora existe um quarto destinatário. Eu não adicionei ninguém.
-> O campo está vazio na minha tela. Talvez não esteja quando alguém abrir isto.
+> A tabela não fecha. Eu não adicionei nenhuma linha.
+> Há um campo vazio na minha tela. Talvez não esteja quando alguém abrir isto.
 
 A revelação posterior permanece deliberadamente ambígua, mas não mais por falta de agência:
 os registros provam que Sarah deixou o campo de destinatário vazio de propósito, como parte
@@ -370,11 +372,11 @@ sistema aceita **uma só**:
 
 Depois da resposta escolhida, "digitando..." reaparece uma última vez (~4s depois da última
 mensagem), fica visível por ~30s e some sem que nenhuma mensagem chegue; a presença então cai
-para offline e não volta. Se o jogador não perguntar nada dentro da janela, a presença cai da
-mesma forma e as sugestões somem — sem punição de campanha (o Finale usa o eco padrão). A
-janela nunca reabre depois de expirar de verdade; um reload feito **durante** a janela ainda
-aberta a encontra aberta, o que é a única leniência aceita. A thread continua legível como
-arquivo depois que a janela fecha, igual às outras três.
+para offline e não volta. Os dois minutos contam apenas enquanto a janela está visível e em
+foco; a aba oculta ou um set piece obrigatório a pausa. Se a pergunta sobre quebrar a sequência
+for perdida, o pós-`future_log` pode recuperar `sarah_break_cache.tmp` depois de `hash_manifest`:
+um protocolo técnico incompleto, nunca a resposta emocional ao vivo. A thread continua legível
+como arquivo depois que a janela fecha, igual às outras três.
 
 ---
 
@@ -399,7 +401,7 @@ Referência rápida de como cada batida vira código (ver também o plano de imp
 | Exportar/importar o caso como texto | código `MISK6.<payload>.<checksum>` | `game/persistence.ts` (`exportCaseCode`/`importCaseCode`) |
 | A entidade reconhece registros, não pessoas: folha impressa PRESENT→DUPLICATED, desktop de 1998 de Miriam, degradação do nome de Sarah | `WorldReaction` `status_sheet`/`name_degraded`, flags `1998_flash_seen`/`miriam_1998_file_recovered`, hook `useNameDegradation` | `desktop/page.tsx` (`StatusSheetAlert`, overlay `desktop-1998-overlay`), `hooks/useNameDegradation.ts`, `Messenger.tsx`, `Explorer.tsx` |
 | A gravação não para em 04:11 e um observador seco escreve por cima dela (uma vez); o voicemail cotidiano chega depois, sem horror | `WorldReaction` `post_end_transcript` (substitui a 1ª ocorrência de `minimized_audio`, que segue valendo depois), flag `post_end_transcript_seen` gateando `voicemail_to_em` (agora `kind: "audio"`) | `MediaPlayer.tsx`, `desktop/page.tsx` (aviso "1 anexo recuperado"), `data/filesystem.ts`, `data/localizedNarrative.ts` (`localizedTranscript`) |
-| Sarah ao vivo por uma janela de ~2 min; 4ª pergunta sobre o quarto destinatário em 3 mensagens com "digitando..." entre elas; presença cai para offline sem nova mensagem | `playerChoices` `sarah_live_seen` (abre a janela) e `sarah_live_question` (`alive`/`restore`/`break`/`fourth`/`missed`), estado derivado por timestamp (sem timers persistidos) | `Messenger.tsx` (`LIVE_WINDOW_MS`, `LIVE_REPLY_RESPONSES`, `LIVE_REPLY_DELAYS`) |
+| Sarah ao vivo por uma janela de ~2 min focados; 4ª pergunta sobre o quarto destinatário em 3 mensagens com "digitando..."; cache técnico se a pergunta `break` for perdida | `liveContact.activeMs` persistido + `playerChoices`; `sarah_break_cache.tmp` seta `break_protocol_recovered` ao abrir | `Messenger.tsx`, `game/liveContact.ts`, `game/diegeticEvents.ts`, `Notepad` |
 | IDENTITY COLLISION: tally seco de destinatários, bloco SARAH BISHOP × designação do observador, "SELECT CANONICAL RECORD" pulsando; Finale reformula RESTORE/SHUT DOWN como escolha de registro canônico | `IndexerResult` com fases encadeadas por `setTimeout`; `finaleChoiceTerminal` (i18n) inclui o bloco de colisão antes do `WITNESS` | `StartMenu.tsx` (`IndexerResult`), `i18n.ts` (`finaleChoiceTerminal`), `Finale.tsx` |
 
 **Escala de corrupção (estágios, função `puzzleCorruptionStage`):**
@@ -651,8 +653,8 @@ espinha dos sete enigmas e não acrescentam uma nova versão de save; registram 
 de evidência dentro do estado existente.
 
 - **Pós-`margin_cipher` — `BISHOP_TREE.CMP`:** compara as árvores M.BISHOP/1998 e S.BISHOP/2026.
-  A única entrada sem proprietário em nenhuma origem é `C:\USERS\{PLAYER}`. Selecioná-la
-  materializa de fato esse diretório sob `Users`, com `FIRST_SEEN.DIR` registrando que ele
+  A única entrada sem proprietário em nenhuma origem é `C:\WINDOWS\Profiles\{PLAYER}`. Selecioná-la
+  materializa de fato esse diretório sob `WINDOWS\Profiles`, com `FIRST_SEEN.DIR` registrando que ele
   foi criado pela comparação, não por uma escrita no disco.
 - **Pós-`counting_audio` — fotografia em três tempos:** `office_1998.jpg`, `office_after.jpg` e
   `office_tomorrow.jpg` compartilham enquadramento. Ativar as três exposições e usar
@@ -663,8 +665,8 @@ de evidência dentro do estado existente.
   gravação. A recompensa é `DO_NOT_COMPLETE.NFO`, o protocolo incompleto de Sarah.
 
 Concluir as três investigações cria `DO_NOT_COMPLETE.NFO`; o jogador ainda precisa lê-lo e
-executar `INDEX /RESTORE /INCOMPLETE`. Só então **RESTORE INCOMPLETE** aparece no Finale.
-Ele usa a disposição RESTORE e acrescenta `ending_restore_incomplete`: Sarah retorna, mas
+executar `INDEX /RESTORE /INCOMPLETE`. Só então a confirmação de **RESTORE SARAH** oferece a
+variante **RESTORE INCOMPLETE**. Ela usa a disposição RESTORE e acrescenta `ending_restore_incomplete`: Sarah retorna, mas
 responde primeiro com o nome do observador, o destinatário continua não resolvido e o
 diretório de ambos converge para `S. BISHOP`. A operação interrompeu algo; não prova o quê.
 
@@ -755,6 +757,16 @@ experimentar como faria em um computador antigo sem sair da ficção.
   Historical Society e o MiskaNet Forum, e uma seção **“From the archive”** com um recorte por
   década (1863, 1912, 1931, 1949, 1977, 1998) — cada um ecoando o mesmo tipo de desaparecimento
   em época diferente, sem nunca declarar a série numérica do enigma `lineage`.
+- **Gull & Lantern Café** — reserva de Sarah e Em, café ruim e uma noite comum que Sarah vinha
+adiando. Disponível desde o início; não é pista obrigatória.
+- **Arkham Transit / Route 7** — rota da Orne Library ao waterfront às 18:30. Depois do
+`future_log`, o próximo ônibus fica preso a um minuto e a contagem prevista muda para quatro.
+- **Orne Compatibility Gateway** — explica o espelho DBX que permite ao Outlook Express ler a
+caixa moderna; o e-mail de Sarah continua ausente do transporte upstream. Pós-`lot_114`.
+- **Orne Staff Bulletin** — Tom cobre o seminário de Sarah, scanner B2 falha e a equipe espera
+uma pessoa no quiz do Gull & Lantern. Pós-`lot_114`.
+- **Essex Hydrographic Telemetry** e **Arkham Preservation Web Ring** — cache de salinidade
+interna às 03:14 e cultura de preservação digital de 2001. Pós-`margin_cipher`.
 - **Pabodie Antarctic Expedition, 1930–31** — arquivo do departamento de Geologia com Dyer,
   Pabodie, Danforth, Gedney, os quatorze espécimes, notas de pessoal e um link cruzado para o
   registro genealógico da família Dyer. O “frame 7” leva ao cache pessoal de Danforth.
@@ -777,7 +789,9 @@ experimentar como faria em um computador antigo sem sair da ficção.
   “NEXT USER”) — o jogador descobre que também é só mais um nó da mesma thread, sem que o jogo
   precise dizer isso em palavras.
 
-Essas páginas são opcionais e alcançáveis por busca livre (sem gate de puzzle). Nenhuma
+Essas páginas são opcionais. As superficiais aceitam busca livre; caches profundos polares,
+Danforth, famílias e o guestbook de Tom exigem `counting_audio` e respondem `CACHE SEGMENT NOT
+MOUNTED` antes disso. Nenhuma
 contém uma resposta necessária para a progressão principal, e nenhuma repete os mecanismos
 exatos dos enigmas (a chave-é-um-nome do `margin_cipher`, a razão ¾ do `lineage`) — elas
 recompensam exploração, criam falsos focos plausíveis e ampliam a ideia de que a máquina
@@ -789,8 +803,9 @@ recompensam exploração, criam falsos focos plausíveis e ampliam a ideia de qu
 - **Accessories** contém Case Notes, Cipher Lab, Calculator e Paint.
 - **System Properties** revela o volume `VOL_114_RECOVERED`, a falha do CMOS e a data
   impossível.
-- A **Recycle Bin** guarda `DANFORTH.URL` e `EXPEDITION.TMP`. O segundo é uma nota apagada do
-  acampamento Lake com data de exclusão amanhã.
+- A **Recycle Bin** é progressiva: começa com `REVIEW_2.TMP`, `GULLLANT.URL` e `ROUTE7.URL`;
+  ganha `APOLOGY.TMP` e `ORNE_GATE.URL` pós-Lote 114, `RETURN.LBL` e `ARKWEB.URL` pós-cifra, e
+  `EMPTY.TMP` pós-log futuro. Danforth e a expedição só aparecem após `counting_audio`.
 - A barra de tarefas mostra cada janela aberta e o estado de retenção do arquivo
   (`SAVING`, `SAVED`, `READ ONLY` ou erro).
 

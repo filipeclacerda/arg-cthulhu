@@ -9,9 +9,11 @@ import "./style.scss";
 
 type FinaleState =
   | "choice"
+  | "restore_confirm"
   | "restore"
   | "restore_incomplete"
   | "shutdown"
+  | "seal_confirm"
   | "seal"
   | "leave_blank"
   | "archive_self";
@@ -30,6 +32,7 @@ const Finale = () => {
     if (state.ending === "seal") return "seal";
     if (state.ending === "leave_blank") return "leave_blank";
     if (state.ending === "archive_self") return "archive_self";
+    if (hasFlag("seal_relay_prepared")) return "seal_confirm";
     return "choice";
   });
 
@@ -48,7 +51,7 @@ const Finale = () => {
   const archiveSelfAvailable =
     hasFlag("secret_ending_available") &&
     state.discoveredEvidenceIds.includes("hash_manifest") &&
-    liveQuestion === "break";
+    (liveQuestion === "break" || hasFlag("break_protocol_recovered"));
   const incompleteRestoreAvailable = hasFlag("incomplete_restore_prepared");
   const echoKey = (ending: EchoEnding): TranslationKey => {
     const suffix =
@@ -115,6 +118,57 @@ const Finale = () => {
     play("glitch");
     setScreen("archive_self");
   };
+
+  if (screen === "restore_confirm") {
+    return (
+      <div className="finale finale--confirm">
+        <div className="finale-terminal">
+          <pre>{locale === "pt-BR"
+            ? `INDEX /RESTORE S.BISHOP\n\nA operação ocupará um registro canônico.\nCONFIRMAR GRAVAÇÃO?`
+            : `INDEX /RESTORE S.BISHOP\n\nThis operation will occupy one canonical record.\nCONFIRM WRITE?`}</pre>
+        </div>
+        <div className="finale-actions">
+          <button className="button btn-lg" type="button" onClick={handleRestore}>
+            {locale === "pt-BR" ? "CONCLUIR REGISTRO" : "COMPLETE RECORD"}
+          </button>
+          {incompleteRestoreAvailable && (
+            <button
+              className="button btn-lg finale-incomplete-button"
+              type="button"
+              onClick={handleIncompleteRestore}
+            >
+              {locale === "pt-BR" ? "PRESERVAR CAMPO INCOMPLETO" : "PRESERVE INCOMPLETE FIELD"}
+            </button>
+          )}
+          <button className="button" type="button" onClick={() => setScreen("choice")}>
+            {locale === "pt-BR" ? "VOLTAR" : "BACK"}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (screen === "seal_confirm") {
+    return (
+      <div className="finale finale--confirm">
+        <div className="finale-terminal">
+          <pre>{locale === "pt-BR"
+            ? `INDEX /SEAL RELAY-07 /WITNESS ARCHIVE\n\nUM CAMPO EXTERNO SERÁ REMOVIDO.\nNENHUMA OPERAÇÃO É REVERSÍVEL.`
+            : `INDEX /SEAL RELAY-07 /WITNESS ARCHIVE\n\nONE OUTSIDE FIELD WILL BE REMOVED.\nNO OPERATION IS REVERSIBLE.`}</pre>
+        </div>
+        <div className="finale-actions">
+          <button className="button btn-lg finale-seal-button" type="button" onClick={handleSeal}>
+            {locale === "pt-BR" ? "SELAR RELAY" : "SEAL RELAY"}
+          </button>
+          {archiveSelfAvailable && (
+            <button className="button btn-lg finale-seal-button" type="button" onClick={handleArchiveSelf}>
+              {t("archiveYourselfLabel")}
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   if (screen === "restore") {
     return (
@@ -320,20 +374,10 @@ NO WRITE OPERATION WAS RECORDED.`}</pre>
         <button
           className="button btn-lg"
           type="button"
-          onClick={handleRestore}
+          onClick={() => setScreen("restore_confirm")}
         >
           {t("restoreSarahLabel")}
         </button>
-        {incompleteRestoreAvailable && (
-          <button
-            className="button btn-lg finale-incomplete-button"
-            type="button"
-            onClick={handleIncompleteRestore}
-            title="BISHOP_TREE.CMP + three-time alignment + channel difference"
-          >
-            {locale === "pt-BR" ? "RESTAURAR INCOMPLETA" : "RESTORE INCOMPLETE"}
-          </button>
-        )}
         <button
           className="button btn-lg"
           type="button"
@@ -341,26 +385,6 @@ NO WRITE OPERATION WAS RECORDED.`}</pre>
         >
           {t("shutDownChoiceLabel")}
         </button>
-        {hasFlag("secret_ending_available") && (
-          <button
-            className="button btn-lg finale-seal-button"
-            type="button"
-            onClick={handleSeal}
-            title={`${state.insightsUnlocked.length}/6 correlations retained`}
-          >
-            {locale === "pt-BR" ? "SELAR RELAY" : "SEAL RELAY"}
-          </button>
-        )}
-        {archiveSelfAvailable && (
-          <button
-            className="button btn-lg finale-seal-button"
-            type="button"
-            onClick={handleArchiveSelf}
-            title="hash_manifest + break reply retained"
-          >
-            {t("archiveYourselfLabel")}
-          </button>
-        )}
       </div>
     </div>
   );

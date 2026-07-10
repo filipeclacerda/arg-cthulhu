@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import "./style.scss";
 import { emails } from "@/app/data/emails";
-import { isUnlocked } from "@/app/data/filesystem";
+import { isUnlocked } from "@/app/game/unlock";
 import { useProgress } from "@/app/context/ProgressContext";
 import { resolveTokens } from "@/app/utils/narrative";
 import ClueText from "@/app/components/ClueText/ClueText";

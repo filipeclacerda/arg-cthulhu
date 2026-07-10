@@ -1,4 +1,4 @@
-import { UnlockCondition } from "./filesystem";
+import { UnlockCondition } from "../game/unlock";
 import { ClueMarker } from "../game/campaign";
 
 export type MessengerPresence = "online" | "away" | "busy" | "offline";

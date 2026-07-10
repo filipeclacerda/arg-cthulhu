@@ -1,12 +1,19 @@
 import { describe, expect, it } from "vitest";
-import { files, isUnlocked, UnlockCondition } from "../data/filesystem";
+import { files, folders } from "../data/filesystem";
+import { isUnlocked, UnlockCondition } from "./unlock";
 import {
   createInitialProgress,
   currentChapter,
+  investigationStage,
   progressChapterSnapshot,
   puzzleCorruptionStage,
   PUZZLE_IDS,
 } from "./progress";
+import {
+  OBSERVER_CONCLUSION_LABELS,
+  isObserverConclusionAvailable,
+  pendingObserverConclusions,
+} from "./campaign";
 import { FUTURE_SEQUENCE, reduceGameEvent } from "./puzzles";
 
 const solveThroughFutureLog = () => {
@@ -111,11 +118,12 @@ describe("ARG progression reducer", () => {
     expect(puzzleCorruptionStage(state.puzzles)).toBe(2);
   });
 
-  it("derives soft-gated chapters from existing progress", () => {
+  it("derives investigation stages exclusively from the main puzzle chain", () => {
     let state = createInitialProgress(1_700_000_000_000, "chapters");
     const chapterOf = () => currentChapter(progressChapterSnapshot(state));
 
     expect(chapterOf()).toBe("chapter_1");
+    expect(investigationStage(state.puzzles)).toBe(1);
     expect(
       isUnlocked(
         { type: "chapter", chapterId: "chapter_2" },
@@ -133,8 +141,17 @@ describe("ARG progression reducer", () => {
     state = reduceGameEvent(state, { type: "SOLVE_PUZZLE", puzzleId: "lot_114" }).state;
     expect(chapterOf()).toBe("chapter_2");
 
+    // Casefile findings color the case but never advance the stage.
     state = reduceGameEvent(state, { type: "SUBMIT_CASE_ANSWER", questionId: "sarah_intent", slotSelections: { time: "time-six-thirty", intent: "intent-go-home" }, evidenceIds: ["chat_em_archive", "todo"] }).state;
     state = reduceGameEvent(state, { type: "SUBMIT_CASE_ANSWER", questionId: "locked_room_source", slotSelections: { place: "place-under-workstation", object: "object-pipe" }, evidenceIds: ["incident_report", "maintenance_record"] }).state;
+    expect(state.flags.act1_recovered_partial).toBe(true);
+    expect(chapterOf()).toBe("chapter_2");
+
+    state = reduceGameEvent(state, { type: "SOLVE_PUZZLE", puzzleId: "palimpsest" }).state;
+    expect(chapterOf()).toBe("chapter_3");
+
+    // margin_cipher happens inside stage 3 — it does not create a new stage.
+    state = reduceGameEvent(state, { type: "SOLVE_PUZZLE", puzzleId: "margin_cipher" }).state;
     expect(chapterOf()).toBe("chapter_3");
 
     state = reduceGameEvent(state, { type: "SOLVE_PUZZLE", puzzleId: "counting_audio" }).state;
@@ -143,8 +160,38 @@ describe("ARG progression reducer", () => {
     state = reduceGameEvent(state, { type: "SOLVE_PUZZLE", puzzleId: "lineage" }).state;
     expect(chapterOf()).toBe("chapter_5");
 
+    // future_log happens inside stage 5.
+    state = reduceGameEvent(state, { type: "SOLVE_PUZZLE", puzzleId: "future_log" }).state;
+    expect(chapterOf()).toBe("chapter_5");
+
     state = reduceGameEvent(state, { type: "SOLVE_PUZZLE", puzzleId: "index_name" }).state;
     expect(chapterOf()).toBe("chapter_6");
+    expect(investigationStage(state.puzzles)).toBe(6);
+  });
+
+  it("keeps lot_114 ahead of palimpsest in the stage derivation", () => {
+    let state = createInitialProgress(1_700_000_000_000, "stage-order");
+    state = reduceGameEvent(state, { type: "SOLVE_PUZZLE", puzzleId: "palimpsest" }).state;
+    // Without the first milestone the stage cannot move at all.
+    expect(investigationStage(state.puzzles)).toBe(1);
+
+    state = reduceGameEvent(state, { type: "SOLVE_PUZZLE", puzzleId: "lot_114" }).state;
+    expect(investigationStage(state.puzzles)).toBe(3);
+  });
+
+  it("never skips a stage because of secondary flags", () => {
+    let state = createInitialProgress(1_700_000_000_000, "stage-flags");
+    for (const flag of [
+      "act1_recovered_partial",
+      "act1_reconstruction_complete",
+      "sarah_email_arrived",
+      "sarah_msn_live",
+      "endgame_available",
+    ]) {
+      state = reduceGameEvent(state, { type: "SET_FLAG", flag }).state;
+    }
+    expect(currentChapter(progressChapterSnapshot(state))).toBe("chapter_1");
+    expect(investigationStage(state.puzzles)).toBe(1);
   });
 
   it("reveals personal and mythos files in narrative layers", () => {
@@ -254,13 +301,104 @@ describe("ARG progression reducer", () => {
     });
     expect(withoutFindings.commandError).toBe("case_incomplete");
 
-    state = retainSarahFindings(retainObserverFindings(state));
+    // The three observer conclusions alone open the final operation — no
+    // act-one finding is technically required.
+    state = retainObserverFindings(state);
+    expect(state.caseAnswers.sarah_intent?.solvedAt ?? null).toBeNull();
+    expect(state.caseAnswers.volume_return?.solvedAt ?? null).toBeNull();
+    expect(state.caseAnswers.locked_room_source?.solvedAt ?? null).toBeNull();
     const accepted = reduceGameEvent(state, {
       type: "RUN_COMMAND",
       command: "  index   /join e7-a1-c4-b9 ",
     });
     expect(accepted.commandAccepted).toBe(true);
     expect(accepted.state.flags.endgame_available).toBe(true);
+  });
+
+  it("names the pending observer conclusion when the index refuses", () => {
+    let state = solveThroughFutureLog();
+    for (const reference of ["E7", "A1", "C4", "B9"]) {
+      state = reduceGameEvent(state, {
+        type: "COLLECT_REFERENCE",
+        reference,
+      }).state;
+    }
+    expect(pendingObserverConclusions(state)).toEqual([
+      "future_displacement",
+      "relay_observer",
+      "chapter_ritual",
+    ]);
+
+    state = reduceGameEvent(state, {
+      type: "SUBMIT_CASE_ANSWER",
+      questionId: "future_displacement",
+      slotSelections: { status: "status-tomorrow", time: "time-one-day" },
+      evidenceIds: ["sarah_live_email", "future_access_log"],
+    }).state;
+    state = reduceGameEvent(state, {
+      type: "SUBMIT_CASE_ANSWER",
+      questionId: "relay_observer",
+      slotSelections: {
+        person: "person-observer",
+        object: "object-archive-field",
+      },
+      evidenceIds: ["tom_last_message", "index_help"],
+    }).state;
+
+    const refused = reduceGameEvent(state, {
+      type: "RUN_COMMAND",
+      command: "INDEX /JOIN E7-A1-C4-B9",
+    });
+    expect(refused.commandError).toBe("case_incomplete");
+    const pending = pendingObserverConclusions(refused.state);
+    expect(pending).toEqual(["chapter_ritual"]);
+    // The refusal copy can name the pendency in both locales.
+    for (const id of pending) {
+      expect(OBSERVER_CONCLUSION_LABELS[id].en.trim().length).toBeGreaterThan(0);
+      expect(
+        OBSERVER_CONCLUSION_LABELS[id]["pt-BR"].trim().length
+      ).toBeGreaterThan(0);
+    }
+    expect(OBSERVER_CONCLUSION_LABELS.chapter_ritual.en).toContain(
+      "Chapter Seven"
+    );
+    expect(OBSERVER_CONCLUSION_LABELS.chapter_ritual["pt-BR"]).toContain(
+      "Capítulo Sete"
+    );
+  });
+
+  it("surfaces each observer conclusion at its own milestone", () => {
+    let state = createInitialProgress(1_700_000_000_000, "conclusion-gates");
+    const available = () =>
+      (["future_displacement", "relay_observer", "chapter_ritual"] as const).filter(
+        (id) => isObserverConclusionAvailable(state, id)
+      );
+
+    expect(available()).toEqual([]);
+
+    for (const puzzleId of PUZZLE_IDS.slice(0, 5)) {
+      state = reduceGameEvent(state, { type: "SOLVE_PUZZLE", puzzleId }).state;
+    }
+    expect(available()).toEqual(["future_displacement"]);
+
+    for (const action of FUTURE_SEQUENCE) {
+      state = reduceGameEvent(state, {
+        type: "FUTURE_SEQUENCE_ACTION",
+        action,
+      }).state;
+    }
+    expect(available()).toEqual(["future_displacement", "relay_observer"]);
+
+    state = reduceGameEvent(state, {
+      type: "DISCOVER_EVIDENCE",
+      evidenceId: "the_name",
+      resourceId: "the_name",
+    }).state;
+    expect(available()).toEqual([
+      "future_displacement",
+      "relay_observer",
+      "chapter_ritual",
+    ]);
   });
 
   it("normalizes command syntax while preserving required puzzle gates", () => {
@@ -380,8 +518,18 @@ describe("ARG progression reducer", () => {
     expect(result.state.puzzles.lot_114.solvedAt).toBeNull();
   });
 
-  it("unlocks the recovered folder after two corroborated act-one findings", () => {
+  it("rewards two corroborated act-one findings without opening RECOVERED", () => {
     let state = createInitialProgress(1_700_000_000_000, "reconstruction");
+    const recoveredFolder = folders.find((folder) => folder.id === "restricted");
+    const recoveredUnlocked = () =>
+      isUnlocked(recoveredFolder!.unlock, {
+        flags: state.flags,
+        discoveredEvidenceIds: state.discoveredEvidenceIds,
+        solvedPuzzleIds: PUZZLE_IDS.filter((puzzleId) =>
+          Boolean(state.puzzles[puzzleId].solvedAt)
+        ),
+      });
+
     state = reduceGameEvent(state, {
       type: "SUBMIT_CASE_ANSWER",
       questionId: "sarah_intent",
@@ -402,9 +550,72 @@ describe("ARG progression reducer", () => {
       },
       evidenceIds: ["miriam_1998", "lot_114_order"],
     });
+    state = second.state;
     expect(second.caseAnswerResult?.accepted).toBe(true);
-    expect(second.state.flags.act1_recovered_partial).toBe(true);
-    expect(second.state.leadsUnlocked).toContain("manuscript");
+    expect(state.flags.act1_recovered_partial).toBe(true);
+    expect(state.leadsUnlocked).toContain("manuscript");
+
+    // The findings reward is optional context; the recovered directory and
+    // the investigation stage still answer only to the first puzzle.
+    expect(recoveredUnlocked()).toBe(false);
+    expect(currentChapter(progressChapterSnapshot(state))).toBe("chapter_1");
+
+    state = reduceGameEvent(state, {
+      type: "SOLVE_PUZZLE",
+      puzzleId: "lot_114",
+    }).state;
+    expect(recoveredUnlocked()).toBe(true);
+  });
+
+  it("withholds MIRIAM_DRAFT.PRN until three findings AND lot_114 are in", () => {
+    let state = createInitialProgress(1_700_000_000_000, "tier-two-reward");
+    const answers = [
+      {
+        questionId: "sarah_intent" as const,
+        slotSelections: {
+          time: "time-six-thirty",
+          intent: "intent-go-home",
+        } as Record<string, string>,
+        evidenceIds: ["chat_em_archive", "todo"],
+      },
+      {
+        questionId: "volume_return" as const,
+        slotSelections: {
+          cause: "cause-deliberately-sent",
+          family: "family-bishop",
+        } as Record<string, string>,
+        evidenceIds: ["miriam_1998", "lot_114_order"],
+      },
+      {
+        questionId: "locked_room_source" as const,
+        slotSelections: {
+          place: "place-under-workstation",
+          object: "object-pipe",
+        } as Record<string, string>,
+        evidenceIds: ["incident_report", "maintenance_record"],
+      },
+    ];
+    for (const answer of answers) {
+      state = reduceGameEvent(state, {
+        type: "SUBMIT_CASE_ANSWER",
+        ...answer,
+      }).state;
+    }
+    // Three retained findings alone do not print the draft.
+    expect(state.flags.act1_reconstruction_complete).toBeUndefined();
+    expect(state.flags.miriam_draft_arrived).toBeUndefined();
+    expect(state.worldReactionsSeen).not.toContain("printer_wake");
+
+    state = reduceGameEvent(state, {
+      type: "SOLVE_PUZZLE",
+      puzzleId: "lot_114",
+    }).state;
+    expect(state.flags.act1_reconstruction_complete).toBe(true);
+    expect(state.flags.miriam_draft_arrived).toBe(true);
+    expect(state.worldReactionsSeen).toContain("printer_wake");
+    expect(state.leadsUnlocked).toEqual(
+      expect.arrayContaining(["historical", "acoustic"])
+    );
   });
 
   it("rejects a plausible conclusion without corroborating evidence", () => {
@@ -637,6 +848,42 @@ describe("ARG progression reducer", () => {
     expect(accepted.ending).toBe("archive_self");
     expect(accepted.flags.ending_archive_self).toBe(true);
     expect(accepted.worldReactionsSeen).toContain("observer_filed");
+  });
+});
+
+describe("live contact record", () => {
+  it("moves unseen -> active -> closed alongside the messenger choices", () => {
+    let state = createInitialProgress(1_700_000_000_000, "live-contact");
+    expect(state.liveContact).toEqual({ status: "unseen", activeMs: 0 });
+
+    state = reduceGameEvent(state, {
+      type: "RECORD_CHOICE",
+      choiceId: "sarah_live_seen",
+      optionId: "opened",
+    }).state;
+    expect(state.liveContact.status).toBe("active");
+
+    state = reduceGameEvent(state, {
+      type: "RECORD_CHOICE",
+      choiceId: "sarah_live_question",
+      optionId: "break",
+    }).state;
+    expect(state.liveContact).toEqual({ status: "closed", activeMs: 120000 });
+  });
+
+  it("closes the record when the window expires unanswered", () => {
+    let state = createInitialProgress(1_700_000_000_000, "live-contact-missed");
+    state = reduceGameEvent(state, {
+      type: "RECORD_CHOICE",
+      choiceId: "sarah_live_seen",
+      optionId: "opened",
+    }).state;
+    state = reduceGameEvent(state, {
+      type: "RECORD_CHOICE",
+      choiceId: "sarah_live_question",
+      optionId: "missed",
+    }).state;
+    expect(state.liveContact).toEqual({ status: "closed", activeMs: 120000 });
   });
 });
 

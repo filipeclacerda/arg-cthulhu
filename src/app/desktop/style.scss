@@ -331,6 +331,18 @@ body.desktop-mode {
         font-size: 18px;
     }
 }
+
+// One-time, non-modal "conclusion ready" taskbar toast. Stacks above the
+// persistence warning so both stay reachable when shown together.
+.conclusion-toast {
+    bottom: 128px;
+    z-index: 7890;
+
+    em {
+        font-style: italic;
+        font-weight: bold;
+    }
+}
 .desktop-icon img {
     height: calc(var(--ui-scale, 1) * 46px);
     width: calc(var(--ui-scale, 1) * 46px);

@@ -1,20 +1,14 @@
-import { ChapterId, PuzzleId, chapterUnlocked } from "../game/progress";
 import { ClueMarker } from "../game/campaign";
+import {
+  isUnlocked,
+  UnlockCondition,
+  UnlockContext,
+} from "../game/unlock";
 
-export type UnlockCondition =
-  | { type: "always" }
-  | { type: "flag"; flag: string }
-  | { type: "puzzleSolved"; puzzleId: PuzzleId }
-  | { type: "chapter"; chapterId: ChapterId }
-  | { type: "evidenceOpened"; evidenceId: string }
-  | { type: "allOf"; conditions: UnlockCondition[] }
-  | { type: "anyOf"; conditions: UnlockCondition[] };
-
-export interface UnlockContext {
-  flags: Record<string, boolean>;
-  discoveredEvidenceIds?: string[];
-  solvedPuzzleIds?: PuzzleId[];
-}
+// Re-exported so existing importers keep working; new code should import the
+// shared gating module (`src/app/game/unlock.ts`) directly.
+export { isUnlocked };
+export type { UnlockCondition, UnlockContext };
 
 export interface VFolder {
   id: string;
@@ -65,39 +59,6 @@ export interface VFile {
    * `<fileId>_transcript`.
    */
   transcript?: string;
-}
-
-const isUnlockContext = (
-  value: UnlockContext | Record<string, boolean>
-): value is UnlockContext =>
-  typeof (value as UnlockContext).flags === "object" &&
-  (value as UnlockContext).flags !== null;
-
-export function isUnlocked(
-  condition: UnlockCondition,
-  contextOrFlags: UnlockContext | Record<string, boolean>
-): boolean {
-  const context: UnlockContext = isUnlockContext(contextOrFlags)
-    ? contextOrFlags
-    : { flags: contextOrFlags };
-  switch (condition.type) {
-    case "always":
-      return true;
-    case "flag":
-      return Boolean(context.flags[condition.flag]);
-    case "puzzleSolved":
-      return Boolean(context.solvedPuzzleIds?.includes(condition.puzzleId));
-    case "chapter":
-      return chapterUnlocked(context, condition.chapterId);
-    case "evidenceOpened":
-      return Boolean(
-        context.discoveredEvidenceIds?.includes(condition.evidenceId)
-      );
-    case "allOf":
-      return condition.conditions.every((child) => isUnlocked(child, context));
-    case "anyOf":
-      return condition.conditions.some((child) => isUnlocked(child, context));
-  }
 }
 
 /** Straight substitution cipher used throughout Sarah's research notes. */
@@ -159,7 +120,9 @@ export const folders: VFolder[] = [
     parentId: "c",
     unlock: { type: "always" },
   },
-  { id: "users", name: "Users", parentId: "c", unlock: { type: "always" } },
+  // Preserve the historic `users` ID for saves, but render the tree as a
+  // Windows 98 profile directory rather than a modern C:\\Users layout.
+  { id: "users", name: "Profiles", parentId: "windows", unlock: { type: "always" } },
   {
     id: "observer-cache",
     name: "[CURRENT OBSERVER]",
@@ -195,13 +158,9 @@ export const folders: VFolder[] = [
     id: "restricted",
     name: "RECOVERED",
     parentId: "sarah",
-    unlock: {
-      type: "anyOf",
-      conditions: [
-        { type: "puzzleSolved", puzzleId: "lot_114" },
-        { type: "flag", flag: "act1_recovered_partial" },
-      ],
-    },
+    // The first real investigative act — and only that act — opens the
+    // recovered directory. Casefile findings never substitute for it.
+    unlock: { type: "puzzleSolved", puzzleId: "lot_114" },
   },
   {
     id: "chapter-seven",
@@ -262,7 +221,7 @@ export const files: VFile[] = [
     name: "innsmouth_trip.png",
     folderId: "pictures",
     kind: "image",
-    unlock: { type: "chapter", chapterId: "chapter_2" },
+    unlock: { type: "puzzleSolved", puzzleId: "lot_114" },
     evidenceId: "photo_sarah_em_coast",
     alias: "INNSMO~1.PNG",
     size: "2.6 MB",
@@ -281,7 +240,7 @@ export const files: VFile[] = [
     name: "tom_after_symposium.png",
     folderId: "pictures",
     kind: "image",
-    unlock: { type: "chapter", chapterId: "chapter_2" },
+    unlock: { type: "puzzleSolved", puzzleId: "lot_114" },
     evidenceId: "photo_sarah_tom_2024",
     alias: "TOMAF~1.PNG",
     size: "2.9 MB",
@@ -319,7 +278,7 @@ export const files: VFile[] = [
     name: "after_dads_65th.png",
     folderId: "pictures",
     kind: "image",
-    unlock: { type: "chapter", chapterId: "chapter_2" },
+    unlock: { type: "puzzleSolved", puzzleId: "lot_114" },
     evidenceId: "photo_sarah_em_kitchen_2025",
     alias: "AFTERD~1.PNG",
     size: "2.2 MB",
@@ -377,7 +336,7 @@ Then it was waiting before we were there.`,
     name: "groceries_on_the_7.png",
     folderId: "pictures",
     kind: "image",
-    unlock: { type: "chapter", chapterId: "chapter_2" },
+    unlock: { type: "puzzleSolved", puzzleId: "lot_114" },
     evidenceId: "photo_sarah_bus_2025",
     alias: "GROCER~1.PNG",
     size: "2.1 MB",
@@ -415,7 +374,15 @@ Then it was waiting before we were there.`,
     name: "miriam_working_notes_1998.png",
     folderId: "work",
     kind: "image",
-    unlock: { type: "chapter", chapterId: "chapter_3" },
+    unlock: {
+      // Optional human-context reward: two retained act-one findings surface
+      // it early; the stage-3 milestone keeps it reachable without Casefile.
+      type: "anyOf",
+      conditions: [
+        { type: "flag", flag: "act1_recovered_partial" },
+        { type: "puzzleSolved", puzzleId: "palimpsest" },
+      ],
+    },
     evidenceId: "miriam_notebook",
     alias: "MIRIAM~2.PNG",
     size: "2.0 MB",
@@ -484,7 +451,7 @@ When a description survives longer than the thing it describes, which one become
     name: "SOLITAIRE.SAV",
     folderId: "sarah",
     kind: "text",
-    unlock: { type: "chapter", chapterId: "chapter_2" },
+    unlock: { type: "puzzleSolved", puzzleId: "lot_114" },
     evidenceId: "solitaire_save",
     alias: "SOLITA~1.SAV",
     content: `[Windows Solitaire saved game]
@@ -504,7 +471,15 @@ Sarah's reply:
     name: "playlist.m3u",
     folderId: "downloads",
     kind: "text",
-    unlock: { type: "chapter", chapterId: "chapter_3" },
+    unlock: {
+      // Optional human-context reward: two retained act-one findings surface
+      // it early; the stage-3 milestone keeps it reachable without Casefile.
+      type: "anyOf",
+      conditions: [
+        { type: "flag", flag: "act1_recovered_partial" },
+        { type: "puzzleSolved", puzzleId: "palimpsest" },
+      ],
+    },
     evidenceId: "midi_collection",
     alias: "PLAYLI~1.M3U",
     content: `C:\\WINDOWS\\MEDIA\\passport.mid
@@ -744,7 +719,7 @@ March 16 —`,
     name: "calendar_0316.ics",
     folderId: "sarah",
     kind: "text",
-    unlock: { type: "chapter", chapterId: "chapter_2" },
+    unlock: { type: "puzzleSolved", puzzleId: "lot_114" },
     evidenceId: "calendar_0316",
     alias: "CALEND~1.ICS",
     content: `BEGIN:VCALENDAR
@@ -814,7 +789,7 @@ My bus is here — okay, bye, I'm still lau—
     name: "reasons_to_stop.txt",
     folderId: "work",
     kind: "text",
-    unlock: { type: "chapter", chapterId: "chapter_2" },
+    unlock: { type: "puzzleSolved", puzzleId: "lot_114" },
     evidenceId: "reasons_to_stop",
     alias: "REASON~1.TXT",
     content: `REASONS TO STOP
@@ -839,7 +814,15 @@ Leave by 6:30. Bring the scans home? No. Do not bring it home.`,
     name: "fellowship_draft.txt",
     folderId: "work",
     kind: "text",
-    unlock: { type: "chapter", chapterId: "chapter_3" },
+    unlock: {
+      // Optional human-context reward: two retained act-one findings surface
+      // it early; the stage-3 milestone keeps it reachable without Casefile.
+      type: "anyOf",
+      conditions: [
+        { type: "flag", flag: "act1_recovered_partial" },
+        { type: "puzzleSolved", puzzleId: "palimpsest" },
+      ],
+    },
     evidenceId: "fellowship_draft",
     alias: "FELLOW~1.TXT",
     modified: "2026-03-07 22:19",
@@ -883,7 +866,7 @@ The hold entry itself is in blue accession pencil.
     name: "unsent_to_dad.txt",
     folderId: "sarah",
     kind: "text",
-    unlock: { type: "chapter", chapterId: "chapter_2" },
+    unlock: { type: "puzzleSolved", puzzleId: "lot_114" },
     evidenceId: "unsent_to_dad",
     alias: "UNSENT~1.TXT",
     content: `DRAFT / not sent
@@ -904,7 +887,7 @@ If I do not bring it, make Em take it anyway.`,
     name: "desk_inventory.tmp",
     folderId: "work",
     kind: "text",
-    unlock: { type: "chapter", chapterId: "chapter_2" },
+    unlock: { type: "puzzleSolved", puzzleId: "lot_114" },
     evidenceId: "desk_inventory",
     alias: "DESKIN~1.TMP",
     modified: "2026-03-16 18:02",
@@ -928,7 +911,15 @@ Do not catalogue loose blanks by hand.`,
     name: "em_draft_reply.txt",
     folderId: "sarah",
     kind: "text",
-    unlock: { type: "chapter", chapterId: "chapter_3" },
+    unlock: {
+      // Optional human-context reward: two retained act-one findings surface
+      // it early; the stage-3 milestone keeps it reachable without Casefile.
+      type: "anyOf",
+      conditions: [
+        { type: "flag", flag: "act1_recovered_partial" },
+        { type: "puzzleSolved", puzzleId: "palimpsest" },
+      ],
+    },
     evidenceId: "em_draft_reply",
     alias: "EMDRAF~1.TXT",
     content: `Recovered browser form draft / Em Bishop
@@ -949,7 +940,15 @@ I am sorry I kept handing you better questions when what I meant was please stop
     name: "printer_alignment.log",
     folderId: "restricted",
     kind: "text",
-    unlock: { type: "chapter", chapterId: "chapter_3" },
+    unlock: {
+      // Optional human-context reward: two retained act-one findings surface
+      // it early; the stage-3 milestone keeps it reachable without Casefile.
+      type: "anyOf",
+      conditions: [
+        { type: "flag", flag: "act1_recovered_partial" },
+        { type: "puzzleSolved", puzzleId: "palimpsest" },
+      ],
+    },
     evidenceId: "printer_alignment",
     alias: "PRNALI~1.LOG",
     modified: "{TOMORROW} 03:08",
@@ -992,7 +991,7 @@ If anyone reads this after me: the counting is not a countdown. Do not finish th
     name: "to_robert_1998.txt",
     folderId: "sarah",
     kind: "text",
-    unlock: { type: "chapter", chapterId: "chapter_2" },
+    unlock: { type: "puzzleSolved", puzzleId: "lot_114" },
     evidenceId: "miriam_letter_1998",
     alias: "TORICH~1.TXT",
     content: `[Recovered from an old local mail archive on Mom's profile — a sent copy she kept for herself.]
@@ -1343,7 +1342,7 @@ Automatic transcription found no voice.`,
     modified: "{TOMORROW} 03:10",
     content: `DIRECTORY ENTRY / OWNER UNRESOLVED
 
-Path ............. C:\\USERS\\{PLAYER}
+Path ............. C:\\WINDOWS\\Profiles\\{PLAYER}
 Created .......... when BISHOP_TREE.CMP was compared
 Source tree ...... none
 Inherited ACL .... M.BISHOP / S.BISHOP
@@ -1398,7 +1397,13 @@ The aliases are intact. The long filenames were overwritten.`,
     name: "browser_history_0316.dat",
     folderId: "downloads",
     kind: "text",
-    unlock: { type: "chapter", chapterId: "chapter_4" },
+    unlock: {
+      type: "anyOf",
+      conditions: [
+        { type: "flag", flag: "act1_reconstruction_complete" },
+        { type: "puzzleSolved", puzzleId: "counting_audio" },
+      ],
+    },
     evidenceId: "browser_history_0316",
     alias: "BROWSER.DAT",
     modified: "{TOMORROW} 03:12",
@@ -1505,7 +1510,7 @@ I'm not writing down what it spells. If you already found the first name, you'll
     name: "field_04.tmp",
     folderId: "chapter-seven",
     kind: "text",
-    unlock: { type: "chapter", chapterId: "chapter_5" },
+    unlock: { type: "puzzleSolved", puzzleId: "lineage" },
     evidenceId: "field_04",
     alias: "FIELD4~1.TMP",
     modified: "{TOMORROW} 03:15",
@@ -1527,7 +1532,7 @@ It contains the fact that someone checked whether it was empty.`,
     name: "do_not_catalogue.me",
     folderId: "chapter-seven",
     kind: "text",
-    unlock: { type: "chapter", chapterId: "chapter_5" },
+    unlock: { type: "puzzleSolved", puzzleId: "lineage" },
     evidenceId: "do_not_catalogue",
     alias: "DONOTC~1.ME",
     modified: "{TOMORROW} 03:15",
@@ -2059,6 +2064,37 @@ PROSE CHANNEL REFUSED.
 FINAL STROKE INTERRUPTED AT SAME ANGLE AS 1998 SAMPLE.`,
   },
   {
+    id: "miriam_shortcut",
+    name: "MIRIAM.LNK",
+    folderId: "restricted",
+    kind: "text",
+    unlock: { type: "flag", flag: "miriam_1998_file_recovered" },
+    alias: "MIRIAM~2.LNK",
+    modified: "1998-09-03 03:14",
+    content: `WINDOWS SHORTCUT
+
+TARGET: C:\\WINDOWS\\Profiles\\M.BISHOP\\Recent\\ACCESSION.PRN
+STATUS: TARGET UNAVAILABLE
+LAST ACCESSED: 03:14
+
+The target does not exist in this image. The shortcut does.`,
+  },
+  {
+    id: "sarah_break_cache",
+    name: "sarah_break_cache.tmp",
+    folderId: "restricted",
+    kind: "text",
+    unlock: { type: "flag", flag: "sarah_break_cache_materialized" },
+    alias: "SARAHB~1.TMP",
+    modified: "{TOMORROW} 03:16",
+    setsFlagOnOpen: "break_protocol_recovered",
+    content: `TEMP CACHE / PARTIAL FLUSH
+
+Do not complete the record. A field can remain unresolved long enough to interrupt the copy.
+
+The rest of the message was never committed.`,
+  },
+  {
     id: "record_2014",
     name: "2014_RECORD.DAT",
     folderId: "chapter-seven",
@@ -2183,11 +2219,66 @@ No determination was made whether the second voice counts toward the total or ag
 The archive has marked these omissions as intentional.`,
   },
   {
+    id: "review_2_tmp",
+    name: "REVIEW_2.TMP",
+    folderId: "deleted",
+    kind: "text",
+    unlock: { type: "always" },
+    size: "3 KB",
+    modified: "03/12/2026 09:18",
+    content: `PEER REVIEW / UNSENT DRAFT
+
+I understand the objection. I also understand that calling the records “anxiety-shaped” saves everyone from reading them.
+
+I was unfair in the meeting. The evidence is thin, and I made it sound thicker because I was tired of being the only person who could see the gap. That does not make me right.`,
+  },
+  {
+    id: "apology_tmp",
+    name: "APOLOGY.TMP",
+    folderId: "deleted",
+    kind: "text",
+    unlock: { type: "puzzleSolved", puzzleId: "lot_114" },
+    size: "2 KB",
+    modified: "03/14/2026 22:11",
+    content: `Tom —
+
+I asked you because I knew you would not say no. That was not fair. You are not an errand service for my mother, my book, or whatever I am becoming around this file.
+
+Please do not come to B2 tonight. I mean it.`,
+  },
+  {
+    id: "return_lbl",
+    name: "RETURN.LBL",
+    folderId: "deleted",
+    kind: "text",
+    unlock: { type: "puzzleSolved", puzzleId: "margin_cipher" },
+    size: "1 KB",
+    modified: "03/15/2026 11:29",
+    content: `GRAYMOOR ANTIQUARIAN BOOKSELLERS
+RETURN LABEL / LOT 114 / VOLUME II
+
+FROM: S. BISHOP
+TO: __________________________
+ROUTE: ADMINISTRATIVE HOLD
+
+The recipient field was removed without leaving an erasure mark.`,
+  },
+  {
+    id: "empty_tmp",
+    name: "EMPTY.TMP",
+    folderId: "deleted",
+    kind: "text",
+    unlock: { type: "puzzleSolved", puzzleId: "future_log" },
+    size: "0 KB",
+    modified: "{TOMORROW}",
+    content: ``,
+  },
+  {
     id: "expedition_tmp",
     name: "EXPEDITION.TMP",
     folderId: "deleted",
     kind: "text",
-    unlock: { type: "always" },
+    unlock: { type: "puzzleSolved", puzzleId: "counting_audio" },
     evidenceId: "deleted_expedition_fragment",
     alias: "EXPEDI~1.TMP",
     size: "1 KB",

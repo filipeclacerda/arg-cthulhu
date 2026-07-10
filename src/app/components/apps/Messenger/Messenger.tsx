@@ -4,8 +4,10 @@ import Image from "next/image";
 import React, { FormEvent, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { useProgress } from "@/app/context/ProgressContext";
 import { useSound } from "@/app/context/SoundContext";
+import { useWindowManager } from "@/app/context/WindowManagerContext";
+import { useFocalSetPieceActive } from "@/app/context/diegeticFocus";
 import { ChatMessage, ChatThread, chats, MessengerPresence } from "@/app/data/chats";
-import { isUnlocked } from "@/app/data/filesystem";
+import { isUnlocked } from "@/app/game/unlock";
 import {
   createMessengerState,
   MessengerEvent,
@@ -18,6 +20,11 @@ import ClueText from "@/app/components/ClueText/ClueText";
 import { useI18n } from "@/app/i18n";
 import { localizedChatMessage } from "@/app/data/localizedNarrative";
 import { useNameDegradation } from "@/app/hooks/useNameDegradation";
+import {
+  LIVE_CONTACT_PERSIST_INTERVAL_MS,
+  LIVE_CONTACT_TICK_MS,
+  shouldAdvanceLiveContact,
+} from "@/app/game/liveContact";
 
 const PRESENCE_LABELS = {
   online: "presenceOnline",
@@ -26,12 +33,6 @@ const PRESENCE_LABELS = {
   busy: "presenceBusy",
 } as const;
 
-// Sarah stays reachable for a bounded window from the first time this thread
-// opens. The timestamp is read back from the "sarah_live_seen" playerChoice
-// (recorded once, on first open) so the window never resets on reload — but
-// a reload that happens *inside* the still-open window sees the same open
-// window, which is an intentional one-time leniency: nothing is persisted
-// about reload count, only about the window's real start time.
 const LIVE_WINDOW_MS = 120_000;
 // How long the "is typing..." ghost lingers after Sarah's reply is fully
 // delivered before presence drops to offline (no further message ever
@@ -101,6 +102,8 @@ const Messenger = () => {
   } = useProgress();
   const { t } = useI18n();
   const { play } = useSound();
+  const { windows } = useWindowManager();
+  const focalSetPieceActive = useFocalSetPieceActive();
   const presenceLabel = (presence: keyof typeof PRESENCE_LABELS | undefined) =>
     t(PRESENCE_LABELS[presence ?? "offline"]);
   const [presencePulse, setPresencePulse] = useState(false);
@@ -113,6 +116,8 @@ const Messenger = () => {
   // playerChoices, never from local-only timers, so a reload mid-window or
   // mid-reply reconstructs the exact same state instead of losing it.
   const [now, setNow] = useState(() => Date.now());
+  const liveElapsedPendingRef = useRef(0);
+  const liveTickAtRef = useRef<number | null>(null);
   // `null` until the first delivery effect runs, so a reload that lands after
   // messages already arrived (or a reopen of an old thread) does not replay a
   // "ding" for history that was never actually new.
@@ -227,17 +232,16 @@ const Messenger = () => {
   const liveQuestionChoice = progress.playerChoices.find(
     (choice) => choice.choiceId === "sarah_live_question"
   );
-  const liveWindowExpired =
-    liveWindowOpenedAt != null && now - liveWindowOpenedAt >= LIVE_WINDOW_MS;
   const liveMissed = liveQuestionChoice?.optionId === "missed";
   const liveAnsweredId: LiveQuestionId | null =
     liveQuestionChoice && !liveMissed
       ? (liveQuestionChoice.optionId as LiveQuestionId)
       : null;
+  const liveWindowExpired =
+    progress.liveContact.status === "closed" && (!liveQuestionChoice || liveMissed);
   const liveWindowOpen =
     Boolean(liveThread) &&
-    liveWindowOpenedAt != null &&
-    !liveWindowExpired &&
+    progress.liveContact.status === "active" &&
     !liveQuestionChoice;
 
   const liveResponses = liveAnsweredId ? LIVE_REPLY_RESPONSES[liveAnsweredId] : null;
@@ -309,6 +313,75 @@ const Messenger = () => {
     }
   }, [dispatchGameEvent, liveThread, progress.playerChoices, play]);
 
+  const messengerWindow = windows.find((window) => window.id === "msn-messenger");
+  const topVisibleZIndex = Math.max(
+    -Infinity,
+    ...windows.filter((window) => !window.minimized).map((window) => window.zIndex)
+  );
+  const messengerFocused = Boolean(
+    messengerWindow &&
+      !messengerWindow.minimized &&
+      messengerWindow.zIndex === topVisibleZIndex
+  );
+  const [documentHidden, setDocumentHidden] = useState(
+    () => typeof document !== "undefined" && document.hidden
+  );
+
+  useEffect(() => {
+    const onVisibilityChange = () => setDocumentHidden(document.hidden);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", onVisibilityChange);
+  }, []);
+
+  const canAdvanceLiveContact = shouldAdvanceLiveContact({
+    status: progress.liveContact.status,
+    documentHidden,
+    messengerFocused,
+    focalSetPieceActive,
+  });
+
+  // Sarah's window measures only the time the player can actually inhabit it.
+  // The accumulated value is persisted every five seconds and also flushed on
+  // visibility changes, focus loss and unmount, so reloads cannot restore
+  // spent time or consume hidden-tab time.
+  useEffect(() => {
+    if (!liveThread || !canAdvanceLiveContact) {
+      liveTickAtRef.current = null;
+      return;
+    }
+
+    liveTickAtRef.current = Date.now();
+    const flushElapsed = (force = false) => {
+      const previousTick = liveTickAtRef.current;
+      if (previousTick == null) return;
+      const currentTick = Date.now();
+      liveElapsedPendingRef.current += Math.max(0, currentTick - previousTick);
+      liveTickAtRef.current = currentTick;
+      const remaining = LIVE_WINDOW_MS - progress.liveContact.activeMs;
+      if (
+        force ||
+        liveElapsedPendingRef.current >= LIVE_CONTACT_PERSIST_INTERVAL_MS ||
+        liveElapsedPendingRef.current >= remaining
+      ) {
+        const elapsedMs = Math.min(liveElapsedPendingRef.current, Math.max(0, remaining));
+        liveElapsedPendingRef.current = 0;
+        if (elapsedMs > 0) {
+          dispatchGameEvent({ type: "ADVANCE_LIVE_CONTACT", elapsedMs });
+        }
+      }
+    };
+    const interval = window.setInterval(flushElapsed, LIVE_CONTACT_TICK_MS);
+    const onVisibilityChange = () => {
+      if (document.hidden) flushElapsed(true);
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+      flushElapsed(true);
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, [canAdvanceLiveContact, dispatchGameEvent, liveThread, progress.liveContact.activeMs]);
+
   // Drives every derived timestamp above. Only ticks while the live thread
   // exists, since nothing else in the component needs sub-second updates.
   useEffect(() => {
@@ -316,18 +389,6 @@ const Messenger = () => {
     const interval = window.setInterval(() => setNow(Date.now()), 500);
     return () => window.clearInterval(interval);
   }, [liveThread]);
-
-  // The chance passes without penalty to the campaign, but it is still
-  // recorded so the window can never reopen after it truly expires.
-  useEffect(() => {
-    if (!liveThread || liveQuestionChoice || liveWindowOpenedAt == null) return;
-    if (now - liveWindowOpenedAt < LIVE_WINDOW_MS) return;
-    dispatchGameEvent({
-      type: "RECORD_CHOICE",
-      choiceId: "sarah_live_question",
-      optionId: "missed",
-    });
-  }, [dispatchGameEvent, liveThread, liveQuestionChoice, liveWindowOpenedAt, now]);
 
   useEffect(() => {
     if (

@@ -16,7 +16,7 @@ Os canais esquerdo e direito contêm o mesmo ruído de sala com erros de fase op
 A transcrição automática não encontrou voz.`,
   observer_first_seen: `ENTRADA DE DIRETÓRIO / PROPRIETÁRIO NÃO RESOLVIDO
 
-Caminho .......... C:\\USERS\\{PLAYER}
+Caminho .......... C:\\WINDOWS\\Profiles\\{PLAYER}
 Criado ........... quando BISHOP_TREE.CMP foi comparado
 Árvore de origem . nenhuma
 ACL herdada ...... M.BISHOP / S.BISHOP
@@ -33,6 +33,18 @@ Não sei se o campo ausente impede que ele nos siga ou lhe dá um lugar para esp
 
 OPERAÇÃO RECUPERADA:
 INDEX /RESTORE /INCOMPLETE`,
+  miriam_shortcut: `ATALHO DO WINDOWS
+
+DESTINO: C:\\WINDOWS\\Profiles\\M.BISHOP\\Recent\\ACCESSION.PRN
+STATUS: DESTINO INDISPONÍVEL
+ÚLTIMO ACESSO: 03:14
+
+O destino não existe nesta imagem. O atalho existe.`,
+  sarah_break_cache: `CACHE TEMPORÁRIO / GRAVAÇÃO PARCIAL
+
+Não complete o registro. Um campo pode ficar sem resposta tempo bastante para interromper a cópia.
+
+O restante da mensagem nunca foi gravado.`,
   miriam_accession_notes_wk3: `NOTAS DE TRABALHO DE INCORPORAÇÃO — SEMANA 3
 CATALOGADORA: M. BISHOP
 

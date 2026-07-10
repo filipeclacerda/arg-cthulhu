@@ -2,7 +2,8 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import "./style.scss";
-import { folders, files, isUnlocked, VFile } from "@/app/data/filesystem";
+import { folders, files, VFile } from "@/app/data/filesystem";
+import { isUnlocked } from "@/app/game/unlock";
 import { useProgress } from "@/app/context/ProgressContext";
 import { useWindowManager } from "@/app/context/WindowManagerContext";
 import { IDENTITY_REVEAL_STAGE } from "@/app/utils/narrative";

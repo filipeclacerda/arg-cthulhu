@@ -184,6 +184,114 @@ describe("save v6", () => {
     expect(misk5.caseId).toBe("compatible-prefix");
   });
 
+  it("hydrates liveContact from saves that predate the field", () => {
+    const base = createInitialProgress(1_700_000_000_000, "live-contact-legacy");
+
+    const neverSeen = { ...base } as any;
+    delete neverSeen.liveContact;
+    expect(migrateProgress(neverSeen)?.liveContact).toEqual({
+      status: "unseen",
+      activeMs: 0,
+    });
+
+    const openedNoAnswer = {
+      ...base,
+      updatedAt: 1_700_000_045_000,
+      playerChoices: [
+        {
+          choiceId: "sarah_live_seen",
+          optionId: "opened",
+          chosenAt: 1_700_000_000_000,
+        },
+      ],
+    } as any;
+    delete openedNoAnswer.liveContact;
+    expect(migrateProgress(openedNoAnswer)?.liveContact).toEqual({
+      status: "active",
+      activeMs: 45_000,
+    });
+
+    const openedNoTimestamp = {
+      ...base,
+      playerChoices: [{ choiceId: "sarah_live_seen", optionId: "opened" }],
+    } as any;
+    delete openedNoTimestamp.liveContact;
+    expect(migrateProgress(openedNoTimestamp)?.liveContact).toEqual({
+      status: "active",
+      activeMs: 0,
+    });
+
+    const answered = {
+      ...base,
+      playerChoices: [
+        {
+          choiceId: "sarah_live_seen",
+          optionId: "opened",
+          chosenAt: 1_700_000_000_000,
+        },
+        {
+          choiceId: "sarah_live_question",
+          optionId: "break",
+          chosenAt: 1_700_000_030_000,
+        },
+      ],
+    } as any;
+    delete answered.liveContact;
+    expect(migrateProgress(answered)?.liveContact).toEqual({
+      status: "closed",
+      activeMs: 120_000,
+    });
+
+    const expired = {
+      ...base,
+      playerChoices: [
+        {
+          choiceId: "sarah_live_seen",
+          optionId: "opened",
+          chosenAt: 1_700_000_000_000,
+        },
+        {
+          choiceId: "sarah_live_question",
+          optionId: "missed",
+          chosenAt: 1_700_000_120_000,
+        },
+      ],
+    } as any;
+    delete expired.liveContact;
+    expect(migrateProgress(expired)?.liveContact).toEqual({
+      status: "closed",
+      activeMs: 120_000,
+    });
+
+    // A save that already carries the field keeps it untouched.
+    const carried = {
+      ...base,
+      liveContact: { status: "active", activeMs: 12_345 },
+    };
+    expect(migrateProgress(carried)?.liveContact).toEqual({
+      status: "active",
+      activeMs: 12_345,
+    });
+
+    // v1/v2 legacy saves never saw the contact.
+    const ancient = migrateProgress({
+      version: 2,
+      corruptionStage: 2,
+      flags: {},
+    });
+    expect(ancient?.liveContact).toEqual({ status: "unseen", activeMs: 0 });
+  });
+
+  it("round-trips liveContact through the MISK6 case code", async () => {
+    const state = createInitialProgress(1_700_000_000_000, "live-contact-code");
+    state.liveContact = { status: "closed", activeMs: 120_000 };
+    const imported = await importCaseCode(await exportCaseCode(state));
+    expect(imported.liveContact).toEqual({
+      status: "closed",
+      activeMs: 120_000,
+    });
+  });
+
   it("preserves an early radio-button finding as solved statement slots", () => {
     const legacy = {
       ...createInitialProgress(1_700_000_000_000, "legacy-finding"),

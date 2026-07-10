@@ -3,6 +3,7 @@ import {
   GameEvent,
   HintChannel,
   HintTrigger,
+  LIVE_CONTACT_WINDOW_MS,
   ProgressStateV3,
   PuzzleId,
 } from "./progress";
@@ -247,6 +248,39 @@ const applyNearMiss = (
   return { state: nextState };
 };
 
+/**
+ * Optional Casefile reward, tier two: three retained act-one findings AND the
+ * solved Lot 114 query recover MIRIAM_DRAFT.PRN plus the historical dossiers.
+ * Never advances the investigation stage — that derives from puzzles alone.
+ */
+const applyActOneReconstruction = (
+  state: ProgressStateV3
+): ProgressStateV3 => {
+  if (state.flags.act1_reconstruction_complete) return state;
+  if (!state.puzzles.lot_114.solvedAt) return state;
+  if (actOneAnswerCount(state) < 3) return state;
+  return {
+    ...state,
+    flags: {
+      ...state.flags,
+      act1_reconstruction_complete: true,
+      miriam_draft_arrived: true,
+    },
+    narrativeBeatsSeen: uniquePushTyped(
+      uniquePushTyped(state.narrativeBeatsSeen, "act1_reconstructed"),
+      "miriam_draft_printed"
+    ),
+    worldReactionsSeen: uniquePushTyped(
+      uniquePushTyped(state.worldReactionsSeen, "printer_wake"),
+      "empty_chair"
+    ),
+    leadsUnlocked: uniquePushTyped(
+      uniquePushTyped(state.leadsUnlocked, "historical"),
+      "acoustic"
+    ),
+  };
+};
+
 const solve = (
   state: ProgressStateV3,
   puzzleId: PuzzleId,
@@ -267,7 +301,7 @@ const solve = (
   if (nextId && puzzles[nextId].availableAt == null) {
     puzzles[nextId] = { ...puzzles[nextId], availableAt: solvedAt };
   }
-  return {
+  const solvedState: ProgressStateV3 = {
     ...state,
     puzzles,
     leadsUnlocked:
@@ -296,6 +330,11 @@ const solve = (
       ...(puzzleId === "index_name" ? { endgame_available: true } : {}),
     },
   };
+  // Three findings may have been retained before the first puzzle was solved;
+  // the tier-two reward completes as soon as both halves of its gate hold.
+  return puzzleId === "lot_114"
+    ? applyActOneReconstruction(solvedState)
+    : solvedState;
 };
 
 export const reduceGameEvent = (
@@ -579,6 +618,7 @@ export const reduceGameEvent = (
             flags: {
               ...state.flags,
               secret_ending_available: true,
+              seal_relay_prepared: true,
             },
             narrativeBeatsSeen: uniquePushTyped(
               state.narrativeBeatsSeen,
@@ -657,15 +697,20 @@ export const reduceGameEvent = (
       if (event.ending === "leave_blank" && !state.flags.endgame_available) {
         break;
       }
+      // The break protocol can be retained either live (Sarah's answer to the
+      // `break` question) or later, from the recovered technical cache
+      // fragment (`break_protocol_recovered`). Either path opens the gate.
       if (
         event.ending === "archive_self" &&
         (!state.flags.secret_ending_available ||
           !hasAllInsights(state) ||
           !state.discoveredEvidenceIds.includes("hash_manifest") ||
-          !state.playerChoices.some(
-            (choice) =>
-              choice.choiceId === "sarah_live_question" &&
-              choice.optionId === "break"
+          !(
+            state.playerChoices.some(
+              (choice) =>
+                choice.choiceId === "sarah_live_question" &&
+                choice.optionId === "break"
+            ) || state.flags.break_protocol_recovered
           ))
       ) {
         break;
@@ -849,6 +894,8 @@ export const reduceGameEvent = (
       const actOneCount = actOneAnswerCount(state);
       const observerCount = observerAnswerCount(state);
       if (actOneCount >= 2) {
+        // Tier-one reward: a discreet world reaction plus the human-context
+        // records. Never opens RECOVERED and never moves the stage.
         state = {
           ...state,
           flags: {
@@ -866,28 +913,7 @@ export const reduceGameEvent = (
           leadsUnlocked: uniquePushTyped(state.leadsUnlocked, "manuscript"),
         };
       }
-      if (actOneCount === 3) {
-        state = {
-          ...state,
-          flags: {
-            ...state.flags,
-            act1_reconstruction_complete: true,
-            miriam_draft_arrived: true,
-          },
-          narrativeBeatsSeen: uniquePushTyped(
-            uniquePushTyped(state.narrativeBeatsSeen, "act1_reconstructed"),
-            "miriam_draft_printed"
-          ),
-          worldReactionsSeen: uniquePushTyped(
-            uniquePushTyped(state.worldReactionsSeen, "printer_wake"),
-            "empty_chair"
-          ),
-          leadsUnlocked: uniquePushTyped(
-            uniquePushTyped(state.leadsUnlocked, "historical"),
-            "acoustic"
-          ),
-        };
-      }
+      state = applyActOneReconstruction(state);
       if (observerCount === 3) {
         state = {
           ...state,
@@ -964,8 +990,51 @@ export const reduceGameEvent = (
             chosenAt: Date.now(),
           },
         ],
+        // Keep the persisted live-contact record in sync with the choices it
+        // is derived from. A closed contact can never be reopened.
+        liveContact:
+          event.choiceId === "sarah_live_seen" &&
+          state.liveContact.status === "unseen"
+            ? { ...state.liveContact, status: "active" }
+            : event.choiceId === "sarah_live_question"
+              ? { status: "closed", activeMs: LIVE_CONTACT_WINDOW_MS }
+              : state.liveContact,
       };
       break;
+    case "ADVANCE_LIVE_CONTACT": {
+      // The 120s window only spends while the Messenger is visible, focused
+      // and uncovered — the component gates what it reports here. Once the
+      // window is consumed the record closes for good, and the unanswered
+      // question is committed as "missed" so the conversation can never be
+      // repeated (RECORD_CHOICE dedupes on choiceId).
+      if (state.liveContact.status !== "active") break;
+      const elapsed = Math.max(0, event.elapsedMs);
+      if (elapsed === 0) break;
+      const activeMs = Math.min(
+        LIVE_CONTACT_WINDOW_MS,
+        state.liveContact.activeMs + elapsed
+      );
+      const consumed = activeMs >= LIVE_CONTACT_WINDOW_MS;
+      state = {
+        ...state,
+        liveContact: { activeMs, status: consumed ? "closed" : "active" },
+        playerChoices:
+          consumed &&
+          !state.playerChoices.some(
+            (choice) => choice.choiceId === "sarah_live_question"
+          )
+            ? [
+                ...state.playerChoices,
+                {
+                  choiceId: "sarah_live_question",
+                  optionId: "missed",
+                  chosenAt: Date.now(),
+                },
+              ]
+            : state.playerChoices,
+      };
+      break;
+    }
     case "DISCOVER_OPTIONAL":
       if (state.optionalDiscoveries.includes(event.discoveryId)) break;
       state = {

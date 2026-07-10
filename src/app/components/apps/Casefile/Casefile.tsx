@@ -38,9 +38,11 @@ import {
   CASE_STATEMENTS,
   HYPOTHESES,
   INSIGHT_LABELS,
+  ObserverConclusionId,
   TOKENS_BY_ID,
   collectedTokensOfType,
   hypothesisVerdict,
+  isObserverConclusionAvailable,
   localized,
 } from "@/app/game/campaign";
 import {
@@ -123,15 +125,6 @@ const LENS_MIN_CHAPTERS: Record<CasefileLens, ChapterId> = {
   organize: "chapter_3",
   timeline: "chapter_4",
   contradictions: "chapter_4",
-};
-const CASE_STATEMENT_MIN_CHAPTERS: Record<CaseQuestionId, ChapterId> = {
-  sarah_intent: "chapter_1",
-  volume_return: "chapter_1",
-  locked_room_source: "chapter_1",
-  lineage_ledger: "chapter_3",
-  future_displacement: "chapter_5",
-  relay_observer: "chapter_5",
-  chapter_ritual: "chapter_5",
 };
 const HYPOTHESIS_MIN_CHAPTERS: Record<HypothesisId, ChapterId> = {
   innsmouth_theft: "chapter_4",
@@ -275,25 +268,20 @@ const chapterAtLeast = (current: ChapterId, required: ChapterId): boolean =>
   chapterIndex(current) >= chapterIndex(required);
 
 const visibleStatementsForChapter = (
-  state: ProgressStateV5,
-  currentChapter: ChapterId
+  state: ProgressStateV5
 ): typeof CASE_STATEMENTS =>
   CASE_STATEMENTS.filter((statement) => {
-    if (
-      !chapterAtLeast(
-        currentChapter,
-        CASE_STATEMENT_MIN_CHAPTERS[statement.id]
-      )
-    ) {
-      return false;
+    // Each observer conclusion surfaces at its own explicit milestone
+    // (lineage, future_log, the_name) rather than a chapter-number gate.
+    if (statement.act === 3) {
+      return isObserverConclusionAvailable(
+        state,
+        statement.id as ObserverConclusionId
+      );
     }
     return (
       statement.act === 1 ||
-      (statement.act === 2 &&
-        state.leadsUnlocked.includes(statement.leadId)) ||
-      (statement.act === 3 &&
-        (state.leadsUnlocked.includes("observer") ||
-          Boolean(state.puzzles.future_log.solvedAt)))
+      state.leadsUnlocked.includes(statement.leadId)
     );
   });
 
@@ -320,8 +308,8 @@ const Casefile = ({
   const { openWindow } = useWindowManager();
   const { play } = useSound();
   const visibleStatements = useMemo(
-    () => visibleStatementsForChapter(state, currentChapter),
-    [currentChapter, state]
+    () => visibleStatementsForChapter(state),
+    [state]
   );
   const firstOpen =
     visibleStatements.find(

@@ -11,6 +11,34 @@ import { useSound, type AmbientStage } from "../context/SoundContext";
 import { useSubliminalGlitch } from "../hooks/useSubliminalGlitch";
 import { useCorruptionPulse } from "../hooks/useCorruptionPulse";
 import { useI18n, TranslationKey } from "../i18n";
+import {
+  OBSERVER_CONCLUSION_IDS,
+  OBSERVER_CONCLUSION_LABELS,
+  ObserverConclusionId,
+  isObserverConclusionAvailable,
+  localized,
+} from "../game/campaign";
+import {
+  DIEGETIC_EVENTS,
+  DIEGETIC_FOCAL_WINDOW_IDS,
+  DIEGETIC_SET_PIECE_WINDOW_IDS,
+  DiegeticEventDefinition,
+  diegeticContext,
+  diegeticEventDelayMs,
+  selectNextDiegeticEvent,
+} from "../game/diegeticEvents";
+import { setFocalSetPieceActive } from "../context/diegeticFocus";
+
+/** A discreet coordinator toast (never a window) with one action. */
+interface DiegeticToast {
+  eventId: string;
+  icon: string;
+  kicker: string;
+  heading: string;
+  body: string;
+  actionLabel: string;
+  onAction: () => void;
+}
 
 interface DesktopApp {
   id: string;
@@ -143,6 +171,79 @@ const StatusSheetAlert = () => {
   );
 };
 
+const conclusionNotifiedFlag = (id: ObserverConclusionId) =>
+  `observer_conclusion_${id}_notified`;
+
+/**
+ * Non-modal, one-time notice that an observer conclusion can now be retained.
+ * Rendered as a fixed taskbar toast (never a dialog window), with direct
+ * access to Casefile.exe. The persisted `observer_conclusion_*_notified`
+ * flag is set the moment the toast appears, so it can never repeat.
+ */
+const ConclusionReadyToast = () => {
+  const { flags, isHydrated, setFlag, state } = useProgress();
+  const { openWindow } = useWindowManager();
+  const { play } = useSound();
+  const { locale, t } = useI18n();
+  const [visibleId, setVisibleId] = useState<ObserverConclusionId | null>(
+    null
+  );
+
+  useEffect(() => {
+    if (!isHydrated || visibleId) return;
+    const ready = OBSERVER_CONCLUSION_IDS.find(
+      (id) =>
+        !flags[conclusionNotifiedFlag(id)] &&
+        !state.caseAnswers[id]?.solvedAt &&
+        isObserverConclusionAvailable(state, id)
+    );
+    if (!ready) return;
+    const timer = setTimeout(() => {
+      setFlag(conclusionNotifiedFlag(ready));
+      play("chime");
+      setVisibleId(ready);
+    }, 1800);
+    return () => clearTimeout(timer);
+  }, [flags, isHydrated, play, setFlag, state, visibleId]);
+
+  if (!visibleId) return null;
+
+  return (
+    <div className="archive-warning conclusion-toast" role="status">
+      <Image src="/icons/folder-special.png" alt="" width={34} height={34} />
+      <div>
+        <strong>{t("conclusionReadyKicker")}</strong>
+        <p>
+          {t("conclusionReadyBody")}{" "}
+          <em>{localized(OBSERVER_CONCLUSION_LABELS[visibleId], locale)}</em>
+        </p>
+      </div>
+      <button
+        className="button"
+        type="button"
+        onClick={() => {
+          openWindow({
+            id: "casefile",
+            appType: "casefile",
+            title: t("casefileLabel"),
+            maximized: true,
+          });
+          setVisibleId(null);
+        }}
+      >
+        {t("openCasefileLabel")}
+      </button>
+      <button
+        className="button archive-warning__close"
+        aria-label={t("dismissLabel")}
+        onClick={() => setVisibleId(null)}
+      >
+        ×
+      </button>
+    </div>
+  );
+};
+
 const appIcon = (appType: AppType) => {
   if (appType === "browser") return "/icons/internet-explorer.png";
   if (appType === "email") return "/icons/outlook-express.png";
@@ -201,116 +302,428 @@ const Desktop = () => {
   );
   useCorruptionPulse(corruptionStage, play);
 
+  // -------------------------------------------------------------------
+  // Diegetic event coordinator. Every dialog, toast and takeover that used
+  // to fire from independent effects now drains from one prioritized queue
+  // (see src/app/game/diegeticEvents.ts). Never two focal windows at once;
+  // a variable pause separates consecutive events; simple alerts present as
+  // taskbar toasts instead of windows.
+  // -------------------------------------------------------------------
+  const [activeToast, setActiveToast] = useState<DiegeticToast | null>(null);
+
+  const liveContactActive = state.liveContact.status === "active";
+  const focalBusy =
+    flash1998 !== null ||
+    windows.some(
+      (win) =>
+        !win.minimized &&
+        (DIEGETIC_FOCAL_WINDOW_IDS.has(win.id) ||
+          win.id === "indexer-result" ||
+          (win.id === "msn-messenger" && liveContactActive))
+    );
+
+  // Mandatory set pieces (priority-1 focal events and the 1998 overlay)
+  // pause Sarah's live-contact timer in the Messenger.
+  const setPieceActive =
+    flash1998 !== null ||
+    windows.some(
+      (win) => !win.minimized && DIEGETIC_SET_PIECE_WINDOW_IDS.has(win.id)
+    );
   useEffect(() => {
-    if (!isHydrated) return;
-    const blockingIds = new Set([
-      "new-mail-alert",
-      "printer-recovery-alert",
-      "restricted-folder-alert",
-      "chapter-seven-alert",
-      "margin-file-alert",
-      "counting-file-alert",
-      "voicemail-alert",
-      "recovered-program-alert",
-      "status-sheet-alert",
-      "indexer-result",
-      "msn-messenger",
-    ]);
-    const manifestationBusy =
-      flash1998 !== null ||
-      windows.some(
-        (win) =>
-          !win.minimized &&
-          (blockingIds.has(win.id) || win.id.startsWith("optional-recovery-"))
-      );
-    if (manifestationBusy) return;
-    const recovery =
-      state.puzzles.margin_cipher.solvedAt &&
-      !flags.directory_comparison_notice_shown
-        ? {
-            flag: "directory_comparison_notice_shown",
-            title: "CHKDSK / ORPHANED DIRECTORY",
-            fileId: "directory_comparison",
-            appType: "notepad" as const,
-            fileName: "BISHOP_TREE.CMP",
-            en: "Two user snapshots disagree about an entry neither source contains.",
-            pt: "Duas imagens de usuário discordam sobre uma entrada que nenhuma origem contém.",
-          }
-        : state.puzzles.counting_audio.solvedAt &&
-            !flags.temporal_photos_notice_shown
-          ? {
-              flag: "temporal_photos_notice_shown",
-              title: "EVIDENCE CAMERA / FRAME COLLISION",
-              fileId: "office_1998_overlay",
-              appType: "image" as const,
-              fileName: "office_1998.jpg",
-              en: "Three exposures share one frame checksum and three incompatible dates.",
-              pt: "Três exposições compartilham o mesmo checksum e três datas incompatíveis.",
-            }
-          : state.puzzles.lineage.solvedAt && !flags.silent_call_notice_shown
-            ? {
-                flag: "silent_call_notice_shown",
-                title: "PBX RECOVERY / NO ROUTE",
-                fileId: "silent_call",
-                appType: "audio" as const,
-                fileName: "CALL_0314.WAV",
-                en: "A call with no caller contains two channels that are almost identical.",
-                pt: "Uma chamada sem origem contém dois canais quase idênticos.",
-              }
-            : null;
-    if (!recovery) return;
-    const timer = setTimeout(() => {
-      setFlag(recovery.flag);
-      play(recovery.appType === "audio" ? "future" : "disk");
-      openWindow({
-        id: `optional-recovery-${recovery.fileId}`,
-        appType: "generic",
-        title: recovery.title,
-        props: {
-          children: (
-            <div className="new-mail-alert optional-recovery-alert">
-              <p className="new-mail-alert__kicker">OPTIONAL RECOVERY THREAD</p>
-              <h2>{recovery.fileName}</h2>
-              <p>{state.locale === "pt-BR" ? recovery.pt : recovery.en}</p>
-              <button
-                className="button"
-                type="button"
-                onClick={() =>
-                  openWindow({
-                    id: `${recovery.appType}-${recovery.fileId}`,
-                    appType: recovery.appType,
-                    title: recovery.fileName,
-                    props: { fileId: recovery.fileId, windowClassName: "corrupted" },
-                  })
-                }
-              >
-                {t("openFileLabel")}
-              </button>
-            </div>
+    setFocalSetPieceActive(setPieceActive);
+    return () => setFocalSetPieceActive(false);
+  }, [setPieceActive]);
+
+  const localeIs = (pt: string, en: string) =>
+    state.locale === "pt-BR" ? pt : en;
+
+  const openFileFromToast = (
+    appType: "notepad" | "image" | "audio",
+    fileId: string,
+    title: string
+  ) =>
+    openWindow({
+      id: `${appType}-${fileId}`,
+      appType,
+      title,
+      props: { fileId, windowClassName: "corrupted" },
+    });
+
+  const presentDiegeticEvent = (definition: DiegeticEventDefinition) => {
+    if (flags[definition.seenFlag]) return;
+    setFlag(definition.seenFlag);
+    play(definition.sound);
+    switch (definition.id) {
+      case "mail_from_tomorrow":
+        openWindow({
+          id: "new-mail-alert",
+          appType: "generic",
+          title: t("newMailTitle"),
+          props: {
+            windowClassName: "corrupted",
+            children: (
+              <div className="new-mail-alert">
+                <p className="new-mail-alert__kicker">{t("messageReceivedKicker")}</p>
+                <h2>sarah.bishop@miskatonic-research.org</h2>
+                <p>{t("clockSyncWarning")}</p>
+                <button
+                  className="button"
+                  type="button"
+                  onClick={() =>
+                    openWindow({ id: "inbox", appType: "email", title: "E-mail" })
+                  }
+                >
+                  {t("openInboxLabel")}
+                </button>
+              </div>
+            ),
+          },
+        });
+        break;
+      case "restricted_folder":
+        openWindow({
+          id: "restricted-folder-alert",
+          appType: "generic",
+          title: t("newFolderRecoveredTitle"),
+          props: {
+            children: (
+              <div className="new-mail-alert">
+                <p className="new-mail-alert__kicker">{t("fileSystemChangeKicker")}</p>
+                <h2>{t("newFolderAppearedAccount")}</h2>
+                <p>{t("recoveredMyDocumentsLine")}</p>
+                <button
+                  className="button"
+                  type="button"
+                  onClick={() =>
+                    openWindow({
+                      id: "explorer-restricted",
+                      appType: "explorer",
+                      title: "RECOVERED",
+                      props: { folderId: "restricted" },
+                    })
+                  }
+                >
+                  {t("openFolderLabel")}
+                </button>
+              </div>
+            ),
+          },
+        });
+        break;
+      case "flash_1998_attempt_1":
+      case "flash_1998_attempt_2":
+        setFlag("1998_flash_seen");
+        setFlash1998(definition.id === "flash_1998_attempt_1" ? 1 : 2);
+        break;
+      case "margin_file":
+        openWindow({
+          id: "margin-file-alert",
+          appType: "generic",
+          title: t("newFileRecoveredTitle"),
+          props: {
+            children: (
+              <div className="new-mail-alert">
+                <p className="new-mail-alert__kicker">{t("fileSystemChangeKicker")}</p>
+                <h2>margin_ch7.enc</h2>
+                <p>{t("palimpsestFileLine")}</p>
+                <button
+                  className="button"
+                  type="button"
+                  onClick={() =>
+                    openWindow({
+                      id: "notepad-cipher_1",
+                      appType: "notepad",
+                      title: "margin_ch7.enc - Notepad",
+                      props: { fileId: "cipher_1" },
+                    })
+                  }
+                >
+                  {t("openFileLabel")}
+                </button>
+              </div>
+            ),
+          },
+        });
+        break;
+      case "counting_file":
+        openWindow({
+          id: "counting-file-alert",
+          appType: "generic",
+          title: t("newFileRecoveredTitle"),
+          props: {
+            children: (
+              <div className="new-mail-alert">
+                <p className="new-mail-alert__kicker">{t("fileSystemChangeKicker")}</p>
+                <h2>counting.wav</h2>
+                <p>{t("marginAudioLine")}</p>
+                <button
+                  className="button"
+                  type="button"
+                  onClick={() =>
+                    openWindow({
+                      id: "audio-counting_audio",
+                      appType: "audio",
+                      title: "counting.wav",
+                      props: { fileId: "counting_audio" },
+                    })
+                  }
+                >
+                  {t("openRecordingLabel")}
+                </button>
+              </div>
+            ),
+          },
+        });
+        break;
+      case "chapter_seven":
+        openWindow({
+          id: "chapter-seven-alert",
+          appType: "generic",
+          title: t("newFolderRecoveredTitle"),
+          props: {
+            children: (
+              <div className="new-mail-alert">
+                <p className="new-mail-alert__kicker">{t("fileSystemChangeKicker")}</p>
+                <h2>{t("newFolderAppearedInside")}</h2>
+                <p>CHAPTER_SEVEN.</p>
+                <button
+                  className="button"
+                  type="button"
+                  onClick={() =>
+                    openWindow({
+                      id: "explorer-chapter-seven",
+                      appType: "explorer",
+                      title: "CHAPTER_SEVEN",
+                      props: { folderId: "chapter-seven" },
+                    })
+                  }
+                >
+                  {t("openFolderLabel")}
+                </button>
+              </div>
+            ),
+          },
+        });
+        break;
+      case "endgame_program":
+        openWindow({
+          id: "recovered-program-alert",
+          appType: "generic",
+          title: t("recoveredProgramInstalledTitle"),
+          props: {
+            windowClassName: "corrupted",
+            children: (
+              <div className="new-mail-alert recovered-program-alert">
+                <p className="new-mail-alert__kicker">{t("recoveredExecutableKicker")}</p>
+                <h2>{t("chapterSevenFinishedIndexing")}</h2>
+                <p>{t("recoveredProgramAvailable")}</p>
+                <button
+                  className="button"
+                  type="button"
+                  onClick={() =>
+                    openWindow({
+                      id: "finale",
+                      appType: "finale",
+                      title: "RECOVERED PROGRAM",
+                    })
+                  }
+                >
+                  {t("runProgramLabel")}
+                </button>
+              </div>
+            ),
+          },
+        });
+        break;
+      case "sarah_msn_live":
+        // Sarah's live window is a chapter event, not a contact the player
+        // must happen to check. One of the three sanctioned auto-opens.
+        openWindow({
+          id: "msn-messenger",
+          appType: "messenger",
+          title: "MSN Messenger",
+          props: { windowClassName: "corrupted" },
+        });
+        break;
+      case "printer_miriam_draft":
+        openWindow({
+          id: "printer-recovery-alert",
+          appType: "generic",
+          title: "EPSON Stylus COLOR 600",
+          props: {
+            children: (
+              <div className="new-mail-alert printer-recovery-alert">
+                <p className="new-mail-alert__kicker">PRINT SPOOLER / DEVICE NOT FOUND</p>
+                <h2>MIRIAM_DRAFT.PRN</h2>
+                <p>
+                  {localeIs(
+                    "Uma impressora removida em 2004 confirmou o trabalho. Uma página foi recuperada em RECOVERED.",
+                    "A printer removed in 2004 acknowledged the job. One page was recovered to RECOVERED."
+                  )}
+                </p>
+                <button
+                  className="button"
+                  onClick={() =>
+                    openWindow({
+                      id: "miriam-draft",
+                      appType: "notepad",
+                      title: "MIRIAM_DRAFT.PRN - Notepad",
+                      props: { fileId: "miriam_draft" },
+                    })
+                  }
+                >
+                  {localeIs("Ver página", "View page")}
+                </button>
+              </div>
+            ),
+          },
+        });
+        break;
+      case "status_sheet":
+        openWindow({
+          id: "status-sheet-alert",
+          appType: "generic",
+          title: "EPSON Stylus COLOR 600",
+          props: { children: <StatusSheetAlert /> },
+        });
+        break;
+      case "voicemail_to_em":
+        setActiveToast({
+          eventId: definition.id,
+          icon: "/icons/media-player.png",
+          kicker: t("voicemailAttachmentKicker"),
+          heading: "voicemail_to_em.wav",
+          body: t("voicemailRecoveredLine"),
+          actionLabel: t("openRecordingLabel"),
+          onAction: () =>
+            openWindow({
+              id: "audio-voicemail_to_em",
+              appType: "audio",
+              title: "voicemail_to_em.wav",
+              props: { fileId: "voicemail_to_em" },
+            }),
+        });
+        break;
+      case "optional_directory_comparison":
+        setActiveToast({
+          eventId: definition.id,
+          icon: "/icons/notepad.png",
+          kicker: "OPTIONAL RECOVERY THREAD",
+          heading: "BISHOP_TREE.CMP",
+          body: localeIs(
+            "Duas imagens de usuário discordam sobre uma entrada que nenhuma origem contém.",
+            "Two user snapshots disagree about an entry neither source contains."
           ),
-        },
-      });
-    }, 2400);
+          actionLabel: t("openFileLabel"),
+          onAction: () =>
+            openFileFromToast("notepad", "directory_comparison", "BISHOP_TREE.CMP"),
+        });
+        break;
+      case "optional_office_1998":
+        setActiveToast({
+          eventId: definition.id,
+          icon: "/icons/file.png",
+          kicker: "OPTIONAL RECOVERY THREAD",
+          heading: "office_1998.jpg",
+          body: localeIs(
+            "Três exposições compartilham o mesmo checksum e três datas incompatíveis.",
+            "Three exposures share one frame checksum and three incompatible dates."
+          ),
+          actionLabel: t("openFileLabel"),
+          onAction: () =>
+            openFileFromToast("image", "office_1998_overlay", "office_1998.jpg"),
+        });
+        break;
+      case "optional_silent_call":
+        setActiveToast({
+          eventId: definition.id,
+          icon: "/icons/media-player.png",
+          kicker: "OPTIONAL RECOVERY THREAD",
+          heading: "CALL_0314.WAV",
+          body: localeIs(
+            "Uma chamada sem origem contém dois canais quase idênticos.",
+            "A call with no caller contains two channels that are almost identical."
+          ),
+          actionLabel: t("openRecordingLabel"),
+          onAction: () =>
+            openFileFromToast("audio", "silent_call", "CALL_0314.WAV"),
+        });
+        break;
+      case "sarah_break_cache":
+        // Technical fallback for the break protocol: materializes the cache
+        // fragment in RECOVERED only after the live contact is spent without
+        // the `break` question. The emotional reply stays live-exclusive.
+        setActiveToast({
+          eventId: definition.id,
+          icon: "/icons/notepad.png",
+          kicker: "TEMP CACHE / PARTIAL FLUSH",
+          heading: "sarah_break_cache.tmp",
+          body: localeIs(
+            "Um segmento de cache não descartado foi gravado em RECOVERED. A escrita nunca foi concluída.",
+            "An undiscarded cache segment was written to RECOVERED. The write was never completed."
+          ),
+          actionLabel: t("openFileLabel"),
+          onAction: () =>
+            openFileFromToast(
+              "notepad",
+              "sarah_break_cache",
+              "sarah_break_cache.tmp - Notepad"
+            ),
+        });
+        break;
+    }
+  };
+  const presentRef = useRef(presentDiegeticEvent);
+  useEffect(() => {
+    presentRef.current = presentDiegeticEvent;
+  });
+
+  const nextEventId = isHydrated
+    ? selectNextDiegeticEvent(diegeticContext(state), {
+        focalBusy,
+        toastBusy: activeToast !== null,
+      })?.id ?? null
+    : null;
+
+  useEffect(() => {
+    if (!nextEventId) return;
+    const definition = DIEGETIC_EVENTS.find(
+      (event) => event.id === nextEventId
+    );
+    if (!definition) return;
+    const timer = setTimeout(
+      () => presentRef.current(definition),
+      diegeticEventDelayMs(definition)
+    );
     return () => clearTimeout(timer);
-  }, [
-    flags,
-    flash1998,
-    isHydrated,
-    openWindow,
-    play,
-    setFlag,
-    state.locale,
-    state.puzzles.counting_audio.solvedAt,
-    state.puzzles.lineage.solvedAt,
-    state.puzzles.margin_cipher.solvedAt,
-    t,
-    windows,
-  ]);
+    // The narrative pause does not restart on unrelated renders: the
+    // presenter is read through a ref at fire time and a gate change changes
+    // `nextEventId`, which cancels this timer.
+  }, [nextEventId]);
 
   useEffect(() => {
     const timer = setTimeout(() => setBooted(true), 1700);
     return () => clearTimeout(timer);
   }, []);
+
+  // Sarah did not close the two windows that establish the case: Tom's
+  // welfare-check email and her recently modified profile directory. This is
+  // intentionally one-time and saved, so returning players resume their own
+  // desktop instead of having their workspace rearranged on every reload.
+  useEffect(() => {
+    if (!booted || !isHydrated || flags.initial_boot_windows_restored) return;
+    setFlag("initial_boot_windows_restored");
+    const timer = setTimeout(() => {
+      openWindow({ id: "inbox", appType: "email", title: "E-mail" });
+      openWindow({
+        id: "initial-profile-explorer",
+        appType: "explorer",
+        title: "Sarah Bishop",
+        props: { folderId: "sarah" },
+      });
+    }, 260);
+    return () => clearTimeout(timer);
+  }, [booted, flags.initial_boot_windows_restored, isHydrated, openWindow, setFlag]);
 
   useEffect(() => {
     if (
@@ -343,480 +756,6 @@ const Desktop = () => {
     return () => document.body.classList.remove("desktop-mode");
   }, []);
 
-  useEffect(() => {
-    if (!isHydrated) return;
-    if (!flags.sarah_email_arrived || flags.sarah_email_notice_shown) return;
-
-    const timer = setTimeout(() => {
-      setFlag("sarah_email_notice_shown");
-      play("future");
-      openWindow({
-        id: "new-mail-alert",
-        appType: "generic",
-        title: t("newMailTitle"),
-        props: {
-          windowClassName: "corrupted",
-          children: (
-            <div className="new-mail-alert">
-              <p className="new-mail-alert__kicker">{t("messageReceivedKicker")}</p>
-              <h2>sarah.bishop@miskatonic-research.org</h2>
-              <p>{t("clockSyncWarning")}</p>
-              <button
-                className="button"
-                type="button"
-                onClick={() =>
-                  openWindow({
-                    id: "inbox",
-                    appType: "email",
-                    title: "E-mail",
-                  })
-                }
-              >
-                {t("openInboxLabel")}
-              </button>
-            </div>
-          ),
-        },
-      });
-    }, 900);
-
-    return () => clearTimeout(timer);
-  }, [
-    flags.sarah_email_arrived,
-    flags.sarah_email_notice_shown,
-    isHydrated,
-    openWindow,
-    play,
-    setFlag,
-    t,
-  ]);
-
-  // Sarah's live window is a chapter event, not a contact the player must
-  // happen to check. It starts only once the mail alert is out of the way and
-  // the Messenger window can actually receive focus.
-  useEffect(() => {
-    if (!isHydrated || !flags.sarah_msn_live || flags.sarah_msn_notice_shown) return;
-    if (windows.some((win) => !win.minimized && win.id === "new-mail-alert")) return;
-    const timer = setTimeout(() => {
-      setFlag("sarah_msn_notice_shown");
-      play("future");
-      openWindow({
-        id: "msn-messenger",
-        appType: "messenger",
-        title: "MSN Messenger",
-        props: { windowClassName: "corrupted" },
-      });
-    }, 1200);
-    return () => clearTimeout(timer);
-  }, [
-    flags.sarah_msn_live,
-    flags.sarah_msn_notice_shown,
-    isHydrated,
-    openWindow,
-    play,
-    setFlag,
-    windows,
-  ]);
-
-  useEffect(() => {
-    if (!isHydrated) return;
-    if (
-      !state.worldReactionsSeen.includes("printer_wake") ||
-      flags.printer_reaction_shown
-    ) {
-      return;
-    }
-    const timer = setTimeout(() => {
-      setFlag("printer_reaction_shown");
-      play("disk");
-      openWindow({
-        id: "printer-recovery-alert",
-        appType: "generic",
-        title: "EPSON Stylus COLOR 600",
-        props: {
-          children: (
-            <div className="new-mail-alert printer-recovery-alert">
-              <p className="new-mail-alert__kicker">PRINT SPOOLER / DEVICE NOT FOUND</p>
-              <h2>MIRIAM_DRAFT.PRN</h2>
-              <p>
-                {state.locale === "pt-BR"
-                  ? "Uma impressora removida em 2004 confirmou o trabalho. Uma página foi recuperada em RECOVERED."
-                  : "A printer removed in 2004 acknowledged the job. One page was recovered to RECOVERED."}
-              </p>
-              <button
-                className="button"
-                onClick={() =>
-                  openWindow({
-                    id: "miriam-draft",
-                    appType: "notepad",
-                    title: "MIRIAM_DRAFT.PRN - Notepad",
-                    props: { fileId: "miriam_draft" },
-                  })
-                }
-              >
-                {state.locale === "pt-BR" ? "Ver página" : "View page"}
-              </button>
-            </div>
-          ),
-        },
-      });
-    }, 1100);
-    return () => clearTimeout(timer);
-  }, [
-    flags.printer_reaction_shown,
-    isHydrated,
-    openWindow,
-    play,
-    setFlag,
-    t,
-    state.locale,
-    state.worldReactionsSeen,
-  ]);
-
-  useEffect(() => {
-    if (!isHydrated) return;
-    if (
-      (!flags.puzzle_lot_114_solved && !flags.act1_recovered_partial) ||
-      flags.restricted_folder_notice_shown
-    ) return;
-
-    const timer = setTimeout(() => {
-      setFlag("restricted_folder_notice_shown");
-      play("disk");
-      openWindow({
-        id: "restricted-folder-alert",
-        appType: "generic",
-        title: t("newFolderRecoveredTitle"),
-        props: {
-          children: (
-            <div className="new-mail-alert">
-              <p className="new-mail-alert__kicker">{t("fileSystemChangeKicker")}</p>
-              <h2>{t("newFolderAppearedAccount")}</h2>
-              <p>{t("recoveredMyDocumentsLine")}</p>
-              <button
-                className="button"
-                type="button"
-                onClick={() =>
-                  openWindow({
-                    id: "explorer-restricted",
-                    appType: "explorer",
-                    title: "RECOVERED",
-                    props: { folderId: "restricted" },
-                  })
-                }
-              >
-                {t("openFolderLabel")}
-              </button>
-            </div>
-          ),
-        },
-      });
-    }, 900);
-
-    return () => clearTimeout(timer);
-  }, [
-    flags.puzzle_lot_114_solved,
-    flags.act1_recovered_partial,
-    flags.restricted_folder_notice_shown,
-    isHydrated,
-    openWindow,
-    play,
-    setFlag,
-    t,
-  ]);
-
-  useEffect(() => {
-    if (!isHydrated) return;
-    if (!flags.puzzle_counting_audio_solved || flags.chapter_seven_notice_shown) return;
-
-    const timer = setTimeout(() => {
-      setFlag("chapter_seven_notice_shown");
-      play("disk");
-      openWindow({
-        id: "chapter-seven-alert",
-        appType: "generic",
-        title: t("newFolderRecoveredTitle"),
-        props: {
-          children: (
-            <div className="new-mail-alert">
-              <p className="new-mail-alert__kicker">{t("fileSystemChangeKicker")}</p>
-              <h2>{t("newFolderAppearedInside")}</h2>
-              <p>CHAPTER_SEVEN.</p>
-              <button
-                className="button"
-                type="button"
-                onClick={() =>
-                  openWindow({
-                    id: "explorer-chapter-seven",
-                    appType: "explorer",
-                    title: "CHAPTER_SEVEN",
-                    props: { folderId: "chapter-seven" },
-                  })
-                }
-              >
-                {t("openFolderLabel")}
-              </button>
-            </div>
-          ),
-        },
-      });
-    }, 900);
-
-    return () => clearTimeout(timer);
-  }, [
-    flags.puzzle_counting_audio_solved,
-    flags.chapter_seven_notice_shown,
-    isHydrated,
-    openWindow,
-    play,
-    setFlag,
-    t,
-  ]);
-
-  useEffect(() => {
-    if (!isHydrated) return;
-    if (
-      !flags.puzzle_palimpsest_solved ||
-      flags.puzzle_margin_cipher_solved ||
-      flags.margin_file_notice_shown
-    ) {
-      return;
-    }
-
-    const timer = setTimeout(() => {
-      setFlag("margin_file_notice_shown");
-      play("disk");
-      openWindow({
-        id: "margin-file-alert",
-        appType: "generic",
-        title: t("newFileRecoveredTitle"),
-        props: {
-          children: (
-            <div className="new-mail-alert">
-              <p className="new-mail-alert__kicker">{t("fileSystemChangeKicker")}</p>
-              <h2>margin_ch7.enc</h2>
-              <p>{t("palimpsestFileLine")}</p>
-              <button
-                className="button"
-                type="button"
-                onClick={() =>
-                  openWindow({
-                    id: "notepad-cipher_1",
-                    appType: "notepad",
-                    title: "margin_ch7.enc - Notepad",
-                    props: { fileId: "cipher_1" },
-                  })
-                }
-              >
-                {t("openFileLabel")}
-              </button>
-            </div>
-          ),
-        },
-      });
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, [
-    flags.margin_file_notice_shown,
-    flags.puzzle_margin_cipher_solved,
-    flags.puzzle_palimpsest_solved,
-    isHydrated,
-    openWindow,
-    play,
-    setFlag,
-    t,
-  ]);
-
-  useEffect(() => {
-    if (!isHydrated) return;
-    if (
-      !flags.puzzle_margin_cipher_solved ||
-      state.puzzles.counting_audio.solvedAt ||
-      flags.counting_file_notice_shown
-    ) {
-      return;
-    }
-
-    const timer = setTimeout(() => {
-      setFlag("counting_file_notice_shown");
-      play("wet");
-      openWindow({
-        id: "counting-file-alert",
-        appType: "generic",
-        title: t("newFileRecoveredTitle"),
-        props: {
-          children: (
-            <div className="new-mail-alert">
-              <p className="new-mail-alert__kicker">{t("fileSystemChangeKicker")}</p>
-              <h2>counting.wav</h2>
-              <p>{t("marginAudioLine")}</p>
-              <button
-                className="button"
-                type="button"
-                onClick={() =>
-                  openWindow({
-                    id: "audio-counting_audio",
-                    appType: "audio",
-                    title: "counting.wav",
-                    props: { fileId: "counting_audio" },
-                  })
-                }
-              >
-                {t("openRecordingLabel")}
-              </button>
-            </div>
-          ),
-        },
-      });
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, [
-    flags.counting_file_notice_shown,
-    flags.puzzle_margin_cipher_solved,
-    isHydrated,
-    openWindow,
-    play,
-    setFlag,
-    state.puzzles.counting_audio.solvedAt,
-    t,
-  ]);
-
-  // The everyday reward: a banal voicemail arrives a beat after the
-  // counting.wav set piece (post_end_transcript), never immediately — the
-  // contrast lands better once the ghost transcript has had time to fade.
-  useEffect(() => {
-    if (!isHydrated) return;
-    if (!flags.post_end_transcript_seen || flags.voicemail_notice_shown) return;
-
-    const timer = setTimeout(() => {
-      setFlag("voicemail_notice_shown");
-      play("chime");
-      openWindow({
-        id: "voicemail-alert",
-        appType: "generic",
-        title: t("newFileRecoveredTitle"),
-        props: {
-          children: (
-            <div className="new-mail-alert">
-              <p className="new-mail-alert__kicker">{t("voicemailAttachmentKicker")}</p>
-              <h2>voicemail_to_em.wav</h2>
-              <p>{t("voicemailRecoveredLine")}</p>
-              <button
-                className="button"
-                type="button"
-                onClick={() =>
-                  openWindow({
-                    id: "audio-voicemail_to_em",
-                    appType: "audio",
-                    title: "voicemail_to_em.wav",
-                    props: { fileId: "voicemail_to_em" },
-                  })
-                }
-              >
-                {t("openRecordingLabel")}
-              </button>
-            </div>
-          ),
-        },
-      });
-    }, 26_000);
-
-    return () => clearTimeout(timer);
-  }, [
-    flags.post_end_transcript_seen,
-    flags.voicemail_notice_shown,
-    isHydrated,
-    openWindow,
-    play,
-    setFlag,
-    t,
-  ]);
-
-  useEffect(() => {
-    if (!isHydrated) return;
-    if (
-      !flags.endgame_available ||
-      !flags.indexer_sequence_seen ||
-      flags.endgame_notice_shown
-    ) return;
-
-    const timer = setTimeout(() => {
-      setFlag("endgame_notice_shown");
-      play("future");
-      openWindow({
-        id: "recovered-program-alert",
-        appType: "generic",
-        title: t("recoveredProgramInstalledTitle"),
-        props: {
-          windowClassName: "corrupted",
-          children: (
-            <div className="new-mail-alert recovered-program-alert">
-              <p className="new-mail-alert__kicker">{t("recoveredExecutableKicker")}</p>
-              <h2>{t("chapterSevenFinishedIndexing")}</h2>
-              <p>{t("recoveredProgramAvailable")}</p>
-              <button
-                className="button"
-                type="button"
-                onClick={() =>
-                  openWindow({
-                    id: "finale",
-                    appType: "finale",
-                    title: "RECOVERED PROGRAM",
-                  })
-                }
-              >
-                {t("runProgramLabel")}
-              </button>
-            </div>
-          ),
-        },
-      });
-    }, 900);
-
-    return () => clearTimeout(timer);
-  }, [
-    flags.endgame_available,
-    flags.endgame_notice_shown,
-    flags.indexer_sequence_seen,
-    isHydrated,
-    openWindow,
-    play,
-    setFlag,
-    t,
-  ]);
-
-  // Manifestation: the printer wakes on its own 3-6s after lot_114 is solved.
-  useEffect(() => {
-    if (!isHydrated) return;
-    if (
-      !state.worldReactionsSeen.includes("status_sheet") ||
-      flags.status_sheet_notice_shown
-    ) {
-      return;
-    }
-    const wakeDelay = 3000 + Math.random() * 3000;
-    const timer = setTimeout(() => {
-      setFlag("status_sheet_notice_shown");
-      play("disk");
-      openWindow({
-        id: "status-sheet-alert",
-        appType: "generic",
-        title: "EPSON Stylus COLOR 600",
-        props: { children: <StatusSheetAlert /> },
-      });
-    }, wakeDelay);
-    return () => clearTimeout(timer);
-  }, [
-    flags.status_sheet_notice_shown,
-    isHydrated,
-    openWindow,
-    play,
-    setFlag,
-    state.worldReactionsSeen,
-  ]);
-
   // A few seconds after the sheet is visible, PRESENT flickers to DUPLICATED.
   // Driven by a persisted flag (not local component state) so the swap holds
   // even if the alert window was closed mid-wait.
@@ -833,41 +772,6 @@ const Desktop = () => {
     setFlag,
   ]);
 
-  // Manifestation: the 1998 desktop flash. First chance after palimpsest;
-  // if missed, a second chance after margin_cipher. Once the file is
-  // recovered (or both chances are spent), it never triggers again.
-  useEffect(() => {
-    if (!isHydrated) return;
-    if (flags.miriam_1998_file_recovered || flash1998 != null) return;
-    if (windows.some((win) => !win.minimized && win.id === "margin-file-alert")) return;
-    const attempt1Ready =
-      Boolean(state.puzzles.palimpsest.solvedAt) &&
-      !flags.flash_1998_attempt_1_shown;
-    const attempt2Ready =
-      Boolean(state.puzzles.margin_cipher.solvedAt) &&
-      Boolean(flags.flash_1998_attempt_1_shown) &&
-      !flags.flash_1998_attempt_2_shown;
-    if (!attempt1Ready && !attempt2Ready) return;
-    const attempt = attempt1Ready ? 1 : 2;
-    const timer = setTimeout(() => {
-      setFlag(`flash_1998_attempt_${attempt}_shown`);
-      setFlag("1998_flash_seen");
-      play("disk");
-      setFlash1998(attempt);
-    }, 1600);
-    return () => clearTimeout(timer);
-  }, [
-    flags.flash_1998_attempt_1_shown,
-    flags.flash_1998_attempt_2_shown,
-    flags.miriam_1998_file_recovered,
-    flash1998,
-    isHydrated,
-    play,
-    setFlag,
-    state.puzzles.margin_cipher.solvedAt,
-    state.puzzles.palimpsest.solvedAt,
-    windows,
-  ]);
 
   // Generous, fixed 7s window, then a hard cut back to normal.
   useEffect(() => {
@@ -1069,6 +973,7 @@ const Desktop = () => {
             </button>
           </div>
         )}
+      <ConclusionReadyToast />
       {flash1998 != null && (
         <div
           className="desktop-1998-overlay"

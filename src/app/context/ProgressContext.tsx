@@ -503,10 +503,12 @@ export const ProgressProvider = ({
       if (beforeChapter !== afterChapter) {
         const copy = CHAPTER_TITLES[afterChapter];
         const number = afterChapter.replace("chapter_", "");
+        // "Chapter" stays reserved for the lore's Chapter Seven; the player's
+        // progression is described as an investigation stage.
         setSystemNotice(
           beforeLocale === "pt-BR"
-            ? `Capítulo ${number} arquivado: ${copy.pt}. Novos registros liberados.`
-            : `Chapter ${number} filed: ${copy.en}. New records released.`
+            ? `Estágio ${number} da investigação arquivado: ${copy.pt}. Novos registros liberados.`
+            : `Investigation stage ${number} filed: ${copy.en}. New records released.`
         );
         if (noticeTimer.current) clearTimeout(noticeTimer.current);
         noticeTimer.current = setTimeout(() => setSystemNotice(null), 4200);

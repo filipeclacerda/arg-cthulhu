@@ -12,66 +12,25 @@ import { puzzleHintsFor } from "@/app/game/puzzles";
 import { useI18n } from "@/app/i18n";
 import ClueText from "@/app/components/ClueText/ClueText";
 import { localizedBrowserText } from "@/app/data/localizedNarrative";
+import {
+  BROWSER_PAGES,
+  browserPage,
+  browserPageFromVisitedId,
+  BrowserPage,
+  PAGE_ADDRESS,
+} from "@/app/data/browserPages";
+import { isUnlocked } from "@/app/game/unlock";
 import "../ArgTools/style.scss";
 import "./style.scss";
 
-export type BrowserPage =
-  | "home"
-  | "results"
-  | "library"
-  | "gazette"
-  | "expedition"
-  | "bellaso"
-  | "weather"
-  | "danforth"
-  | "lot"
-  | "coast"
-  | "sarah"
-  | "memo"
-  | "staff"
-  | "reader-log"
-  | "graymoor"
-  | "families"
-  | "forum"
-  | "em"
-  | "tom"
-  | "tom-guestbook"
-  | "maintenance"
-  | "downloads"
-  | "false-lead"
-  | "not-found";
+export type { BrowserPage } from "@/app/data/browserPages";
 
 interface HistoryEntry {
   page: BrowserPage;
   address: string;
 }
 
-export const PAGE_ADDRESS: Record<BrowserPage, string> = {
-  home: "http://search.miskatonic.net/",
-  results: "http://search.miskatonic.net/search",
-  library: "http://www.miskatonic.edu/library/",
-  gazette: "http://www.arkham-gazette.com/archive/",
-  expedition: "http://www.miskatonic.edu/geology/pabodie/",
-  bellaso: "http://www.miskatonic.edu/library/cryptography/bellaso.htm",
-  weather: "http://weather.antarctic-net.org/station/lake/",
-  danforth: "http://www.geocities.com/arkham_heights/danforth.html",
-  lot: "cache://miskatonic/catalog/MS-WHA-1998-114-II",
-  coast: "cache://hydrographic/yhanthlei",
-  sarah: "cache://miskatonic/catalog/2026-bishop-sarah",
-  memo: "cache://miskatonic/library/incident-memo-2026",
-  staff: "http://www.miskatonic.edu/library/staff/armitage.htm",
-  "reader-log": "http://www.miskatonic.edu/library/readers/notices.htm",
-  graymoor: "http://www.graymoor-antiquarian.com/about/",
-  families: "http://www.innsmouth-historical.org/registry/",
-  forum: "http://www.miskanet-forums.org/board/folklore/",
-  em: "http://www.geocities.com/em_bishop/photos/",
-  tom: "http://www.geocities.com/tomalvarez_archive/",
-  "tom-guestbook": "http://www.geocities.com/tomalvarez_archive/guestbook.html",
-  maintenance: "cache://miskatonic/facilities/B2/",
-  downloads: "http://www.miskanet-files.org/archive-tools/",
-  "false-lead": "http://search.miskatonic.net/search",
-  "not-found": "res://shdoclc/dnserror.htm",
-};
+export { PAGE_ADDRESS } from "@/app/data/browserPages";
 
 const normalize = (value: string) =>
   value.toUpperCase().replace(/[^A-Z0-9]+/g, " ").trim();
@@ -91,21 +50,25 @@ const RecoveredBrowser = ({
     recordNearMiss,
     activePuzzle,
     dispatchGameEvent,
-    currentChapter,
   } = useProgress();
   const { locale, t } = useI18n();
-  const chapterNumber = Number(currentChapter.replace("chapter_", ""));
-  const historicalCacheUnlocked = chapterNumber >= 3;
-  const deepCacheUnlocked = chapterNumber >= 4;
-  const initialPage: BrowserPage = initialAddress
+  const unlockContext = { flags: state.flags, discoveredEvidenceIds: state.discoveredEvidenceIds, solvedPuzzleIds: Object.entries(state.puzzles).filter(([, value]) => value.solvedAt).map(([id]) => id) as import("@/app/game/progress").PuzzleId[] };
+  const historicalCacheUnlocked = isPuzzleSolved("margin_cipher");
+  const deepCacheUnlocked = isPuzzleSolved("counting_audio");
+  const requestedInitialPage: BrowserPage = initialAddress
     ? ((Object.entries(PAGE_ADDRESS) as [BrowserPage, string][]).find(
         ([, addr]) => addr === initialAddress
       )?.[0] ??
       (initialAddress.includes("danforth") ? "danforth" : "home"))
     : "home";
+  const initialPage: BrowserPage = isUnlocked(browserPage(requestedInitialPage).unlock, unlockContext)
+    ? requestedInitialPage
+    : "not-found";
   const [page, setPage] = useState<BrowserPage>(initialPage);
   const [address, setAddress] = useState(
-    initialAddress ?? PAGE_ADDRESS[initialPage]
+    initialPage === "not-found" && requestedInitialPage !== "not-found"
+      ? "res://shdoclc/dnserror.htm#CACHE_SEGMENT_NOT_MOUNTED"
+      : initialAddress ?? PAGE_ADDRESS[initialPage]
   );
   const [backStack, setBackStack] = useState<HistoryEntry[]>([]);
   const [forwardStack, setForwardStack] = useState<HistoryEntry[]>([]);
@@ -137,6 +100,10 @@ const RecoveredBrowser = ({
     nextAddress = PAGE_ADDRESS[next],
     record = true
   ) => {
+    if (!isUnlocked(browserPage(next).unlock, unlockContext)) {
+      next = "not-found";
+      nextAddress = "res://shdoclc/dnserror.htm#CACHE_SEGMENT_NOT_MOUNTED";
+    }
     if (record) {
       setBackStack((items) => [...items, { page, address }]);
       setForwardStack([]);
@@ -151,6 +118,10 @@ const RecoveredBrowser = ({
     pageId: string,
     evidenceId?: string
   ) => {
+    if (!isUnlocked(browserPage(next).unlock, unlockContext)) {
+      navigate("not-found", "res://shdoclc/dnserror.htm#CACHE_SEGMENT_NOT_MOUNTED");
+      return;
+    }
     visitPage(pageId);
     if (evidenceId) discoverEvidence(evidenceId, pageId);
     if (next === "tom" && state.puzzles.future_log.solvedAt) {
@@ -238,8 +209,9 @@ const RecoveredBrowser = ({
       return;
     }
 
-    if (compact.includes("GEOCITIES") || compact.includes("DANFORTH") || compact.includes("TEKELILI")) {
-      visitAtmospherePage("danforth", "danforth-personal-cache", "danforth_cache");
+    const registryMatch = BROWSER_PAGES.find((candidate) => candidate.keywords.some((keyword) => compact.includes(keyword.toUpperCase())));
+    if (registryMatch && registryMatch.id !== "home" && registryMatch.id !== "results") {
+      visitAtmospherePage(registryMatch.id, registryMatch.pageId ?? registryMatch.id, registryMatch.evidenceId);
       return;
     }
     if (compact.includes("ARKHAMGAZETTE")) {
@@ -390,6 +362,16 @@ const RecoveredBrowser = ({
             <strong>{t("menuFavorites")}</strong>
             <button onClick={() => visitAtmospherePage("library", "miskatonic-library-home")}>Miskatonic Library</button>
             <button onClick={() => visitAtmospherePage("gazette", "arkham-gazette")}>Arkham Gazette</button>
+            <button onClick={() => visitAtmospherePage("gull-lantern", "gull-lantern")}>Gull &amp; Lantern Café</button>
+            <button onClick={() => visitAtmospherePage("route-7", "arkham-route-7")}>Arkham Transit — Route 7</button>
+            {isPuzzleSolved("lot_114") && <>
+              <button onClick={() => visitAtmospherePage("compat-gateway", "orne-compat-gateway")}>Orne Compatibility Gateway</button>
+              <button onClick={() => visitAtmospherePage("staff-bulletin", "orne-staff-bulletin")}>Orne Staff Bulletin</button>
+            </>}
+            {isPuzzleSolved("margin_cipher") && <>
+              <button onClick={() => visitAtmospherePage("hydrography", "essex-hydrography")}>Essex Hydrographic Telemetry</button>
+              <button onClick={() => visitAtmospherePage("web-ring", "arkham-web-ring")}>Arkham Preservation Web Ring</button>
+            </>}
             {deepCacheUnlocked && (
               <>
                 <button onClick={() => visitAtmospherePage("expedition", "pabodie-expedition")}>1930 Expedition</button>
@@ -414,11 +396,12 @@ const RecoveredBrowser = ({
           <aside className="browser-favorites browser-history">
             <strong>History</strong>
             {state.visitedPageIds.length === 0 && <small>No cached pages opened.</small>}
-            {state.visitedPageIds.slice().reverse().slice(0, 14).map((id) => (
-              <button key={id} onClick={() => setSearchInput(id)}>
-                {id}
-              </button>
-            ))}
+            {state.visitedPageIds.slice().reverse().slice(0, 14).map((id) => {
+              const visited = browserPageFromVisitedId(id);
+              return <button key={id} onClick={() => visited ? visitAtmospherePage(visited.id, id, visited.evidenceId) : navigate("not-found")}>
+                {visited?.address ?? id}
+              </button>;
+            })}
             {state.puzzles.lineage.solvedAt && (
               <button className="browser-history__future" onClick={() => {
                 setSearchInput("2026");
@@ -499,6 +482,10 @@ const RecoveredBrowser = ({
                 <span> - </span>
                 <button onClick={() => visitAtmospherePage("gazette", "arkham-gazette")}>News</button>
                 <span> - </span>
+                <button onClick={() => visitAtmospherePage("gull-lantern", "gull-lantern")}>Café</button>
+                <span> - </span>
+                <button onClick={() => visitAtmospherePage("route-7", "arkham-route-7")}>Transit</button>
+                <span> - </span>
                 {deepCacheUnlocked && (
                   <>
                     <button onClick={() => visitAtmospherePage("expedition", "pabodie-expedition")}>Science</button>
@@ -564,6 +551,20 @@ const RecoveredBrowser = ({
                   <span>University news, missing-person reports and searchable editions from 1823 onward.</span>
                   <small>www.arkham-gazette.com/archive/</small>
                 </button>
+                <button onClick={() => visitAtmospherePage("gull-lantern", "gull-lantern")}>
+                  <strong>Gull &amp; Lantern Café</strong><span>Reservations, local coffee and a familiar name in the guest list.</span><small>www.gull-lantern-arkham.com/</small>
+                </button>
+                <button onClick={() => visitAtmospherePage("route-7", "arkham-route-7")}>
+                  <strong>Arkham Transit — Route 7</strong><span>Weekday service from Orne Library to the waterfront.</span><small>transit.arkham.gov/route7/</small>
+                </button>
+                {isPuzzleSolved("lot_114") && <>
+                  <button onClick={() => visitAtmospherePage("compat-gateway", "orne-compat-gateway")}><strong>Orne Compatibility Gateway</strong><span>Legacy mailbox mirror status.</span><small>orne.miskatonic.edu/gateway/</small></button>
+                  <button onClick={() => visitAtmospherePage("staff-bulletin", "orne-staff-bulletin")}><strong>Orne Staff Bulletin</strong><span>Staff notices and campus life.</span><small>www.miskatonic.edu/staff/bulletin/</small></button>
+                </>}
+                {isPuzzleSolved("margin_cipher") && <>
+                  <button onClick={() => visitAtmospherePage("hydrography", "essex-hydrography")}><strong>Essex Hydrographic Telemetry</strong><span>Instrument readings from inland monitoring stations.</span><small>cache://essex-hydro/telemetry/</small></button>
+                  <button onClick={() => visitAtmospherePage("web-ring", "arkham-web-ring")}><strong>Arkham Preservation Web Ring</strong><span>Preserving the small web, one dead link at a time.</span><small>www.arkhamwebring.org/preservation/</small></button>
+                </>}
                 {deepCacheUnlocked && (
                   <button onClick={() => visitAtmospherePage("expedition", "pabodie-expedition")}>
                     <strong>Pabodie Antarctic Expedition, 1930–31</strong>
@@ -1332,6 +1333,25 @@ const RecoveredBrowser = ({
               </div>
               <small>Files in this cache were scanned in 2001. Virus definitions expired 9,131 days ago.</small>
             </article>
+          )}
+
+          {page === "gull-lantern" && (
+            <article className="arg-tool__paper"><p className="arg-tool__kicker">ARKHAM WATERFRONT / EST. 1978</p><h2>Gull &amp; Lantern Café</h2><p>{locale === "pt-BR" ? "Café ruim, sopa honesta e mesas perto da janela." : "Bad coffee, honest soup, and tables by the window."}</p><hr /><p><strong>Reservations — March 16</strong><br />18:00 · E. Bishop + S. Bishop · window table requested</p><p className="browser-redaction">{locale === "pt-BR" ? "Observação: Sarah pediu para adiar. Em respondeu: “você sempre pede isso”." : "Note: Sarah asked to postpone. Em replied: “you always ask that.”"}</p></article>
+          )}
+          {page === "route-7" && (
+            <article className="arg-tool__paper"><p className="arg-tool__kicker">ARKHAM TRANSIT AUTHORITY</p><h2>Route 7 — Orne / Waterfront</h2><table className="browser-table"><tbody><tr><th>Stop</th><th>Weekday</th></tr><tr><td>Orne Library</td><td>18:30</td></tr><tr><td>Gull &amp; Lantern</td><td>18:42</td></tr><tr><td>Waterfront terminus</td><td>18:57</td></tr></tbody></table>{state.puzzles.future_log.solvedAt && <p className="browser-redaction">NEXT BUS: 1 MINUTE · EXPECTED PASSENGERS: 4</p>}<small>{locale === "pt-BR" ? "Horário arquivado; não confirma embarque." : "Archived timetable; it does not confirm boarding."}</small></article>
+          )}
+          {page === "compat-gateway" && (
+            <article className="arg-tool__paper"><p className="arg-tool__kicker">ORNE COMPUTING SERVICES</p><h2>Compatibility Gateway</h2><p>{locale === "pt-BR" ? "O espelho de caixa postal termina TLS e autenticação no servidor. Este Outlook Express só lê uma cópia DBX de arquivo." : "The mailbox mirror terminates TLS and authentication upstream. This Outlook Express only reads an archival DBX copy."}</p><table className="browser-table"><tbody><tr><th>Mirror</th><td>READ-ONLY</td></tr><tr><th>Transport log</th><td>COMPLETE</td></tr><tr><th>Legacy client</th><td>OUTLOOK EXPRESS ARCHIVE VIEW</td></tr></tbody></table><p className="browser-redaction">No outbound message from S. Bishop appears in the upstream transport log.</p></article>
+          )}
+          {page === "staff-bulletin" && (
+            <article className="arg-tool__paper"><p className="arg-tool__kicker">MISKATONIC UNIVERSITY / STAFF BULLETIN</p><h2>Week of March 9</h2><p><strong>Thursday seminar:</strong> Tom Alvarez will cover Sarah Bishop&apos;s 14:00 provenance session.</p><p><strong>Scanner B2:</strong> still leaving a wet band along the lower edge. Please stop calling Facilities “the sea people.”</p><p><strong>Gull &amp; Lantern:</strong> library staff trivia team is short one archivist. Sarah said she was “probably coming.”</p></article>
+          )}
+          {page === "hydrography" && (
+            <article className="arg-tool__paper"><p className="arg-tool__kicker">ESSEX HYDROGRAPHIC TELEMETRY / RECOVERED CACHE</p><h2>Inland station 03:14</h2><table className="browser-table"><tbody><tr><th>Reading</th><th>Value</th><th>Status</th></tr><tr><td>Conductivity</td><td>54.8 mS/cm</td><td>INVALID</td></tr><tr><td>Salinity</td><td>35.1 PSU</td><td>INVALID</td></tr><tr><td>Location</td><td>Orne B2</td><td>NOT A WATER SITE</td></tr></tbody></table><p>{locale === "pt-BR" ? "O instrumento registrou água do mar onde não havia linha d’água." : "The instrument recorded seawater where no water line existed."}</p></article>
+          )}
+          {page === "web-ring" && (
+            <article className="arg-tool__paper"><p className="arg-tool__kicker">ARKHAM PRESERVATION WEB RING · 2001</p><h2>Keep the small web alive</h2><p>{locale === "pt-BR" ? "Esta página liga colecionadores, bibliotecas de bairro e diários pessoais antes que os provedores fechem." : "This page links collectors, neighborhood libraries and personal diaries before providers close them."}</p><ul><li>◄ Previous: <s>Old Essex Photos</s> [404]</li><li>Random: Miskatonic Library mirror</li><li>Next ►: <s>Sea Glass Journal</s> [host unavailable]</li></ul><small>Last ring crawl: 2001-08-17. 19 of 43 members responded.</small></article>
           )}
 
           {page === "false-lead" && (

@@ -197,6 +197,25 @@ export interface PlayerChoice {
   chosenAt: number;
 }
 
+/**
+ * Persistent record of Sarah's one live Messenger window. The timer/UI logic
+ * lives with the Messenger (phase 2); the save only tracks whether the
+ * contact was ever seen, is currently open, or has closed for good.
+ */
+export type LiveContactStatus = "unseen" | "active" | "closed";
+
+export interface LiveContactState {
+  activeMs: number;
+  status: LiveContactStatus;
+}
+
+export const LIVE_CONTACT_WINDOW_MS = 120_000;
+
+export const createInitialLiveContact = (): LiveContactState => ({
+  activeMs: 0,
+  status: "unseen",
+});
+
 export interface ProgressStateV5 {
   version: 5 | 6;
   caseId: string;
@@ -235,6 +254,7 @@ export interface ProgressStateV5 {
   playerChoices: PlayerChoice[];
   optionalDiscoveries: OptionalDiscoveryId[];
   assetVariantsSeen: string[];
+  liveContact: LiveContactState;
 }
 
 /** Source-compatible aliases keep the existing UI incremental while saves move forward. */
@@ -290,6 +310,7 @@ export type GameEvent =
   | { type: "SEE_NARRATIVE_BEAT"; beatId: NarrativeBeatId }
   | { type: "TRIGGER_WORLD_REACTION"; reactionId: WorldReactionId }
   | { type: "RECORD_CHOICE"; choiceId: string; optionId: string }
+  | { type: "ADVANCE_LIVE_CONTACT"; elapsedMs: number }
   | { type: "DISCOVER_OPTIONAL"; discoveryId: OptionalDiscoveryId }
   | { type: "SEE_ASSET_VARIANT"; variantId: string }
   | { type: "RESET_BOARD_LAYOUT" }
@@ -363,6 +384,7 @@ export const createInitialProgress = (
   playerChoices: [],
   optionalDiscoveries: [],
   assetVariantsSeen: [],
+  liveContact: createInitialLiveContact(),
 });
 
 export const puzzleCorruptionStage = (
@@ -381,40 +403,48 @@ export interface ChapterProgressSnapshot {
   solvedPuzzleIds?: readonly PuzzleId[];
 }
 
-const solved = (
-  snapshot: ChapterProgressSnapshot,
-  puzzleId: PuzzleId
-): boolean => Boolean(snapshot.solvedPuzzleIds?.includes(puzzleId));
+/**
+ * The main-puzzle milestones that advance the investigation stage, in order.
+ * margin_cipher happens inside stage 3 and future_log inside stage 5 — they
+ * are deliberately absent. Solving a milestone out of order (via debug tools
+ * or an edited save) cannot skip a stage: each stage requires every earlier
+ * milestone as well.
+ */
+export const STAGE_MILESTONES: readonly PuzzleId[] = [
+  "lot_114",
+  "palimpsest",
+  "counting_audio",
+  "lineage",
+  "index_name",
+];
+
+/**
+ * Derives the investigation stage (1–6) exclusively from solved main puzzles.
+ * The stage is never settable directly — no flag, finding or optional
+ * discovery can move it. Analogous to `puzzleCorruptionStage`.
+ */
+export const investigationStageFromSolved = (
+  solvedPuzzleIds: readonly PuzzleId[] | undefined
+): number => {
+  let stage = 1;
+  for (const milestone of STAGE_MILESTONES) {
+    if (!solvedPuzzleIds?.includes(milestone)) break;
+    stage += 1;
+  }
+  return stage;
+};
+
+export const investigationStage = (
+  puzzles: Record<PuzzleId, PuzzleProgress>
+): number =>
+  investigationStageFromSolved(
+    PUZZLE_ORDER.filter((id) => Boolean(puzzles[id]?.solvedAt))
+  );
 
 export const currentChapter = (
   snapshot: ChapterProgressSnapshot
-): ChapterId => {
-  if (snapshot.flags.endgame_available || solved(snapshot, "index_name")) {
-    return "chapter_6";
-  }
-  if (
-    snapshot.flags.sarah_email_arrived ||
-    snapshot.flags.sarah_msn_live ||
-    solved(snapshot, "lineage")
-  ) {
-    return "chapter_5";
-  }
-  if (
-    snapshot.flags.act1_reconstruction_complete ||
-    solved(snapshot, "counting_audio")
-  ) {
-    return "chapter_4";
-  }
-  if (snapshot.flags.act1_recovered_partial) {
-    return "chapter_3";
-  }
-  // Reading the source files is preparation, not a solved investigation.
-  // Chapter 2 advances only after the player submits the Lot 114 browser query.
-  if (solved(snapshot, "lot_114")) {
-    return "chapter_2";
-  }
-  return "chapter_1";
-};
+): ChapterId =>
+  CHAPTER_IDS[investigationStageFromSolved(snapshot.solvedPuzzleIds) - 1];
 
 export const chapterIndex = (chapterId: ChapterId): number =>
   CHAPTER_IDS.indexOf(chapterId);

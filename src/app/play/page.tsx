@@ -22,7 +22,9 @@ const BOOT_LINES: Record<Locale, string[]> = {
     "HANDSHAKE ACCEPTED FROM UNLISTED CLIENT",
     "CHECKING CHAIN OF CUSTODY ........ FAILED",
     "CHECKING SOURCE SIGNATURE .... T. ALVAREZ",
-    "CHECKING RECIPIENT FIELD ......... UNRESOLVED",
+    "RECIPIENTS VERIFIED .............. 3",
+    "TABLE CHECKSUM ............ MISMATCH",
+    "UNALLOCATED ROW ........ NOT INDEXED",
     "SEALED IMAGE SB-0316 FOUND",
   ],
   "pt-BR": [
@@ -30,7 +32,9 @@ const BOOT_LINES: Record<Locale, string[]> = {
     "CONEXÃO ACEITA DE CLIENTE NÃO LISTADO",
     "VERIFICANDO CADEIA DE CUSTÓDIA .... FALHOU",
     "VERIFICANDO ASSINATURA DE ORIGEM .. T. ALVAREZ",
-    "VERIFICANDO DESTINATÁRIO .......... NÃO RESOLVIDO",
+    "DESTINATÁRIOS VERIFICADOS ......... 3",
+    "CHECKSUM DA TABELA ........ DIVERGE",
+    "LINHA NÃO ALOCADA .... NÃO INDEXADA",
     "IMAGEM SELADA SB-0316 ENCONTRADA",
   ],
 };
@@ -275,7 +279,8 @@ export default function Home() {
                 </>
               ) : (
                 <>
-                  <dt>{isPt ? "Destinatário" : "Recipient"}</dt><dd className="relay-unstable">{isPt ? "NÃO RESOLVIDO" : "UNRESOLVED"}</dd>
+                  <dt>{isPt ? "Linhas verificadas" : "Verified rows"}</dt><dd>3</dd>
+                  <dt>{isPt ? "Tabela" : "Table"}</dt><dd className="relay-unstable">{isPt ? "CHECKSUM DIVERGENTE" : "CHECKSUM MISMATCH"}</dd>
                 </>
               )}
               <dt>{isPt ? "Horário" : "Timestamp"}</dt><dd>{isPt ? "NÃO CONFIÁVEL" : "UNRELIABLE"}</dd>
@@ -321,13 +326,13 @@ export default function Home() {
                   </p>
                   <p>
                     {isPt
-                      ? "Fiz uma cópia forense antes que o arquivo o recolhesse. Coloquei três colegas na fila. Agora existe um quarto destinatário. Não fui eu que o adicionei."
-                      : "I made a forensic copy before the archive took it. I queued it for three colleagues. There is a fourth recipient now. I did not add one."}
+                      ? "Fiz uma cópia forense antes que o arquivo o recolhesse. Coloquei três colegas na fila. A tabela de entrega não confere com o manifesto."
+                      : "I made a forensic copy before the archive took it. I queued it for three colleagues. The delivery table no longer agrees with the manifest."}
                   </p>
                   <p>
                     {isPt
-                      ? "O campo está vazio na minha tela. Talvez não esteja vazio quando alguém abrir isto."
-                      : "The field is blank on my screen. Maybe it will not be blank when somebody opens this."}
+                      ? "Há uma linha que não consigo indexar. Não altere o pacote antes de verificar a cópia."
+                      : "There is one row I cannot index. Do not alter the package before you verify the copy."}
                   </p>
                   <footer>— Tom Alvarez</footer>
                 </blockquote>
@@ -357,8 +362,8 @@ export default function Home() {
                   </strong>
                   <span>
                     {isPt
-                      ? "O relé não conseguiu validar um destinatário para esta sessão. A designação é opcional."
-                      : "The relay could not validate a recipient for this session. A designation is optional."}
+                      ? "O relé criou uma sessão local não listada. A designação é opcional e fica apenas neste checkpoint."
+                      : "The relay created an unlisted local session. A designation is optional and remains in this checkpoint only."}
                   </span>
                 </div>
 
@@ -521,7 +526,7 @@ export default function Home() {
 
         <footer className="relay-terminal__footer">
           <span>{isPt ? "SEM CAMINHO DE RETORNO" : "NO RETURN PATH"}</span>
-          <span>{isPt ? "CAMPO DE DESTINATÁRIO: NÃO RESOLVIDO" : "RECIPIENT FIELD: UNRESOLVED"}</span>
+          <span>{isPt ? "LINHA NÃO ALOCADA: NÃO INDEXADA" : "UNALLOCATED ROW: NOT INDEXED"}</span>
           <span>{isPt ? "INTEGRIDADE DO LINK 07%" : "LINK INTEGRITY 07%"}</span>
         </footer>
       </section>

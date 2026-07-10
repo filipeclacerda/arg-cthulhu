@@ -40,6 +40,7 @@ const Notepad = ({ fileId }: NotepadProps) => {
   useEffect(() => {
     if (!file) return;
     markFileRead(file.id);
+    if (file.setsFlagOnOpen) setFlag(file.setsFlagOnOpen);
     if (file.evidenceId) discoverEvidence(file.evidenceId, file.id);
     if (file.id === "the_name" && isPuzzleSolved("lineage")) {
       recordSequenceAction("file:the_name");
@@ -185,7 +186,7 @@ const Notepad = ({ fileId }: NotepadProps) => {
     { id: "temp", label: "\\TEMP\\~CACHE", left: "DIR", right: "DIR" },
     {
       id: "observer",
-      label: `\\USERS\\${playerName?.trim() || "NEXT USER"}`,
+      label: `\\WINDOWS\\Profiles\\${playerName?.trim() || "NEXT USER"}`,
       left: "—",
       right: "—",
     },

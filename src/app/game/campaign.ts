@@ -7,6 +7,7 @@ import {
   ProgressStateV5,
   TokenType,
 } from "./progress";
+import { isUnlocked, UnlockCondition } from "./unlock";
 
 export interface LocalizedCopy {
   en: string;
@@ -532,11 +533,74 @@ export const observerAnswerCount = (state: ProgressStateV5): number =>
     (statement) => statement.act === 3 && isStatementSolved(state, statement.id)
   ).length;
 
+/**
+ * The three conclusions about the observer required by the final INDEX
+ * operation, in the order their milestones occur. Act-one findings still
+ * color codas and context, but never gate the Indexer.
+ */
+export const OBSERVER_CONCLUSION_IDS = [
+  "future_displacement",
+  "relay_observer",
+  "chapter_ritual",
+] as const;
+
+export type ObserverConclusionId = (typeof OBSERVER_CONCLUSION_IDS)[number];
+
+/** When each observer conclusion becomes available to reconstruct. */
+export const OBSERVER_CONCLUSION_UNLOCKS: Record<
+  ObserverConclusionId,
+  UnlockCondition
+> = {
+  // "Sarah stays one day ahead" — after the lineage year is confirmed.
+  future_displacement: { type: "puzzleSolved", puzzleId: "lineage" },
+  // "The Relay requires a living observer" — after the future log is replayed.
+  relay_observer: { type: "puzzleSolved", puzzleId: "future_log" },
+  // "Chapter Seven is the act of reconstruction" — after the_name.txt is opened.
+  chapter_ritual: { type: "evidenceOpened", evidenceId: "the_name" },
+};
+
+/** Player-facing names for the observer conclusions (chrome + refusals). */
+export const OBSERVER_CONCLUSION_LABELS: Record<
+  ObserverConclusionId,
+  LocalizedCopy
+> = {
+  future_displacement: {
+    en: "Sarah stays one day ahead",
+    "pt-BR": "Sarah permanece sempre um dia à frente",
+  },
+  relay_observer: {
+    en: "The Relay requires a living observer",
+    "pt-BR": "O Relay exige um observador vivo",
+  },
+  chapter_ritual: {
+    en: "Chapter Seven is the act of reconstruction",
+    "pt-BR": "O Capítulo Sete é o ato de reconstrução",
+  },
+};
+
+export const isObserverConclusionAvailable = (
+  state: ProgressStateV5,
+  id: ObserverConclusionId
+): boolean =>
+  isUnlocked(OBSERVER_CONCLUSION_UNLOCKS[id], {
+    flags: state.flags,
+    discoveredEvidenceIds: state.discoveredEvidenceIds,
+    solvedPuzzleIds: (Object.keys(state.puzzles) as (keyof typeof state.puzzles)[]).filter(
+      (puzzleId) => Boolean(state.puzzles[puzzleId].solvedAt)
+    ),
+  });
+
+/** Observer conclusions not yet retained, in milestone order. */
+export const pendingObserverConclusions = (
+  state: ProgressStateV5
+): ObserverConclusionId[] =>
+  OBSERVER_CONCLUSION_IDS.filter((id) => !isStatementSolved(state, id));
+
 export const canRunFinalIndex = (state: ProgressStateV5): boolean =>
-  // The last operation is not just a technical checklist. The observer must
-  // have retained enough of Sarah's ordinary life to understand what recovery
-  // would cost, as well as the three conclusions about the relay.
-  observerAnswerCount(state) === 3 && actOneAnswerCount(state) >= 2;
+  // The final operation asks only for the three conclusions about the
+  // observer. Sarah's ordinary life remains optional context — it shapes the
+  // codas, not the command gate.
+  observerAnswerCount(state) === 3;
 
 export const hasAllInsights = (state: ProgressStateV5): boolean =>
   Object.keys(INSIGHT_LABELS).every((id) =>

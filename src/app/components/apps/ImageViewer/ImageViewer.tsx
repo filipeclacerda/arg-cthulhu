@@ -3,7 +3,8 @@
 import Image from "next/image";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useProgress } from "@/app/context/ProgressContext";
-import { files, isUnlocked } from "@/app/data/filesystem";
+import { files } from "@/app/data/filesystem";
+import { isUnlocked } from "@/app/game/unlock";
 import { resolveTokens } from "@/app/utils/narrative";
 import "../ArgTools/style.scss";
 import "./style.scss";

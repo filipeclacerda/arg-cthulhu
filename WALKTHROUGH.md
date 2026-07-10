@@ -39,14 +39,17 @@
    - usuário: `sarah.bishop`
    - senha: `password`
 5. Clique em **MOUNT READ-ONLY IMAGE** ou **CONTINUE MOUNTED CASE**.
-6. A partir desse ponto você está dentro do Windows de Sarah. O relay não aparece na caixa
-   postal nem em seus arquivos.
-7. Abra **Outlook Express** e leia pelo menos:
+6. A partir desse ponto você está dentro do Windows de Sarah. Na primeira abertura, o sistema
+   restaura a caixa de entrada e o Explorer como uma sessão interrompida; o relay não aparece
+   na caixa postal nem em seus arquivos.
+7. Em **Start → Recent Documents**, os seis atalhos iniciais também apontam para o incidente,
+   diário, notas de Miriam, índice de sobrenomes, tarefas e palestra.
+8. Abra **Outlook Express** e leia pelo menos:
    - `Your order has shipped — Lot 114`
    - `Sarah, where are you?`
    - `Re: Re: Re: are you even alive`
-8. Abra **My Documents**, que leva diretamente à pasta de Sarah. O caminho longo equivalente
-   é `My Computer → Local Disk (C:) → Users → Sarah Bishop`.
+9. Abra **My Documents**, que leva diretamente ao perfil de Sarah. O caminho longo equivalente
+   é `My Computer → Local Disk (C:) → Windows → Profiles → S.BISHOP`.
 
 Os arquivos iniciais mais importantes são:
 
@@ -656,7 +659,10 @@ se reproduzir sem pessoas. O jogo deliberadamente não confirma qual leitura é 
 ### ARCHIVE YOURSELF — variação secreta
 
 Depois de liberar a contenção, abra `hash_manifest.txt` e, na conversa ao vivo com Sarah,
-escolha **Como quebramos isso?**. O botão **ARCHIVE YOURSELF** aparece no Finale.
+escolha **Como quebramos isso?**. Se a janela ao vivo já tiver fechado com outra pergunta,
+`sarah_break_cache.tmp` aparece após `future_log`; abra-o para recuperar apenas o protocolo.
+**ARCHIVE YOURSELF** aparece como continuação da confirmação de contenção, não na tela principal
+do Finale.
 
 Ele aceita o nome do jogador como testemunha, mas mostra `REPLACEMENT: FIELD UNRESOLVED`.
 Sarah não volta e o jogo não confirma que a cadeia terminou. É um sacrifício, não uma vitória.
@@ -745,19 +751,20 @@ parte do save.
 
 No Internet Explorer:
 
+- **Gull & Lantern Café** e **Arkham Transit / Route 7** estão disponíveis desde o início.
+- Depois do Lote 114, aparecem **Orne Compatibility Gateway** e **Orne Staff Bulletin**.
+- Depois da cifra da margem, aparecem **Essex Hydrographic Telemetry** e o **Arkham Preservation
+  Web Ring**.
 - **Miskatonic University** contém a referência de Bellaso.
-- **Arkham Gazette** conecta o caso Bishop aos relatos de William Dyer.
-- **Geology Department** abre o arquivo da expedição Pabodie de 1930–31.
-- **Antarctic-Net** contém uma estação automática ainda transmitindo `TEKELI-LI`.
-- Pesquisar `TEKELI-LI`, `DANFORTH` ou abrir o frame danificado leva à página GeoCities de
-  Danforth.
+- Conteúdo polar, Danforth, famílias e guestbook de Tom só abre após `counting_audio`; antes,
+  o navegador mostra `CACHE SEGMENT NOT MOUNTED`.
 
 ### Lixeira
 
-Abra **Recycle Bin** e dê duplo clique em:
-
-- `DANFORTH.URL` — abre o cache pessoal de Danforth;
-- `EXPEDITION.TMP` — nota apagada do acampamento Lake.
+Abra **Recycle Bin** e dê duplo clique nos itens que surgem progressivamente. No início há
+`REVIEW_2.TMP`, `GULLLANT.URL` e `ROUTE7.URL`; pós-Lote 114 entram `APOLOGY.TMP` e
+`ORNE_GATE.URL`; pós-cifra entram `RETURN.LBL` e `ARKWEB.URL`; pós-log futuro aparece
+`EMPTY.TMP`. `DANFORTH.URL` e `EXPEDITION.TMP` só entram após `counting_audio`.
 
 Esses conteúdos não são necessários para concluir o jogo.
 
