@@ -20,6 +20,7 @@ import {
   PAGE_ADDRESS,
 } from "@/app/data/browserPages";
 import { isUnlocked } from "@/app/game/unlock";
+import { useWindowManager } from "@/app/context/WindowManagerContext";
 import "../ArgTools/style.scss";
 import "./style.scss";
 
@@ -50,7 +51,9 @@ const RecoveredBrowser = ({
     recordNearMiss,
     activePuzzle,
     dispatchGameEvent,
+    setFlag,
   } = useProgress();
+  const { openWindow } = useWindowManager();
   const { locale, t } = useI18n();
   const unlockContext = { flags: state.flags, discoveredEvidenceIds: state.discoveredEvidenceIds, solvedPuzzleIds: Object.entries(state.puzzles).filter(([, value]) => value.solvedAt).map(([id]) => id) as import("@/app/game/progress").PuzzleId[] };
   const historicalCacheUnlocked = isPuzzleSolved("margin_cipher");
@@ -87,6 +90,26 @@ const RecoveredBrowser = ({
           state.puzzles[activePuzzle].hintsUnlocked - 1
         ]
       : null;
+  const eleanorReconciled = state.optionalDiscoveries.includes("eleanor_record");
+
+  const recoverGraymoorReceipt = () => {
+    setFlag("graymoor_return_receipt_recovered");
+    openWindow({
+      id: "notepad-graymoor-return-receipt",
+      appType: "notepad",
+      title: "RETURN_114.RCP - Notepad",
+      props: { fileId: "graymoor_return_receipt", windowClassName: "corrupted" },
+    });
+  };
+
+  const reconcileEleanorOwner = () => {
+    if (!state.discoveredEvidenceIds.includes("record_2014")) return;
+    discoverEvidence("eleanor_reconciliation", "personnel-14-ev");
+    dispatchGameEvent({
+      type: "COMPLETE_OPTIONAL_MISSION",
+      missionId: "eleanor_record",
+    });
+  };
 
   const secure = address.startsWith("cache://");
   const statusText = useMemo(() => {
@@ -98,9 +121,10 @@ const RecoveredBrowser = ({
   const navigate = (
     next: BrowserPage,
     nextAddress = PAGE_ADDRESS[next],
-    record = true
+    record = true,
+    bypassUnlock = false
   ) => {
-    if (!isUnlocked(browserPage(next).unlock, unlockContext)) {
+    if (!bypassUnlock && !isUnlocked(browserPage(next).unlock, unlockContext)) {
       next = "not-found";
       nextAddress = "res://shdoclc/dnserror.htm#CACHE_SEGMENT_NOT_MOUNTED";
     }
@@ -154,7 +178,7 @@ const RecoveredBrowser = ({
       solvePuzzle("lot_114");
       discoverEvidence("catalogue_lot_114", "catalogue-lot-114");
       visitPage("catalogue-lot-114");
-      navigate("lot");
+      navigate("lot", PAGE_ADDRESS.lot, true, true);
       return;
     }
     if (!isPuzzleSolved("lot_114") && lotValidation.nearMiss) {
@@ -174,7 +198,7 @@ const RecoveredBrowser = ({
       solvePuzzle("counting_audio");
       discoverEvidence("coastline_archive", "coastline-yhanthlei");
       visitPage("coastline-yhanthlei");
-      navigate("coast");
+      navigate("coast", PAGE_ADDRESS.coast, true, true);
       return;
     }
 
@@ -187,7 +211,7 @@ const RecoveredBrowser = ({
       solvePuzzle("lineage");
       discoverEvidence("sarah_future_record", "catalogue-2026");
       visitPage("catalogue-2026");
-      navigate("sarah");
+      navigate("sarah", PAGE_ADDRESS.sarah, true, true);
       return;
     }
     if (
@@ -975,6 +999,77 @@ const RecoveredBrowser = ({
             </article>
           )}
 
+          {page === "graymoor-return" && (
+            <article className="arg-tool__paper site-maintenance">
+              <p className="arg-tool__kicker">GRAYMOOR / RETURN TRACE CACHE</p>
+              <h2>GM-114-0310</h2>
+              <p>
+                {locale === "pt-BR"
+                  ? "Cópia local do rastreamento anotado por Sarah no verso do recibo do café."
+                  : "Local copy of the tracking number Sarah wrote on the back of the café receipt."}
+              </p>
+              <table className="browser-table"><tbody>
+                <tr><th>{locale === "pt-BR" ? "Evento" : "Event"}</th><th>{locale === "pt-BR" ? "Horário" : "Time"}</th></tr>
+                <tr><td>{locale === "pt-BR" ? "Coleta solicitada" : "Pickup requested"}</td><td>2026-03-10 16:41</td></tr>
+                <tr><td>{locale === "pt-BR" ? "Pacote aceito" : "Parcel accepted"}</td><td>2026-03-11 09:14</td></tr>
+                <tr className="browser-redaction"><td>{locale === "pt-BR" ? "Rota de retorno criada" : "Return route created"}</td><td>2026-03-11 09:13</td></tr>
+                <tr><td>{locale === "pt-BR" ? "Etiqueta impressa" : "Label printed"}</td><td>2026-03-12 08:03</td></tr>
+              </tbody></table>
+              <p className="browser-redaction">
+                {locale === "pt-BR"
+                  ? "A rota de retorno existia um minuto antes de a Graymoor aceitar o pacote."
+                  : "The return route existed one minute before Graymoor accepted the parcel."}
+              </p>
+              <button className="button" type="button" onClick={recoverGraymoorReceipt}>
+                {locale === "pt-BR" ? "Abrir comprovante em cache" : "Open cached receipt"}
+              </button>
+            </article>
+          )}
+
+          {page === "eleanor" && (
+            <article className="arg-tool__paper site-maintenance">
+              <p className="arg-tool__kicker">MISKATONIC PERSONNEL MIRROR / 14-EV</p>
+              <h2>Eleanor Vale</h2>
+              <dl className="arg-tool__properties">
+                <dt>{locale === "pt-BR" ? "Cargo" : "Role"}</dt>
+                <dd>{locale === "pt-BR" ? "Contratada de digitalização noturna" : "Night digitization contractor"}</dd>
+                <dt>{locale === "pt-BR" ? "Programa" : "Program"}</dt>
+                <dd>{locale === "pt-BR" ? "Preservação de bibliotecas" : "Library preservation"}</dd>
+                <dt>{locale === "pt-BR" ? "Projeto" : "Project"}</dt>
+                <dd>{locale === "pt-BR" ? "Histórias orais de Essex County" : "Essex County oral histories"}</dd>
+                <dt>{locale === "pt-BR" ? "Última nota" : "Last note"}</dt>
+                <dd>{locale === "pt-BR" ? "Ligar para a mãe depois das 08:00." : "Call mother after 08:00."}</dd>
+              </dl>
+              <hr />
+              <h3>{locale === "pt-BR" ? "Reconciliação do espelho" : "Mirror reconciliation"}</h3>
+              {!state.discoveredEvidenceIds.includes("record_2014") ? (
+                <p className="browser-redaction">
+                  {locale === "pt-BR"
+                    ? "REGISTRO LOCAL AUSENTE: abra 2014_RECORD.DAT antes de confrontar o proprietário."
+                    : "LOCAL RECORD MISSING: open 2014_RECORD.DAT before reconciling its owner."}
+                </p>
+              ) : (
+                <>
+                  <table className="browser-table"><tbody>
+                    <tr><th>BADGE</th><td>14-EV</td></tr>
+                    <tr><th>LOOPBACK 0.3</th><td>UPLOADER: e_vale / 2014-05-19 03:14</td></tr>
+                    <tr><th>DISAPPEARANCE</th><td>2014-05-18 03:14</td></tr>
+                    <tr><th>OWNER</th><td>{eleanorReconciled ? "[CHECKSUM]" : "ELEANOR VALE / CURRENT OBSERVER"}</td></tr>
+                    <tr><th>WITNESS</th><td>{eleanorReconciled ? "ARCHIVE" : "[comparison pending]"}</td></tr>
+                  </tbody></table>
+                  <button className="button" type="button" disabled={eleanorReconciled} onClick={reconcileEleanorOwner}>
+                    {eleanorReconciled
+                      ? locale === "pt-BR" ? "Proprietário reconciliado" : "Owner reconciled"
+                      : locale === "pt-BR" ? "Confrontar crachá e registro" : "Compare badge and record"}
+                  </button>
+                </>
+              )}
+              {eleanorReconciled && (
+                <p className="browser-redaction">OWNER: CHECKSUM / HUMAN ATTRIBUTION UNRESOLVED</p>
+              )}
+            </article>
+          )}
+
           {page === "families" && (
             <article className="site-families">
               <header>
@@ -1293,7 +1388,7 @@ const RecoveredBrowser = ({
               <table className="browser-table"><tbody>
                 <tr><th>Date</th><th>Location</th><th>Disposition</th></tr>
                 <tr><td>1998-09-02</td><td>Orne B2 / M. Bishop</td><td>ADMINISTRATIVE</td></tr>
-                <tr><td>2014-05-18</td><td>Off-site archive mirror</td><td>OWNER REDACTED</td></tr>
+                <tr><td>2014-05-18</td><td>Off-site archive mirror</td><td>{eleanorReconciled ? "OWNER: CHECKSUM" : "OWNER REDACTED"}</td></tr>
                 <tr><td>2026-03-11</td><td>Orne B2 / S. Bishop</td><td>ADMINISTRATIVE</td></tr>
               </tbody></table>
               <p>No active water line entered any affected room. Conductivity in all retained samples matched seawater within test tolerance.</p>

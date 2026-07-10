@@ -8,7 +8,7 @@ export type BrowserPage =
   | "reader-log" | "graymoor" | "families" | "forum" | "em" | "tom"
   | "tom-guestbook" | "maintenance" | "downloads" | "false-lead" | "not-found"
   | "gull-lantern" | "route-7" | "compat-gateway" | "staff-bulletin"
-  | "hydrography" | "web-ring";
+  | "hydrography" | "web-ring" | "graymoor-return" | "eleanor";
 
 export interface BrowserPageDefinition {
   id: BrowserPage;
@@ -37,10 +37,12 @@ export const BROWSER_PAGES: readonly BrowserPageDefinition[] = [
   { id: "staff", address: "http://www.miskatonic.edu/library/staff/armitage.htm", keywords: ["armitage"], unlock: always, pageId: "library-staff-armitage" },
   { id: "reader-log", address: "http://www.miskatonic.edu/library/readers/notices.htm", keywords: ["readerlog"], unlock: always, pageId: "library-reader-notices" },
   { id: "graymoor", address: "http://www.graymoor-antiquarian.com/about/", keywords: ["graymoor"], unlock: always, pageId: "graymoor-history" },
+  { id: "graymoor-return", address: "cache://graymoor/returns/GM-114-0310", keywords: ["gm1140310"], unlock: { type: "evidenceOpened", evidenceId: "gull_0310_receipt" }, pageId: "graymoor-return-gm-114-0310" },
   { id: "forum", address: "http://www.miskanet-forums.org/board/folklore/", keywords: ["forum", "miskanet"], unlock: always, pageId: "miskanet-forum" },
   { id: "em", address: "http://www.geocities.com/em_bishop/photos/", keywords: ["embishop"], unlock: always, pageId: "em-personal-page" },
   { id: "tom", address: "http://www.geocities.com/tomalvarez_archive/", keywords: ["tomalvarez"], unlock: always, pageId: "tom-personal-page", evidenceId: "tom_homepage" },
   { id: "maintenance", address: "cache://miskatonic/facilities/B2/", keywords: ["facilities", "humidity"], unlock: always, pageId: "facilities-b2", evidenceId: "maintenance_record" },
+  { id: "eleanor", address: "cache://miskatonic/personnel/14-EV", keywords: ["14ev", "eleanorvale"], unlock: { type: "allOf", conditions: [{ type: "puzzleSolved", puzzleId: "future_log" }, { type: "evidenceOpened", evidenceId: "victim_2014" }] }, pageId: "personnel-14-ev" },
   { id: "downloads", address: "http://www.miskanet-files.org/archive-tools/", keywords: ["downloads", "loopback"], unlock: always, pageId: "miskanet-downloads" },
   { id: "false-lead", address: "http://search.miskatonic.net/search", keywords: ["sheknows"], unlock: always, pageId: "false-lead-search" },
   { id: "not-found", address: "res://shdoclc/dnserror.htm", keywords: [], unlock: always },

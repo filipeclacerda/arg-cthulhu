@@ -73,6 +73,10 @@ const ImageViewer = ({ fileId }: { fileId: string }) => {
   ];
   const isTemporalPhoto = Boolean(file && temporalFileIds.includes(file.id));
   const temporalSolved = Boolean(progress.flags.three_times_solved);
+  const embeddedRecovered = Boolean(
+    file?.embeddedVariant &&
+      progress.assetVariantsSeen.includes(file.embeddedVariant.id)
+  );
   const temporalAvailable = {
     past: progress.discoveredEvidenceIds.includes("office_1998_overlay"),
     present: progress.discoveredEvidenceIds.includes("office_after_photo"),
@@ -159,6 +163,18 @@ const ImageViewer = ({ fileId }: { fileId: string }) => {
     }
   };
 
+  const recoverEmbeddedVariant = () => {
+    if (!file.embeddedVariant || embeddedRecovered) return;
+    setFlag(file.embeddedVariant.setsFlag);
+    dispatchGameEvent({
+      type: "SEE_ASSET_VARIANT",
+      variantId: file.embeddedVariant.id,
+    });
+    if (file.embeddedVariant.evidenceId) {
+      discoverEvidence(file.embeddedVariant.evidenceId, file.id);
+    }
+  };
+
   const browse = (direction: -1 | 1) => {
     if (gallery.length < 2) return;
     const nextIndex =
@@ -226,6 +242,18 @@ const ImageViewer = ({ fileId }: { fileId: string }) => {
               onClick={() => setCompareMode((value) => !value)}
             >
               Compare frames
+            </button>
+          )}
+          {file.embeddedVariant && (
+            <button
+              className={`button ${embeddedRecovered ? "active" : ""}`}
+              type="button"
+              disabled={embeddedRecovered}
+              onClick={recoverEmbeddedVariant}
+            >
+              {embeddedRecovered
+                ? progress.locale === "pt-BR" ? "Thumbnail recuperado" : "Thumbnail recovered"
+                : progress.locale === "pt-BR" ? "Recuperar thumbnail" : "Recover thumbnail"}
             </button>
           )}
           <button className="button" onClick={showProperties}>{t("propertiesLabel")}</button>
@@ -385,6 +413,13 @@ const ImageViewer = ({ fileId }: { fileId: string }) => {
               <span>{comparisonFile.name}</span>
             </div>
           )}
+          {embeddedRecovered && file.embeddedVariant && (
+            <div className="image-viewer__embedded-reveal" aria-live="polite">
+              <small>EMBEDDED THUMBNAIL / RECOVERED</small>
+              <strong>{file.embeddedVariant.label}</strong>
+              <span>{file.embeddedVariant.detail}</span>
+            </div>
+          )}
           {recovered && (
             <div className="image-viewer__reveal">
               <strong>BELLASO</strong>
@@ -431,6 +466,12 @@ const ImageViewer = ({ fileId }: { fileId: string }) => {
                       clues={file.clues}
                     />
                   </dd>
+                  {file.embeddedVariant && (
+                    <>
+                      <dt>Embedded data</dt>
+                      <dd>{embeddedRecovered ? file.embeddedVariant.label : "thumbnail fragment available"}</dd>
+                    </>
+                  )}
                 </>
               )}
             </dl>

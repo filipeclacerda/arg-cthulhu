@@ -6,18 +6,49 @@ import { formatGameDate, tomorrow } from "@/app/utils/narrative";
 import "./style.scss";
 
 const Clock = () => {
-  const { corruptionStage, isPuzzleSolved, state } = useProgress();
+  const { corruptionStage, isPuzzleSolved, setFlag, state } = useProgress();
   const { openWindow } = useWindowManager();
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
   const [skipping, setSkipping] = useState(false);
   // Accumulated "wrongness" the clock has remembered into the future.
   const skewRef = useRef(0);
   const hasLostSecond = state.worldReactionsSeen.includes("clock_lost_second");
+  const hasUnindexedInterval = state.worldReactionsSeen.includes(
+    "unindexed_interval"
+  );
   const secondSkipped = useRef(false);
+  const intervalRecall = useRef(false);
+  const intervalRecallReplayed = useRef(false);
+  const recallTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const replayPersisted = Boolean(state.flags.unindexed_clock_replayed);
+
+  useEffect(() => {
+    if (replayPersisted) intervalRecallReplayed.current = true;
+  }, [replayPersisted]);
+
+  useEffect(() => {
+    if (!hasUnindexedInterval || intervalRecallReplayed.current) {
+      return;
+    }
+    intervalRecallReplayed.current = true;
+    intervalRecall.current = true;
+    setFlag("unindexed_clock_replayed");
+    setSkipping(true);
+    setCurrentTime(new Date(Date.now() - 41 * 60 * 60 * 1000 - 58 * 60 * 1000 - 12 * 1000));
+    recallTimer.current = setTimeout(() => {
+      intervalRecall.current = false;
+      setSkipping(false);
+      setCurrentTime(new Date(Date.now() + skewRef.current));
+    }, 1000);
+    return () => {
+      if (recallTimer.current) clearTimeout(recallTimer.current);
+    };
+  }, [hasUnindexedInterval, setFlag]);
 
   useEffect(() => {
     setCurrentTime(new Date());
     const intervalId = setInterval(() => {
+      if (intervalRecall.current) return;
       // Stage 2+ the clock starts running fast; each tick it remembers a little
       // more time than has actually passed.
       const skewPerTick = corruptionStage >= 2 ? corruptionStage - 1 : 0;

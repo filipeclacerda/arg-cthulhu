@@ -28,6 +28,7 @@ import {
   selectNextDiegeticEvent,
 } from "../game/diegeticEvents";
 import { setFocalSetPieceActive } from "../context/diegeticFocus";
+import DeepseaScreensaver from "../components/DeepseaScreensaver/DeepseaScreensaver";
 
 /** A discreet coordinator toast (never a window) with one action. */
 interface DiegeticToast {
@@ -671,6 +672,55 @@ const Desktop = () => {
             ),
         });
         break;
+      case "micro_two_days_out":
+        setActiveToast({
+          eventId: definition.id,
+          icon: "/icons/folder-special.png",
+          kicker: "RETURN TRACE / UNINDEXED INTERVAL",
+          heading: "41:58:12",
+          body: localeIs(
+            "Por quase dois dias, nenhum evento de Sarah entrou no índice. O relógio se lembrou deles de uma vez.",
+            "For almost two days, no Sarah event entered the index. The clock remembered them all at once."
+          ),
+          actionLabel: localeIs("Ver sistema", "View system"),
+          onAction: () =>
+            openWindow({
+              id: "system-properties",
+              appType: "system-properties",
+              title: "System Properties",
+            }),
+        });
+        break;
+      case "micro_tom_held_block":
+        setActiveToast({
+          eventId: definition.id,
+          icon: "/icons/drive.png",
+          kicker: "A: / VERIFY COMPLETE",
+          heading: "TOM_HOLD.LOG",
+          body: localeIs(
+            "A unidade continua procurando um bloco que a cópia já regenerou.",
+            "The drive keeps seeking for a block the copy has already regenerated."
+          ),
+          actionLabel: t("openFileLabel"),
+          onAction: () =>
+            openFileFromToast("notepad", "tom_hold_log", "TOM_HOLD.LOG"),
+        });
+        break;
+      case "micro_eleanor_record":
+        setActiveToast({
+          eventId: definition.id,
+          icon: "/icons/file.png",
+          kicker: "PERSONNEL MIRROR / OWNER RECONCILED",
+          heading: "ELEANOR.VCF",
+          body: localeIs(
+            "O registro recuperou uma pessoa. O campo de proprietário recuperou apenas um checksum.",
+            "The record recovered a person. The owner field recovered only a checksum."
+          ),
+          actionLabel: t("openFileLabel"),
+          onAction: () =>
+            openFileFromToast("notepad", "eleanor_vcard", "ELEANOR.VCF"),
+        });
+        break;
     }
   };
   const presentRef = useRef(presentDiegeticEvent);
@@ -852,6 +902,10 @@ const Desktop = () => {
           : ""
       }
     >
+      <DeepseaScreensaver
+        enabled={state.assetVariantsSeen.includes("deepsea-screensaver")}
+        playerName={playerName}
+      />
       <div className="desktop-atmosphere" aria-hidden="true" />
       <div className="desktop-case-label" aria-hidden="true">
         {labelGlitch ? (
@@ -973,6 +1027,35 @@ const Desktop = () => {
             </button>
           </div>
         )}
+      {activeToast && (
+        <div className="archive-warning coordinator-toast" role="status">
+          <Image src={activeToast.icon} alt="" width={34} height={34} />
+          <div>
+            <small>{activeToast.kicker}</small>
+            <strong>{activeToast.heading}</strong>
+            <p>{activeToast.body}</p>
+          </div>
+          <button
+            className="button"
+            type="button"
+            onClick={() => {
+              const action = activeToast.onAction;
+              setActiveToast(null);
+              action();
+            }}
+          >
+            {activeToast.actionLabel}
+          </button>
+          <button
+            className="button archive-warning__close"
+            type="button"
+            aria-label={t("dismissLabel")}
+            onClick={() => setActiveToast(null)}
+          >
+            ×
+          </button>
+        </div>
+      )}
       <ConclusionReadyToast />
       {flash1998 != null && (
         <div

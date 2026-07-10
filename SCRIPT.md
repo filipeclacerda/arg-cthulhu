@@ -670,6 +670,38 @@ variante **RESTORE INCOMPLETE**. Ela usa a disposição RESTORE e acrescenta `en
 responde primeiro com o nome do observador, o destinatário continua não resolvido e o
 diretório de ambos converge para `S. BISHOP`. A operação interrompeu algo; não prova o quê.
 
+### Três micro-missões — histórias que o índice quase apagou
+
+Estas investigações são descobertas organicamente e nunca aparecem como lista de tarefas. Cada
+uma registra um `OptionalDiscoveryId`, uma reação diegética e uma linha de coda, sem alterar a
+ordem dos sete enigmas ou liberar finais.
+
+- **`two_days_out` — Quarenta e oito horas:** depois de `lot_114`, ler `diary.txt` e
+  `reasons_to_stop.txt` recupera `GULL_0310.RCT` na Lixeira. O código `GM-114-0310` abre o
+  rastreamento da Graymoor: o pacote foi aceito às 09:14, mas a rota de retorno já existia às
+  09:13 e a etiqueta só seria impressa no dia seguinte. Abrir `RETURN_114.RCP` preserva o
+  intervalo de `41:58:12` em que Sarah realmente esteve fora do índice. O relógio relembra
+  esse intervalo por um segundo; isso não implica que Sarah tenha sido apagada ou protegida.
+- **`tom_held_block` — O bloco que Tom reteve:** depois de `lineage`, o thumbnail embutido em
+  `relay07_upload_setup.jpg` revela o disquete `SB-0316 / HOLD BLOCK 04` e materializa `A:`.
+  `HOLD_04.CHK` e `hash_manifest.txt` fornecem `VERIFY SB-0316 /HOLD 04`. A verificação mostra
+  que Tom removeu o bloco antes do upload e que a cópia o regenerou na primeira abertura; não
+  prova que ele conhecia o plano de Sarah nem explica seu desaparecimento.
+- **`eleanor_record` — O registro de Eleanor Vale:** depois de `future_log`, o crachá `14-EV`
+  leva ao perfil de Eleanor. Confrontar esse perfil com `2014_RECORD.DAT` liga sua credencial
+  ao upload de `LOOPBACK 0.3` no dia posterior ao desaparecimento. O proprietário termina como
+  `CHECKSUM`, a atribuição humana continua `UNRESOLVED` e o jogo não decide quem realizou o
+  upload ou se Eleanor sobreviveu.
+
+O bloco `WITNESS` do Finale mostra apenas `OMISSIONS RETAINED: N/3`. O pós-jogo acrescenta
+linhas administrativas a `case_correlations.txt`; nenhuma delas oferece uma interpretação
+canônica.
+
+Três pequenos stings usam conteúdo já existente: `DEEPSEA.SCR` ativa um screensaver depois de
+3:14 de inatividade, `SOLITAIRE.SAV` registra a partida 413 depois de qualquer final, e
+`EMPTY.TMP` continua visualmente vazio mas passa a ocupar 404 bytes e pertencer ao observador
+depois de aberto.
+
 ### Sistema de dicas (todas as etapas)
 
 Cada enigma tem até 3 dicas, reveladas em ordem crescente de explicitação:

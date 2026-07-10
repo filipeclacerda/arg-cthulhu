@@ -256,6 +256,33 @@ export const DIEGETIC_EVENTS: DiegeticEventDefinition[] = [
     seenFlag: "sarah_break_cache_materialized",
     sound: "disk",
   },
+  {
+    id: "micro_two_days_out",
+    priority: 4,
+    presentation: { kind: "toast" },
+    when: { type: "worldReaction", reactionId: "unindexed_interval" },
+    seenFlag: "two_days_out_notice_shown",
+    sound: "future",
+  },
+  {
+    id: "micro_tom_held_block",
+    priority: 4,
+    presentation: { kind: "toast" },
+    when: { type: "worldReaction", reactionId: "tom_hold_seek" },
+    seenFlag: "tom_held_block_notice_shown",
+    sound: "disk",
+  },
+  {
+    id: "micro_eleanor_record",
+    priority: 4,
+    presentation: { kind: "toast" },
+    when: {
+      type: "worldReaction",
+      reactionId: "eleanor_owner_reconciled",
+    },
+    seenFlag: "eleanor_record_notice_shown",
+    sound: "future",
+  },
 ];
 
 /** Window ids the coordinator may hold open; used for the focal-busy gate. */

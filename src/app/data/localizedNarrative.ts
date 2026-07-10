@@ -714,6 +714,69 @@ Nenhum sistema externo confirmou que Sarah Bishop retornou.
 Não foi determinado se a segunda voz conta a favor do total ou contra ele.
 
 O arquivo marcou estas omissões como intencionais.`,
+  gull_0310_receipt: `GULL & LANTERN CAFÉ / 10 DE MARÇO DE 2026
+
+2 chowders
+1 queijo quente, sem tomate
+2 cafés, um substituído depois que Em reclamou
+
+MESA: JANELA 4
+PAGO POR: E. BISHOP
+
+Anotado à mão no verso, S. Bishop:
+coleta da devolução / GM-114-0310
+Em disse para escrever em algum lugar que não fosse o livro.`,
+  graymoor_return_receipt: `GRAYMOOR / RECONCILIAÇÃO DA DEVOLUÇÃO DO LOTE 114
+
+COLETA SOLICITADA ... 2026-03-10 16:41
+PACOTE ACEITO ........ 2026-03-11 09:14
+ROTA DE RETORNO CRIADA 2026-03-11 09:13
+ETIQUETA IMPRESSA .... 2026-03-12 08:03
+
+ORIGEM: S. BISHOP
+DESTINO: ORNE LIBRARY B2
+INTERVALO NÃO INDEXADO: 41:58:12
+
+A rota de retorno antecede a aceitação do pacote.
+Nenhuma operação de correção foi registrada.`,
+  tom_lunch_note: `Sarah —
+
+Peguei a etiquetadora emprestada de novo. Se ela voltar com todas as teclas menos o 4, isso não tem relação comigo e é impossível provar.
+
+Almoço na quinta? Eu levo o cabo. Você finge que isso conta como sair do porão.
+
+— Tom`,
+  tom_hold_fragment: `SB-0316 / FRAGMENTO DE VERIFICAÇÃO
+
+BLOCO 04 .............. REMOVIDO ANTES DO UPLOAD
+ORIGEM DA REMOÇÃO ..... T. ALVAREZ
+HASH ESPERADO ......... ver HASHMA~1.TXT
+RECONSTRUÇÃO .......... AGUARDANDO PRIMEIRA ABERTURA
+
+Sintaxe de verificação retida em espaço não alocado:
+VERIFY SB-0316 /HOLD 04`,
+  tom_hold_log: `SB-0316 / VERIFICAÇÃO DO BLOCO RETIDO
+
+BLOCO 04 .............. ausente intencionalmente
+ÚLTIMO PROPRIETÁRIO ... T. ALVAREZ
+PROPRIETÁRIO DO UPLOAD  não resolvido
+PRIMEIRA ABERTURA ..... observador atual
+
+RESULTADO:
+O bloco retido foi regenerado quando a imagem foi aberta.
+Nenhum registro sobrevivente identifica quem instruiu a cópia a substituí-lo.`,
+  eleanor_vcard: `BEGIN:VCARD
+VERSION:2.1
+FN:Eleanor Vale
+TITLE:Contratada de digitalização noturna
+ORG:Miskatonic University;Espelho Externo do Arquivo
+NOTE:Estudante de preservação. Turno de histórias orais. Ligar para a mãe depois das 08:00.
+X-BADGE:14-EV
+X-LAST-HUMAN-UPDATE:2014-05-17 22:41
+X-LOOPBACK-UPLOAD:2014-05-19 03:14
+X-OWNER:[CHECKSUM]
+X-HUMAN-ATTRIBUTION:NÃO RESOLVIDA
+END:VCARD`,
 };
 
 const EMAILS_PT: Record<string, { subject: string; body: string }> = {

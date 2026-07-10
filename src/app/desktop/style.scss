@@ -343,6 +343,19 @@ body.desktop-mode {
         font-weight: bold;
     }
 }
+
+.coordinator-toast {
+    bottom: 202px;
+    z-index: 7880;
+
+    small {
+        display: block;
+        margin-bottom: 2px;
+        color: #4b4b4b;
+        font-size: 10px;
+        letter-spacing: 0.05em;
+    }
+}
 .desktop-icon img {
     height: calc(var(--ui-scale, 1) * 46px);
     width: calc(var(--ui-scale, 1) * 46px);
@@ -487,4 +500,82 @@ body.desktop-mode {
     &:hover p {
         text-decoration: underline;
     }
+}
+
+.deepsea-screensaver {
+    position: fixed;
+    inset: 0;
+    z-index: 30000;
+    overflow: hidden;
+    cursor: none;
+    color: #9fd4cf;
+    background:
+        radial-gradient(circle at 50% 110%, rgba(40, 120, 124, 0.18), transparent 45%),
+        #01090d;
+    font-family: "Courier New", monospace;
+}
+
+.deepsea-screensaver::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+        to bottom,
+        transparent 0,
+        transparent 3px,
+        rgba(120, 210, 210, 0.035) 4px
+    );
+    pointer-events: none;
+}
+
+.deepsea-screensaver__water {
+    position: absolute;
+    inset: 0;
+}
+
+.deepsea-screensaver__water i {
+    position: absolute;
+    width: 38vw;
+    aspect-ratio: 1;
+    border: 1px solid rgba(104, 203, 199, 0.24);
+    border-radius: 50%;
+    animation: deepsea-drift 18s linear infinite;
+}
+
+.deepsea-screensaver__water i:nth-child(1) { left: -12vw; top: 8vh; }
+.deepsea-screensaver__water i:nth-child(2) { left: 22vw; top: 44vh; animation-delay: -4s; }
+.deepsea-screensaver__water i:nth-child(3) { right: -10vw; top: 12vh; animation-delay: -8s; }
+.deepsea-screensaver__water i:nth-child(4) { left: 44vw; top: -20vh; animation-delay: -12s; }
+.deepsea-screensaver__water i:nth-child(5) { left: 6vw; bottom: -22vh; animation-delay: -15s; }
+.deepsea-screensaver__water i:nth-child(6) { right: 18vw; bottom: -16vh; animation-delay: -2s; }
+.deepsea-screensaver__water i:nth-child(7) { left: 34vw; top: 26vh; animation-delay: -10s; }
+
+.deepsea-screensaver__status {
+    position: absolute;
+    left: 50%;
+    bottom: 9vh;
+    display: grid;
+    gap: 5px;
+    min-width: 320px;
+    text-align: center;
+    transform: translateX(-50%);
+    text-shadow: 0 0 8px rgba(86, 214, 204, 0.45);
+}
+
+.deepsea-screensaver__status strong {
+    letter-spacing: 0.32em;
+}
+
+.deepsea-screensaver__status small {
+    opacity: 0.55;
+}
+
+@keyframes deepsea-drift {
+    0% { transform: scale(0.2); opacity: 0; }
+    16% { opacity: 0.8; }
+    100% { transform: scale(2.4); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .deepsea-screensaver__water i { animation: none; opacity: 0.35; }
 }

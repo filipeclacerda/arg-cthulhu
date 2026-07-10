@@ -14,14 +14,19 @@ describe("recovered web registry", () => {
 
   it("maps persisted page visits back to an addressable page for History", () => {
     expect(browserPageFromVisitedId("arkham-route-7")?.id).toBe("route-7");
+    expect(browserPageFromVisitedId("graymoor-return-gm-114-0310")?.id).toBe(
+      "graymoor-return"
+    );
+    expect(browserPageFromVisitedId("personnel-14-ev")?.id).toBe("eleanor");
   });
 });
 
 describe("recycle bin registry", () => {
   it("contains the eight staged additions and gates deep lore late", () => {
-    expect(RECYCLE_ENTRIES).toHaveLength(10);
+    expect(RECYCLE_ENTRIES).toHaveLength(11);
     expect(RECYCLE_ENTRIES.find((entry) => entry.id === "danforth")?.unlock).toEqual({ type: "puzzleSolved", puzzleId: "counting_audio" });
     expect(RECYCLE_ENTRIES.find((entry) => entry.id === "empty")?.target).toEqual({ type: "file", fileId: "empty_tmp" });
+    expect(RECYCLE_ENTRIES.find((entry) => entry.id === "gull-0310")?.unlock).toMatchObject({ type: "allOf" });
   });
 
   it("materializes the recovered fallback and Miriam's broken shortcut", () => {

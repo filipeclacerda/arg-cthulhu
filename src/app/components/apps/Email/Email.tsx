@@ -63,6 +63,12 @@ const Email = () => {
   }, [visibleEmailIds]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const selected = visibleEmails.find((e) => e.id === selectedId);
+  const selectedBody = selected
+    ? selected.id === "email-tom-loop" &&
+      state.optionalDiscoveries.includes("tom_held_block")
+      ? `${selected.body}\n\nATTACHMENT: HOLD_04.CHK — 0 bytes`
+      : selected.body
+    : "";
 
   useEffect(() => {
     if (selectedId) {
@@ -154,7 +160,7 @@ const Email = () => {
               <ClueText
                 as="pre"
                 className="email-body"
-                text={formatEmailDate(resolveTokens(selected.body, ctx))}
+                text={formatEmailDate(resolveTokens(selectedBody, ctx))}
                 clues={selected.clues}
               />
             </>

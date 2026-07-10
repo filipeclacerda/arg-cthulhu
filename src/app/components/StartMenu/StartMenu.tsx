@@ -276,6 +276,8 @@ const StartMenu = () => {
       normalizedCommand === "INDEX /SEAL RELAY-07 /WITNESS ARCHIVE";
     const incompleteRestoreCommand =
       normalizedCommand === "INDEX /RESTORE /INCOMPLETE";
+    const heldBlockCommand =
+      normalizedCommand === "VERIFY SB-0316 /HOLD 04";
     setRunInput("");
     setShowRun(false);
     const result = runCommand(command);
@@ -317,6 +319,15 @@ const StartMenu = () => {
         });
         return;
       }
+      if (heldBlockCommand) {
+        openWindow({
+          id: "notepad-tom-hold-log",
+          appType: "notepad",
+          title: "TOM_HOLD.LOG - Notepad",
+          props: { fileId: "tom_hold_log", windowClassName: "corrupted" },
+        });
+        return;
+      }
       openWindow({
         id: "indexer-result",
         appType: "generic",
@@ -348,6 +359,10 @@ const StartMenu = () => {
               ? locale === "pt-BR"
                 ? "O arquivo não reconhece a si mesmo como testemunha. Seis correlações independentes são necessárias."
                 : "The archive does not recognize itself as a witness. Six independent correlations are required."
+            : result.commandError === "hold_unavailable"
+              ? locale === "pt-BR"
+                ? "VERIFY: o bloco 04 ou o manifesto de hash ainda não foi recuperado."
+                : "VERIFY: block 04 or the hash manifest has not been recovered."
           : t("invalidCommand");
     openWindow({
       appType: "generic",
@@ -358,6 +373,8 @@ const StartMenu = () => {
             <strong>
               {result.commandError === "wrong_order"
                 ? "INDEX: TIMESTAMP ORDER CONFLICT"
+                : result.commandError === "hold_unavailable"
+                  ? "VERIFY: HELD BLOCK LOOKUP FAILED"
                 : "INDEX: REFERENCE LOOKUP FAILED"}
             </strong>
             <p>{errorMessage}</p>

@@ -5,6 +5,7 @@ import { useProgress } from "@/app/context/ProgressContext";
 import { useSound } from "@/app/context/SoundContext";
 import { resolveTokens, formatGameDate, tomorrow } from "@/app/utils/narrative";
 import { TranslationKey, useI18n } from "@/app/i18n";
+import { completedOptionalMissionCount } from "@/app/game/optionalMissions";
 import "./style.scss";
 
 type FinaleState =
@@ -360,10 +361,13 @@ NO WRITE OPERATION WAS RECORDED.`}</pre>
   );
   const observedHours = Math.floor(observedMs / 3600000);
   const observedMinutes = Math.floor((observedMs % 3600000) / 60000);
+  const retainedOmissions = completedOptionalMissionCount(
+    state.optionalDiscoveries
+  );
   const witnessBlock =
     locale === "pt-BR"
-      ? `\n\nTESTEMUNHA ........ ${playerName ?? "USUÁRIO SEGUINTE"}\nPRIMEIRA ABERTURA . ${firstOpened.getFullYear()}-${pad2(firstOpened.getMonth() + 1)}-${pad2(firstOpened.getDate())} ${pad2(firstOpened.getHours())}:${pad2(firstOpened.getMinutes())}\nOBSERVAÇÃO ........ ${observedHours} H ${pad2(observedMinutes)} MIN`
-      : `\n\nWITNESS ........... ${playerName ?? "NEXT USER"}\nFIRST OPENED ...... ${firstOpened.getFullYear()}-${pad2(firstOpened.getMonth() + 1)}-${pad2(firstOpened.getDate())} ${pad2(firstOpened.getHours())}:${pad2(firstOpened.getMinutes())}\nOBSERVATION ....... ${observedHours} H ${pad2(observedMinutes)} MIN`;
+      ? `\n\nTESTEMUNHA ........ ${playerName ?? "USUÁRIO SEGUINTE"}\nPRIMEIRA ABERTURA . ${firstOpened.getFullYear()}-${pad2(firstOpened.getMonth() + 1)}-${pad2(firstOpened.getDate())} ${pad2(firstOpened.getHours())}:${pad2(firstOpened.getMinutes())}\nOBSERVAÇÃO ........ ${observedHours} H ${pad2(observedMinutes)} MIN\nOMISSÕES RETIDAS .. ${retainedOmissions}/3`
+      : `\n\nWITNESS ........... ${playerName ?? "NEXT USER"}\nFIRST OPENED ...... ${firstOpened.getFullYear()}-${pad2(firstOpened.getMonth() + 1)}-${pad2(firstOpened.getDate())} ${pad2(firstOpened.getHours())}:${pad2(firstOpened.getMinutes())}\nOBSERVATION ....... ${observedHours} H ${pad2(observedMinutes)} MIN\nOMISSIONS RETAINED  ${retainedOmissions}/3`;
 
   return (
     <div className="finale">

@@ -158,6 +158,7 @@ export const Paint = () => {
 
 export const SystemProperties = () => {
   const { locale, setLocale, t } = useI18n();
+  const { state } = useProgress();
   const [telemetry, setTelemetry] =
     useState<TelemetryConsent>("unknown");
 
@@ -187,6 +188,12 @@ export const SystemProperties = () => {
       <dt>Disk label:</dt><dd>VOL_114_RECOVERED</dd>
       <dt>Network:</dt><dd>3Com EtherLink — cable disconnected</dd>
       <dt>System clock:</dt><dd>CMOS checksum invalid; tomorrow retained</dd>
+      {state.optionalDiscoveries.includes("two_days_out") && (
+        <><dt>Longest unindexed interval:</dt><dd>41:58:12</dd></>
+      )}
+      {state.optionalDiscoveries.includes("eleanor_record") && (
+        <><dt>Off-site mirror:</dt><dd>ACTIVE / OWNER CHECKSUM</dd></>
+      )}
     </dl>
     <div className="system-properties__rule" />
     <section className="system-properties__preferences">
@@ -242,11 +249,9 @@ export const RecycleBin = () => {
     discoveredEvidenceIds: state.discoveredEvidenceIds,
     solvedPuzzleIds: Object.entries(state.puzzles).filter(([, puzzle]) => puzzle.solvedAt).map(([id]) => id) as import("@/app/game/progress").PuzzleId[],
   }));
-  const emptyExpanded = state.playerChoices.some(
-    (choice) => choice.choiceId === "sarah_live_question"
-  );
+  const emptyExpanded = state.readFileIds.includes("empty_tmp");
   const entrySize = (entry: (typeof RECYCLE_ENTRIES)[number]) =>
-    entry.id === "empty" && emptyExpanded ? "1 KB" : entry.size;
+    entry.id === "empty" && emptyExpanded ? "404 bytes" : entry.size;
   const openEntry = (entry: (typeof RECYCLE_ENTRIES)[number]) => {
     if (entry.target.type === "browser") {
       openWindow({ id: `recycle-${entry.id}`, appType: "browser", title: "Internet Explorer", props: { initialAddress: entry.target.address } });

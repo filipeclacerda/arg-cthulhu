@@ -57,6 +57,7 @@ export type RunCommandError =
   | "wrong_order"
   | "case_incomplete"
   | "seal_unavailable"
+  | "hold_unavailable"
   | "invalid_command";
 
 export interface RunCommandResult {

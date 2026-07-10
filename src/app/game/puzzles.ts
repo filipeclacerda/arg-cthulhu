@@ -17,6 +17,10 @@ import {
 } from "./campaign";
 import { evaluateTheory, theoryConnectionKeys } from "./theories";
 import { RunCommandError, validateIndexCommand } from "./validators";
+import {
+  canCompleteOptionalMission,
+  optionalMission,
+} from "./optionalMissions";
 
 export const HINT_ONE_MS = 12 * 60 * 1000;
 export const HINT_TWO_MS = 25 * 60 * 1000;
@@ -587,6 +591,25 @@ export const reduceGameEvent = (
     }
     case "RUN_COMMAND": {
       const command = normalizeCommand(event.command);
+      const heldBlockCommand = "VERIFY SB-0316 /HOLD 04";
+      if (command === heldBlockCommand) {
+        if (canCompleteOptionalMission(state, "tom_held_block")) {
+          const mission = optionalMission("tom_held_block")!;
+          state = {
+            ...state,
+            optionalDiscoveries: uniquePushTyped(
+              state.optionalDiscoveries,
+              mission.id
+            ),
+            worldReactionsSeen: uniquePushTyped(
+              state.worldReactionsSeen,
+              mission.reactionId
+            ),
+          };
+          return { state: touch(state), commandAccepted: true };
+        }
+        return { state: current, commandError: "hold_unavailable" };
+      }
       const incompleteRestoreCommand = "INDEX /RESTORE /INCOMPLETE";
       if (command === incompleteRestoreCommand) {
         if (
@@ -1045,6 +1068,23 @@ export const reduceGameEvent = (
         ],
       };
       break;
+    case "COMPLETE_OPTIONAL_MISSION": {
+      if (!canCompleteOptionalMission(state, event.missionId)) break;
+      const mission = optionalMission(event.missionId);
+      if (!mission) break;
+      state = {
+        ...state,
+        optionalDiscoveries: uniquePushTyped(
+          state.optionalDiscoveries,
+          mission.id
+        ),
+        worldReactionsSeen: uniquePushTyped(
+          state.worldReactionsSeen,
+          mission.reactionId
+        ),
+      };
+      break;
+    }
     case "SEE_ASSET_VARIANT":
       if (state.assetVariantsSeen.includes(event.variantId)) break;
       state = {

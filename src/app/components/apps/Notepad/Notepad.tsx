@@ -9,6 +9,7 @@ import { puzzleHintsFor } from "@/app/game/puzzles";
 import { localizedFileContent } from "@/app/data/localizedNarrative";
 import ClueText from "@/app/components/ClueText/ClueText";
 import { useI18n } from "@/app/i18n";
+import { optionalMissionCodaLines } from "@/app/game/optionalMissions";
 
 interface NotepadProps {
   fileId: string;
@@ -24,6 +25,7 @@ const Notepad = ({ fileId }: NotepadProps) => {
     recordSequenceAction,
     isPuzzleSolved,
     setFlag,
+    dispatchGameEvent,
     state,
   } = useProgress();
   const { openWindow } = useWindowManager();
@@ -42,6 +44,12 @@ const Notepad = ({ fileId }: NotepadProps) => {
     markFileRead(file.id);
     if (file.setsFlagOnOpen) setFlag(file.setsFlagOnOpen);
     if (file.evidenceId) discoverEvidence(file.evidenceId, file.id);
+    if (file.completesOptionalMission) {
+      dispatchGameEvent({
+        type: "COMPLETE_OPTIONAL_MISSION",
+        missionId: file.completesOptionalMission,
+      });
+    }
     if (file.id === "the_name" && isPuzzleSolved("lineage")) {
       recordSequenceAction("file:the_name");
     }
@@ -91,6 +99,38 @@ const Notepad = ({ fileId }: NotepadProps) => {
     baseContent = baseContent
       .replace(/LINE 04:.*(?:\n|$)/, "LINE 04: [UNRECOVERABLE AFTER LAST READ]\n")
       .replace(/LINHA 04:.*(?:\n|$)/, "LINHA 04: [IRRECUPERÁVEL APÓS A ÚLTIMA LEITURA]\n");
+  }
+  if (file.id === "solitaire_save" && state.ending) {
+    baseContent = baseContent
+      .replace("Games played: 412", "Games played: 413")
+      .replace("Partidas: 412", "Partidas: 413")
+      .replace("Current game: hopeless", "Current game: already dealt")
+      .replace("Jogo atual: sem esperança", "Jogo atual: já distribuído");
+    baseContent +=
+      state.locale === "pt-BR"
+        ? `\n\nÚLTIMA DISTRIBUIÇÃO: ${resolveTokens("{TOMORROW} 03:14")}`
+        : `\n\nLAST DEAL: ${resolveTokens("{TOMORROW} 03:14")}`;
+  }
+  if (
+    file.id === "record_2014" &&
+    state.optionalDiscoveries.includes("eleanor_record")
+  ) {
+    baseContent = baseContent
+      .replace("OWNER: unresolved", "OWNER: CHECKSUM")
+      .replace("PROPRIETÁRIO: não resolvido", "PROPRIETÁRIO: CHECKSUM");
+    baseContent +=
+      state.locale === "pt-BR"
+        ? "\nATRIBUIÇÃO HUMANA: E. VALE / NÃO RESOLVIDA"
+        : "\nHUMAN ATTRIBUTION: E. VALE / UNRESOLVED";
+  }
+  if (file.id === "case_correlations") {
+    const codaLines = optionalMissionCodaLines(
+      state.optionalDiscoveries,
+      state.locale
+    );
+    if (codaLines.length > 0) {
+      baseContent += `\n\nRETAINED OMISSIONS:\n${codaLines.join("\n")}`;
+    }
   }
   const sequenceEcho =
     file.id === "access_log" && state.futureSequenceStep > 0

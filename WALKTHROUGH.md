@@ -736,6 +736,45 @@ parte do save.
    designação do observador ao dizer o próprio nome; o destinatário permanece não resolvido
    e os diretórios convergem. A variante tem coda e custo próprios.
 
+### Micro-missões opcionais
+
+As três histórias abaixo não alteram enigmas, correlações ou finais. Concluí-las muda apenas
+pequenas reações do desktop, `case_correlations.txt` e a contagem `OMISSIONS RETAINED` no
+Finale.
+
+#### Quarenta e oito horas — Sarah
+
+1. Depois de resolver `lot_114`, abra `diary.txt` e `reasons_to_stop.txt`.
+2. Na **Recycle Bin**, abra o novo `GULL_0310.RCT`. No verso Sarah anotou
+   `GM-114-0310`.
+3. Pesquise esse código no Internet Explorer.
+4. O cache da Graymoor mostra o pacote aceito em `2026-03-11 09:14`, a rota de retorno criada
+   em `09:13` e a etiqueta impressa somente em 12 de março.
+5. Clique **Open cached receipt / Abrir comprovante em cache** e abra `RETURN_114.RCP`.
+   O System Properties passa a registrar `LONGEST UNINDEXED INTERVAL: 41:58:12`.
+
+#### O bloco que Tom reteve
+
+1. Depois de `lineage`, abra `Downloads/relay07_upload_setup.jpg`.
+2. Use **Properties** ou o botão do Image Viewer para **Recover thumbnail**. A etiqueta
+   `SB-0316 / HOLD BLOCK 04` aparece e a unidade **3½ Floppy (A:)** é montada em My Computer.
+3. Em `A:`, leia `LUNCH.TXT` e `HOLD_04.CHK`.
+4. Abra também `Downloads/hash_manifest.txt`.
+5. Em **Start → Run...**, execute `VERIFY SB-0316 /HOLD 04`.
+6. `TOM_HOLD.LOG` confirma que o bloco removido por Tom foi regenerado na primeira abertura.
+   O e-mail futuro de Tom passa a listar `HOLD_04.CHK — 0 bytes` como anexo.
+
+#### O registro de Eleanor Vale
+
+1. Depois de `future_log`, abra `RECOVERED/LINEAGE/2014_offsite_personnel_match.txt` e retenha
+   o crachá `14-EV`.
+2. Pesquise `14-EV` ou `ELEANOR VALE` no Internet Explorer.
+3. Leia o perfil recuperado. O botão de confronto permanece bloqueado até
+   `CHAPTER_SEVEN/2014_RECORD.DAT` ser aberto.
+4. Volte ao perfil e clique **Compare badge and record / Confrontar crachá e registro**.
+5. O proprietário termina como `CHECKSUM`, `ELEANOR.VCF` aparece em `LINEAGE` e a atribuição
+   humana permanece não resolvida.
+
 ## Save e continuação
 
 - O jogo salva automaticamente.
@@ -767,6 +806,12 @@ Abra **Recycle Bin** e dê duplo clique nos itens que surgem progressivamente. N
 `EMPTY.TMP`. `DANFORTH.URL` e `EXPEDITION.TMP` só entram após `counting_audio`.
 
 Esses conteúdos não são necessários para concluir o jogo.
+
+- Baixar `DEEPSEA.SCR` no MiskaNet Shareware Vault instala um screensaver que surge depois de
+  3 minutos e 14 segundos sem entrada; qualquer movimento ou tecla o fecha.
+- Depois de qualquer final, `SOLITAIRE.SAV` registra a partida 413 e recebe a data de amanhã.
+- Depois de abrir `EMPTY.TMP`, a janela continua vazia, mas a Lixeira e as Properties passam a
+  registrar `404 bytes` e o observador como proprietário.
 
 ### My Pictures
 

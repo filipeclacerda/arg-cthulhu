@@ -73,7 +73,10 @@ export type WorldReactionId =
   | "blank_space"
   | "observer_filed"
   | "status_sheet"
-  | "name_degraded";
+  | "name_degraded"
+  | "unindexed_interval"
+  | "tom_hold_seek"
+  | "eleanor_owner_reconciled";
 export type OptionalDiscoveryId =
   | "paint_doodles"
   | "dad_recipe"
@@ -94,7 +97,10 @@ export type OptionalDiscoveryId =
   | "browser_history_0316"
   | "em_draft_reply"
   | "field_04"
-  | "do_not_catalogue";
+  | "do_not_catalogue"
+  | "two_days_out"
+  | "tom_held_block"
+  | "eleanor_record";
 export type InsightId =
   | "second_volume"
   | "cataloguer_lineage"
@@ -312,6 +318,7 @@ export type GameEvent =
   | { type: "RECORD_CHOICE"; choiceId: string; optionId: string }
   | { type: "ADVANCE_LIVE_CONTACT"; elapsedMs: number }
   | { type: "DISCOVER_OPTIONAL"; discoveryId: OptionalDiscoveryId }
+  | { type: "COMPLETE_OPTIONAL_MISSION"; missionId: OptionalDiscoveryId }
   | { type: "SEE_ASSET_VARIANT"; variantId: string }
   | { type: "RESET_BOARD_LAYOUT" }
   | { type: "SET_LOCALE"; locale: Locale }

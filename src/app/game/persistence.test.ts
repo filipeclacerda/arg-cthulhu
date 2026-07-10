@@ -29,7 +29,17 @@ describe("save v6", () => {
       nearMisses: {},
       solvedAt: 1_700_000_000_600,
     };
-    state.optionalDiscoveries = ["dad_recipe"];
+    state.optionalDiscoveries = [
+      "dad_recipe",
+      "two_days_out",
+      "tom_held_block",
+      "eleanor_record",
+    ];
+    state.worldReactionsSeen = [
+      "unindexed_interval",
+      "tom_hold_seek",
+      "eleanor_owner_reconciled",
+    ];
 
     const code = await exportCaseCode(state);
     const imported = await importCaseCode(code);
@@ -56,7 +66,8 @@ describe("save v6", () => {
       "time-six-thirty",
       "intent-go-home",
     ]);
-    expect(imported.optionalDiscoveries).toEqual(["dad_recipe"]);
+    expect(imported.optionalDiscoveries).toEqual(state.optionalDiscoveries);
+    expect(imported.worldReactionsSeen).toEqual(state.worldReactionsSeen);
   });
 
   it("rejects a modified checksum", async () => {
@@ -170,6 +181,23 @@ describe("save v6", () => {
       attempts: 0,
       solvedAt: null,
     });
+  });
+
+  it("merges additive defaults into an older v6 snapshot", () => {
+    const legacy = {
+      ...createInitialProgress(1_700_000_000_000, "legacy-v6-additive"),
+      playerName: "Preserved Investigator",
+    } as any;
+    delete legacy.optionalDiscoveries;
+    delete legacy.worldReactionsSeen;
+    delete legacy.assetVariantsSeen;
+
+    const migrated = migrateProgress(legacy);
+    expect(migrated?.version).toBe(6);
+    expect(migrated?.playerName).toBe("Preserved Investigator");
+    expect(migrated?.optionalDiscoveries).toEqual([]);
+    expect(migrated?.worldReactionsSeen).toEqual([]);
+    expect(migrated?.assetVariantsSeen).toEqual([]);
   });
 
   it("continues to accept MISK3, MISK4 and MISK5 portable prefixes", async () => {

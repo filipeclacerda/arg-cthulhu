@@ -1,4 +1,5 @@
 import { ClueMarker } from "../game/campaign";
+import { OptionalDiscoveryId } from "../game/progress";
 import {
   isUnlocked,
   UnlockCondition,
@@ -52,6 +53,16 @@ export interface VFile {
   raisesCorruptionTo?: number;
   /** Opening this file sets a flag — used to unlock the finale, etc. */
   setsFlagOnOpen?: string;
+  /** Opening the final artifact completes one registered optional mission. */
+  completesOptionalMission?: OptionalDiscoveryId;
+  /** Recoverable data stored in an image thumbnail rather than its main pixels. */
+  embeddedVariant?: {
+    id: string;
+    label: string;
+    detail: string;
+    setsFlag: string;
+    evidenceId?: string;
+  };
   /**
    * Diegetic transcript shown under the Media Player once an audio file has
    * been played. Distinct from `content` (the audio src path). English text
@@ -111,6 +122,13 @@ export const folders: VFolder[] = [
     name: "Local Disk (C:)",
     parentId: "my-computer",
     unlock: { type: "always" },
+    icon: "/icons/drive.png",
+  },
+  {
+    id: "floppy-a",
+    name: "3½ Floppy (A:)",
+    parentId: "my-computer",
+    unlock: { type: "flag", flag: "tom_floppy_recovered" },
     icon: "/icons/drive.png",
   },
   { id: "windows", name: "Windows", parentId: "c", unlock: { type: "always" } },
@@ -1615,6 +1633,13 @@ Tom doesn't know I did this. Whoever opens the blank field after me, I need them
     comment:
       "The external drive is powered. The floppy label was unreadable before the photograph was compressed.",
     content: "/artifacts/tom_relay_disk_2026.png",
+    embeddedVariant: {
+      id: "tom-relay-thumbnail",
+      label: "SB-0316 / HOLD BLOCK 04",
+      detail: "Embedded camera thumbnail / floppy label recovered",
+      setsFlag: "tom_floppy_recovered",
+      evidenceId: "tom_hold_thumbnail",
+    },
   },
   {
     id: "tom_upload_notes",
@@ -1663,6 +1688,62 @@ RECIPIENT 04: ADDRESS NULL / CREATED AFTER FIRST OPEN
 
 Tom's note in the failed upload record:
 I didn't choose the fourth. Sarah left no address. The copy filled the blank — or obeyed something she left inside it. I cannot prove which happened first.`,
+  },
+  {
+    id: "tom_lunch_note",
+    name: "LUNCH.TXT",
+    folderId: "floppy-a",
+    kind: "text",
+    unlock: { type: "always" },
+    alias: "LUNCH.TXT",
+    modified: "2026-03-12 12:07",
+    content: `Sarah —
+
+I borrowed the label maker again. If it comes back with every key except the 4, that is unrelated to me and impossible to prove.
+
+Lunch Thursday? I will bring the cable. You will pretend this counts as leaving the basement.
+
+— Tom`,
+  },
+  {
+    id: "tom_hold_fragment",
+    name: "HOLD_04.CHK",
+    folderId: "floppy-a",
+    kind: "text",
+    unlock: { type: "always" },
+    evidenceId: "tom_hold_fragment",
+    alias: "HOLD_04.CHK",
+    size: "0 KB",
+    modified: "2026-03-23 03:13",
+    content: `SB-0316 / VERIFY FRAGMENT
+
+BLOCK 04 .............. REMOVED BEFORE UPLOAD
+REMOVAL SOURCE ........ T. ALVAREZ
+EXPECTED HASH ......... see HASHMA~1.TXT
+RECONSTRUCTION ........ PENDING FIRST OPEN
+
+Verification syntax retained in slack space:
+VERIFY SB-0316 /HOLD 04`,
+  },
+  {
+    id: "tom_hold_log",
+    name: "TOM_HOLD.LOG",
+    folderId: "floppy-a",
+    kind: "text",
+    unlock: { type: "worldReaction", reactionId: "tom_hold_seek" },
+    evidenceId: "tom_hold_log",
+    alias: "TOMHOL~1.LOG",
+    modified: "{TOMORROW} 03:14",
+    content: `SB-0316 / HELD BLOCK VERIFICATION
+
+BLOCK 04 .............. intentionally absent
+LAST LOCAL OWNER ...... T. ALVAREZ
+UPLOAD OWNER .......... unresolved
+FIRST OPEN OWNER ...... current observer
+
+RESULT:
+The held block was regenerated when the image was opened.
+No surviving record identifies who instructed the copy to replace it.`,
   },
   {
     id: "the_name",
@@ -1930,6 +2011,31 @@ The maintenance database redacted OWNER, but the same badge authenticated again 
 Whether that later user was Eleanor Vale is unresolved. The archive only confirms that something answered with her credential.`,
   },
   {
+    id: "eleanor_vcard",
+    name: "ELEANOR.VCF",
+    folderId: "lineage-dossiers",
+    kind: "text",
+    unlock: {
+      type: "worldReaction",
+      reactionId: "eleanor_owner_reconciled",
+    },
+    evidenceId: "eleanor_vcard",
+    alias: "ELEANO~1.VCF",
+    modified: "{TOMORROW} 03:14",
+    content: `BEGIN:VCARD
+VERSION:2.1
+FN:Eleanor Vale
+TITLE:Night digitization contractor
+ORG:Miskatonic University;Off-site Archive Mirror
+NOTE:Library preservation student. Oral-history shift. Call mother after 08:00.
+X-BADGE:14-EV
+X-LAST-HUMAN-UPDATE:2014-05-17 22:41
+X-LOOPBACK-UPLOAD:2014-05-19 03:14
+X-OWNER:[CHECKSUM]
+X-HUMAN-ATTRIBUTION:UNRESOLVED
+END:VCARD`,
+  },
+  {
     id: "em_investigation",
     name: "em_private_trace.txt",
     folderId: "lineage-dossiers",
@@ -2122,6 +2228,30 @@ Validation result:
 RECORD HAS READ ITSELF 1 TIME(S)`,
   },
   {
+    id: "graymoor_return_receipt",
+    name: "RETURN_114.RCP",
+    folderId: "restricted",
+    kind: "text",
+    unlock: { type: "flag", flag: "graymoor_return_receipt_recovered" },
+    evidenceId: "graymoor_return_receipt",
+    alias: "RETURN~1.RCP",
+    modified: "2026-03-12 08:03",
+    completesOptionalMission: "two_days_out",
+    content: `GRAYMOOR / LOT 114 RETURN RECONCILIATION
+
+PICKUP REQUESTED .... 2026-03-10 16:41
+PARCEL ACCEPTED ..... 2026-03-11 09:14
+RETURN ROUTE CREATED  2026-03-11 09:13
+LABEL PRINTED ....... 2026-03-12 08:03
+
+SOURCE: S. BISHOP
+DESTINATION: ORNE LIBRARY B2
+UNINDEXED INTERVAL: 41:58:12
+
+The return route predates acceptance of the parcel.
+No correction operation was recorded.`,
+  },
+  {
     id: "containment_utility",
     name: "LOOPBACK.EXE.txt",
     folderId: "downloads",
@@ -2231,6 +2361,36 @@ The archive has marked these omissions as intentional.`,
 I understand the objection. I also understand that calling the records “anxiety-shaped” saves everyone from reading them.
 
 I was unfair in the meeting. The evidence is thin, and I made it sound thicker because I was tired of being the only person who could see the gap. That does not make me right.`,
+  },
+  {
+    id: "gull_0310_receipt",
+    name: "GULL_0310.RCT",
+    folderId: "deleted",
+    kind: "text",
+    unlock: {
+      type: "allOf",
+      conditions: [
+        { type: "puzzleSolved", puzzleId: "lot_114" },
+        { type: "evidenceOpened", evidenceId: "diary" },
+        { type: "evidenceOpened", evidenceId: "reasons_to_stop" },
+      ],
+    },
+    evidenceId: "gull_0310_receipt",
+    alias: "GULL03~1.RCT",
+    size: "1 KB",
+    modified: "2026-03-10 22:18",
+    content: `GULL & LANTERN CAFÉ / 10 MARCH 2026
+
+2 chowders
+1 grilled cheese, tomato removed
+2 coffees, one replaced after Em complained
+
+TABLE: WINDOW 4
+PAID: E. BISHOP
+
+Handwritten on reverse, S. Bishop:
+return pickup / GM-114-0310
+Em says write it somewhere that isn't the book.`,
   },
   {
     id: "apology_tmp",
