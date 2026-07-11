@@ -351,6 +351,11 @@ export interface DiegeticGate {
   focalBusy: boolean;
   /** A coordinator toast is still visible. */
   toastBusy: boolean;
+  /**
+   * The player deliberately opened the closed-case archive. It remains a
+   * readable desktop snapshot, so no deferred campaign events may drain.
+   */
+  aftermathReview?: boolean;
 }
 
 /**
@@ -363,6 +368,7 @@ export const selectNextDiegeticEvent = (
   gate: DiegeticGate,
   definitions: DiegeticEventDefinition[] = DIEGETIC_EVENTS
 ): DiegeticEventDefinition | null => {
+  if (gate.aftermathReview) return null;
   if (gate.focalBusy) return null;
   const next = pendingDiegeticEvents(context, definitions)[0] ?? null;
   if (!next) return null;

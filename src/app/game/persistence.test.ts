@@ -18,6 +18,7 @@ describe("save v6", () => {
     state.collectedTokens = ["time-six-thirty", "intent-go-home"];
     state.ending = "archive_self";
     state.flags.ending_archive_self = true;
+    state.flags.ending_closure_seen = true;
     state.caseAnswers.sarah_intent = {
       slots: {
         time: "time-six-thirty",
@@ -58,6 +59,7 @@ describe("save v6", () => {
     expect(imported.insightsUnlocked).toEqual(["second_volume"]);
     expect(imported.ending).toBe("archive_self");
     expect(imported.flags.ending_archive_self).toBe(true);
+    expect(imported.flags.ending_closure_seen).toBe(true);
     expect(imported.caseAnswers.sarah_intent?.lockedSlots).toEqual([
       "time",
       "intent",

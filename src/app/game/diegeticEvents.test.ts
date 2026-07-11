@@ -45,6 +45,16 @@ describe("diegetic event coordination", () => {
       selectNextDiegeticEvent(context, { focalBusy: true, toastBusy: false }, events)
     ).toBeNull();
   });
+
+  it("does not drain deferred campaign events during aftermath review", () => {
+    expect(
+      selectNextDiegeticEvent(
+        context,
+        { focalBusy: false, toastBusy: false, aftermathReview: true },
+        events
+      )
+    ).toBeNull();
+  });
 });
 
 describe("live contact focus gates", () => {

@@ -6,10 +6,14 @@ import { useProgress } from "@/app/context/ProgressContext";
 import { useWindowManager } from "@/app/context/WindowManagerContext";
 import { resolveTokens } from "@/app/utils/narrative";
 import { puzzleHintsFor } from "@/app/game/puzzles";
-import { localizedFileContent } from "@/app/data/localizedNarrative";
+import {
+  localizedEndingClosureContent,
+  localizedFileContent,
+} from "@/app/data/localizedNarrative";
 import ClueText from "@/app/components/ClueText/ClueText";
 import { useI18n } from "@/app/i18n";
 import { optionalMissionCodaLines } from "@/app/game/optionalMissions";
+import { desktopModeFromSearch, isStoryComplete } from "@/app/game/endingLifecycle";
 
 interface NotepadProps {
   fileId: string;
@@ -31,6 +35,10 @@ const Notepad = ({ fileId }: NotepadProps) => {
   const { openWindow } = useWindowManager();
   const { t } = useI18n();
   const file = files.find((f) => f.id === fileId);
+  const isAftermath =
+    typeof window !== "undefined" &&
+    desktopModeFromSearch(window.location.search) === "aftermath" &&
+    isStoryComplete(state);
   const [wasReadBeforeOpen] = useState(() => state.readFileIds.includes(fileId));
   const [answer, setAnswer] = useState("");
   const [wrongAttempt, setWrongAttempt] = useState(false);
@@ -40,7 +48,7 @@ const Notepad = ({ fileId }: NotepadProps) => {
   const untypeableTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    if (!file) return;
+    if (!file || isAftermath) return;
     markFileRead(file.id);
     if (file.setsFlagOnOpen) setFlag(file.setsFlagOnOpen);
     if (file.evidenceId) discoverEvidence(file.evidenceId, file.id);
@@ -54,7 +62,7 @@ const Notepad = ({ fileId }: NotepadProps) => {
       recordSequenceAction("file:the_name");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fileId]);
+  }, [fileId, isAftermath]);
 
   useEffect(
     () => () => {
@@ -76,6 +84,13 @@ const Notepad = ({ fileId }: NotepadProps) => {
     absenceHours: absenceMs > 0 ? absenceMs / (1000 * 60 * 60) : undefined,
     }
   );
+  if (file.id === "case_closure_log" && state.ending) {
+    baseContent = localizedEndingClosureContent(
+      state.ending,
+      Boolean(state.flags.ending_restore_incomplete),
+      state.locale
+    );
+  }
   if (file.id === "observer_outbox") {
     const attachmentNames = state.readFileIds
       .filter((id) => id !== file.id)
@@ -209,7 +224,7 @@ const Notepad = ({ fileId }: NotepadProps) => {
   };
 
   const openInCipherLab = () => {
-    if (!file) return;
+    if (!file || isAftermath) return;
     openWindow({
       id: "cipher-lab",
       appType: "cipher-lab",
@@ -233,6 +248,7 @@ const Notepad = ({ fileId }: NotepadProps) => {
   ];
 
   const inspectDirectoryEntry = (entryId: string) => {
+    if (isAftermath) return;
     setDirectoryAttempt(entryId);
     if (entryId !== "observer") return;
     if (!directorySolved) {
@@ -259,7 +275,7 @@ const Notepad = ({ fileId }: NotepadProps) => {
         <span>{file.name}</span>
         {file.raisesCorruptionTo != null && <strong>unstable text</strong>}
         {file.unlocksFlag && solved && <strong>decoded</strong>}
-        {file.name.toLowerCase().endsWith(".enc") && (
+        {!isAftermath && file.name.toLowerCase().endsWith(".enc") && (
           <button
             type="button"
             className="notepad-open-cipher"
@@ -281,7 +297,7 @@ const Notepad = ({ fileId }: NotepadProps) => {
           as="pre"
           className="notepad-content"
           text={resolvedContent}
-          clues={file.clues}
+          clues={isAftermath ? undefined : file.clues}
         />
         {isDirectoryComparison && (
           <section className="directory-compare" aria-label="Directory comparison">
@@ -294,6 +310,7 @@ const Notepad = ({ fileId }: NotepadProps) => {
               <button
                 key={row.id}
                 type="button"
+                disabled={isAftermath}
                 className={directoryAttempt === row.id ? "selected" : ""}
                 onClick={() => inspectDirectoryEntry(row.id)}
               >
@@ -319,7 +336,7 @@ const Notepad = ({ fileId }: NotepadProps) => {
           </section>
         )}
       </div>
-      {file.kind === "cipher" && !solved && (
+      {file.kind === "cipher" && !solved && !isAftermath && (
         <div className="notepad-answer">
           <input
             type="text"
@@ -357,6 +374,10 @@ const Notepad = ({ fileId }: NotepadProps) => {
           {file.kind === "cipher"
             ? solved
               ? t("cipherAccepted")
+              : isAftermath
+                ? state.locale === "pt-BR"
+                  ? "ARQUIVO ENCERRADO — SOMENTE LEITURA"
+                  : "CASE CLOSED — READ ONLY"
               : isUntypeable
               ? t("inputBufferUnstable")
               : t("awaitingDecodedWord")

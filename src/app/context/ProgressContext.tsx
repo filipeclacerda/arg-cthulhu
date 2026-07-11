@@ -36,6 +36,7 @@ import {
   persistProgress,
 } from "../game/persistence";
 import { ABSENCE_THRESHOLD_MS } from "../utils/narrative";
+import { isStoryComplete } from "../game/endingLifecycle";
 
 type SaveStatus = "loading" | "saving" | "saved" | "error" | "readonly";
 
@@ -99,6 +100,7 @@ interface ProgressContextValue {
   recordSequenceAction: (action: string) => DispatchResult;
   runCommand: (command: string) => DispatchResult;
   chooseEnding: (ending: EndingId) => void;
+  markEndingClosureSeen: () => void;
   setPlayerName: (name: string | null) => void;
   setLocale: (locale: Locale) => void;
   setCaseNotes: (notes: string) => void;
@@ -351,10 +353,13 @@ export const ProgressProvider = ({
   }, [isHydrated, isReadOnly, state.caseId]);
 
   useEffect(() => {
-    if (!isHydrated || isReadOnly) return;
+    if (!isHydrated || isReadOnly || isStoryComplete(stateRef.current)) return;
     let lastTick = Date.now();
     const timer = window.setInterval(() => {
-      if (document.visibilityState !== "visible") {
+      if (
+        document.visibilityState !== "visible" ||
+        isStoryComplete(stateRef.current)
+      ) {
         lastTick = Date.now();
         return;
       }
@@ -681,6 +686,29 @@ export const ProgressProvider = ({
       dispatchGameEvent({ type: "CHOOSE_ENDING", ending }),
     [dispatchGameEvent]
   );
+  const markEndingClosureSeen = useCallback(
+    () => {
+      if (isReadOnly) return;
+      const event: GameEvent = {
+        type: "SET_FLAG",
+        flag: "ending_closure_seen",
+      };
+      const next = reduceGameEvent(stateRef.current, event).state;
+      // Finale deliberately navigates immediately after acknowledgement. Keep
+      // this small lifecycle checkpoint durable even before React has had a
+      // chance to commit the dispatch and run the normal debounce.
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+      stateRef.current = next;
+      dispatch(event);
+      void persistProgress(next, false)
+        .then((destination) => {
+          setPersistenceAvailable(destination === "indexeddb");
+          setSaveStatus("saved");
+        })
+        .catch(() => setSaveStatus("error"));
+    },
+    [isReadOnly]
+  );
   const setLocale = useCallback(
     (locale: Locale) => dispatchGameEvent({ type: "SET_LOCALE", locale }),
     [dispatchGameEvent]
@@ -762,6 +790,7 @@ export const ProgressProvider = ({
       recordSequenceAction,
       runCommand,
       chooseEnding,
+      markEndingClosureSeen,
       setPlayerName,
       setLocale,
       setCaseNotes,
@@ -788,6 +817,7 @@ export const ProgressProvider = ({
       isPuzzleSolved,
       isReadOnly,
       markEmailRead,
+      markEndingClosureSeen,
       markFileRead,
       moveBoardCard,
       newCase,

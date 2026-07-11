@@ -6,6 +6,7 @@ import { useSound } from "@/app/context/SoundContext";
 import { resolveTokens, formatGameDate, tomorrow } from "@/app/utils/narrative";
 import { TranslationKey, useI18n } from "@/app/i18n";
 import { completedOptionalMissionCount } from "@/app/game/optionalMissions";
+import { desktopModeFromSearch } from "@/app/game/endingLifecycle";
 import "./style.scss";
 
 type FinaleState =
@@ -17,15 +18,24 @@ type FinaleState =
   | "seal_confirm"
   | "seal"
   | "leave_blank"
-  | "archive_self";
+  | "archive_self"
+  | "closure";
 type EchoEnding = "restore" | "shutdown" | "seal";
 
 const pad2 = (value: number) => String(value).padStart(2, "0");
 
 const Finale = () => {
-  const { chooseEnding, playerName, hasFlag, state, setFlag } = useProgress();
+  const {
+    chooseEnding,
+    playerName,
+    hasFlag,
+    markEndingClosureSeen,
+    state,
+    setFlag,
+  } = useProgress();
   const { play } = useSound();
   const { t, locale } = useI18n();
+  const [endingReviewMode, setEndingReviewMode] = useState(false);
   const [screen, setScreen] = useState<FinaleState>(() => {
     if (hasFlag("ending_restore_incomplete")) return "restore_incomplete";
     if (state.ending === "restore") return "restore";
@@ -41,8 +51,14 @@ const Finale = () => {
   // (closing the window, the tab, the day) is itself an answer — committed
   // on the next return, in ProgressContext, as ending_leave_blank.
   useEffect(() => {
-    setFlag("finale_choice_seen");
-  }, [setFlag]);
+    if (!state.ending) setFlag("finale_choice_seen");
+  }, [setFlag, state.ending]);
+
+  // An ending can be revisited by the completed-case menu. Keep that route
+  // deliberately read-only: it never returns to the canonical-record choice.
+  useEffect(() => {
+    setEndingReviewMode(desktopModeFromSearch(window.location.search) === "ending");
+  }, []);
 
   const ctx = { playerName };
   const tomorrowStr = formatGameDate(tomorrow());
@@ -87,6 +103,49 @@ const Finale = () => {
     }
     return null;
   })();
+
+  const recordedEndingKey = (): TranslationKey => {
+    if (hasFlag("ending_restore_incomplete")) return "finaleEndingRestoreIncomplete";
+    switch (state.ending) {
+      case "restore":
+        return "finaleEndingRestore";
+      case "shutdown":
+        return "finaleEndingShutdown";
+      case "seal":
+        return "finaleEndingSeal";
+      case "leave_blank":
+        return "finaleEndingLeaveBlank";
+      case "archive_self":
+        return "finaleEndingArchiveSelf";
+      default:
+        return "finaleEndingRestore";
+    }
+  };
+
+  const completeRecord = () => {
+    play("chime");
+    setScreen("closure");
+  };
+
+  const returnToRelay = () => {
+    markEndingClosureSeen();
+    // Let the state update commit before pagehide flushes this deliberate
+    // transition to the completed-case menu.
+    window.setTimeout(() => window.location.assign("/"), 0);
+  };
+
+  const codaActions = (
+    <div className="finale-actions finale-coda-actions">
+      {endingReviewMode && (
+        <p className="finale-readonly" role="status">
+          {t("finaleEndingReadonly")}
+        </p>
+      )}
+      <button className="button btn-lg" type="button" onClick={completeRecord}>
+        {t("finaleCompleteRecord")}
+      </button>
+    </div>
+  );
 
   const handleRestore = () => {
     setFlag("ending_restore_complete");
@@ -182,6 +241,7 @@ const Finale = () => {
         </p>
         <p className="finale-caption">{t(echoKey("restore"))}</p>
         {personalCoda && <p className="finale-caption">{personalCoda}</p>}
+        {codaActions}
       </div>
     );
   }
@@ -229,6 +289,7 @@ CHECKSUM .............. 7A:11:09`,
             ? "Seu diretório continua em C:\\USERS, agora com o nome S. BISHOP. As propriedades ainda registram você como proprietário."
             : "Your directory remains under C:\\USERS, now named S. BISHOP. Its properties still list you as owner."}
         </p>
+        {codaActions}
       </div>
     );
   }
@@ -262,6 +323,7 @@ CHECKSUM .............. 7A:11:09`,
             <p>{t(echoKey("shutdown"))}</p>
             {personalCoda && <p>{personalCoda}</p>}
           </article>
+          {codaActions}
         </section>
       </div>
     );
@@ -297,6 +359,7 @@ LAST OPENED ....... ${tomorrowStr} 03:16`}</pre>
             ? "A ausência de uma escolha também foi preservada como registro."
             : "The absence of a choice was also preserved as a record."}
         </p>
+        {codaActions}
       </div>
     );
   }
@@ -338,6 +401,7 @@ NO WRITE OPERATION WAS RECORDED.`}</pre>
         </p>
         <p className="finale-caption">{t(echoKey("seal"))}</p>
         {personalCoda && <p className="finale-caption">{personalCoda}</p>}
+        {codaActions}
       </div>
     );
   }
@@ -349,7 +413,31 @@ NO WRITE OPERATION WAS RECORDED.`}</pre>
           <pre>{resolveTokens(t("finaleArchiveSelfTerminal"), ctx)}</pre>
         </div>
         <p className="finale-caption">{t("finaleArchiveSelfCaption")}</p>
+        {codaActions}
       </div>
+    );
+  }
+
+  if (screen === "closure") {
+    const closureTerminal = t("finaleClosureTerminal").replace(
+      "{ENDING}",
+      t(recordedEndingKey())
+    );
+    return (
+      <section className="finale finale--closure" aria-labelledby="finale-closure-title">
+        <h1 id="finale-closure-title" className="finale-closure-title">
+          {t("finaleStoryComplete")}
+        </h1>
+        <div className="finale-terminal">
+          <pre>{closureTerminal}</pre>
+        </div>
+        <p className="finale-caption">{t("finaleClosureLead")}</p>
+        <div className="finale-actions">
+          <button className="button btn-lg" type="button" onClick={returnToRelay}>
+            {t("finaleReturnToRelay")}
+          </button>
+        </div>
+      </section>
     );
   }
 

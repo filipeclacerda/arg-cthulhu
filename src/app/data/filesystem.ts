@@ -2100,19 +2100,57 @@ P.S. A second session is still open: M.BISHOP. The only readable fields are TOMA
     evidenceId: "blank_space",
     alias: "BLANKS~1.TXT",
     modified: "{TOMORROW} 03:16",
-    content: `RECOVERY INDEX / FIELD LEFT UNRESOLVED
+    content: `RECOVERY INDEX / FIELD RETAINED UNRESOLVED
 
 SOURCE: S. BISHOP
 ARCHIVE: SB-0316
 WITNESS: current observer
-NEXT FIELD: [left blank]
+FIELD 04: [left blank]
 
-The relay remains open.
-The source remains unrecovered.
-The count did not advance while the field stayed empty.
+The relay has been closed.
+The source remains unrecovered by record.
+The count was retained at the moment the field stayed empty.
 
-STATUS: OPEN
-RECHECK SCHEDULED: {TOMORROW} 03:16`,
+STATUS: CLOSED
+NO RECHECK SCHEDULED`,
+  },
+  {
+    id: "restore_incomplete_checkpoint",
+    name: "RESTORE_INCOMPLETE.CHK",
+    folderId: "sarah",
+    kind: "text",
+    unlock: { type: "flag", flag: "ending_restore_incomplete" },
+    modified: "{TOMORROW} 03:16",
+    content: `RESTORE CHECKPOINT / INCOMPLETE
+
+SOURCE ........ S. BISHOP
+FIELD 04 ...... WITHHELD
+OWNER ......... {PLAYER}
+STATUS ........ CLOSED
+
+The source returned with one field retained outside the record.
+No further restore operation has been scheduled.`,
+  },
+  {
+    id: "case_closure_log",
+    name: "CASE_CLOSURE.LOG",
+    folderId: "sarah",
+    kind: "text",
+    unlock: {
+      type: "anyOf",
+      conditions: [
+        { type: "flag", flag: "ending_restore" },
+        { type: "flag", flag: "ending_shutdown" },
+        { type: "flag", flag: "ending_seal" },
+        { type: "flag", flag: "ending_leave_blank" },
+        { type: "flag", flag: "ending_archive_self" },
+      ],
+    },
+    modified: "{TOMORROW} 03:16",
+    content: `CASE SB-0316 / CLOSURE RECORD
+
+STATUS: CLOSED
+This record is resolved when opened from a completed case.`,
   },
   {
     id: "archived_observer_after",

@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from "react";
 import "./style.scss";
 import "../globals.scss";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import Clock from "../components/Clock/Clock";
 import StartMenu from "../components/StartMenu/StartMenu";
 import { useWindowManager, AppType } from "../context/WindowManagerContext";
@@ -28,6 +29,11 @@ import {
   selectNextDiegeticEvent,
 } from "../game/diegeticEvents";
 import { setFocalSetPieceActive } from "../context/diegeticFocus";
+import {
+  desktopModeFromSearch,
+  isStoryComplete,
+  type DesktopMode,
+} from "../game/endingLifecycle";
 import DeepseaScreensaver from "../components/DeepseaScreensaver/DeepseaScreensaver";
 
 /** A discreet coordinator toast (never a window) with one action. */
@@ -259,6 +265,7 @@ const appIcon = (appType: AppType) => {
 
 const Desktop = () => {
   const { openWindow, windows, focusWindow } = useWindowManager();
+  const router = useRouter();
   const {
     flags,
     isHydrated,
@@ -272,6 +279,21 @@ const Desktop = () => {
     playerName,
     state,
   } = useProgress();
+  // Read the query after mounting rather than through useSearchParams: this
+  // desktop is statically built, and the mode must not turn /desktop into a
+  // client-rendering bailout. Event presentation is hydration-gated below.
+  const [desktopMode, setDesktopMode] = useState<DesktopMode | null>(null);
+  const endingPresentationOpened = useRef(false);
+  useEffect(() => {
+    setDesktopMode(desktopModeFromSearch(window.location.search));
+  }, []);
+  // The only post-game desktop is an explicit archive review. A finished
+  // campaign opened without this mode is handled by the Relay guard; keeping
+  // this check narrow also means old/in-progress saves retain their desktop.
+  const isAftermath = desktopMode === "aftermath" && isStoryComplete(state);
+  const isEndingPresentation =
+    desktopMode === "ending" && isStoryComplete(state);
+  const isPostEndingDesktop = isAftermath || isEndingPresentation;
   const { play, setAmbientStage, muted, toggleMuted } = useSound();
   const { t } = useI18n();
   const appLabel = (app: DesktopApp) => (app.labelKey ? t(app.labelKey) : app.label);
@@ -298,10 +320,10 @@ const Desktop = () => {
   const [flash1998, setFlash1998] = useState<1 | 2 | null>(null);
   const previousCorruptionStage = useRef<number | null>(null);
   const { labelGlitch, cursorEcho } = useSubliminalGlitch(
-    corruptionStage >= 4,
+    !isPostEndingDesktop && corruptionStage >= 4,
     playerName
   );
-  useCorruptionPulse(corruptionStage, play);
+  useCorruptionPulse(isPostEndingDesktop ? 0 : corruptionStage, play);
 
   // -------------------------------------------------------------------
   // Diegetic event coordinator. Every dialog, toast and takeover that used
@@ -732,6 +754,7 @@ const Desktop = () => {
     ? selectNextDiegeticEvent(diegeticContext(state), {
         focalBusy,
         toastBusy: activeToast !== null,
+        aftermathReview: isPostEndingDesktop,
       })?.id ?? null
     : null;
 
@@ -756,12 +779,33 @@ const Desktop = () => {
     return () => clearTimeout(timer);
   }, []);
 
+  // A completed case never resumes as an ordinary live desktop. The only
+  // exceptions are the deliberate ending replay and aftermath-review routes.
+  // While an ending is being shown in the current window layer, keep it in
+  // place so its coda can reach the explicit closure screen.
+  useEffect(() => {
+    if (
+      !isHydrated ||
+      !isStoryComplete(state) ||
+      isPostEndingDesktop ||
+      windows.some((window) => window.appType === "finale")
+    )
+      return;
+    router.replace("/");
+  }, [isHydrated, isPostEndingDesktop, router, state, windows]);
+
   // Sarah did not close the two windows that establish the case: Tom's
   // welfare-check email and her recently modified profile directory. This is
   // intentionally one-time and saved, so returning players resume their own
   // desktop instead of having their workspace rearranged on every reload.
   useEffect(() => {
-    if (!booted || !isHydrated || flags.initial_boot_windows_restored) return;
+    if (
+      isPostEndingDesktop ||
+      !booted ||
+      !isHydrated ||
+      flags.initial_boot_windows_restored
+    )
+      return;
     setFlag("initial_boot_windows_restored");
     const timer = setTimeout(() => {
       openWindow({ id: "inbox", appType: "email", title: "E-mail" });
@@ -773,10 +817,18 @@ const Desktop = () => {
       });
     }, 260);
     return () => clearTimeout(timer);
-  }, [booted, flags.initial_boot_windows_restored, isHydrated, openWindow, setFlag]);
+  }, [
+    booted,
+    flags.initial_boot_windows_restored,
+    isPostEndingDesktop,
+    isHydrated,
+    openWindow,
+    setFlag,
+  ]);
 
   useEffect(() => {
     if (
+      !isPostEndingDesktop &&
       previousCorruptionStage.current !== null &&
       corruptionStage > previousCorruptionStage.current
     ) {
@@ -791,15 +843,15 @@ const Desktop = () => {
       play(transitionSound);
     }
     previousCorruptionStage.current = corruptionStage;
-  }, [corruptionStage, play]);
+  }, [corruptionStage, isPostEndingDesktop, play]);
 
   useEffect(() => {
-    const normalizedStage = booted
+    const normalizedStage = booted && !isPostEndingDesktop
       ? (Math.min(4, Math.max(0, corruptionStage)) as Exclude<AmbientStage, null>)
       : null;
     setAmbientStage(normalizedStage);
     return () => setAmbientStage(null);
-  }, [booted, corruptionStage, setAmbientStage]);
+  }, [booted, corruptionStage, isPostEndingDesktop, setAmbientStage]);
 
   useEffect(() => {
     document.body.classList.add("desktop-mode");
@@ -810,7 +862,7 @@ const Desktop = () => {
   // Driven by a persisted flag (not local component state) so the swap holds
   // even if the alert window was closed mid-wait.
   useEffect(() => {
-    if (!isHydrated) return;
+    if (isPostEndingDesktop || !isHydrated) return;
     if (!flags.status_sheet_notice_shown || flags.status_sheet_duplicated) return;
     const flipDelay = 4000 + Math.random() * 3000;
     const timer = setTimeout(() => setFlag("status_sheet_duplicated"), flipDelay);
@@ -818,6 +870,7 @@ const Desktop = () => {
   }, [
     flags.status_sheet_duplicated,
     flags.status_sheet_notice_shown,
+    isPostEndingDesktop,
     isHydrated,
     setFlag,
   ]);
@@ -825,7 +878,7 @@ const Desktop = () => {
 
   // Generous, fixed 7s window, then a hard cut back to normal.
   useEffect(() => {
-    if (flash1998 == null) return;
+    if (isPostEndingDesktop || flash1998 == null) return;
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const timer = setTimeout(() => {
       if (flash1998 === 2) setFlag("miriam_1998_file_recovered");
@@ -833,7 +886,25 @@ const Desktop = () => {
       setFlash1998(null);
     }, reducedMotion ? 20_000 : 7000);
     return () => clearTimeout(timer);
-  }, [flash1998, play, setFlag]);
+  }, [flash1998, isPostEndingDesktop, play, setFlag]);
+
+  // A deliberate ending replay opens only the already-recorded Finale. Its
+  // component renders the canonical coda from state and cannot offer another
+  // ending once state.ending is present.
+  useEffect(() => {
+    if (
+      !isHydrated ||
+      !isEndingPresentation ||
+      endingPresentationOpened.current
+    )
+      return;
+    endingPresentationOpened.current = true;
+    openWindow({
+      id: "finale",
+      appType: "finale",
+      title: "RECOVERED PROGRAM",
+    });
+  }, [isEndingPresentation, isHydrated, openWindow]);
 
   const openMiriamAccessionFile = () => {
     setFlag("miriam_1998_file_recovered");
@@ -897,18 +968,25 @@ const Desktop = () => {
     <main
       id="desktop-root"
       className={
-        state.worldReactionsSeen.includes("monitor_condensation")
+        !isPostEndingDesktop && state.worldReactionsSeen.includes("monitor_condensation")
           ? "desktop--condensation"
           : ""
       }
     >
       <DeepseaScreensaver
-        enabled={state.assetVariantsSeen.includes("deepsea-screensaver")}
+        enabled={
+          !isPostEndingDesktop && state.assetVariantsSeen.includes("deepsea-screensaver")
+        }
         playerName={playerName}
       />
       <div className="desktop-atmosphere" aria-hidden="true" />
       <div className="desktop-case-label" aria-hidden="true">
-        {labelGlitch ? (
+        {isAftermath ? (
+          <>
+            <span>CASE CLOSED — AFTERMATH REVIEW</span>
+            <span>SB-0316 / READ-ONLY NARRATIVE ARCHIVE</span>
+          </>
+        ) : labelGlitch ? (
           <span className="desktop-case-label__glitch">{labelGlitch}</span>
         ) : (
           <>
@@ -923,6 +1001,26 @@ const Desktop = () => {
           aria-hidden="true"
           style={{ left: cursorEcho.x, top: cursorEcho.y }}
         />
+      )}
+      {isAftermath && (
+        <div className="archive-warning" role="status">
+          <Image src="/icons/folder-special.png" alt="" width={34} height={34} />
+          <div>
+            <strong>
+              {state.locale === "pt-BR"
+                ? "CASO ENCERRADO — CONSULTA PÓS-ARQUIVAMENTO"
+                : "CASE CLOSED — AFTERMATH REVIEW"}
+            </strong>
+            <p>
+              {state.locale === "pt-BR"
+                ? "Este desktop preserva apenas os registros já recuperados. Nenhum novo evento será iniciado."
+                : "This desktop preserves recovered records only. No new narrative events will begin."}
+            </p>
+          </div>
+          <button className="button" type="button" onClick={() => router.push("/play")}>
+            {state.locale === "pt-BR" ? "VOLTAR AO RELAY" : "RETURN TO RELAY"}
+          </button>
+        </div>
       )}
       <div id="taskbar">
         <div className="taskbar-left">
@@ -1056,8 +1154,8 @@ const Desktop = () => {
           </button>
         </div>
       )}
-      <ConclusionReadyToast />
-      {flash1998 != null && (
+      {!isPostEndingDesktop && <ConclusionReadyToast />}
+      {!isPostEndingDesktop && flash1998 != null && (
         <div
           className="desktop-1998-overlay"
           role="dialog"

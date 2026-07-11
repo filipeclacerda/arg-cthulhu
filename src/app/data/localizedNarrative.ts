@@ -1,4 +1,4 @@
-import { Locale } from "../game/progress";
+import { EndingId, Locale } from "../game/progress";
 
 const FILES_PT: Record<string, string> = {
   directory_comparison: `COMPARADOR DE DIRETÓRIOS DE RECUPERAÇÃO 0.4
@@ -666,19 +666,28 @@ Vou observar você. Do mesmo modo que você me observou.
 — S.
 
 P.S. Uma segunda sessão continua aberta: M.BISHOP. Os únicos campos legíveis são TOMATE / SARAH / TERMINAR —`,
-  blank_space_after: `ÍNDICE DE RECUPERAÇÃO / CAMPO DEIXADO SEM RESOLUÇÃO
+  blank_space_after: `ÍNDICE DE RECUPERAÇÃO / CAMPO RETIDO SEM RESOLUÇÃO
 
 ORIGEM: S. BISHOP
 ARQUIVO: SB-0316
 TESTEMUNHA: observador atual
-PRÓXIMO CAMPO: [deixado em branco]
+CAMPO 04: [deixado em branco]
 
-O relay continua aberto.
-A origem continua sem recuperação.
-A contagem não avançou enquanto o campo permaneceu vazio.
+O relay foi encerrado.
+A origem segue sem recuperação em registro.
+A contagem foi retida no momento em que o campo permaneceu vazio.
 
-STATUS: ABERTO
-NOVA VERIFICAÇÃO AGENDADA: {TOMORROW} 03:16`,
+STATUS: ENCERRADO
+NENHUMA NOVA VERIFICAÇÃO AGENDADA`,
+  restore_incomplete_checkpoint: `CHECKPOINT DE RESTAURAÇÃO / INCOMPLETO
+
+ORIGEM ........ S. BISHOP
+CAMPO 04 ...... RETIDO
+PROPRIETÁRIO .. {PLAYER}
+STATUS ........ ENCERRADO
+
+A origem retornou com um campo retido fora do registro.
+Nenhuma nova operação de restauração foi agendada.`,
   archived_observer_after: `ÍNDICE DE RECUPERAÇÃO / OBSERVADOR ARQUIVADO
 
 ORIGEM: não resolvida
@@ -1405,6 +1414,61 @@ export const localizedFileContent = (
 ): string => {
   const localizedId = fileId === "cipher_1" ? "margin_ciphertext" : fileId;
   return locale === "pt-BR" ? FILES_PT[localizedId] ?? original : original;
+};
+
+/**
+ * CASE_CLOSURE.LOG is a single archive entry whose recovered body reflects
+ * the canonical ending. Keeping it here prevents the aftermath desktop from
+ * inventing a second ending state or writing new flags while it is read.
+ */
+export const localizedEndingClosureContent = (
+  ending: EndingId,
+  restoreIncomplete: boolean,
+  locale: Locale
+): string => {
+  const pt = locale === "pt-BR";
+  const result =
+    ending === "restore"
+      ? restoreIncomplete
+        ? pt
+          ? "RESTAURAÇÃO INCOMPLETA / CAMPO 04 RETIDO"
+          : "RESTORE INCOMPLETE / FIELD 04 RETAINED"
+        : pt
+          ? "SARAH BISHOP RESTAURADA"
+          : "SARAH BISHOP RESTORED"
+      : ending === "shutdown"
+        ? pt
+          ? "RELAY DESLIGADO / PRÓXIMO DESTINATÁRIO NÃO INDEXADO"
+          : "RELAY SHUT DOWN / NEXT RECIPIENT NOT INDEXED"
+        : ending === "seal"
+          ? pt
+            ? "RELAY 07 SELADO / CONTAGEM RETIDA"
+            : "RELAY 07 SEALED / COUNT HELD"
+          : ending === "leave_blank"
+            ? pt
+              ? "CAMPO 04 DEIXADO EM BRANCO / CONTAGEM RETIDA"
+              : "FIELD 04 LEFT BLANK / COUNT RETAINED"
+            : pt
+              ? "OBSERVADOR ARQUIVADO POR CONSENTIMENTO"
+              : "OBSERVER ARCHIVED BY CONSENT";
+
+  return pt
+    ? `CASO SB-0316 / REGISTRO DE ENCERRAMENTO
+
+STATUS ........ ENCERRADO
+RESULTADO ...... ${result}
+ARQUIVO ........ CONSULTA SOMENTE LEITURA
+
+A narrativa deste caso foi concluída.
+Nenhuma nova operação será iniciada por este registro.`
+    : `CASE SB-0316 / CLOSURE RECORD
+
+STATUS ........ CLOSED
+OUTCOME ....... ${result}
+ARCHIVE ....... READ-ONLY REVIEW
+
+The narrative of this case is complete.
+No new operation will begin from this record.`;
 };
 
 /** Localized diegetic transcript for an audio file (see VFile.transcript). */

@@ -3,6 +3,12 @@
 import { useEffect, useState } from "react";
 import { useProgress } from "../context/ProgressContext";
 import { Locale, ProgressStateV4, puzzleAct } from "../game/progress";
+import {
+  aftermathDesktopHref,
+  endingDesktopHref,
+  isEndingClosurePending,
+  isStoryComplete,
+} from "../game/endingLifecycle";
 import posthog from "posthog-js";
 import {
   captureTelemetry,
@@ -44,6 +50,7 @@ export default function Home() {
     state,
     isHydrated,
     newCase,
+    exportCode,
     previewCode,
     importCode,
     setPlayerName,
@@ -66,6 +73,8 @@ export default function Home() {
     useState<TelemetryConsent>("unknown");
   const [preferencesReady, setPreferencesReady] = useState(false);
   const [hasMounted, setHasMounted] = useState(false);
+  const [exportedCode, setExportedCode] = useState("");
+  const [exportError, setExportError] = useState("");
 
   useEffect(() => {
     setHasMounted(true);
@@ -104,6 +113,17 @@ export default function Home() {
     Object.values(state.puzzles).some((puzzle) => puzzle.solvedAt) ||
     Boolean(state.flags.relay_envelope_opened) ||
     Boolean(state.flags.registration_shown);
+  const storyComplete = isStoryComplete(state);
+  const endingClosurePending = isEndingClosurePending(state);
+  const endingLabel = state.ending
+    ? {
+        restore: isPt ? "RESTAURAR SARAH" : "RESTORE SARAH",
+        shutdown: isPt ? "DESLIGAR" : "SHUT DOWN",
+        seal: isPt ? "SELAR RELÉ" : "SEAL RELAY",
+        leave_blank: isPt ? "DEIXAR EM BRANCO" : "LEAVE BLANK",
+        archive_self: isPt ? "ARQUIVAR OBSERVADOR" : "ARCHIVE OBSERVER",
+      }[state.ending]
+    : null;
 
   const mountImage = () => {
     if (username !== SARAH_USERNAME || password !== SARAH_PASSWORD) {
@@ -117,7 +137,20 @@ export default function Home() {
       is_returning: hasExistingCase,
       act: puzzleAct(state),
     });
-    window.location.href = "/desktop/";
+    window.location.href = storyComplete ? endingDesktopHref : "/desktop/";
+  };
+
+  const exportCompletedCase = async () => {
+    try {
+      setExportError("");
+      setExportedCode(await exportCode());
+    } catch {
+      setExportError(
+        isPt
+          ? "Não foi possível exportar o código do caso."
+          : "The case code could not be exported."
+      );
+    }
   };
 
   const chooseDiagnostics = (consent: "granted" | "denied") => {
@@ -267,7 +300,13 @@ export default function Home() {
               <dt>{isPt ? "Sujeito" : "Subject"}</dt><dd>BISHOP, SARAH</dd>
               <dt>{isPt ? "Mídia" : "Medium"}</dt><dd>{isPt ? "IMAGEM DE DISCO" : "DISK IMAGE"}</dd>
               <dt>{isPt ? "Origem" : "Source"}</dt><dd>T. ALVAREZ</dd>
-              <dt>Status</dt><dd>{isPt ? "NÃO RESOLVIDO" : "UNRESOLVED"}</dd>
+              <dt>Status</dt><dd>{storyComplete ? (isPt ? "CASO CONCLUÍDO" : "CASE COMPLETED") : (isPt ? "NÃO RESOLVIDO" : "UNRESOLVED")}</dd>
+              {storyComplete && (
+                <>
+                  <dt>{isPt ? "Final registrado" : "Ending recorded"}</dt>
+                  <dd className="relay-unstable">{endingLabel}</dd>
+                </>
+              )}
               {state.flags.ending_shutdown ? (
                 <>
                   <dt>{isPt ? "Destinatários" : "Recipients"}</dt>
@@ -367,6 +406,67 @@ export default function Home() {
                   </span>
                 </div>
 
+                {storyComplete ? (
+                  <div className="relay-envelope" aria-live="polite">
+                    <p className="relay-label">
+                      {isPt ? "ARQUIVO DO CASO // ENCERRADO" : "CASE ARCHIVE // CLOSED"}
+                    </p>
+                    <strong>
+                      {endingClosurePending
+                        ? isPt
+                          ? "APRESENTAÇÃO FINAL PENDENTE"
+                          : "FINAL PRESENTATION PENDING"
+                        : isPt
+                          ? "HISTÓRIA CONCLUÍDA"
+                          : "STORY COMPLETE"}
+                    </strong>
+                    <p>
+                      {endingClosurePending
+                        ? isPt
+                          ? "O resultado registrado ainda precisa ser encerrado no terminal do caso."
+                          : "The recorded result still needs to be closed from the case terminal."
+                        : isPt
+                          ? "A investigação principal terminou. Os registros permanecem disponíveis para consulta."
+                          : "The main investigation is over. Its records remain available for review."}
+                    </p>
+                    <div>
+                      <button
+                        className="relay-command"
+                        type="button"
+                        onClick={() => {
+                          window.location.href = endingDesktopHref;
+                        }}
+                      >
+                        [ {isPt ? "REVER FINAL" : "REVIEW ENDING"} ]
+                      </button>
+                      {!endingClosurePending && (
+                        <button
+                          className="relay-command"
+                          type="button"
+                          onClick={() => {
+                            window.location.href = aftermathDesktopHref;
+                          }}
+                        >
+                          [ {isPt ? "EXPLORAR CONSEQUÊNCIAS" : "EXPLORE AFTERMATH"} ]
+                        </button>
+                      )}
+                      <button
+                        className="relay-command"
+                        type="button"
+                        onClick={() => void exportCompletedCase()}
+                      >
+                        [ {isPt ? "EXPORTAR CÓDIGO DO CASO" : "EXPORT CASE CODE"} ]
+                      </button>
+                    </div>
+                    {exportError && <p className="relay-error">{exportError}</p>}
+                    {exportedCode && (
+                      <label>
+                        {isPt ? "Código portátil do caso" : "Portable case code"}
+                        <textarea value={exportedCode} readOnly rows={3} />
+                      </label>
+                    )}
+                  </div>
+                ) : (
                 <form
                   onSubmit={(event) => {
                     event.preventDefault();
@@ -413,6 +513,7 @@ export default function Home() {
                       : isPt ? "MONTAR IMAGEM SOMENTE LEITURA" : "MOUNT READ-ONLY IMAGE"} ]
                   </button>
                 </form>
+                )}
 
                 {isHydrated && (
                   <div className="relay-case-controls">

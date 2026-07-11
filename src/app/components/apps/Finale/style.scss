@@ -63,6 +63,35 @@
   font-style: italic;
 }
 
+.finale-coda-actions {
+  align-items: center;
+}
+
+.finale-readonly {
+  flex-basis: 100%;
+  margin: 0;
+  color: #52645a;
+  font-size: calc(var(--ui-scale, 1) * 12px);
+  letter-spacing: .06em;
+  text-align: center;
+}
+
+.finale--closure {
+  background:
+    repeating-linear-gradient(90deg, rgba(104, 219, 126, .07) 0 1px, transparent 1px 6px),
+    #030803;
+}
+
+.finale-closure-title {
+  margin: 0 0 calc(var(--ui-scale, 1) * 12px);
+  color: #d8ffd8;
+  font-family: win98, monospace;
+  font-size: calc(var(--ui-scale, 1) * 18px);
+  letter-spacing: .08em;
+  text-align: center;
+  text-shadow: 0 0 8px rgba(80, 255, 110, .55);
+}
+
 .finale--restore .finale-terminal {
   color: #d8f7ff;
   background:
@@ -161,6 +190,20 @@
   box-sizing: border-box;
   flex-direction: column;
   gap: calc(var(--ui-scale, 1) * 14px);
+}
+
+.finale-shutdown-panel .finale-coda-actions {
+  margin-top: 0;
+
+  .button {
+    color: #d8ffd8;
+    background: #153c1b;
+    border-color: #b6ffc0 #071b0a #071b0a #b6ffc0;
+  }
+
+  .finale-readonly {
+    color: #9bd0a0;
+  }
 }
 
 .finale-shutdown-terminal {

@@ -176,6 +176,20 @@ const en = {
     "[VOLUNTARY WITNESS ACCEPTED — {TOMORROW}]\n\nSOURCE ........... UNRESOLVED\nARCHIVE .......... SB-0316\nWITNESS .......... {PLAYER}\nREPLACEMENT ...... FIELD UNRESOLVED\n\nNEW FILES FOUND UNDER CURRENT OBSERVER.\nALL MODIFIED TOMORROW.",
   finaleArchiveSelfCaption:
     "The archive accepts your name. The next field does not answer.",
+  finaleCompleteRecord: "COMPLETE RECORD",
+  finaleStoryComplete: "STORY COMPLETE",
+  finaleClosureTerminal:
+    "CASE SB-0316\nSTATUS ........ CLOSED\nENDING ........ {ENDING}\n\nSTORY COMPLETE",
+  finaleClosureLead:
+    "The story has concluded. This record remains available for review.",
+  finaleReturnToRelay: "RETURN TO RELAY",
+  finaleEndingReadonly: "RECORDED ENDING · READ ONLY",
+  finaleEndingRestore: "RESTORE SARAH",
+  finaleEndingRestoreIncomplete: "RESTORE INCOMPLETE",
+  finaleEndingShutdown: "SHUT DOWN",
+  finaleEndingSeal: "SEAL RELAY",
+  finaleEndingLeaveBlank: "LEAVE BLANK",
+  finaleEndingArchiveSelf: "ARCHIVE YOURSELF",
   finaleEchoRestoreAlive:
     "Her answer lingers: not alive in your tense, but still remembering a body.",
   finaleEchoRestoreRestore:
@@ -651,6 +665,20 @@ const pt: Record<keyof typeof en, string> = {
     "[TESTEMUNHA VOLUNTÁRIA ACEITA — {TOMORROW}]\n\nORIGEM ........... NÃO RESOLVIDA\nARQUIVO .......... SB-0316\nTESTEMUNHA ....... {PLAYER}\nSUBSTITUTO ....... CAMPO NÃO RESOLVIDO\n\nNOVOS ARQUIVOS ENCONTRADOS SOB O OBSERVADOR ATUAL.\nTODOS MODIFICADOS AMANHÃ.",
   finaleArchiveSelfCaption:
     "O arquivo aceita seu nome. O próximo campo não responde.",
+  finaleCompleteRecord: "CONCLUIR REGISTRO",
+  finaleStoryComplete: "HISTÓRIA CONCLUÍDA",
+  finaleClosureTerminal:
+    "CASO SB-0316\nSTATUS ........ FECHADO\nFINAL ......... {ENDING}\n\nHISTÓRIA CONCLUÍDA",
+  finaleClosureLead:
+    "A história foi concluída. Este registro permanece disponível para consulta.",
+  finaleReturnToRelay: "VOLTAR AO RELAY",
+  finaleEndingReadonly: "FINAL REGISTRADO · SOMENTE LEITURA",
+  finaleEndingRestore: "RESTAURAR SARAH",
+  finaleEndingRestoreIncomplete: "RESTAURAÇÃO INCOMPLETA",
+  finaleEndingShutdown: "DESLIGAR",
+  finaleEndingSeal: "SELAR RELAY",
+  finaleEndingLeaveBlank: "DEIXAR EM BRANCO",
+  finaleEndingArchiveSelf: "ARQUIVAR-SE",
   finaleEchoRestoreAlive:
     "A resposta dela permanece: não viva no seu tempo verbal, mas ainda lembrando de ter um corpo.",
   finaleEchoRestoreRestore:

@@ -349,6 +349,26 @@ export const reduceGameEvent = (
     return { state: event.state };
   }
 
+  // A selected ending is a hard narrative boundary. The aftermath may retain
+  // reading history and investigator-owned presentation state, but it must
+  // never let an old UI callback unlock content, advance a puzzle, or change
+  // the final disposition. `ending_closure_seen` is deliberately the only
+  // post-ending flag: it records that the player acknowledged the conclusion.
+  if (current.ending) {
+    const isSafeAftermathEvent =
+      event.type === "MARK_FILE_READ" ||
+      event.type === "MARK_EMAIL_READ" ||
+      event.type === "SET_CASE_NOTES" ||
+      event.type === "SET_LAST_RESOURCE" ||
+      event.type === "MOVE_BOARD_CARD" ||
+      event.type === "TOGGLE_BOARD_CONNECTION" ||
+      event.type === "RESET_BOARD_LAYOUT" ||
+      event.type === "SET_LOCALE" ||
+      event.type === "TOUCH_SEEN" ||
+      (event.type === "SET_FLAG" && event.flag === "ending_closure_seen");
+    if (!isSafeAftermathEvent) return { state: current };
+  }
+
   let state = current;
   switch (event.type) {
     case "SET_FLAG":

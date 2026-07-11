@@ -4,6 +4,7 @@ import { isUnlocked, UnlockCondition } from "./unlock";
 import {
   createInitialProgress,
   currentChapter,
+  GameEvent,
   investigationStage,
   progressChapterSnapshot,
   puzzleCorruptionStage,
@@ -15,6 +16,13 @@ import {
   pendingObserverConclusions,
 } from "./campaign";
 import { FUTURE_SEQUENCE, reduceGameEvent } from "./puzzles";
+
+const completedCase = () => {
+  const state = createInitialProgress(1_700_000_000_000, "completed-case");
+  state.ending = "shutdown";
+  state.flags.ending_shutdown = true;
+  return state;
+};
 
 const solveThroughFutureLog = () => {
   let state = createInitialProgress(1_700_000_000_000, "test-case");
@@ -848,6 +856,49 @@ describe("ARG progression reducer", () => {
     expect(accepted.ending).toBe("archive_self");
     expect(accepted.flags.ending_archive_self).toBe(true);
     expect(accepted.worldReactionsSeen).toContain("observer_filed");
+  });
+
+  it("freezes narrative progression after a final while retaining aftermath UX", () => {
+    const state = completedCase();
+    const blockedEvents: GameEvent[] = [
+      { type: "SET_FLAG", flag: "post_ending_flag" },
+      { type: "DISCOVER_EVIDENCE", evidenceId: "hash_manifest" },
+      { type: "VISIT_PAGE", pageId: "post-ending-page" },
+      { type: "ATTEMPT_PUZZLE", puzzleId: "lot_114" },
+      { type: "SOLVE_PUZZLE", puzzleId: "lot_114" },
+      { type: "COLLECT_REFERENCE", reference: "E7-A1-C4-B9" },
+      { type: "COLLECT_TOKEN", tokenId: "status-tomorrow" },
+      { type: "FUTURE_SEQUENCE_ACTION", action: "image:mirror" },
+      { type: "RUN_COMMAND", command: "INDEX /RESTORE SARAH" },
+      { type: "DISCOVER_OPTIONAL", discoveryId: "solitaire_save" },
+      { type: "COMPLETE_OPTIONAL_MISSION", missionId: "solitaire_save" },
+      { type: "CHOOSE_ENDING", ending: "restore" },
+    ];
+
+    for (const event of blockedEvents) {
+      expect(reduceGameEvent(state, event).state).toBe(state);
+    }
+    expect(state.flags.post_ending_flag).toBeUndefined();
+    expect(state.discoveredEvidenceIds).toEqual([]);
+    expect(state.puzzles.lot_114.solvedAt).toBeNull();
+
+    const acknowledged = reduceGameEvent(state, {
+      type: "SET_FLAG",
+      flag: "ending_closure_seen",
+    }).state;
+    expect(acknowledged.flags.ending_closure_seen).toBe(true);
+
+    const reviewed = reduceGameEvent(acknowledged, {
+      type: "MARK_FILE_READ",
+      fileId: "solitaire_save",
+    }).state;
+    expect(reviewed.readFileIds).toEqual(["solitaire_save"]);
+
+    const notes = reduceGameEvent(reviewed, {
+      type: "SET_CASE_NOTES",
+      notes: "The case is closed.",
+    }).state;
+    expect(notes.caseNotes).toBe("The case is closed.");
   });
 });
 
