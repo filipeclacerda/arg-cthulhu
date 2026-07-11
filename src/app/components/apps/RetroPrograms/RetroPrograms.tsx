@@ -248,6 +248,7 @@ export const RecycleBin = () => {
     flags: state.flags,
     discoveredEvidenceIds: state.discoveredEvidenceIds,
     solvedPuzzleIds: Object.entries(state.puzzles).filter(([, puzzle]) => puzzle.solvedAt).map(([id]) => id) as import("@/app/game/progress").PuzzleId[],
+    insightsUnlocked: state.insightsUnlocked,
   }));
   const emptyExpanded = state.readFileIds.includes("empty_tmp");
   const entrySize = (entry: (typeof RECYCLE_ENTRIES)[number]) =>

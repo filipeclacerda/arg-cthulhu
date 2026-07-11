@@ -56,6 +56,7 @@ import {
   evidenceUsageById,
   exclusiveEvidenceByClaim,
   findingIdFromClaim,
+  isCasefileRelevantEvidence,
   retainedFindingsFromAnswers,
   sharedEvidenceIds,
 } from "@/app/game/casefile";
@@ -70,6 +71,7 @@ import {
   chapterIndex,
   type ProgressStateV5,
 } from "@/app/game/progress";
+import { THEORY_DEFINITIONS } from "@/app/game/theories";
 import "../ArgTools/style.scss";
 import "./evidence-board.scss";
 import "./case-reconstruction.scss";
@@ -107,8 +109,7 @@ const CATEGORY_META: Record<CasefileCategory, { short: string }> = {
   event: { short: "TIME" },
 };
 const LENS_LABEL_KEYS: Record<CasefileLens, TranslationKey> = {
-  reconstruct: "casefileLensReconstruct",
-  organize: "casefileLensOrganize",
+  deductions: "casefileLensDeductions",
   timeline: "casefileLensTimeline",
   contradictions: "casefileLensContradictions",
 };
@@ -121,8 +122,7 @@ const CHAPTER_TITLE_KEYS: Record<ChapterId, TranslationKey> = {
   chapter_6: "chapter6Title",
 };
 const LENS_MIN_CHAPTERS: Record<CasefileLens, ChapterId> = {
-  reconstruct: "chapter_1",
-  organize: "chapter_3",
+  deductions: "chapter_1",
   timeline: "chapter_4",
   contradictions: "chapter_4",
 };
@@ -200,8 +200,7 @@ const CATEGORY_LABEL_KEYS: Record<CasefileCategory, TranslationKey> = {
   event: "casefileTimeline",
 };
 const LENS_HINT_KEYS: Record<CasefileLens, TranslationKey> = {
-  reconstruct: "casefileAttachedRecordsHint",
-  organize: "casefileCorrelationHint",
+  deductions: "casefileDeductionsHint",
   timeline: "casefileNeedTimelineHint",
   contradictions: "casefileNeedTwoRecordsToRefute",
 };
@@ -286,9 +285,11 @@ const visibleStatementsForChapter = (
   });
 
 const Casefile = ({
-  initialLens = "reconstruct",
+  initialLens = "deductions",
+  initialThreadId,
 }: {
   initialLens?: CasefileLens;
+  initialThreadId?: InsightId;
 }) => {
   const {
     discoveredEvidenceIds,
@@ -317,6 +318,12 @@ const Casefile = ({
     )?.id ?? visibleStatements[0].id;
 
   const [lens, setLens] = useState<CasefileLens>(initialLens);
+  const [deductionMode, setDeductionMode] = useState<"finding" | "thread">(
+    "finding"
+  );
+  const [activeThreadId, setActiveThreadId] = useState<InsightId | null>(
+    initialThreadId ?? null
+  );
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [theoryIds, setTheoryIds] = useState<string[]>([]);
   const [theoryFeedback, setTheoryFeedback] = useState("");
@@ -380,12 +387,19 @@ const Casefile = ({
   );
 
   useEffect(() => {
-    setLens(lensUnlocked(initialLens) ? initialLens : "reconstruct");
+    setLens(lensUnlocked(initialLens) ? initialLens : "deductions");
   }, [initialLens, lensUnlocked]);
 
   useEffect(() => {
+    if (!initialThreadId) return;
+    setLens("deductions");
+    setDeductionMode("thread");
+    setActiveThreadId(initialThreadId);
+  }, [initialThreadId]);
+
+  useEffect(() => {
     if (lensUnlocked(lens)) return;
-    setLens("reconstruct");
+    setLens("deductions");
     setSelectedId(null);
     setTheoryFeedback("");
   }, [lens, lensUnlocked]);
@@ -487,6 +501,7 @@ const Casefile = ({
   const evidenceCards = useMemo(
     () =>
       discoveredEvidenceIds
+        .filter(isCasefileRelevantEvidence)
         .map((id) => EVIDENCE_CARDS[id])
         .filter((card): card is BoardCard => Boolean(card))
         .map(localizeCard),
@@ -546,19 +561,49 @@ const Casefile = ({
   );
 
   const correlationCards = useMemo<CasefileCard[]>(
-    () => {
-      if (!lensUnlocked("organize")) return [];
-      return insightsUnlocked.map((insightId) => ({
-        id: `correlation:${insightId}`,
-        title: localized(INSIGHT_LABELS[insightId], locale),
-        summary: t("casefileCorrelationSummary"),
-        category: "correlation",
-        claimId: `correlation:${insightId}`,
-        sourceId: insightId,
-      }));
-    },
-    [insightsUnlocked, lensUnlocked, locale, t]
+    () =>
+      THEORY_DEFINITIONS.filter(
+        (theory) =>
+          chapterAtLeast(currentChapter, theory.availableAt) ||
+          insightsUnlocked.includes(theory.insightId)
+      ).map((theory) => {
+        const retained = insightsUnlocked.includes(theory.insightId);
+        return {
+          id: `correlation:${theory.insightId}`,
+          title: retained
+            ? localized(INSIGHT_LABELS[theory.insightId], locale)
+            : `${t("casefileThreadLabel")} ${
+                THEORY_DEFINITIONS.indexOf(theory) + 1
+              }`,
+          summary: retained
+            ? t("casefileCorrelationSummary")
+            : localized(theory.hint, locale),
+          category: "correlation",
+          claimId: `correlation:${theory.insightId}`,
+          sourceId: theory.insightId,
+        };
+      }),
+    [currentChapter, insightsUnlocked, locale, t]
   );
+
+  const availableThreads = useMemo(
+    () =>
+      THEORY_DEFINITIONS.filter(
+        (theory) =>
+          chapterAtLeast(currentChapter, theory.availableAt) ||
+          insightsUnlocked.includes(theory.insightId)
+      ),
+    [currentChapter, insightsUnlocked]
+  );
+  const activeThread =
+    availableThreads.find((thread) => thread.insightId === activeThreadId) ??
+    availableThreads[0];
+  const activeThreadFailures = activeThread
+    ? state.theoryAttempts.filter(
+        (attempt) =>
+          attempt.targetInsightId === activeThread.insightId && !attempt.insightId
+      ).length
+    : 0;
 
   const visibleHypothesisIds = useMemo(
     () =>
@@ -591,7 +636,9 @@ const Casefile = ({
   );
 
   const allPositioned: PositionedCard[] = useMemo(() => {
-    const people = PERSON_CARDS.map((card) => ({
+    const people = PERSON_CARDS.filter((card) =>
+      isCasefileRelevantEvidence(card.id)
+    ).map((card) => ({
       card: localizeCard(card) as CasefileCard,
       position: boardPositions[card.id] ?? PERSON_POSITIONS[card.id],
     }));
@@ -647,10 +694,10 @@ const Casefile = ({
   );
   const pendingFindingKeys = useMemo(
     () =>
-      lens === "reconstruct"
+      lens === "deductions" && deductionMode === "finding"
         ? attachedEvidenceIds.map((id) => pairKey(activeClaimId, id))
         : [],
-    [activeClaimId, attachedEvidenceIds, lens]
+    [activeClaimId, attachedEvidenceIds, deductionMode, lens]
   );
   const allConfirmedConnections = useMemo(
     () => Array.from(new Set([...confirmedConnections, ...solvedFindingKeys])),
@@ -664,12 +711,18 @@ const Casefile = ({
     return ids;
   }, [allConfirmedConnections]);
   const relevantEvidence = useMemo(() => {
+    if (lens === "deductions" && deductionMode === "thread" && activeThread) {
+      return new Set([
+        ...activeThread.required,
+        ...(activeThread.anyOf ?? []),
+      ]);
+    }
     const relevant = new Set<string>([
       ...(statement.evidence.allOf ?? []),
       ...(statement.evidence.anyOf ?? []),
     ]);
     return relevant;
-  }, [statement]);
+  }, [activeThread, deductionMode, lens, statement]);
   const timelineEvidence = useMemo(
     () =>
       new Set(
@@ -947,7 +1000,8 @@ const Casefile = ({
     setCaseFeedback("");
     setCaseFeedbackTone("neutral");
     setEvidenceFilter("");
-    setLens("reconstruct");
+    setLens("deductions");
+    setDeductionMode("finding");
     setSelectedId(claimIdForFinding(id));
   };
 
@@ -1141,7 +1195,7 @@ const Casefile = ({
   };
 
   const submitTheory = () => {
-    if (!lensUnlocked("organize")) {
+    if (!activeThread) {
       setTheoryFeedback(t("casefileLensLocked"));
       play("error");
       return;
@@ -1150,11 +1204,24 @@ const Casefile = ({
       setTheoryFeedback(t("theoryEmpty"));
       return;
     }
-    const result = testTheory(theoryIds);
+    const result = testTheory(theoryIds, activeThread.insightId);
     const insightId = result.theoryResult?.insightId as InsightId | null;
-    setTheoryFeedback(
-      insightId ? localized(INSIGHT_LABELS[insightId], locale) : t("theoryFailed")
-    );
+    if (insightId) {
+      setTheoryFeedback(localized(INSIGHT_LABELS[insightId], locale));
+    } else {
+      const progress = result.theoryResult;
+      const base = t("casefileThreadProgress")
+        .replace("{matched}", String(progress?.matchedCount ?? 0))
+        .replace("{required}", String(progress?.requiredCount ?? 0));
+      const kinds = progress?.missingKinds ?? [];
+      const categoryHint =
+        activeThreadFailures + 1 >= 2 && kinds.length > 0
+          ? ` ${t("casefileThreadKinds")}: ${kinds
+              .map((kind) => categoryLabel(kind as CasefileCategory))
+              .join(", ")}.`
+          : "";
+      setTheoryFeedback(`${base}${categoryHint}`);
+    }
     if (insightId && !result.theoryResult?.alreadyKnown) {
       play("chime");
     } else if (!insightId) {
@@ -1194,12 +1261,21 @@ const Casefile = ({
       selectStatement(findingId);
       return;
     }
-    if (lens === "reconstruct" && card && card.category !== "correlation") {
+    if (
+      lens === "deductions" &&
+      deductionMode === "finding" &&
+      card &&
+      card.category !== "correlation"
+    ) {
       setSelectedId(cardId);
       toggleEvidence(cardId);
       return;
     }
-    if (lens === "organize" && isCorrelationCandidate(card)) {
+    if (
+      lens === "deductions" &&
+      deductionMode === "thread" &&
+      isCorrelationCandidate(card)
+    ) {
       setTheoryFeedback("");
       setTheoryIds((current) =>
         current.includes(cardId)
@@ -1518,13 +1594,13 @@ const Casefile = ({
   }, [helpLegendOpen]);
 
   const renderInspector = () => {
-    if (lens === "reconstruct") {
+    if (lens === "deductions" && deductionMode === "finding") {
       return (
         <section
-          id={lensPanelId("reconstruct")}
+          id={lensPanelId("deductions")}
           className="casefile-inspector__stack"
           role="tabpanel"
-          aria-labelledby={lensTabId("reconstruct")}
+          aria-labelledby={lensTabId("deductions")}
         >
           <div className="casefile-claim-list">
             <strong>{t("casefileFindings")}</strong>
@@ -1545,6 +1621,34 @@ const Casefile = ({
                 </button>
               );
             })}
+            <strong className="casefile-claim-list__section">
+              {t("casefileCorrelations")}
+            </strong>
+            <div className="casefile-thread-list">
+              {availableThreads.map((thread, index) => {
+                const retainedThread = insightsUnlocked.includes(thread.insightId);
+                return (
+                  <button
+                    key={thread.insightId}
+                    type="button"
+                    className={retainedThread ? "retained" : ""}
+                    onClick={() => {
+                      setActiveThreadId(thread.insightId);
+                      setDeductionMode("thread");
+                      setTheoryIds([]);
+                      setTheoryFeedback("");
+                    }}
+                  >
+                    <i>{retainedThread ? "✓" : `${index + 1}`}</i>
+                    <span>
+                      {retainedThread
+                        ? localized(INSIGHT_LABELS[thread.insightId], locale)
+                        : `${t("casefileThreadLabel")} ${index + 1}`}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           <section className="casefile-reconstruction">
@@ -1602,6 +1706,22 @@ const Casefile = ({
                 ? t("casefileFindingRetained")
                 : t("casefileTestFinding")}
             </button>
+            {solved &&
+              statement.id === "volume_return" &&
+              chapterAtLeast(currentChapter, "chapter_2") &&
+              !insightsUnlocked.includes("second_volume") && (
+              <button
+                className="button casefile-submit casefile-submit--thread"
+                type="button"
+                onClick={() => {
+                  setActiveThreadId("second_volume");
+                  setDeductionMode("thread");
+                  setTheoryIds([]);
+                }}
+              >
+                {t("casefileCrossFinding")}
+              </button>
+            )}
             {caseFeedback && (
               <p className={`case-reconstruction__feedback ${caseFeedbackTone}`}>
                 {caseFeedback}
@@ -1814,15 +1934,51 @@ const Casefile = ({
 
     return (
       <section
-        id={lensPanelId("organize")}
+        id={lensPanelId("deductions")}
         className="casefile-inspector__stack"
         role="tabpanel"
-        aria-labelledby={lensTabId("organize")}
+        aria-labelledby={lensTabId("deductions")}
       >
+        <div className="casefile-claim-list casefile-claim-list--threads">
+          <strong>{t("casefileDeductions")}</strong>
+          <button
+            type="button"
+            className="casefile-claim-list__back"
+            onClick={() => setDeductionMode("finding")}
+          >
+            <i>←</i><span>{t("casefileFindings")}</span>
+          </button>
+          <div className="casefile-thread-list">
+            {availableThreads.map((thread, index) => {
+              const retainedThread = insightsUnlocked.includes(thread.insightId);
+              return (
+                <button
+                  key={thread.insightId}
+                  type="button"
+                  className={`${
+                    activeThread?.insightId === thread.insightId ? "active" : ""
+                  } ${retainedThread ? "retained" : ""}`}
+                  onClick={() => {
+                    setActiveThreadId(thread.insightId);
+                    setTheoryIds([]);
+                    setTheoryFeedback("");
+                  }}
+                >
+                  <i>{retainedThread ? "✓" : `${index + 1}`}</i>
+                  <span>{retainedThread ? localized(INSIGHT_LABELS[thread.insightId], locale) : `${t("casefileThreadLabel")} ${index + 1}`}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
         <section className="evidence-board__theory">
           <span>{t("casefileCorrelationTray")}</span>
-          <strong>{t("theoryPrompt")}</strong>
-          <p className="casefile-correlation-hint">{t("casefileCorrelationHint")}</p>
+          <strong>{activeThread ? (insightsUnlocked.includes(activeThread.insightId) ? localized(INSIGHT_LABELS[activeThread.insightId], locale) : localized(activeThread.hint, locale)) : t("theoryPrompt")}</strong>
+          <p className="casefile-correlation-hint">
+            {activeThreadFailures >= 2
+              ? t("casefileThreadKindsHint")
+              : t("casefileCorrelationHint")}
+          </p>
           <div className="evidence-board__theory-cards">
             {theoryIds.length === 0 ? (
               <em>—</em>
@@ -1964,6 +2120,8 @@ const Casefile = ({
     const status = cardStatus(card);
     const facts = collectedTokensForEvidence(card.id, state.collectedTokens);
     const relevant = relevantEvidence.has(card.id);
+    const threadMatch =
+      lens === "deductions" && deductionMode === "thread" && relevant;
     const attached = activeEvidenceSet.has(card.id);
     const fresh = freshIds.has(card.id);
     const dragging = !options.decked && dragPreview?.id === card.id;
@@ -1974,6 +2132,8 @@ const Casefile = ({
     } ${theoryIds.includes(card.id) ? "evidence-card--theory" : ""} ${
       confirmedCardIds.has(card.id) ? "evidence-card--confirmed" : ""
     } ${relevant ? "casefile-card--relevant" : ""} ${
+      threadMatch ? "casefile-card--thread-match" : ""
+    } ${
       attached ? "casefile-card--attached" : ""
     } ${shared ? "evidence-card--shared" : ""
     } ${fresh ? "casefile-card--fresh" : ""} ${
@@ -2016,9 +2176,9 @@ const Casefile = ({
         }}
         aria-label={`${card.title}. ${card.summary}`}
         title={
-          lens === "reconstruct"
+          lens === "deductions" && deductionMode === "finding"
             ? t("casefileAttachToFinding")
-            : lens === "organize"
+            : lens === "deductions" && deductionMode === "thread"
               ? t("casefileAddOrRemoveCorrelation")
               : t("casefileSelect")
         }
@@ -2448,7 +2608,7 @@ const Casefile = ({
 
         <aside className="evidence-board__inspector casefile__inspector">
           <p className="arg-tool__kicker">
-            {lens === "organize"
+            {lens === "deductions" && deductionMode === "thread"
               ? t("casefileCorrelations").toUpperCase()
               : t(LENS_LABEL_KEYS[lens]).toUpperCase()}
           </p>

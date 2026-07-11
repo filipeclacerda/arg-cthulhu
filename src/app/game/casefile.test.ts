@@ -5,6 +5,7 @@ import {
   CASEFILE_CORRELATION_CLAIMS,
   CASEFILE_FINDING_CLAIMS,
   CASEFILE_HYPOTHESIS_CLAIMS,
+  CASEFILE_RELEVANT_EVIDENCE_IDS,
   CASEFILE_TIMELINE_EVENTS,
   HYPOTHESIS_EVIDENCE_REQUIREMENTS,
   TOKEN_TYPE_LABEL_KEYS,
@@ -13,6 +14,7 @@ import {
   evidenceIdsForClaim,
   evidenceUsageById,
   exclusiveEvidenceByClaim,
+  isCasefileRelevantEvidence,
   retainedFindingsFromAnswers,
   sharedEvidenceIds,
   tokensForEvidence,
@@ -179,5 +181,21 @@ describe("casefile graph", () => {
     expect(Object.keys(TOKEN_TYPE_LABEL_KEYS).sort()).toEqual(
       tokenTypes.sort()
     );
+  });
+
+  it("keeps the board limited to actionable evidence and deliberate red herrings", () => {
+    const actionableIds = new Set([
+      ...CASEFILE_FINDING_CLAIMS.flatMap(evidenceIdsForClaim),
+      ...CASEFILE_CORRELATION_CLAIMS.flatMap(evidenceIdsForClaim),
+      ...CASEFILE_HYPOTHESIS_CLAIMS.flatMap(evidenceIdsForClaim),
+      ...CASEFILE_TIMELINE_EVENTS.map((event) => event.evidenceId),
+    ]);
+
+    expect(CASEFILE_RELEVANT_EVIDENCE_IDS).toEqual(actionableIds);
+    expect(isCasefileRelevantEvidence("tom_last_message")).toBe(true);
+    expect(isCasefileRelevantEvidence("chat_em_archive")).toBe(true);
+    expect(isCasefileRelevantEvidence("solitaire_save")).toBe(false);
+    expect(isCasefileRelevantEvidence("photo_sarah_office")).toBe(false);
+    expect(isCasefileRelevantEvidence("person-em")).toBe(false);
   });
 });

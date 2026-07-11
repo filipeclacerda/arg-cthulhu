@@ -55,6 +55,7 @@ const ImageViewer = ({ fileId }: { fileId: string }) => {
                 solvedPuzzleIds: Object.entries(progress.puzzles)
                   .filter(([, puzzle]) => Boolean(puzzle.solvedAt))
                   .map(([id]) => id as keyof typeof progress.puzzles),
+                insightsUnlocked: progress.insightsUnlocked,
               })
           )
         : file

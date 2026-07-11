@@ -293,6 +293,52 @@ const ConclusionReadyToast = () => {
   );
 };
 
+/** Keeps the first correlation in view once the next chapter is waiting on it. */
+const CorrelationTutorialToast = () => {
+  const { isHydrated, state } = useProgress();
+  const { openWindow } = useWindowManager();
+  const { t } = useI18n();
+  const [dismissed, setDismissed] = useState(false);
+  const pending =
+    isHydrated &&
+    Boolean(state.puzzles.palimpsest.solvedAt) &&
+    !state.insightsUnlocked.includes("second_volume") &&
+    !state.flags.correlation_tutorial_grandfathered;
+
+  if (!pending || dismissed) return null;
+  return (
+    <div className="archive-warning conclusion-toast" role="status">
+      <Image src="/icons/folder-special.png" alt="" width={34} height={34} />
+      <div>
+        <strong>{t("correlationTutorialKicker")}</strong>
+        <p>{t("correlationTutorialBody")}</p>
+      </div>
+      <button
+        className="button"
+        type="button"
+        onClick={() =>
+          openWindow({
+            id: "casefile",
+            appType: "casefile",
+            title: t("casefileLabel"),
+            props: { initialLens: "deductions", initialThreadId: "second_volume" },
+            maximized: true,
+          })
+        }
+      >
+        {t("correlationTutorialAction")}
+      </button>
+      <button
+        className="button archive-warning__close"
+        aria-label={t("dismissLabel")}
+        onClick={() => setDismissed(true)}
+      >
+        ×
+      </button>
+    </div>
+  );
+};
+
 const appIcon = (appType: AppType) => {
   if (appType === "browser") return "/icons/internet-explorer.png";
   if (appType === "email") return "/icons/outlook-express.png";
@@ -336,7 +382,14 @@ const Desktop = () => {
   const isEndingPresentation =
     desktopMode === "ending" && isStoryComplete(state);
   const isPostEndingDesktop = isAftermath || isEndingPresentation;
-  const { play, setAmbientStage, muted, toggleMuted } = useSound();
+  const {
+    play,
+    setAmbientStage,
+    playHauntedLoop,
+    stopHauntedLoop,
+    muted,
+    toggleMuted,
+  } = useSound();
   const { t } = useI18n();
   const appLabel = (app: DesktopApp) => (app.labelKey ? t(app.labelKey) : app.label);
   const windowTitle = (win: (typeof windows)[number]) =>
@@ -931,6 +984,14 @@ const Desktop = () => {
     return () => clearTimeout(timer);
   }, [flash1998, isPostEndingDesktop, play, setFlag]);
 
+  // The first two 1998 flashes borrow the room's radio interference. It is
+  // explicitly stopped when the overlay leaves so it cannot leak into play.
+  useEffect(() => {
+    if (flash1998 !== 1 && flash1998 !== 2) return;
+    playHauntedLoop("flash-1998-radio-static", "/sounds/radio-static.wav", 8_000, 0.1);
+    return () => stopHauntedLoop("flash-1998-radio-static");
+  }, [flash1998, playHauntedLoop, stopHauntedLoop]);
+
   // Unlike the brief earlier flashes, this session requires a reply. Restore
   // it after a reload until the persisted terminal choice has been made.
   useEffect(() => {
@@ -963,6 +1024,7 @@ const Desktop = () => {
   }, [isEndingPresentation, isHydrated, openWindow]);
 
   const openMiriamAccessionFile = () => {
+    stopHauntedLoop("flash-1998-radio-static");
     setFlag("miriam_1998_file_recovered");
     play("disk");
     openWindow({
@@ -1211,6 +1273,7 @@ const Desktop = () => {
         </div>
       )}
       {!isPostEndingDesktop && <ConclusionReadyToast />}
+      {!isPostEndingDesktop && <CorrelationTutorialToast />}
       {!isPostEndingDesktop && flash1998 != null && (
         <div
           className="desktop-1998-overlay"

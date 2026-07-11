@@ -17,8 +17,7 @@ import type { TranslationKey } from "../i18n";
 import { THEORY_DEFINITIONS } from "./theories";
 
 export type CasefileLens =
-  | "organize"
-  | "reconstruct"
+  | "deductions"
   | "timeline"
   | "contradictions";
 
@@ -227,6 +226,22 @@ export const CASEFILE_TIMELINE_EVENTS: CasefileTimelineEvent[] = [
     },
   },
 ];
+
+/**
+ * The Casefile is a working surface, not an archive of every opened file.
+ * Hypothesis evidence intentionally remains as a red herring the player can
+ * investigate and dismiss.
+ */
+export const CASEFILE_RELEVANT_EVIDENCE_IDS: ReadonlySet<string> = new Set([
+  ...CASEFILE_CLAIMS.flatMap((claim) => [
+    ...claim.requiredEvidenceIds,
+    ...claim.optionalEvidenceIds,
+  ]),
+  ...CASEFILE_TIMELINE_EVENTS.map((event) => event.evidenceId),
+]);
+
+export const isCasefileRelevantEvidence = (evidenceId: string): boolean =>
+  CASEFILE_RELEVANT_EVIDENCE_IDS.has(evidenceId);
 
 export const tokensForEvidence = (evidenceId: string): TokenDefinition[] =>
   TOKENS.filter((token) => token.sourceEvidenceId === evidenceId);

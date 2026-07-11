@@ -126,8 +126,9 @@ final secreto.
 
 ### Respostas completas do Casefile.exe
 
-O **Casefile.exe** concentra quatro lentes: **Achados**, **Correlações**, **Cronologia** e
-**Refutar**. As respostas abaixo cobrem todos os gates e descobertas desse hub.
+O **Casefile.exe** concentra três lentes: **Deduções**, **Cronologia** e **Refutar**.
+Em Deduções, achados e fios são etapas do mesmo fluxo. As respostas abaixo cobrem todos os
+gates e descobertas desse hub.
 
 #### Achados — achados retidos
 
@@ -181,10 +182,12 @@ O **Casefile.exe** concentra quatro lentes: **Achados**, **Correlações**, **Cr
    - Anexos válidos: `the_name` obrigatório, mais um entre `margin_ciphertext`,
      `counting_audio`, `lineage_pattern`, `future_access_log`.
 
-#### Correlações — correlações retidas
+#### Deduções — fios retidos
 
-Na lente **Correlações**, selecione as cartas listadas. Uma correlação correta vira fio
-dourado e conta para o final secreto.
+Depois de reter **Retorno do Volume II**, cruze `miriam_1998` + `diary` + `lot_114_order`.
+Esse primeiro fio é obrigatório: o Capítulo 3 só abre depois dele. Os demais fios aparecem
+progressivamente e continuam opcionais; uma correlação correta vira fio dourado e conta para
+o final secreto.
 
 1. **The second volume returned through the Bishops**
    - Cartas: `miriam_1998` + `diary` + `lot_114_order`.
@@ -630,8 +633,8 @@ aberto — o jogador ainda pode voltar e escolher um final ativo depois.
 
 ### SEAL RELAY — final secreto
 
-Antes de escolher RESTORE ou SHUT DOWN, encontre as seis correlações em
-**Casefile.exe → Correlações**:
+Antes de escolher RESTORE ou SHUT DOWN, complete os seis fios em
+**Casefile.exe → Deduções**. O primeiro já terá sido exigido para abrir o Capítulo 3:
 
 1. Lote 114 + Miriam + diário → o segundo volume voltou através das Bishop.
 2. Miriam + Sarah + padrão da linhagem → ambas ocupam o mesmo campo.

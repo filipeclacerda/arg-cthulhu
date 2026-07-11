@@ -15,7 +15,11 @@ import {
   observerAnswerCount,
   validateStatement,
 } from "./campaign";
-import { evaluateTheory, theoryConnectionKeys } from "./theories";
+import {
+  evaluateTheory,
+  evaluateTheoryAttempt,
+  theoryConnectionKeys,
+} from "./theories";
 import { RunCommandError, validateIndexCommand } from "./validators";
 import {
   canCompleteOptionalMission,
@@ -128,7 +132,13 @@ export interface EventResult {
   commandAccepted?: boolean;
   commandError?: RunCommandError;
   hintUnlocked?: { puzzleId: PuzzleId; level: number; trigger: HintTrigger };
-  theoryResult?: { insightId: string | null; alreadyKnown: boolean };
+  theoryResult?: {
+    insightId: string | null;
+    alreadyKnown: boolean;
+    matchedCount: number;
+    requiredCount: number;
+    missingKinds: string[];
+  };
   caseAnswerResult?: {
     questionId: string;
     accepted: boolean;
@@ -804,7 +814,15 @@ export const reduceGameEvent = (
     }
     case "TEST_THEORY": {
       const evidenceIds = Array.from(new Set(event.evidenceIds)).sort();
-      const insightId = evaluateTheory(evidenceIds);
+      const evaluation = event.targetInsightId
+        ? evaluateTheoryAttempt(event.targetInsightId, evidenceIds)
+        : {
+            insightId: evaluateTheory(evidenceIds),
+            matchedCount: 0,
+            requiredCount: 0,
+            missingKinds: [],
+          };
+      const insightId = evaluation.insightId;
       const alreadyKnown = Boolean(
         insightId && state.insightsUnlocked.includes(insightId)
       );
@@ -826,6 +844,9 @@ export const reduceGameEvent = (
             evidenceIds,
             attemptedAt: Date.now(),
             insightId,
+            ...(event.targetInsightId
+              ? { targetInsightId: event.targetInsightId }
+              : {}),
           },
         ],
         flags: {
@@ -838,7 +859,13 @@ export const reduceGameEvent = (
       };
       return {
         state: touch(state),
-        theoryResult: { insightId, alreadyKnown },
+        theoryResult: {
+          insightId,
+          alreadyKnown,
+          matchedCount: evaluation.matchedCount,
+          requiredCount: evaluation.requiredCount,
+          missingKinds: evaluation.missingKinds,
+        },
       };
     }
     case "SUBMIT_CASE_ANSWER": {

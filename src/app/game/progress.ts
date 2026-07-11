@@ -180,6 +180,8 @@ export interface TheoryAttempt {
   evidenceIds: string[];
   attemptedAt: number;
   insightId: InsightId | null;
+  /** The thread the player was actively assembling, when the attempt came from Deductions. */
+  targetInsightId?: InsightId;
 }
 
 export interface CaseAnswer {
@@ -223,7 +225,7 @@ export const createInitialLiveContact = (): LiveContactState => ({
 });
 
 export interface ProgressStateV5 {
-  version: 5 | 6;
+  version: 5 | 6 | 7;
   caseId: string;
   revision: number;
   createdAt: number;
@@ -299,7 +301,12 @@ export type GameEvent =
   | { type: "CHOOSE_ENDING"; ending: EndingId }
   | { type: "MOVE_BOARD_CARD"; cardId: string; x: number; y: number }
   | { type: "TOGGLE_BOARD_CONNECTION"; fromId: string; toId: string }
-  | { type: "TEST_THEORY"; evidenceIds: string[] }
+  | {
+      type: "TEST_THEORY";
+      evidenceIds: string[];
+      /** Optional for imported/legacy callers; Deductions always supplies it. */
+      targetInsightId?: InsightId;
+    }
   | {
       type: "SUBMIT_CASE_ANSWER";
       questionId: CaseQuestionId;
@@ -354,7 +361,7 @@ export const createInitialProgress = (
       ? crypto.randomUUID()
       : `case-${now}-${Math.random().toString(36).slice(2)}`
 ): ProgressStateV5 => ({
-  version: 6,
+  version: 7,
   caseId,
   revision: 0,
   createdAt: now,
@@ -408,6 +415,7 @@ export interface ChapterProgressSnapshot {
   flags: Record<string, boolean>;
   discoveredEvidenceIds?: readonly string[];
   solvedPuzzleIds?: readonly PuzzleId[];
+  insightsUnlocked?: readonly InsightId[];
 }
 
 /**
@@ -426,9 +434,9 @@ export const STAGE_MILESTONES: readonly PuzzleId[] = [
 ];
 
 /**
- * Derives the investigation stage (1–6) exclusively from solved main puzzles.
- * The stage is never settable directly — no flag, finding or optional
- * discovery can move it. Analogous to `puzzleCorruptionStage`.
+ * Derives the investigation stage (1–6) from solved main puzzles. Chapter 3
+ * additionally requires the first retained correlation: it teaches the
+ * Deductions workflow before the archive opens the next layer.
  */
 export const investigationStageFromSolved = (
   solvedPuzzleIds: readonly PuzzleId[] | undefined
@@ -450,8 +458,13 @@ export const investigationStage = (
 
 export const currentChapter = (
   snapshot: ChapterProgressSnapshot
-): ChapterId =>
-  CHAPTER_IDS[investigationStageFromSolved(snapshot.solvedPuzzleIds) - 1];
+): ChapterId => {
+  const stage = investigationStageFromSolved(snapshot.solvedPuzzleIds);
+  const tutorialComplete =
+    snapshot.insightsUnlocked?.includes("second_volume") ||
+    snapshot.flags.correlation_tutorial_grandfathered;
+  return CHAPTER_IDS[(stage >= 3 && !tutorialComplete ? 2 : stage) - 1];
+};
 
 export const chapterIndex = (chapterId: ChapterId): number =>
   CHAPTER_IDS.indexOf(chapterId);
@@ -467,6 +480,7 @@ export const progressChapterSnapshot = (
   flags: state.flags,
   discoveredEvidenceIds: state.discoveredEvidenceIds,
   solvedPuzzleIds: PUZZLE_ORDER.filter((id) => Boolean(state.puzzles[id].solvedAt)),
+  insightsUnlocked: state.insightsUnlocked,
 });
 
 export const isPuzzleSolved = (

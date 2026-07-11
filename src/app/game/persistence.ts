@@ -18,7 +18,8 @@ const STORE = "saves";
 const CURRENT_KEY = "current";
 const CHECKPOINT_PREFIX = "checkpoint-";
 const LEGACY_STORAGE_KEY = "arg-cthulhu-progress";
-const FALLBACK_STORAGE_KEY = "arg-cthulhu-progress-v6";
+const FALLBACK_STORAGE_KEY = "arg-cthulhu-progress-v7";
+const V6_FALLBACK_STORAGE_KEY = "arg-cthulhu-progress-v6";
 const V5_FALLBACK_STORAGE_KEY = "arg-cthulhu-progress-v5";
 const V4_FALLBACK_STORAGE_KEY = "arg-cthulhu-progress-v4";
 const V3_FALLBACK_STORAGE_KEY = "arg-cthulhu-progress-v3";
@@ -173,7 +174,7 @@ const isProgressV5 = (value: unknown): value is ProgressStateV4 => {
   if (!value || typeof value !== "object") return false;
   const parsed = value as Partial<ProgressStateV4>;
   return (
-    (parsed.version === 5 || parsed.version === 6) &&
+    (parsed.version === 5 || parsed.version === 6 || parsed.version === 7) &&
     typeof parsed.caseId === "string" &&
     typeof parsed.updatedAt === "number" &&
     Boolean(parsed.puzzles) &&
@@ -199,10 +200,19 @@ const markSolved = (
 export const migrateProgress = (value: unknown): ProgressStateV4 | null => {
   if (isProgressV5(value)) {
     const initial = createInitialProgress(value.createdAt, value.caseId);
+    const legacyTutorialBypass =
+      value.version !== 7 && Boolean(value.puzzles?.palimpsest?.solvedAt);
     return {
       ...initial,
       ...value,
-      version: 6,
+      version: 7,
+      flags: {
+        ...initial.flags,
+        ...value.flags,
+        ...(legacyTutorialBypass
+          ? { correlation_tutorial_grandfathered: true }
+          : {}),
+      },
       collectedTokens: Array.isArray(value.collectedTokens)
         ? value.collectedTokens
         : [],
@@ -241,7 +251,7 @@ export const migrateProgress = (value: unknown): ProgressStateV4 | null => {
     return {
       ...initial,
       ...legacy,
-      version: 6,
+      version: 7,
       locale: legacy.locale === "pt-BR" ? "pt-BR" : "en",
       puzzles,
       insightsUnlocked: Array.isArray(legacy.insightsUnlocked)
@@ -355,6 +365,7 @@ const safeParse = (raw: string | null): unknown => {
 const readLocalFallback = (): ProgressStateV4 | null =>
   migrateProgress(
     safeParse(localStorage.getItem(FALLBACK_STORAGE_KEY)) ??
+      safeParse(localStorage.getItem(V6_FALLBACK_STORAGE_KEY)) ??
       safeParse(localStorage.getItem(V5_FALLBACK_STORAGE_KEY)) ??
       safeParse(localStorage.getItem(V4_FALLBACK_STORAGE_KEY)) ??
       safeParse(localStorage.getItem(V3_FALLBACK_STORAGE_KEY)) ??

@@ -33,3 +33,12 @@
   layers move from fluorescent CRT room tone to wet pipe resonance, electrical
   beating and finally a sparse sub-bass void. Muted entirely by the taskbar
   sound toggle.
+- `public/sounds/radio-static.wav`, `harmonized-tone.wav`,
+  `mechanical-moan.wav`, `metal-resonance.wav`, `clock.wav` and
+  `deep-moaning-tone.wav` originate from the locally supplied `Horror SFX
+  Free` package. Original file names and folders: `Ambient/Radio_static.wav`,
+  `Stingers and Spooky Triggers/Harmonized Tone_Pleasant but Spooky.wav`,
+  `Ambient/Mechanical Moan and Creaking.wav`, `Stingers and Spooky
+  Triggers/Metal_resonance.wav`, `House & Office/Clock.wav`, and `Monsters &
+  Ghosts/Tone_Moaning_Deep_3.wav`. The supplied package contains no license
+  document; verify its distribution terms before a public release.

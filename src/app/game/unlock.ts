@@ -1,4 +1,4 @@
-import { ChapterId, PuzzleId, chapterUnlocked } from "./progress";
+import { ChapterId, InsightId, PuzzleId, chapterUnlocked } from "./progress";
 
 /**
  * Shared gating vocabulary for every surface that reveals content over time:
@@ -27,6 +27,7 @@ export interface UnlockContext {
   flags: Record<string, boolean>;
   discoveredEvidenceIds?: string[];
   solvedPuzzleIds?: PuzzleId[];
+  insightsUnlocked?: InsightId[];
   /** Optional richer context used by the diegetic event coordinator. */
   worldReactionsSeen?: string[];
   playerChoices?: { choiceId: string; optionId: string }[];

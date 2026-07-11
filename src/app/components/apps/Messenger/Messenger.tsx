@@ -218,6 +218,7 @@ const Messenger = () => {
       flags,
       discoveredEvidenceIds,
       solvedPuzzleIds,
+      insightsUnlocked: progress.insightsUnlocked,
     })
   );
   const [runtime, dispatch] = useReducer(

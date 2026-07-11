@@ -181,7 +181,7 @@ const CaseNotes = () => {
               id: "casefile",
               appType: "casefile",
               title: t("casefileLabel"),
-              props: { initialLens: "organize" },
+              props: { initialLens: "deductions" },
               maximized: true,
             })
           }

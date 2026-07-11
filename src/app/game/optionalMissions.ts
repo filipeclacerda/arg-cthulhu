@@ -70,6 +70,7 @@ const unlockContextFor = (state: ProgressStateV3) => ({
   solvedPuzzleIds: Object.entries(state.puzzles)
     .filter(([, puzzle]) => Boolean(puzzle.solvedAt))
     .map(([id]) => id as PuzzleId),
+  insightsUnlocked: state.insightsUnlocked,
   worldReactionsSeen: state.worldReactionsSeen,
   playerChoices: state.playerChoices,
   liveContactStatus: state.liveContact.status,

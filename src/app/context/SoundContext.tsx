@@ -1,6 +1,7 @@
 "use client";
 import React, {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useRef,
@@ -16,7 +17,12 @@ export type SoundName =
   | "glitch"
   | "disk"
   | "wet"
-  | "future";
+  | "future"
+  | "harmonized"
+  | "mechanicalMoan"
+  | "metalResonance"
+  | "clock"
+  | "deepMoan";
 
 export type AmbientStage = 0 | 1 | 2 | 3 | 4 | null;
 
@@ -28,6 +34,11 @@ const SOUND_FILES: Record<SoundName, string> = {
   disk: "/sounds/disk-seek.wav",
   wet: "/sounds/wet-click.wav",
   future: "/sounds/future-chime.wav",
+  harmonized: "/sounds/harmonized-tone.wav",
+  mechanicalMoan: "/sounds/mechanical-moan.wav",
+  metalResonance: "/sounds/metal-resonance.wav",
+  clock: "/sounds/clock.wav",
+  deepMoan: "/sounds/deep-moaning-tone.wav",
 };
 
 const SOUND_VOLUME: Record<SoundName, number> = {
@@ -38,6 +49,11 @@ const SOUND_VOLUME: Record<SoundName, number> = {
   disk: 0.33,
   wet: 0.4,
   future: 0.45,
+  harmonized: 0.32,
+  mechanicalMoan: 0.22,
+  metalResonance: 0.3,
+  clock: 0.2,
+  deepMoan: 0.18,
 };
 
 const AMBIENT_FILES: Record<Exclude<AmbientStage, null>, string> = {
@@ -61,7 +77,12 @@ interface SoundContextValue {
   toggleMuted: () => void;
   play: (name: SoundName) => void;
   setAmbientStage: (stage: AmbientStage) => void;
-  playHauntedLoop: (id: string, src: string, durationMs: number) => void;
+  playHauntedLoop: (
+    id: string,
+    src: string,
+    durationMs: number,
+    volume?: number
+  ) => void;
   stopHauntedLoop: (id: string) => void;
 }
 
@@ -150,27 +171,32 @@ export const SoundProvider = ({ children }: { children: React.ReactNode }) => {
 
   // A window the player minimized keeps producing sound for a while after it is
   // gone from the taskbar view — it stops on its own; there is no button for it.
-  const stopHauntedLoop = (id: string) => {
+  const stopHauntedLoop = useCallback((id: string) => {
     const entry = hauntedLoopsRef.current[id];
     if (!entry) return;
     entry.audio.pause();
     clearTimeout(entry.timer);
     delete hauntedLoopsRef.current[id];
-  };
+  }, []);
 
-  const playHauntedLoop = (id: string, src: string, durationMs: number) => {
+  const playHauntedLoop = useCallback((
+    id: string,
+    src: string,
+    durationMs: number,
+    volume = 0.22
+  ) => {
     if (hauntedLoopsRef.current[id]) return;
     try {
       const audio = new Audio(src);
       audio.loop = true;
-      audio.volume = 0.22;
+      audio.volume = volume;
       if (!mutedRef.current) audio.play().catch(() => {});
       const timer = setTimeout(() => stopHauntedLoop(id), durationMs);
       hauntedLoopsRef.current[id] = { audio, timer };
     } catch {
       // Audio unavailable in this environment — fail silently.
     }
-  };
+  }, [stopHauntedLoop]);
 
   const value: SoundContextValue = {
     muted,

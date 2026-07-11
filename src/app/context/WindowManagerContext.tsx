@@ -73,7 +73,12 @@ function reducer(
           ...state,
           windows: state.windows.map((w) =>
             w.id === action.window.id
-              ? { ...w, minimized: false, zIndex: state.nextZIndex }
+              ? {
+                  ...w,
+                  props: { ...w.props, ...action.window.props },
+                  minimized: false,
+                  zIndex: state.nextZIndex,
+                }
               : w
           ),
           nextZIndex: state.nextZIndex + 1,

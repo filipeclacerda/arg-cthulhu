@@ -55,7 +55,14 @@ const RecoveredBrowser = ({
   } = useProgress();
   const { openWindow } = useWindowManager();
   const { locale, t } = useI18n();
-  const unlockContext = { flags: state.flags, discoveredEvidenceIds: state.discoveredEvidenceIds, solvedPuzzleIds: Object.entries(state.puzzles).filter(([, value]) => value.solvedAt).map(([id]) => id) as import("@/app/game/progress").PuzzleId[] };
+  const unlockContext = {
+    flags: state.flags,
+    discoveredEvidenceIds: state.discoveredEvidenceIds,
+    solvedPuzzleIds: Object.entries(state.puzzles)
+      .filter(([, value]) => value.solvedAt)
+      .map(([id]) => id) as import("@/app/game/progress").PuzzleId[],
+    insightsUnlocked: state.insightsUnlocked,
+  };
   const historicalCacheUnlocked = isPuzzleSolved("margin_cipher");
   const deepCacheUnlocked = isPuzzleSolved("counting_audio");
   const requestedInitialPage: BrowserPage = initialAddress

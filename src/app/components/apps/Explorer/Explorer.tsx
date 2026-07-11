@@ -75,7 +75,12 @@ const Explorer = ({ folderId = "my-computer" }: ExplorerProps) => {
   const solvedPuzzleIds = Object.entries(state.puzzles)
     .filter(([, progress]) => Boolean(progress.solvedAt))
     .map(([id]) => id as keyof typeof state.puzzles);
-  const unlockContext = { flags, discoveredEvidenceIds, solvedPuzzleIds };
+  const unlockContext = {
+    flags,
+    discoveredEvidenceIds,
+    solvedPuzzleIds,
+    insightsUnlocked: state.insightsUnlocked,
+  };
 
   const currentFolder = folders.find((f) => f.id === currentFolderId);
   const subfolders = folders.filter(

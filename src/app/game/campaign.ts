@@ -588,6 +588,7 @@ export const isObserverConclusionAvailable = (
     solvedPuzzleIds: (Object.keys(state.puzzles) as (keyof typeof state.puzzles)[]).filter(
       (puzzleId) => Boolean(state.puzzles[puzzleId].solvedAt)
     ),
+    insightsUnlocked: state.insightsUnlocked,
   });
 
 /** Observer conclusions not yet retained, in milestone order. */

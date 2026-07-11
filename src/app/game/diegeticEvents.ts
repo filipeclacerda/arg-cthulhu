@@ -35,7 +35,17 @@ export type DiegeticPresentation =
   /** Non-modal taskbar toast with an action button. */
   | { kind: "toast" };
 
-export type DiegeticSound = "disk" | "wet" | "future" | "chime" | "glitch";
+export type DiegeticSound =
+  | "disk"
+  | "wet"
+  | "future"
+  | "chime"
+  | "glitch"
+  | "harmonized"
+  | "mechanicalMoan"
+  | "metalResonance"
+  | "clock"
+  | "deepMoan";
 
 export interface DiegeticEventDefinition {
   id: string;
@@ -76,7 +86,7 @@ export const DIEGETIC_EVENTS: DiegeticEventDefinition[] = [
     presentation: { kind: "window", windowId: "new-mail-alert" },
     when: { type: "flag", flag: "sarah_email_arrived" },
     seenFlag: "sarah_email_notice_shown",
-    sound: "future",
+    sound: "harmonized",
   },
   {
     // RECOVERED appears under My Documents (lot_114 reveal).
@@ -123,7 +133,7 @@ export const DIEGETIC_EVENTS: DiegeticEventDefinition[] = [
     when: { type: "flag", flag: "next_user_handshake_sent" },
     obsoleteWhen: { type: "flag", flag: "next_user_1998_complete" },
     seenFlag: "next_user_1998_session_shown",
-    sound: "future",
+    sound: "harmonized",
     delayRangeMs: [1_800, 2_600],
   },
   {
@@ -144,7 +154,7 @@ export const DIEGETIC_EVENTS: DiegeticEventDefinition[] = [
     when: { type: "flag", flag: "puzzle_margin_cipher_solved" },
     obsoleteWhen: { type: "puzzleSolved", puzzleId: "counting_audio" },
     seenFlag: "counting_file_notice_shown",
-    sound: "wet",
+    sound: "mechanicalMoan",
   },
   {
     // CHAPTER_SEVEN appears inside RECOVERED (counting_audio reveal).
@@ -153,7 +163,7 @@ export const DIEGETIC_EVENTS: DiegeticEventDefinition[] = [
     presentation: { kind: "window", windowId: "chapter-seven-alert" },
     when: { type: "flag", flag: "puzzle_counting_audio_solved" },
     seenFlag: "chapter_seven_notice_shown",
-    sound: "disk",
+    sound: "metalResonance",
   },
   {
     // The recovered program finishes installing — the Finale trigger.
@@ -168,7 +178,7 @@ export const DIEGETIC_EVENTS: DiegeticEventDefinition[] = [
       ],
     },
     seenFlag: "endgame_notice_shown",
-    sound: "future",
+    sound: "deepMoan",
   },
 
   // --- Priority 2: Sarah live ----------------------------------------------
@@ -273,7 +283,7 @@ export const DIEGETIC_EVENTS: DiegeticEventDefinition[] = [
     presentation: { kind: "toast" },
     when: { type: "worldReaction", reactionId: "unindexed_interval" },
     seenFlag: "two_days_out_notice_shown",
-    sound: "future",
+    sound: "clock",
   },
   {
     id: "micro_tom_held_block",
@@ -325,6 +335,7 @@ export const diegeticContext = (state: ProgressStateV3): UnlockContext => ({
   solvedPuzzleIds: PUZZLE_ORDER.filter((id: PuzzleId) =>
     Boolean(state.puzzles[id]?.solvedAt)
   ),
+  insightsUnlocked: state.insightsUnlocked,
   worldReactionsSeen: state.worldReactionsSeen,
   playerChoices: state.playerChoices,
   liveContactStatus: state.liveContact.status,

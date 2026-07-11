@@ -132,7 +132,7 @@ describe("save v6", () => {
     }
 
     const migrated = migrateProgress(legacy);
-    expect(migrated?.version).toBe(6);
+    expect(migrated?.version).toBe(7);
     expect(migrated?.locale).toBe("en");
     expect(migrated?.puzzles.lot_114.nearMisses).toEqual({});
     expect(migrated?.puzzles.lot_114.hintHistory).toEqual([]);
@@ -144,7 +144,7 @@ describe("save v6", () => {
     expect(migrated?.caseAnswers).toEqual({});
   });
 
-  it("migrates a v5 casefile-compatible save into v6 without losing board state", () => {
+  it("migrates a v5 casefile-compatible save into v7 without losing board state", () => {
     const legacy = {
       ...createInitialProgress(1_700_000_000_000, "legacy-v5-casefile"),
       version: 5,
@@ -158,7 +158,7 @@ describe("save v6", () => {
     } as any;
 
     const migrated = migrateProgress(legacy);
-    expect(migrated?.version).toBe(6);
+    expect(migrated?.version).toBe(7);
     expect(migrated?.boardPositions["finding:sarah_intent"]).toEqual({
       x: 900,
       y: 40,
@@ -170,7 +170,7 @@ describe("save v6", () => {
     expect(migrated?.insightsUnlocked).toEqual(["second_volume"]);
   });
 
-  it("fills v6 puzzle defaults when importing an older v5 puzzle set", () => {
+  it("fills v7 puzzle defaults when importing an older v5 puzzle set", () => {
     const legacy = {
       ...createInitialProgress(1_700_000_000_000, "legacy-v5-missing-puzzle"),
       version: 5,
@@ -178,7 +178,7 @@ describe("save v6", () => {
     delete legacy.puzzles.index_name;
 
     const migrated = migrateProgress(legacy);
-    expect(migrated?.version).toBe(6);
+    expect(migrated?.version).toBe(7);
     expect(migrated?.puzzles.index_name).toMatchObject({
       attempts: 0,
       solvedAt: null,
@@ -188,6 +188,7 @@ describe("save v6", () => {
   it("merges additive defaults into an older v6 snapshot", () => {
     const legacy = {
       ...createInitialProgress(1_700_000_000_000, "legacy-v6-additive"),
+      version: 6,
       playerName: "Preserved Investigator",
     } as any;
     delete legacy.optionalDiscoveries;
@@ -195,11 +196,23 @@ describe("save v6", () => {
     delete legacy.assetVariantsSeen;
 
     const migrated = migrateProgress(legacy);
-    expect(migrated?.version).toBe(6);
+    expect(migrated?.version).toBe(7);
     expect(migrated?.playerName).toBe("Preserved Investigator");
     expect(migrated?.optionalDiscoveries).toEqual([]);
     expect(migrated?.worldReactionsSeen).toEqual([]);
     expect(migrated?.assetVariantsSeen).toEqual([]);
+  });
+
+  it("grandfathers a pre-v7 save that had already reached chapter 3", () => {
+    const legacy = {
+      ...createInitialProgress(1_700_000_000_000, "legacy-chapter-three"),
+      version: 6,
+    } as any;
+    legacy.puzzles.lot_114.solvedAt = 1;
+    legacy.puzzles.palimpsest.solvedAt = 2;
+
+    const migrated = migrateProgress(legacy);
+    expect(migrated?.flags.correlation_tutorial_grandfathered).toBe(true);
   });
 
   it("continues to accept MISK3, MISK4 and MISK5 portable prefixes", async () => {
@@ -338,7 +351,7 @@ describe("save v6", () => {
     delete (legacy as any).collectedTokens;
 
     const migrated = migrateProgress(legacy);
-    expect(migrated?.version).toBe(6);
+    expect(migrated?.version).toBe(7);
     expect(migrated?.collectedTokens).toEqual([]);
     expect(migrated?.caseAnswers.sarah_intent).toMatchObject({
       slots: {

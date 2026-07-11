@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  DIEGETIC_EVENTS,
   DiegeticEventDefinition,
   selectNextDiegeticEvent,
 } from "./diegeticEvents";
@@ -54,6 +55,20 @@ describe("diegetic event coordination", () => {
         events
       )
     ).toBeNull();
+  });
+});
+
+describe("diegetic sound cues", () => {
+  it("keeps the selected subtle effects attached to their narrative reveals", () => {
+    const soundFor = (id: string) =>
+      DIEGETIC_EVENTS.find((event) => event.id === id)?.sound;
+
+    expect(soundFor("mail_from_tomorrow")).toBe("harmonized");
+    expect(soundFor("next_user_1998_session")).toBe("harmonized");
+    expect(soundFor("counting_file")).toBe("mechanicalMoan");
+    expect(soundFor("chapter_seven")).toBe("metalResonance");
+    expect(soundFor("endgame_program")).toBe("deepMoan");
+    expect(soundFor("micro_two_days_out")).toBe("clock");
   });
 });
 

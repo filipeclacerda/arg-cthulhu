@@ -46,7 +46,13 @@ interface DispatchResult {
   commandAccepted?: boolean;
   commandError?: RunCommandError;
   hintUnlocked?: { puzzleId: PuzzleId; level: number };
-  theoryResult?: { insightId: string | null; alreadyKnown: boolean };
+  theoryResult?: {
+    insightId: string | null;
+    alreadyKnown: boolean;
+    matchedCount: number;
+    requiredCount: number;
+    missingKinds: string[];
+  };
   caseAnswerResult?: {
     questionId: string;
     accepted: boolean;
@@ -95,7 +101,7 @@ interface ProgressContextValue {
   collectToken: (tokenId: string) => void;
   moveBoardCard: (cardId: string, x: number, y: number) => void;
   toggleBoardConnection: (fromId: string, toId: string) => void;
-  testTheory: (evidenceIds: string[]) => DispatchResult;
+  testTheory: (evidenceIds: string[], targetInsightId?: InsightId) => DispatchResult;
   resetBoardLayout: () => void;
   recordSequenceAction: (action: string) => DispatchResult;
   runCommand: (command: string) => DispatchResult;
@@ -475,6 +481,7 @@ export const ProgressProvider = ({
             evidence_count: event.evidenceIds.length,
             matched: Boolean(result.theoryResult?.insightId),
             insight_id: result.theoryResult?.insightId ?? null,
+            target_insight_id: event.targetInsightId ?? null,
           },
         });
       } else if (event.type === "CHOOSE_ENDING") {
@@ -649,8 +656,8 @@ export const ProgressProvider = ({
     [dispatchGameEvent]
   );
   const testTheory = useCallback(
-    (evidenceIds: string[]) =>
-      dispatchGameEvent({ type: "TEST_THEORY", evidenceIds }),
+    (evidenceIds: string[], targetInsightId?: InsightId) =>
+      dispatchGameEvent({ type: "TEST_THEORY", evidenceIds, targetInsightId }),
     [dispatchGameEvent]
   );
   const resetBoardLayout = useCallback(

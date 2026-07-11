@@ -37,7 +37,12 @@ const Email = () => {
     .map(([id]) => id as keyof typeof state.puzzles);
   const visibleEmails = emails
     .filter((e) =>
-      isUnlocked(e.unlock, { flags, discoveredEvidenceIds, solvedPuzzleIds })
+      isUnlocked(e.unlock, {
+        flags,
+        discoveredEvidenceIds,
+        solvedPuzzleIds,
+        insightsUnlocked: state.insightsUnlocked,
+      })
     )
     .map((email) => ({
       ...email,

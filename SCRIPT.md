@@ -233,7 +233,8 @@ jogador é a última evidência do caso.
   `blank_space.txt` aparece na pasta de Sarah com uma nova verificação agendada para amanhã.
   O relay continua aberto; a recusa por inação é registrada, não encenada. (Um final que só
   se alcança desistindo de escolher — nenhum texto o anuncia.)
-- **SEAL RELAY** — final secreto. Depois de seis correlações opcionais, o jogador pode
+- **SEAL RELAY** — final secreto. Depois de reter as seis correlações (a primeira é o
+  tutorial obrigatório do Casefile e as demais são opcionais), o jogador pode
   registrar o arquivo como sua própria testemunha e selar o Relay 07 num loop. Sarah não
   retorna e ninguém ocupa o lugar dela. O checksum muda sem operação de escrita, deixando
   incerto se houve contenção ou apenas uma nova forma de propagação. `COUNT: HELD` não
@@ -646,9 +647,11 @@ fluxo principal.
 - **Em:** a irmã de Sarah testa explicações menos sobrenaturais e as refuta com registros
   cotidianos. Sua investigação liga a fotografia costeira ao mapa de Miriam.
 
-## Correlações opcionais e contenção
+## Deduções, correlações e contenção
 
-O Casefile reconhece seis deduções: segundo volume, linhagem de catalogadores, cadeia
+O Casefile reúne achados e fios numa única lente de Deduções. A primeira correlação — segundo
+volume — é obrigatória depois do palimpsesto para abrir o Capítulo 3; as cinco seguintes
+continuam opcionais. As seis deduções são: segundo volume, linhagem de catalogadores, cadeia
 de observadores, supressão institucional, interrupção deliberada de Miriam e autoindexação.
 As três últimas dependem de novos artefatos — manutenção/Whitfield, caderno de Miriam e
 registro de 2014/LOOPBACK. Com todas as correlações, `CONTAIN.HLP` aparece. O comando secreto

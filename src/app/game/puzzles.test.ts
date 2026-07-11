@@ -126,7 +126,7 @@ describe("ARG progression reducer", () => {
     expect(puzzleCorruptionStage(state.puzzles)).toBe(2);
   });
 
-  it("derives investigation stages exclusively from the main puzzle chain", () => {
+  it("holds chapter 3 until the first correlation is retained", () => {
     let state = createInitialProgress(1_700_000_000_000, "chapters");
     const chapterOf = () => currentChapter(progressChapterSnapshot(state));
 
@@ -156,6 +156,13 @@ describe("ARG progression reducer", () => {
     expect(chapterOf()).toBe("chapter_2");
 
     state = reduceGameEvent(state, { type: "SOLVE_PUZZLE", puzzleId: "palimpsest" }).state;
+    expect(chapterOf()).toBe("chapter_2");
+
+    state = reduceGameEvent(state, {
+      type: "TEST_THEORY",
+      targetInsightId: "second_volume",
+      evidenceIds: ["lot_114_order", "diary", "miriam_1998"],
+    }).state;
     expect(chapterOf()).toBe("chapter_3");
 
     // margin_cipher happens inside stage 3 — it does not create a new stage.
@@ -514,9 +521,26 @@ describe("ARG progression reducer", () => {
     expect(result.hintUnlocked?.trigger).toBe("near_miss");
   });
 
-  it("records optional theories without gating puzzle progression", () => {
+  it("records the selected first thread and reports partial progress without exposing records", () => {
     const initial = createInitialProgress(1_700_000_000_000, "theory");
+    const partial = reduceGameEvent(initial, {
+      type: "TEST_THEORY",
+      targetInsightId: "second_volume",
+      evidenceIds: ["lot_114_order", "diary"],
+    });
+    expect(partial.theoryResult).toMatchObject({
+      insightId: null,
+      matchedCount: 2,
+      requiredCount: 3,
+      missingKinds: ["document"],
+    });
+    expect(partial.state.theoryAttempts[0]).toMatchObject({
+      targetInsightId: "second_volume",
+      insightId: null,
+    });
+
     const result = reduceGameEvent(initial, {
+      targetInsightId: "second_volume",
       type: "TEST_THEORY",
       evidenceIds: ["lot_114_order", "diary", "miriam_1998"],
     });
