@@ -116,6 +116,17 @@ export const DIEGETIC_EVENTS: DiegeticEventDefinition[] = [
     delayRangeMs: [1_600, 2_400],
   },
   {
+    // The modern NEXT_USER reply wakes the same text session in 1998.
+    id: "next_user_1998_session",
+    priority: 1,
+    presentation: { kind: "overlay" },
+    when: { type: "flag", flag: "next_user_handshake_sent" },
+    obsoleteWhen: { type: "flag", flag: "next_user_1998_complete" },
+    seenFlag: "next_user_1998_session_shown",
+    sound: "future",
+    delayRangeMs: [1_800, 2_600],
+  },
+  {
     // margin_ch7.enc recovered (palimpsest reveal, next link in the chain).
     id: "margin_file",
     priority: 1,

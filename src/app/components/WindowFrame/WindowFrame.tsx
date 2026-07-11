@@ -28,7 +28,10 @@ import {
 } from "../apps/RetroPrograms/RetroPrograms";
 import { useI18n } from "@/app/i18n";
 
-const renderAppContent = (win: WindowInstance) => {
+const renderAppContent = (
+  win: WindowInstance,
+  controls?: { onClose: () => void; onMinimize: () => void }
+) => {
   switch (win.appType) {
     case "explorer":
       return <Explorer folderId={win.props.folderId} />;
@@ -37,7 +40,7 @@ const renderAppContent = (win: WindowInstance) => {
     case "email":
       return <Email />;
     case "finale":
-      return <Finale />;
+      return <Finale onRequestClose={controls?.onClose} onRequestMinimize={controls?.onMinimize} />;
     case "browser":
       return <RecoveredBrowser initialAddress={win.props.initialAddress} />;
     case "messenger":
@@ -148,7 +151,10 @@ const WindowFrame = ({ win }: { win: WindowInstance }) => {
           win.maximized ? "maximized" : ""
         }`.trim()}
       >
-        {renderAppContent(win)}
+        {renderAppContent(win, {
+          onClose: () => closeWindow(win.id),
+          onMinimize: () => toggleMinimize(win.id),
+        })}
       </WindowComponent>
     </div>
   );

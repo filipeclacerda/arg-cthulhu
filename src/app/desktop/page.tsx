@@ -57,6 +57,48 @@ interface DesktopApp {
   maximized?: boolean;
 }
 
+const LegacyMessengerTerminal = ({ onComplete }: { onComplete: () => void }) => {
+  const { state, dispatchGameEvent } = useProgress();
+  const [step, setStep] = useState<"connected" | "answer">("connected");
+  const modernChoice = state.playerChoices.find(
+    (choice) => choice.choiceId === "sarah_live_question"
+  )?.optionId;
+  const echo: Record<string, { en: string; pt: string }> = {
+    alive: { en: "ARE YOU ALIVE?", pt: "VOCE ESTA VIVO?" },
+    restore: { en: "WHAT DOES RESTORE DO?", pt: "O QUE RESTORE FAZ?" },
+    break: { en: "HOW DO WE BREAK THIS?", pt: "COMO QUEBRAMOS ISSO?" },
+    fourth: { en: "DID YOU CREATE THE FOURTH RECIPIENT?", pt: "VOCE CRIOU O QUARTO DESTINATARIO?" },
+  };
+  const received = echo[modernChoice ?? ""] ?? {
+    en: "NO MESSAGE BODY RECOVERED",
+    pt: "CORPO DA MENSAGEM NAO RECUPERADO",
+  };
+  const finish = (optionId: "remember" | "warn" | "silence") => {
+    dispatchGameEvent({ type: "RECORD_CHOICE", choiceId: "next_user_1998_reply", optionId });
+    dispatchGameEvent({ type: "SET_FLAG", flag: "next_user_1998_complete" });
+    dispatchGameEvent({ type: "SET_FLAG", flag: "legacy_msn_files_recovered" });
+    onComplete();
+  };
+
+  return (
+    <section className="legacy-msn-terminal" aria-label="MSN text terminal">
+      <header>MSN TEXT SERVICE 2.5 / M.BISHOP / 09-03-1998 03:14</header>
+      <pre>{`MODEM 33.6K ........ CARRIER DETECTED\nREMOTE ID ......... NEXT_USER\nROUTE ............. RELAY-07 / LOOPBACK\n\nNEXT_USER> ${state.locale === "pt-BR" ? received.pt : received.en}\n\n${step === "connected" ? (state.locale === "pt-BR" ? "A mensagem tem data de 28 anos no futuro.\nO campo REMOTE USER contem a sua designacao." : "The message is dated 28 years in the future.\nREMOTE USER contains your designation.") : (state.locale === "pt-BR" ? "NEXT_USER> Eu lembro desta tela. Voce ainda nao.\nNEXT_USER> Escolha o que eu devo encontrar quando chegar ai." : "NEXT_USER> I remember this screen. You do not.\nNEXT_USER> Choose what I should find when I reach you.")}`}</pre>
+      <div className="legacy-msn-terminal__choices">
+        {step === "connected" ? (
+          <button onClick={() => setStep("answer")}>[{state.locale === "pt-BR" ? "RESPONDER" : "REPLY"}]</button>
+        ) : (
+          <>
+            <button onClick={() => finish("remember")}>{state.locale === "pt-BR" ? "[LEMBRE DESTA TELA]" : "[REMEMBER THIS SCREEN]"}</button>
+            <button onClick={() => finish("warn")}>{state.locale === "pt-BR" ? "[NAO ESCREVA SEU NOME]" : "[DO NOT WRITE YOUR NAME]"}</button>
+            <button onClick={() => finish("silence")}>{state.locale === "pt-BR" ? "[DEIXAR EM BRANCO]" : "[LEAVE BLANK]"}</button>
+          </>
+        )}
+      </div>
+    </section>
+  );
+};
+
 const desktopApps: DesktopApp[] = [
   {
     id: "my-computer",
@@ -317,7 +359,7 @@ const Desktop = () => {
   // Manifestation: for ~7s the machine "becomes" Miriam's 1998 desktop. Two
   // possible attempts (palimpsest, then margin_cipher as a second chance) —
   // whichever the player takes, or neither.
-  const [flash1998, setFlash1998] = useState<1 | 2 | null>(null);
+  const [flash1998, setFlash1998] = useState<1 | 2 | 3 | null>(null);
   const previousCorruptionStage = useRef<number | null>(null);
   const { labelGlitch, cursorEcho } = useSubliminalGlitch(
     !isPostEndingDesktop && corruptionStage >= 4,
@@ -435,8 +477,9 @@ const Desktop = () => {
         break;
       case "flash_1998_attempt_1":
       case "flash_1998_attempt_2":
+      case "next_user_1998_session":
         setFlag("1998_flash_seen");
-        setFlash1998(definition.id === "flash_1998_attempt_1" ? 1 : 2);
+        setFlash1998(definition.id === "flash_1998_attempt_1" ? 1 : definition.id === "flash_1998_attempt_2" ? 2 : 3);
         break;
       case "margin_file":
         openWindow({
@@ -878,7 +921,7 @@ const Desktop = () => {
 
   // Generous, fixed 7s window, then a hard cut back to normal.
   useEffect(() => {
-    if (isPostEndingDesktop || flash1998 == null) return;
+    if (isPostEndingDesktop || flash1998 == null || flash1998 === 3) return;
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const timer = setTimeout(() => {
       if (flash1998 === 2) setFlag("miriam_1998_file_recovered");
@@ -887,6 +930,19 @@ const Desktop = () => {
     }, reducedMotion ? 20_000 : 7000);
     return () => clearTimeout(timer);
   }, [flash1998, isPostEndingDesktop, play, setFlag]);
+
+  // Unlike the brief earlier flashes, this session requires a reply. Restore
+  // it after a reload until the persisted terminal choice has been made.
+  useEffect(() => {
+    if (
+      !isHydrated ||
+      isPostEndingDesktop ||
+      flash1998 !== null ||
+      !flags.next_user_1998_session_shown ||
+      flags.next_user_1998_complete
+    ) return;
+    setFlash1998(3);
+  }, [flags.next_user_1998_complete, flags.next_user_1998_session_shown, flash1998, isHydrated, isPostEndingDesktop]);
 
   // A deliberate ending replay opens only the already-recorded Finale. Its
   // component renders the canonical coda from state and cannot offer another
@@ -1179,6 +1235,17 @@ const Desktop = () => {
             <Image src="/icons/notepad.png" alt="" width={40} height={40} />
             <p>accession_notes_wk3.txt</p>
           </button>
+          {flash1998 === 3 && (
+            <>
+              <LegacyMessengerTerminal onComplete={() => { play("disk"); setFlash1998(null); }} />
+              <div className="desktop-1998-overlay__artifact desktop-1998-overlay__artifact--first">
+                <Image src="/icons/file.png" alt="" width={34} height={34} /><span>DIALUP.LOG</span>
+              </div>
+              <div className="desktop-1998-overlay__artifact desktop-1998-overlay__artifact--second">
+                <Image src="/icons/file.png" alt="" width={34} height={34} /><span>USERMAP.DAT</span>
+              </div>
+            </>
+          )}
         </div>
       )}
     </main>

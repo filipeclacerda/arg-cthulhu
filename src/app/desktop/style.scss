@@ -502,6 +502,28 @@ body.desktop-mode {
     }
 }
 
+.legacy-msn-terminal {
+    position: absolute;
+    left: 50%; top: 48%;
+    width: min(680px, calc(100vw - 160px));
+    min-height: 360px;
+    transform: translate(-50%, -50%);
+    border: 2px outset #dfdfdf;
+    background: #000;
+    color: #c9c9c9;
+    box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.35);
+    font: 14px/1.45 "Courier New", monospace;
+}
+.legacy-msn-terminal header { padding: 5px 8px; color: #fff; background: #000080; font: bold 13px win98, sans-serif; }
+.legacy-msn-terminal pre { min-height: 245px; margin: 0; padding: 18px; white-space: pre-wrap; }
+.legacy-msn-terminal__choices { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 18px 18px; }
+.legacy-msn-terminal__choices button { border: 0; padding: 3px 5px; color: #fff; background: transparent; font: inherit; cursor: pointer; }
+.legacy-msn-terminal__choices button:hover,
+.legacy-msn-terminal__choices button:focus-visible { color: #000; background: #c9c9c9; outline: none; }
+.desktop-1998-overlay__artifact { position: absolute; left: 18px; display: grid; justify-items: center; gap: 3px; color: #fff; font: 12px win98, sans-serif; text-shadow: 1px 1px #000; }
+.desktop-1998-overlay__artifact--first { top: 105px; }
+.desktop-1998-overlay__artifact--second { top: 177px; }
+
 .deepsea-screensaver {
     position: fixed;
     inset: 0;

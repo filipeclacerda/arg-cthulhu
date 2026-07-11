@@ -45,20 +45,20 @@ type LiveQuestionId = "alive" | "restore" | "break" | "fourth";
 const LIVE_REPLY_RESPONSES: Record<LiveQuestionId, { en: string; pt: string }[]> = {
   alive: [
     {
-      en: "I still remember the weight of the green mug. I do not know if memory counts as being alive.",
-      pt: "Ainda lembro do peso da caneca verde. Não sei se memória conta como estar viva.",
+      en: "I remember making this choice. I do not know which side of it counts as alive.",
+      pt: "Eu lembro de fazer esta escolha. Não sei qual lado dela conta como estar vivo.",
     },
   ],
   restore: [
     {
-      en: "It has never restored the same field twice. That is all I can make it show me.",
-      pt: "Ele nunca restaurou o mesmo campo duas vezes. É tudo que consigo fazê-lo me mostrar.",
+      en: "It copies a user into the next empty record. I found my own designation there.",
+      pt: "Ele copia um usuário para o próximo registro vazio. Encontrei minha própria designação lá.",
     },
   ],
   break: [
     {
-      en: "Mom left a line blank. The line learned to wait. I do not know what that means yet.",
-      pt: "Mamãe deixou uma linha em branco. A linha aprendeu a esperar. Ainda não sei o que isso significa.",
+      en: "Leave the next field blank. Do not give it a name, even if the name is yours.",
+      pt: "Deixe o próximo campo em branco. Não dê um nome a ele, mesmo que seja o seu.",
     },
   ],
   // The centerpiece reveal: three short messages, typed fast enough that the
@@ -66,16 +66,16 @@ const LIVE_REPLY_RESPONSES: Record<LiveQuestionId, { en: string; pt: string }[]>
   // the player did write a designation into the relay, back in the prologue.
   fourth: [
     {
-      en: "I left the field empty.",
-      pt: "Eu deixei o campo vazio.",
+      en: "I thought you created it.",
+      pt: "Eu achei que você o tinha criado.",
     },
     {
-      en: "That is not the same thing.",
-      pt: "Não é a mesma coisa.",
+      en: "Then I found the terminal in 1998.",
+      pt: "Então encontrei o terminal em 1998.",
     },
     {
-      en: "did you write your name in it?",
-      pt: "você escreveu seu nome nele?",
+      en: "the fourth is whichever one of us answers next",
+      pt: "o quarto é qualquer um de nós que responder depois",
     },
   ],
 };
@@ -118,6 +118,9 @@ const Messenger = () => {
   const [now, setNow] = useState(() => Date.now());
   const liveElapsedPendingRef = useRef(0);
   const liveTickAtRef = useRef<number | null>(null);
+  // Kept out of the timer effect dependencies: committing elapsed time changes
+  // this value, and rerunning the effect would immediately force-flush again.
+  const liveContactActiveMsRef = useRef(progress.liveContact.activeMs);
   // `null` until the first delivery effect runs, so a reload that lands after
   // messages already arrived (or a reopen of an old thread) does not replay a
   // "ding" for history that was never actually new.
@@ -135,7 +138,7 @@ const Messenger = () => {
       flags.sarah_msn_live
         ? {
             id: "chat-sarah-live",
-            title: "Sarah Bishop (tomorrow)",
+            title: "NEXT_USER",
             contactId: "future-sarah",
             mode: "choices",
             unlock: { type: "flag", flag: "sarah_msn_live" },
@@ -149,8 +152,8 @@ const Messenger = () => {
               },
               {
                 id: "future-sarah",
-                displayName: "Sarah Bishop",
-                address: "sarah.bishop@tomorrow",
+                displayName: "NEXT_USER",
+                address: "next_user@relay.invalid",
                 presence: "online",
               },
             ],
@@ -161,8 +164,8 @@ const Messenger = () => {
                 timestamp: resolveTokens("{TOMORROW} 03:14"),
                 body:
                   progress.locale === "pt-BR"
-                    ? "Não feche ainda. Quando a janela some, eu continuo vendo o lugar onde ela estava."
-                    : "Don't close this yet. When the window disappears, I can still see where it was.",
+                    ? "Não feche. Eu só consigo ver esta janela depois que você a abre."
+                    : "Don't close this. I can only see this window after you open it.",
               },
               {
                 id: "sarah-live-2",
@@ -170,8 +173,8 @@ const Messenger = () => {
                 timestamp: resolveTokens("{TOMORROW} 03:14"),
                 body:
                   progress.locale === "pt-BR"
-                    ? "Faça uma pergunta. Acho que ele só permite uma."
-                    : "Ask one question. I think it only allows one.",
+                    ? "Escolha uma frase. Eu preciso saber qual delas chegou primeiro."
+                    : "Choose one line. I need to know which of them arrived first.",
               },
             ],
             suggestedReplies: [
@@ -340,6 +343,10 @@ const Messenger = () => {
     focalSetPieceActive,
   });
 
+  useEffect(() => {
+    liveContactActiveMsRef.current = progress.liveContact.activeMs;
+  }, [progress.liveContact.activeMs]);
+
   // Sarah's window measures only the time the player can actually inhabit it.
   // The accumulated value is persisted every five seconds and also flushed on
   // visibility changes, focus loss and unmount, so reloads cannot restore
@@ -357,7 +364,7 @@ const Messenger = () => {
       const currentTick = Date.now();
       liveElapsedPendingRef.current += Math.max(0, currentTick - previousTick);
       liveTickAtRef.current = currentTick;
-      const remaining = LIVE_WINDOW_MS - progress.liveContact.activeMs;
+      const remaining = LIVE_WINDOW_MS - liveContactActiveMsRef.current;
       if (
         force ||
         liveElapsedPendingRef.current >= LIVE_CONTACT_PERSIST_INTERVAL_MS ||
@@ -380,7 +387,7 @@ const Messenger = () => {
       window.clearInterval(interval);
       document.removeEventListener("visibilitychange", onVisibilityChange);
     };
-  }, [canAdvanceLiveContact, dispatchGameEvent, liveThread, progress.liveContact.activeMs]);
+  }, [canAdvanceLiveContact, dispatchGameEvent, liveThread]);
 
   // Drives every derived timestamp above. Only ticks while the live thread
   // exists, since nothing else in the component needs sub-second updates.
@@ -538,6 +545,7 @@ const Messenger = () => {
       choiceId: "sarah_live_question",
       optionId: replyId,
     });
+    dispatchGameEvent({ type: "SET_FLAG", flag: "next_user_handshake_sent" });
   };
 
   return (
@@ -667,7 +675,7 @@ const Messenger = () => {
               (liveTyping || liveGhostTypingAfterAnswer) && (
                 <div className="messenger__message messenger__message--ghost-typing">
                   <div>
-                    <strong>Sarah Bishop</strong>
+                    <strong>NEXT_USER</strong>
                     <time>{presenceLabel("online")}</time>
                   </div>
                   <p>

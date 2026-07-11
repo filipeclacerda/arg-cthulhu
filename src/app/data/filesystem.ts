@@ -1143,6 +1143,44 @@ LINE 04 ... LEAVE BLANK UNTIL VOL. II ARRIVES
 No further fields recovered from this session.`,
   },
 
+  {
+    id: "legacy_dialup_log",
+    name: "DIALUP.LOG",
+    folderId: "sarah",
+    kind: "text",
+    unlock: { type: "flag", flag: "legacy_msn_files_recovered" },
+    alias: "DIALUP.LOG",
+    modified: "1998-09-03 03:14",
+    content: `MSN TEXT SERVICE / CONNECTION LOG
+
+03:14:02 CARRIER DETECTED
+03:14:03 REMOTE USER: NEXT_USER
+03:14:03 LOCAL USER: M.BISHOP
+03:14:04 ROUTE: RELAY-07 / LOOPBACK
+03:14:11 CLOCK SKEW: +28 YEARS
+03:14:12 WARNING: LOCAL AND REMOTE OWNER CHECKSUMS MATCH
+03:14:13 CONNECTION RETAINED BY REMOTE HOST`,
+  },
+  {
+    id: "legacy_usermap",
+    name: "USERMAP.DAT",
+    folderId: "sarah",
+    kind: "text",
+    unlock: { type: "flag", flag: "legacy_msn_files_recovered" },
+    alias: "USERMAP.DAT",
+    modified: "1998-09-03 03:15",
+    content: `USER TABLE / PARTIAL RECOVERY
+
+M.BISHOP ......... LOCAL / 1998
+S.BISHOP ......... RESERVED / 2026
+NEXT_USER ........ REMOTE / DATE INVALID
+
+OWNER CHECKSUM: SAME
+DISPLAY NAMES: DIFFERENT
+
+The system treats these as one user at different offsets.`,
+  },
+
   // --- Act 2: the pattern (RECOVERED, unlocked by cipher_1) -----------------
   {
     id: "lot_114_scan",

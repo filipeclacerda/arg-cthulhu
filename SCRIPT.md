@@ -354,11 +354,19 @@ O modelo de dados prevê três modos (`readonly`, `choices` e `freeform`), respo
 rascunhos e mensagens recebidas — e é isso que sustenta a thread "Sarah Bishop (tomorrow)"
 descrita abaixo, sem substituir a interface nem reescrever o histórico já existente.
 
-#### Sarah ao vivo (pós-`lineage`)
+#### NEXT_USER ao vivo (pós-`lineage`)
 
-Ao resolver `lineage`, a thread "Sarah Bishop (tomorrow)" aparece e se abre sozinha uma vez.
-A partir desse instante, Sarah fica **online por uma janela de ~2 minutos** — o único contato
-vivo do jogo inteiro. Dentro da janela, quatro perguntas sugeridas ficam disponíveis; o
+Na apresentação, o contato usa somente o nome `NEXT_USER`. As opções parecem
+ser dirigidas a alguém adiante no relay; ao escolher uma, a frase atravessa a
+conexão e reabre a sessão real de 1998 de M. Bishop. Um cliente MSN textual
+mostra a mesma frase chegando 28 anos antes e oferece três respostas. O segundo
+lado reconhece a designação do jogador: são duas posições temporais do mesmo
+usuário, não um novo NPC. `DIALUP.LOG` e `USERMAP.DAT` ficam no perfil depois da
+conversa como confirmação opcional, sem explicar a mecânica além do necessário.
+
+Ao resolver `lineage`, a thread `NEXT_USER` aparece e se abre sozinha uma vez.
+A partir desse instante, o contato fica **online por uma janela de ~2 minutos** — o único contato
+vivo do jogo inteiro. Dentro da janela, quatro frases sugeridas ficam disponíveis; o
 sistema aceita **uma só**:
 
 - "Você está viva?" / "O que RESTORE faz?" / "Como quebramos isso?" (existentes, intocadas —

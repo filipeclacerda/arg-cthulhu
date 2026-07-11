@@ -708,10 +708,14 @@ parte do save.
   sala dos professores, promessa de chegar para o jantar, uma risada sobre algo que Em disse —
   sem nenhum horror, encerrada em `[4 SECONDS OF LINE NOISE]`. O contraste com a cena anterior
   é a recompensa.
-- **Sarah ao vivo no MSN (após `lineage`):** um som toca quando a thread abre sozinha pela
-  primeira vez (Sarah entrando online) e a cada mensagem que chega dela. A janela de contato
+- **NEXT_USER ao vivo no MSN (após `lineage`):** um som toca quando a thread abre sozinha pela
+  primeira vez (o contato entrando online) e a cada mensagem que chega. A janela de contato
   dura cerca de 2 minutos; a presença cai sozinha para offline ao fim dela ou ~34 segundos
   depois da última mensagem de resposta, o que vier primeiro.
+  O contato aparece como **NEXT_USER**. Depois que uma opção é enviada, feche ou minimize o
+  Messenger: o desktop muda para a sessão real de 1998 e abre o cliente textual. Responda
+  por uma das três opções; a decisão persiste, e `DIALUP.LOG` e `USERMAP.DAT` passam a ficar
+  disponíveis nos documentos para releitura.
 - **A degradação do nome (corrupção em estágio 3+, após `future_log`):** o nome "Sarah
   Bishop" — no bloco de identidade do MSN Messenger e no título da pasta do usuário no
   Explorer — ocasionalmente falha por ~1 segundo: `S. BISHOP`, mais raramente
