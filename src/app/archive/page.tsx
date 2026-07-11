@@ -42,7 +42,7 @@ const COPY: Record<
       "CHAIN OF CUSTODY ............. BROKEN",
       "RECIPIENT MANIFEST FOLLOWS",
     ],
-    title: "THE ARCHIVE OF TOMORROW",
+    title: "THE ARCHIVE REMEMBERS TOMORROW",
     briefLabel: "REVIEW PROTOCOL // HUMAN ANALYSIS REQUIRED",
     brief:
       "Inspect the recovered desktop. Cross-reference files, messages, and cached pages. Record what the archive is trying to hide.",
@@ -80,8 +80,8 @@ const COPY: Record<
       "CADEIA DE CUSTÓDIA .......... ROMPIDA",
       "MANIFESTO DE DESTINATÁRIOS A SEGUIR",
     ],
-    title: "THE ARCHIVE OF TOMORROW",
-    subtitle: "o arquivo de amanhã",
+    title: "THE ARCHIVE REMEMBERS TOMORROW",
+    subtitle: "o arquivo se lembra do amanhã",
     briefLabel: "PROTOCOLO DE REVISÃO // ANÁLISE HUMANA NECESSÁRIA",
     brief:
       "Explore o computador recuperado. Cruze arquivos, mensagens e páginas em cache. Registre o que o arquivo está tentando esconder.",

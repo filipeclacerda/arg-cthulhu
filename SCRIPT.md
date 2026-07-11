@@ -1,4 +1,4 @@
-# O ARQUIVO DE AMANHÃ — Bíblia de Roteiro
+# THE ARCHIVE REMEMBERS TOMORROW — Bíblia de Roteiro
 
 > **AVISO DE DESIGN.** Este documento explica tudo. O jogo explica quase nada.
 > A metafísica daqui existe para manter a equipe coerente — o jogador deve *deduzir* as

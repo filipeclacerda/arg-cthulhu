@@ -1,4 +1,4 @@
-# O Arquivo de Amanhã
+# The Archive Remembers Tomorrow
 
 ARG investigativo de horror cósmico apresentado como um computador Windows 98.
 

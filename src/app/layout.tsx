@@ -11,7 +11,7 @@ import SystemToast from "./components/SystemToast/SystemToast";
 import { PHProvider } from "./components/PHProvider/PHProvider";
 
 export const metadata: Metadata = {
-  title: "The Archive of Tomorrow",
+  title: "The Archive Remembers Tomorrow",
   description:
     "A forensic disk image, an unresolved delivery table, and a missing researcher.",
 };

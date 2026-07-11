@@ -1,4 +1,4 @@
-# Walkthrough completo — O Arquivo de Amanhã
+# Walkthrough completo — The Archive Remembers Tomorrow
 
 > **SPOILERS TOTAIS.** Este guia revela todas as respostas, a ordem exata dos enigmas,
 > o significado dos acontecimentos e os finais. Para uma primeira partida sem spoilers,
