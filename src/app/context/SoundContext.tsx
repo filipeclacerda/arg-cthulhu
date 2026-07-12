@@ -72,11 +72,27 @@ const AMBIENT_VOLUME: Record<Exclude<AmbientStage, null>, number> = {
   4: 0.13,
 };
 
+interface AmbientOverrideOptions {
+  /** Absolute target volume (0–1) the room is ducked to while held. */
+  volume: number;
+  /** Fade duration to the target, in ms. Defaults to an immediate set. */
+  fadeMs?: number;
+}
+
 interface SoundContextValue {
   muted: boolean;
   toggleMuted: () => void;
   play: (name: SoundName) => void;
   setAmbientStage: (stage: AmbientStage) => void;
+  /**
+   * Ducks the room tone under an owned override (e.g. the RECALL_0314 calm and
+   * silence beats). Multiple owners stack; the quietest wins. Mute stays
+   * sovereign — an override only lowers the target volume, it never plays or
+   * unmutes audio.
+   */
+  pushAmbientOverride: (owner: string, options: AmbientOverrideOptions) => void;
+  /** Releases an owned override, fading back toward the stage's base volume. */
+  releaseAmbientOverride: (owner: string, options?: { fadeMs?: number }) => void;
   playHauntedLoop: (
     id: string,
     src: string,
@@ -94,6 +110,8 @@ export const SoundProvider = ({ children }: { children: React.ReactNode }) => {
   const poolRef = useRef<Partial<Record<SoundName, HTMLAudioElement>>>({});
   const ambientRef = useRef<HTMLAudioElement | null>(null);
   const ambientStageRef = useRef<AmbientStage>(null);
+  const ambientOverridesRef = useRef<Map<string, number>>(new Map());
+  const ambientFadeRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const hauntedLoopsRef = useRef<
     Partial<Record<string, { audio: HTMLAudioElement; timer: ReturnType<typeof setTimeout> }>>
   >({});
@@ -148,6 +166,46 @@ export const SoundProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const clampVolume = (value: number) => Math.max(0, Math.min(1, value));
+
+  // The stage's base volume, ducked by whichever owned override is quietest.
+  const effectiveAmbientVolume = (): number => {
+    const stage = ambientStageRef.current;
+    const base = stage === null ? 0 : AMBIENT_VOLUME[stage];
+    if (ambientOverridesRef.current.size === 0) return base;
+    return clampVolume(Math.min(base, ...ambientOverridesRef.current.values()));
+  };
+
+  const fadeAmbientTo = (target: number, fadeMs = 0) => {
+    const audio = ambientRef.current;
+    if (ambientFadeRef.current) {
+      clearInterval(ambientFadeRef.current);
+      ambientFadeRef.current = null;
+    }
+    if (!audio) return;
+    const goal = clampVolume(target);
+    if (fadeMs <= 0) {
+      audio.volume = goal;
+      return;
+    }
+    const start = audio.volume;
+    const startedAt = Date.now();
+    ambientFadeRef.current = setInterval(() => {
+      const active = ambientRef.current;
+      if (!active) {
+        if (ambientFadeRef.current) clearInterval(ambientFadeRef.current);
+        ambientFadeRef.current = null;
+        return;
+      }
+      const progress = Math.min(1, (Date.now() - startedAt) / fadeMs);
+      active.volume = clampVolume(start + (goal - start) * progress);
+      if (progress >= 1 && ambientFadeRef.current) {
+        clearInterval(ambientFadeRef.current);
+        ambientFadeRef.current = null;
+      }
+    }, 50);
+  };
+
   const setAmbientStage = (stage: AmbientStage) => {
     ambientStageRef.current = stage;
     if (stage === null) {
@@ -161,12 +219,28 @@ export const SoundProvider = ({ children }: { children: React.ReactNode }) => {
       ambientRef.current?.pause();
       const audio = new Audio(nextSrc);
       audio.loop = true;
-      audio.volume = AMBIENT_VOLUME[stage];
+      audio.volume = effectiveAmbientVolume();
       ambientRef.current = audio;
     } else {
-      ambientRef.current.volume = AMBIENT_VOLUME[stage];
+      ambientRef.current.volume = effectiveAmbientVolume();
     }
     if (!mutedRef.current) ambientRef.current.play().catch(() => {});
+  };
+
+  const pushAmbientOverride = (
+    owner: string,
+    options: AmbientOverrideOptions
+  ) => {
+    ambientOverridesRef.current.set(owner, clampVolume(options.volume));
+    fadeAmbientTo(effectiveAmbientVolume(), options.fadeMs ?? 0);
+  };
+
+  const releaseAmbientOverride = (
+    owner: string,
+    options?: { fadeMs?: number }
+  ) => {
+    if (!ambientOverridesRef.current.delete(owner)) return;
+    fadeAmbientTo(effectiveAmbientVolume(), options?.fadeMs ?? 0);
   };
 
   // A window the player minimized keeps producing sound for a while after it is
@@ -203,6 +277,8 @@ export const SoundProvider = ({ children }: { children: React.ReactNode }) => {
     toggleMuted: () => setMuted((m) => !m),
     play,
     setAmbientStage,
+    pushAmbientOverride,
+    releaseAmbientOverride,
     playHauntedLoop,
     stopHauntedLoop,
   };

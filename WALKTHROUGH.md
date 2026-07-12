@@ -868,6 +868,56 @@ registrada como "perdida". A janela não reabre depois de expirar de verdade (um
 feito enquanto ela ainda está aberta a encontra aberta; depois de fechada, fica fechada). A
 thread permanece legível como arquivo depois disso, igual às outras três.
 
+## O computador se lembra (manifestações) — QA
+
+Anomalias ambientes que provam que a máquina duplica o que observa. Todas são **projeções**: abrir
+qualquer aparição abre o arquivo canônico, sem duplicar evidência nem progresso. Para conferir, use
+uma anomalia, salve e recarregue — nada deve se repetir nem sumir de forma que trave a campanha.
+
+| Gatilho | O que verificar |
+|---|---|
+| Depois de `lot_114` + folha `STATUS_QUERY.PRN` piscar para `DUPLICATED` | Uma segunda `STATUS_QUERY.PRN` aparece em `RECOVERED` datada de amanhã; ela também surge em Iniciar → Documentos Recentes **antes** de ser aberta e some dos recentes depois de aberta. |
+| Depois de `margin_cipher` | `margin_ch7.enc` some da pasta da Sarah e aparece em `RECOVERED` (abre o mesmo conteúdo). Confirme que isso só acontece **depois** de o enigma estar resolvido. |
+| Depois de `counting_audio` | `counting.wav` aparece nos Documentos Recentes com data posterior à reprodução. |
+| Abrir `APOLOGY.TMP` na Lixeira | Ela desaparece da Lixeira e aparece em `Work`. Depois de `future_log`, uma cópia volta à Lixeira datada de amanhã, **mantendo** a de `Work`. |
+| Depois de `lineage` | Títulos passam a refletir o observador: janela/atalho `Sarah Bishop` → sua designação; `RECOVERED — CURRENT OBSERVER`; `MSN Messenger — archived tomorrow`; `office_after.jpg — 2 instances`. A janela do Finale `RECOVERED PROGRAM` **não** é contaminada. |
+| Busca no Recovered Browser (pós-`lineage`) | Bloco `RECOVERED ECHOES` com ecos do observador/futuro. Consultas válidas dos enigmas (lote, costa, ano) continuam funcionando exatamente igual. |
+
+## Consequências do Messenger — QA
+
+- **Pergunta moderna** (`alive`/`restore`/`break`/`fourth`, ou perdida): vira uma linha em
+  `DIALUP.LOG` (`03:14:05 REMOTE BODY: …`) e o recibo do sistema no `RECALL_0314`:
+  `alive` → `PRESENCE QUERY / STATUS UNRESOLVED`; `restore` → `RESTORE REQUEST / TARGET EMPTY RECORD`;
+  `break` → `WRITE CANCELED / RECIPIENT FIELD RETAINED BLANK`; `fourth` → `RECIPIENT TABLE / FIELD 04 ACTIVE`;
+  perdida → `NO OUTBOUND MESSAGE / READ RECEIPT PRESENT`.
+- **Resposta de 1998** (`remember`/`warn`/`silence`): depois de `future_log`, um toast discreto
+  (`1998 ECHO / RETAINED RESIDUE`) aponta para o resíduo correspondente — `remember` → `DIALUP.LOG`
+  com `SESSION RETAINED`; `warn` → `USERMAP.DAT` com `DISPLAY NAME: [WITHHELD]`; `silence` → `EMPTY.TMP`
+  de volta à Lixeira. Cada resposta deixa uma **coda diferente** no encerramento, igual para os cinco finais.
+
+## `RECALL_0314` — passo a passo de QA
+
+**Pré-condições:** `future_log` resolvido, transcrição pós-4:11 vista, contato ao vivo fechado, sessão
+de 1998 concluída (ou pergunta perdida), nenhum final escolhido e desktop sem set piece focal aberto.
+Com tudo isso, a sequência arma sozinha em desktop quieto.
+
+Batidas (o ambiente é abafado ao silêncio no início e restaurado devagar no fim):
+
+1. **Relógio** — congela em `03:14:00`; bandeja mostra `TIME SOURCE UNAVAILABLE`.
+2. **Recibo** — `DATE/TIME PROPERTIES` com `LAST VALID SYNC {AMANHÃ} 03:14` e
+   `REQUESTING PROCESS MSNMSGR.EXE`, seguido do recibo do sistema derivado da pergunta moderna.
+3. **Histórico** — `cache://sb-archive-02/history/0314` com três ações `PENDING`.
+4. **Fotografia** — `office_after.jpg` normal que vira a variante já arquivada; Media Player em `04:12`.
+5. **Silêncio** — áudio e relógio param; ~20–25s sem resposta.
+6. **Encerramento** — `PENDING → CONFIRMED`, `CLOCK SOURCE RESTORED / OFFSET +24:00:00`,
+   `5 RECORDS RECONCILED / 1 SOURCE UNRESOLVED`.
+
+**Testes de robustez:** ocultar a aba pausa a contagem; **Pausar** congela a batida atual; recarregar
+mostra `RECOVERY INTERRUPTED — Resume` (não reabre nada sozinho); **Stop recovery** encerra como
+interrompido, sem conceder evidência; sob reduced motion cada batida espera um clique em `Continuar`
+(sem flicker/movimento automático); o **mute** do jogador nunca é desfeito pela sequência; salvar e
+recarregar não reenfileira batidas já vistas.
+
 ## Lore adicional
 
 ### O computador realmente veio de onde?

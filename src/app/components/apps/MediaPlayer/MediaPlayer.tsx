@@ -46,7 +46,7 @@ const formatClock = (totalSeconds: number) => {
   return `${String(mm).padStart(2, "0")}:${String(ss).padStart(2, "0")}`;
 };
 
-const MediaPlayer = ({ fileId }: { fileId: string }) => {
+const MediaPlayer = ({ fileId, recallDisplay = false }: { fileId: string; recallDisplay?: boolean }) => {
   const file = files.find((candidate) => candidate.id === fileId);
   const {
     discoverEvidence,
@@ -81,11 +81,12 @@ const MediaPlayer = ({ fileId }: { fileId: string }) => {
   const { t } = useI18n();
 
   useEffect(() => {
+    if (recallDisplay) return;
     if (!file) return;
     if (file.evidenceId) discoverEvidence(file.evidenceId, file.id);
     markFileRead(file.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [file?.id]);
+  }, [file?.id, recallDisplay]);
 
   useEffect(() => {
     const timeoutRef = ghostTimeoutsRef;
@@ -228,6 +229,14 @@ const MediaPlayer = ({ fileId }: { fileId: string }) => {
   };
 
   const overtimeLabel = formatClock(RECORDING_END_SECONDS + overtimeSeconds);
+
+  if (recallDisplay) return (
+    <div className="arg-tool media-player">
+      <div className="arg-tool__menubar"><span>{t("menuFile")}</span><span>{t("menuView")}</span><span>{t("menuPlayback")}</span><span>{t("help")}</span></div>
+      <div className="arg-tool__content media-player__display"><strong>04:12</strong><small>BUFFER POSITION / SOURCE UNAVAILABLE</small></div>
+      <div className="arg-tool__status"><span>Stopped</span><span>04:12</span></div>
+    </div>
+  );
 
   return (
     <div className="arg-tool media-player">

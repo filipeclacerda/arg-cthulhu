@@ -26,6 +26,8 @@ export type DiegeticPresentation =
   | { kind: "window"; windowId: string }
   /** Full-desktop takeover (the 1998 session flash). */
   | { kind: "overlay" }
+  /** Starts a multi-app incident; the name and controller remain invisible. */
+  | { kind: "sequence" }
   /**
    * Auto-opens the app window itself. Reserved — with the overlay — for the
    * three sanctioned auto-open moments (1998 desktop, post-4:11 audio set
@@ -57,7 +59,8 @@ export interface DiegeticEventDefinition {
   obsoleteWhen?: UnlockCondition;
   /** Persisted the moment the event presents; a set flag never re-enters. */
   seenFlag: string;
-  sound: DiegeticSound;
+  /** Optional: silent incidents deliberately begin without a sting. */
+  sound?: DiegeticSound;
   /** Narrative delay range in ms; defaults to the standard 1.2–2.4s pause. */
   delayRangeMs?: [number, number];
 }
@@ -78,6 +81,37 @@ export const diegeticEventDelayMs = (
 
 export const DIEGETIC_EVENTS: DiegeticEventDefinition[] = [
   // --- Priority 1: mandatory set pieces -----------------------------------
+  {
+    // Internal name only. The incident manifests through the existing Clock,
+    // Date/Time Properties, Messenger, Browser and Image Viewer surfaces.
+    id: "recall_0314",
+    priority: 1,
+    presentation: { kind: "sequence" },
+    when: {
+      type: "allOf",
+      conditions: [
+        { type: "puzzleSolved", puzzleId: "future_log" },
+        { type: "flag", flag: "post_end_transcript_seen" },
+        { type: "liveContactClosed" },
+        {
+          type: "anyOf",
+          conditions: [
+            { type: "flag", flag: "next_user_1998_complete" },
+            { type: "not", condition: { type: "flag", flag: "next_user_handshake_sent" } },
+          ],
+        },
+      ],
+    },
+    obsoleteWhen: {
+      type: "anyOf",
+      conditions: [
+        { type: "flag", flag: "recall_0314_complete" },
+        { type: "flag", flag: "recall_0314_skipped" },
+      ],
+    },
+    seenFlag: "recall_0314_started",
+    delayRangeMs: [14_000, 20_000],
+  },
   {
     // Sarah's mail from tomorrow (lineage reveal). Precedes the live MSN
     // window by construction: same trigger, lower queue position.
@@ -302,6 +336,25 @@ export const DIEGETIC_EVENTS: DiegeticEventDefinition[] = [
       reactionId: "eleanor_owner_reconciled",
     },
     seenFlag: "eleanor_record_notice_shown",
+    sound: "future",
+  },
+  {
+    // The 1998 reply leaves a persistent residue once the future log is solved.
+    // A discreet toast points at whichever artifact the chosen reply changed
+    // (DIALUP.LOG / USERMAP.DAT / the returned EMPTY.TMP). See
+    // messengerConsequences.legacyReplyResidue for the per-reply target.
+    id: "legacy_reply_echo",
+    priority: 4,
+    presentation: { kind: "toast" },
+    when: {
+      type: "allOf",
+      conditions: [
+        { type: "flag", flag: "next_user_1998_complete" },
+        { type: "puzzleSolved", puzzleId: "future_log" },
+        { type: "flag", flag: "recall_0314_complete" },
+      ],
+    },
+    seenFlag: "legacy_reply_echo_shown",
     sound: "future",
   },
 ];

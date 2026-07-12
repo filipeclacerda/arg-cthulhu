@@ -20,6 +20,7 @@ import {
   PAGE_ADDRESS,
 } from "@/app/data/browserPages";
 import { isUnlocked } from "@/app/game/unlock";
+import { browserSearchEchoes } from "@/app/game/desktopManifestations";
 import { useWindowManager } from "@/app/context/WindowManagerContext";
 import "../ArgTools/style.scss";
 import "./style.scss";
@@ -53,7 +54,8 @@ const RecoveredBrowser = ({
     dispatchGameEvent,
     setFlag,
   } = useProgress();
-  const { openWindow } = useWindowManager();
+  const { openWindow, toggleMinimize } = useWindowManager();
+  const recallAddress = "cache://sb-archive-02/history/0314";
   const { locale, t } = useI18n();
   const unlockContext = {
     flags: state.flags,
@@ -75,11 +77,24 @@ const RecoveredBrowser = ({
     ? requestedInitialPage
     : "not-found";
   const [page, setPage] = useState<BrowserPage>(initialPage);
+  const isRecallHistory = page === "recall-history";
   const [address, setAddress] = useState(
     initialPage === "not-found" && requestedInitialPage !== "not-found"
       ? "res://shdoclc/dnserror.htm#CACHE_SEGMENT_NOT_MOUNTED"
       : initialAddress ?? PAGE_ADDRESS[initialPage]
   );
+
+  React.useEffect(() => {
+    if (isRecallHistory && !state.flags.recall_0314_history_seen) {
+      setFlag("recall_0314_history_seen");
+    }
+  }, [isRecallHistory, setFlag, state.flags.recall_0314_history_seen]);
+
+  const openRecallPhoto = () => {
+    openWindow({ id: "image-office_after_photo", appType: "image", title: "office_after.jpg — 2 instances", props: { fileId: "office_after_photo", recallDisplay: true, windowClassName: "corrupted" } });
+    openWindow({ id: "recall-media-clock", appType: "audio", title: "Windows Media Player — 04:12", props: { fileId: "voicemail_to_em", recallDisplay: true } });
+    window.setTimeout(() => toggleMinimize("recall-media-clock"), 0);
+  };
   const [backStack, setBackStack] = useState<HistoryEntry[]>([]);
   const [forwardStack, setForwardStack] = useState<HistoryEntry[]>([]);
   const [favoritesOpen, setFavoritesOpen] = useState(false);
@@ -98,6 +113,10 @@ const RecoveredBrowser = ({
         ]
       : null;
   const eleanorReconciled = state.optionalDiscoveries.includes("eleanor_record");
+  // Additive contamination: observer/future echoes the archive appends beside
+  // the real cache. Never intercepts a valid catalogue query — `runQuery`
+  // still owns the puzzle searches; these are display-only suggestions.
+  const searchEchoes = browserSearchEchoes(state, searchInput);
 
   const recoverGraymoorReceipt = () => {
     setFlag("graymoor_return_receipt_recovered");
@@ -329,6 +348,10 @@ const RecoveredBrowser = ({
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
+    if (address === recallAddress) {
+      navigate("recall-history", recallAddress);
+      return;
+    }
     runQuery(address);
   };
 
@@ -349,6 +372,30 @@ const RecoveredBrowser = ({
     setPage(next.page);
     setAddress(next.address);
   };
+
+  if (isRecallHistory) return (
+    <div className="arg-tool recovered-browser">
+      <div className="arg-tool__menubar"><span>{t("menuFile")}</span><span>{t("menuEdit")}</span><span>{t("menuView")}</span><span>{t("help")}</span></div>
+      <form className="arg-tool__toolbar browser-address" onSubmit={submit}>
+        <label htmlFor="recall-address">{t("addressLabel")}</label>
+        <input id="recall-address" value={address} onChange={(event) => setAddress(event.target.value)} />
+        <button className="button" type="submit">{t("goLabel")}</button>
+      </form>
+      <div className="arg-tool__content">
+        <section className="browser-page browser-page--archive">
+          <p className="arg-tool__kicker">SB-ARCHIVE-02 / HISTORY / 0314</p>
+          <h1>Recovered browsing history</h1>
+          <ol className="browser-history__recall">
+            <li>114VER~1.TIF /MIRROR <strong>{state.flags.recall_0314_silence_seen ? "CONFIRMED" : "PENDING"}</strong></li>
+            <li><button type="button" onClick={openRecallPhoto}>OFFICE~1.JPG /OPEN</button> <strong>{state.flags.recall_0314_silence_seen ? "CONFIRMED" : "PENDING"}</strong></li>
+            <li>THENAM~1.TXT /OPEN <strong>{state.flags.recall_0314_silence_seen ? "CONFIRMED" : "PENDING"}</strong></li>
+          </ol>
+          {state.flags.recall_0314_silence_seen && <div className="arg-tool__result"><p>CLOCK SOURCE RESTORED / OFFSET +24:00:00</p><p>5 RECORDS RECONCILED / 1 SOURCE UNRESOLVED</p>{!state.flags.recall_0314_complete && <button className="button" type="button" onClick={() => setFlag("recall_0314_complete")}>OK</button>}</div>}
+        </section>
+      </div>
+      <div className="arg-tool__status"><span>Recovered cache</span><span>Internet zone</span></div>
+    </div>
+  );
 
   return (
     <div className="arg-tool recovered-browser">
@@ -505,6 +552,33 @@ const RecoveredBrowser = ({
               {browserHint && (
                 <div className="retro-search-index-note">
                   <strong>RECOVERED AUTOCOMPLETE:</strong> {browserHint}
+                </div>
+              )}
+              {searchEchoes.length > 0 && (
+                <div className="retro-search-index-note retro-search-echoes">
+                  <strong>RECOVERED ECHOES:</strong>
+                  <ul>
+                    {searchEchoes.map((echo) => (
+                      <li key={echo.id}>
+                        <button
+                          type="button"
+                          className="retro-search-echo"
+                          onClick={() => {
+                            if (echo.kind === "unperformed") {
+                              dispatchGameEvent({
+                                type: "TRIGGER_WORLD_REACTION",
+                                reactionId: "future_search",
+                              });
+                            } else {
+                              setSearchInput(echo.text);
+                            }
+                          }}
+                        >
+                          {echo.text}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               )}
               <div className="retro-search-directory">

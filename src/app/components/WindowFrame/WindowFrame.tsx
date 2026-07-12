@@ -27,6 +27,8 @@ import {
   SystemProperties,
 } from "../apps/RetroPrograms/RetroPrograms";
 import { useI18n } from "@/app/i18n";
+import { useProgress } from "../../context/ProgressContext";
+import { resolveWindowTitle } from "@/app/game/desktopManifestations";
 
 const renderAppContent = (
   win: WindowInstance,
@@ -44,11 +46,11 @@ const renderAppContent = (
     case "browser":
       return <RecoveredBrowser initialAddress={win.props.initialAddress} />;
     case "messenger":
-      return <Messenger />;
+      return <Messenger initialThreadId={win.props.initialThreadId} />;
     case "image":
-      return <ImageViewer fileId={win.props.fileId} />;
+      return <ImageViewer fileId={win.props.fileId} recallDisplay={win.props.recallDisplay} />;
     case "audio":
-      return <MediaPlayer fileId={win.props.fileId} />;
+      return <MediaPlayer fileId={win.props.fileId} recallDisplay={win.props.recallDisplay} />;
     case "cipher-lab":
       return <CipherLab initialCiphertext={win.props.initialCiphertext} />;
     case "casefile":
@@ -80,6 +82,7 @@ const renderAppContent = (
 
 const WindowFrame = ({ win }: { win: WindowInstance }) => {
   const { t } = useI18n();
+  const { state } = useProgress();
   const {
     closeWindow,
     focusWindow,
@@ -143,7 +146,11 @@ const WindowFrame = ({ win }: { win: WindowInstance }) => {
       onMouseDown={handleMouseDown}
     >
       <WindowComponent
-        title={win.appType === "casefile" ? t("casefileLabel") : win.title}
+        title={
+          win.appType === "casefile"
+            ? t("casefileLabel")
+            : resolveWindowTitle({ title: win.title }, state)
+        }
         onClose={() => closeWindow(win.id)}
         onMinimize={() => toggleMinimize(win.id)}
         onMaximize={() => toggleMaximize(win.id)}

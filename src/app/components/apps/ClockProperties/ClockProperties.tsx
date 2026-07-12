@@ -6,12 +6,15 @@ import { formatGameDate, tomorrow } from "@/app/utils/narrative";
 import "../ArgTools/style.scss";
 import "./style.scss";
 import { useI18n } from "@/app/i18n";
+import { useWindowManager } from "@/app/context/WindowManagerContext";
 
 const ClockProperties = () => {
-  const { corruptionStage, isPuzzleSolved, collectReference } = useProgress();
+  const { corruptionStage, isPuzzleSolved, collectReference, state } = useProgress();
+  const { openWindow } = useWindowManager();
   const { t } = useI18n();
   const [now, setNow] = useState<Date | null>(null);
   const referenceVisible = isPuzzleSolved("future_log");
+  const recallActive = Boolean(state.flags.recall_0314_clock_seen && !state.flags.recall_0314_complete && !state.flags.recall_0314_skipped);
 
   useEffect(() => {
     setNow(new Date());
@@ -50,12 +53,22 @@ const ClockProperties = () => {
           <dt>{t("timeZoneLabel")}</dt>
           <dd>{Intl.DateTimeFormat().resolvedOptions().timeZone}</dd>
           <dt>{t("clockSourceLabel")}</dt>
-          <dd>SB-ARCHIVE-02 / CMOS registry</dd>
+          <dd>{recallActive ? "TIME SOURCE UNAVAILABLE" : "SB-ARCHIVE-02 / CMOS registry"}</dd>
           <dt>{t("synchronizationLabel")}</dt>
           <dd>{corruptionStage >= 2 ? t("driftExceedsTolerance") : t("notAvailable")}</dd>
           <dt>{t("registryKeyLabel")}</dt>
           <dd>HKLM\System\CurrentControlSet\Control\TimeZoneInformation</dd>
         </dl>
+
+        {recallActive && (
+          <div className="arg-tool__result arg-tool__warning">
+            <p>LAST VALID SYNC: {formatGameDate(tomorrow(new Date()))} 03:14</p>
+            <p>REQUESTING PROCESS: MSNMSGR.EXE</p>
+            <button className="button" type="button" onClick={() => openWindow({ id: "msn-messenger", appType: "messenger", title: "MSN Messenger", props: { windowClassName: "corrupted", initialThreadId: "chat-sarah-live" } })}>
+              MSNMSGR.EXE
+            </button>
+          </div>
+        )}
 
         {referenceVisible ? (
           <div className="arg-tool__reference">OBJECT REF: B9</div>

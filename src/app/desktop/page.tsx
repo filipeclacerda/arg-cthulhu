@@ -29,6 +29,10 @@ import {
   selectNextDiegeticEvent,
 } from "../game/diegeticEvents";
 import { setFocalSetPieceActive } from "../context/diegeticFocus";
+import { resolveWindowTitle } from "../game/desktopManifestations";
+import { legacyReplyResidue } from "../game/messengerConsequences";
+import { recallStatus } from "../game/recall0314";
+import RecallSequence from "../components/RecallSequence/RecallSequence";
 import {
   desktopModeFromSearch,
   isStoryComplete,
@@ -395,7 +399,7 @@ const Desktop = () => {
   const windowTitle = (win: (typeof windows)[number]) =>
     win.appType === "casefile"
       ? t("casefileLabel")
-      : win.title;
+      : resolveWindowTitle({ title: win.title }, state);
   const SAVE_STATUS_LABELS: Record<string, TranslationKey> = {
     loading: "statusLoading",
     saving: "statusSaving",
@@ -439,10 +443,16 @@ const Desktop = () => {
           win.id === "indexer-result" ||
           (win.id === "msn-messenger" && liveContactActive))
     );
+  // The RECALL_0314 set piece pauses the diegetic queue while it runs (no new
+  // manifestation drains over it), but does not itself count toward the
+  // trigger gate other events use.
+  const recallActive =
+    !isPostEndingDesktop && recallStatus(flags) === "active";
 
   // Mandatory set pieces (priority-1 focal events and the 1998 overlay)
   // pause Sarah's live-contact timer in the Messenger.
   const setPieceActive =
+    recallActive ||
     flash1998 !== null ||
     windows.some(
       (win) => !win.minimized && DIEGETIC_SET_PIECE_WINDOW_IDS.has(win.id)
@@ -470,7 +480,7 @@ const Desktop = () => {
   const presentDiegeticEvent = (definition: DiegeticEventDefinition) => {
     if (flags[definition.seenFlag]) return;
     setFlag(definition.seenFlag);
-    play(definition.sound);
+    if (definition.sound) play(definition.sound);
     switch (definition.id) {
       case "mail_from_tomorrow":
         openWindow({
@@ -533,6 +543,10 @@ const Desktop = () => {
       case "next_user_1998_session":
         setFlag("1998_flash_seen");
         setFlash1998(definition.id === "flash_1998_attempt_1" ? 1 : definition.id === "flash_1998_attempt_2" ? 2 : 3);
+        break;
+      case "recall_0314":
+        // The coordinator has persisted the start flag. There is deliberately
+        // no panel or auto-open: the system clock is the first manifestation.
         break;
       case "margin_file":
         openWindow({
@@ -839,6 +853,46 @@ const Desktop = () => {
             openFileFromToast("notepad", "eleanor_vcard", "ELEANOR.VCF"),
         });
         break;
+      case "legacy_reply_echo": {
+        // The residue of the answer the player sent back into 1998. The toast
+        // opens whichever artifact that reply changed; each reply differs.
+        const residue = legacyReplyResidue(state);
+        if (!residue) break;
+        const heading =
+          residue.replyId === "warn"
+            ? "USERMAP.DAT"
+            : residue.replyId === "silence"
+              ? "EMPTY.TMP"
+              : "DIALUP.LOG";
+        setActiveToast({
+          eventId: definition.id,
+          icon: "/icons/file.png",
+          kicker: localeIs(
+            "ECO DE 1998 / RESÍDUO RETIDO",
+            "1998 ECHO / RETAINED RESIDUE"
+          ),
+          heading,
+          body: residue.coda[state.locale],
+          actionLabel:
+            residue.replyId === "silence"
+              ? t("recycleBinLabel")
+              : t("openFileLabel"),
+          onAction: () => {
+            if (residue.replyId === "warn") {
+              openFileFromToast("notepad", "legacy_usermap", "USERMAP.DAT - Notepad");
+            } else if (residue.replyId === "silence") {
+              openWindow({
+                id: "recycle-bin",
+                appType: "recycle-bin",
+                title: "Recycle Bin",
+              });
+            } else {
+              openFileFromToast("notepad", "legacy_dialup_log", "DIALUP.LOG - Notepad");
+            }
+          },
+        });
+        break;
+      }
     }
   };
   const presentRef = useRef(presentDiegeticEvent);
@@ -848,7 +902,7 @@ const Desktop = () => {
 
   const nextEventId = isHydrated
     ? selectNextDiegeticEvent(diegeticContext(state), {
-        focalBusy,
+        focalBusy: focalBusy || recallActive,
         toastBusy: activeToast !== null,
         aftermathReview: isPostEndingDesktop,
       })?.id ?? null
@@ -1274,6 +1328,12 @@ const Desktop = () => {
       )}
       {!isPostEndingDesktop && <ConclusionReadyToast />}
       {!isPostEndingDesktop && <CorrelationTutorialToast />}
+      {!isPostEndingDesktop && (
+        <RecallSequence
+          enabled={isHydrated && !isPostEndingDesktop && flash1998 === null}
+          focalBusy={focalBusy}
+        />
+      )}
       {!isPostEndingDesktop && flash1998 != null && (
         <div
           className="desktop-1998-overlay"

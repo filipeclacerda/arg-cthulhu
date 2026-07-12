@@ -25,6 +25,7 @@ import {
   LIVE_CONTACT_TICK_MS,
   shouldAdvanceLiveContact,
 } from "@/app/game/liveContact";
+import { recallReceiptLine, shouldAcknowledgeRecallReceipt } from "@/app/game/recall0314";
 
 const PRESENCE_LABELS = {
   online: "presenceOnline",
@@ -91,7 +92,7 @@ const LIVE_REPLY_DELAYS: Record<LiveQuestionId, number[]> = {
   fourth: [1100, 2300, 2700],
 };
 
-const Messenger = () => {
+const Messenger = ({ initialThreadId }: { initialThreadId?: string }) => {
   const {
     flags,
     discoveredEvidenceIds,
@@ -99,10 +100,15 @@ const Messenger = () => {
     discoverEvidence,
     corruptionStage,
     dispatchGameEvent,
+    setFlag,
   } = useProgress();
   const { t } = useI18n();
   const { play } = useSound();
-  const { windows } = useWindowManager();
+  const { windows, openWindow } = useWindowManager();
+  const recallReceipt = flags.recall_0314_clock_seen && !flags.recall_0314_complete
+    ? recallReceiptLine(progress)
+    : null;
+
   const focalSetPieceActive = useFocalSetPieceActive();
   const presenceLabel = (presence: keyof typeof PRESENCE_LABELS | undefined) =>
     t(PRESENCE_LABELS[presence ?? "offline"]);
@@ -230,6 +236,16 @@ const Messenger = () => {
     visibleThreads.find((thread) => thread.id === runtime.selectedThreadId) ??
     visibleThreads[0];
 
+  useEffect(() => {
+    if (
+      initialThreadId &&
+      visibleThreads.some((thread) => thread.id === initialThreadId) &&
+      runtime.selectedThreadId !== initialThreadId
+    ) {
+      dispatch({ type: "OPEN_THREAD", threadId: initialThreadId });
+    }
+  }, [initialThreadId, runtime.selectedThreadId, visibleThreads]);
+
   const liveWindowOpenedAt =
     progress.playerChoices.find((choice) => choice.choiceId === "sarah_live_seen")
       ?.chosenAt ?? null;
@@ -327,6 +343,17 @@ const Messenger = () => {
       !messengerWindow.minimized &&
       messengerWindow.zIndex === topVisibleZIndex
   );
+
+  useEffect(() => {
+    if (shouldAcknowledgeRecallReceipt({
+      hasReceipt: Boolean(recallReceipt),
+      messengerFocused,
+      liveThreadSelected: selected?.id === liveThread?.id,
+      alreadySeen: Boolean(flags.recall_0314_receipt_seen),
+    })) {
+      setFlag("recall_0314_receipt_seen");
+    }
+  }, [flags.recall_0314_receipt_seen, liveThread?.id, messengerFocused, recallReceipt, selected?.id, setFlag]);
   const [documentHidden, setDocumentHidden] = useState(
     () => typeof document !== "undefined" && document.hidden
   );
@@ -635,6 +662,15 @@ const Messenger = () => {
             <div className="messenger__archive-banner">
               {t("archiveBanner")}
             </div>
+            {recallReceipt && selected.id === liveThread?.id && (
+              <div className="messenger__message messenger__message--system">
+                <div><strong>MSN TEXT SERVICE</strong><time>03:14:05</time></div>
+                <p>{recallReceipt}</p>
+                <button className="button" type="button" onClick={() => openWindow({ id: "recall-history", appType: "browser", title: "Microsoft Internet Explorer", props: { initialAddress: "cache://sb-archive-02/history/0314", windowClassName: "corrupted" } })}>
+                  cache://sb-archive-02/history/0314
+                </button>
+              </div>
+            )}
             {messages.map((message) => {
               const sender = selected.participants.find(
                 (participant) => participant.id === message.senderId

@@ -16,6 +16,7 @@ export type UnlockCondition =
   | { type: "puzzleSolved"; puzzleId: PuzzleId }
   | { type: "chapter"; chapterId: ChapterId }
   | { type: "evidenceOpened"; evidenceId: string }
+  | { type: "fileRead"; fileId: string }
   | { type: "worldReaction"; reactionId: string }
   | { type: "choiceMade"; choiceId: string; optionId?: string }
   | { type: "liveContactClosed" }
@@ -32,6 +33,12 @@ export interface UnlockContext {
   worldReactionsSeen?: string[];
   playerChoices?: { choiceId: string; optionId: string }[];
   liveContactStatus?: "unseen" | "active" | "closed";
+  /**
+   * Files the player has actually opened. Only the "computer remembers"
+   * manifestations need this — a projected duplicate or move keys off whether
+   * its canonical file was ever read.
+   */
+  readFileIds?: string[];
 }
 
 const isUnlockContext = (
@@ -60,6 +67,8 @@ export function isUnlocked(
       return Boolean(
         context.discoveredEvidenceIds?.includes(condition.evidenceId)
       );
+    case "fileRead":
+      return Boolean(context.readFileIds?.includes(condition.fileId));
     case "worldReaction":
       return Boolean(
         context.worldReactionsSeen?.includes(condition.reactionId)

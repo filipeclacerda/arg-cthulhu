@@ -12,7 +12,7 @@ import { puzzleHintsFor } from "@/app/game/puzzles";
 import { useI18n } from "@/app/i18n";
 import ClueText from "@/app/components/ClueText/ClueText";
 
-const ImageViewer = ({ fileId }: { fileId: string }) => {
+const ImageViewer = ({ fileId, recallDisplay = false }: { fileId: string; recallDisplay?: boolean }) => {
   const [currentFileId, setCurrentFileId] = useState(fileId);
   const file = files.find((candidate) => candidate.id === currentFileId);
   const {
@@ -39,8 +39,25 @@ const ImageViewer = ({ fileId }: { fileId: string }) => {
   });
   const [temporalBlend, setTemporalBlend] = useState<"normal" | "difference">("normal");
   const [temporalAttempted, setTemporalAttempted] = useState(false);
+  const [recallChanged, setRecallChanged] = useState(false);
   const partialRecorded = useRef(false);
   const { t } = useI18n();
+
+  useEffect(() => {
+    if (
+      recallDisplay &&
+      fileId === "office_after_photo" &&
+      !progress.flags.office_after_photo_changed
+    ) {
+      const timer = window.setTimeout(() => {
+        setRecallChanged(true);
+        setFlag("office_after_photo_changed");
+        dispatchGameEvent({ type: "SEE_ASSET_VARIANT", variantId: "office-after-reflection-shift" });
+        setFlag("recall_0314_photo_seen");
+      }, window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 12_000 : 6_000);
+      return () => window.clearTimeout(timer);
+    }
+  }, [dispatchGameEvent, fileId, progress.flags.office_after_photo_changed, recallDisplay, setFlag]);
 
   const gallery = useMemo(
     () =>
@@ -98,7 +115,8 @@ const ImageViewer = ({ fileId }: { fileId: string }) => {
     if (file?.evidenceId) discoverEvidence(file.evidenceId, file.id);
     if (
       file?.id === "office_after_photo" &&
-      progress.puzzles.future_log.solvedAt
+      progress.puzzles.future_log.solvedAt &&
+      (!progress.flags.recall_0314_started || progress.flags.office_after_photo_changed)
     ) {
       dispatchGameEvent({
         type: "TRIGGER_WORLD_REACTION",
@@ -114,6 +132,8 @@ const ImageViewer = ({ fileId }: { fileId: string }) => {
     dispatchGameEvent,
     file,
     progress.puzzles.future_log.solvedAt,
+    progress.flags.office_after_photo_changed,
+    progress.flags.recall_0314_started,
   ]);
 
   useEffect(() => {
@@ -191,7 +211,10 @@ const ImageViewer = ({ fileId }: { fileId: string }) => {
   );
   const displayedSource =
     file.id === "office_after_photo" &&
-    progress.assetVariantsSeen.includes("office-after-reflection-shift")
+    (recallChanged ||
+      progress.flags.office_after_photo_changed ||
+      (!progress.flags.recall_0314_started &&
+        progress.assetVariantsSeen.includes("office-after-reflection-shift")))
       ? "/photos/office_after_changed_2026.png"
       : file.id === "photo_bishop_birthday" &&
           progress.puzzles.lineage.solvedAt
@@ -378,7 +401,7 @@ const ImageViewer = ({ fileId }: { fileId: string }) => {
                 <Image src="/photos/office_1998_overlay.png" alt="Office exposure, 1998" fill sizes="900px" priority />
               )}
               {temporalLayers.present && (
-                <Image src="/photos/office_after_2026.png" alt="Office exposure, 2026" fill sizes="900px" priority />
+                <Image key={displayedSource} src={displayedSource} alt="Office exposure, 2026" fill sizes="900px" priority />
               )}
               {temporalLayers.future && (
                 <Image src="/photos/office_tomorrow_overlay.png" alt="Office exposure, tomorrow" fill sizes="900px" priority />
@@ -396,6 +419,7 @@ const ImageViewer = ({ fileId }: { fileId: string }) => {
             </div>
           ) : (
             <Image
+              key={displayedSource}
               src={displayedSource}
               alt={file.caption ?? file.name}
               fill

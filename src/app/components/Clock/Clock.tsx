@@ -83,8 +83,12 @@ const Clock = () => {
       : formatGameDate(currentTime)
     : "--/--/----";
   const referenceVisible = isPuzzleSolved("future_log");
+  const recallActive = Boolean(
+    state.flags.recall_0314_started && !state.flags.recall_0314_complete && !state.flags.recall_0314_skipped
+  );
 
   const openProperties = () => {
+    if (recallActive) setFlag("recall_0314_clock_seen");
     openWindow({
       id: "clock-properties",
       appType: "clock-properties",
@@ -104,7 +108,7 @@ const Clock = () => {
       onClick={openProperties}
     >
       <span>
-        {currentTime ? formatTime(currentTime) : "--:--:-- --"}
+        {recallActive ? "3:14:00 AM" : currentTime ? formatTime(currentTime) : "--:--:-- --"}
       </span>
       <span>{dateString}</span>
     </button>

@@ -12,6 +12,9 @@ import {
   localized,
   pendingObserverConclusions,
 } from "@/app/game/campaign";
+import { projectRecentDocuments } from "@/app/game/desktopManifestations";
+import { files } from "@/app/data/filesystem";
+import type { ProgressStateV4 } from "@/app/game/progress";
 
 type MenuView = "root" | "programs" | "accessories" | "recent";
 
@@ -109,6 +112,56 @@ const RECENT_DOCUMENTS: ProgramEntry[] = [
   { id: "recent-todo", label: "to_do.txt", icon: "/icons/notepad.png", appType: "notepad", props: { fileId: "todo" } },
   { id: "recent-lecture", label: "lecture_draft.txt", icon: "/icons/notepad.png", appType: "notepad", props: { fileId: "lecture_draft" } },
 ];
+
+const RECENT_ICON_FOR = (kind: string | undefined) =>
+  kind === "audio" ? "/icons/media-player.png" : "/icons/notepad.png";
+
+const RECENT_APP_FOR = (kind: string | undefined): AppType =>
+  kind === "image" ? "image" : kind === "audio" ? "audio" : "notepad";
+
+/**
+ * The recent-documents list: the static onboarding shortcuts, plus the
+ * anomalies the archive has projected (impossible entries the machine
+ * remembers before they were opened), plus the files actually opened most
+ * recently. Projected entries open their canonical source, so a duplicate in
+ * recents never mints new evidence.
+ */
+const buildRecentEntries = (state: ProgressStateV4): ProgramEntry[] => {
+  const seenFileIds = new Set(
+    RECENT_DOCUMENTS.map((entry) => entry.props?.fileId as string)
+  );
+  const projected: ProgramEntry[] = projectRecentDocuments(state).map(
+    (projection) => {
+      const source = files.find((f) => f.id === projection.sourceFileId);
+      seenFileIds.add(projection.sourceFileId);
+      return {
+        id: `recent-proj-${projection.instanceId}`,
+        label: projection.displayName,
+        icon: RECENT_ICON_FOR(source?.kind),
+        appType: RECENT_APP_FOR(source?.kind),
+        props: { fileId: projection.sourceFileId },
+      };
+    }
+  );
+  const realReads: ProgramEntry[] = [...state.readFileIds]
+    .reverse()
+    .map((fileId) => files.find((f) => f.id === fileId))
+    .filter((file): file is (typeof files)[number] => Boolean(file))
+    .filter((file) => {
+      if (seenFileIds.has(file.id)) return false;
+      seenFileIds.add(file.id);
+      return true;
+    })
+    .slice(0, 4)
+    .map((file) => ({
+      id: `recent-read-${file.id}`,
+      label: file.name,
+      icon: RECENT_ICON_FOR(file.kind),
+      appType: RECENT_APP_FOR(file.kind),
+      props: { fileId: file.id },
+    }));
+  return [...RECENT_DOCUMENTS, ...projected, ...realReads];
+};
 
 const INDEX_FRAGMENTS = ["E7", "A1", "C4", "B9"];
 
@@ -542,7 +595,7 @@ const StartMenu = () => {
               )}
 
               {view === "accessories" && ACCESSORIES.map(renderProgramEntry)}
-              {view === "recent" && RECENT_DOCUMENTS.map(renderProgramEntry)}
+              {view === "recent" && buildRecentEntries(state).map(renderProgramEntry)}
             </div>
           </div>
         </>

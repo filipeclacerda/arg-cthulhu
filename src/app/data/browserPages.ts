@@ -8,7 +8,8 @@ export type BrowserPage =
   | "reader-log" | "graymoor" | "families" | "forum" | "em" | "tom"
   | "tom-guestbook" | "maintenance" | "downloads" | "false-lead" | "not-found"
   | "gull-lantern" | "route-7" | "compat-gateway" | "staff-bulletin"
-  | "hydrography" | "web-ring" | "graymoor-return" | "eleanor";
+  | "hydrography" | "web-ring" | "graymoor-return" | "eleanor"
+  | "recall-history";
 
 export interface BrowserPageDefinition {
   id: BrowserPage;
@@ -25,6 +26,7 @@ const afterMargin: UnlockCondition = { type: "puzzleSolved", puzzleId: "margin_c
 const deep: UnlockCondition = { type: "puzzleSolved", puzzleId: "counting_audio" };
 
 export const BROWSER_PAGES: readonly BrowserPageDefinition[] = [
+  { id: "recall-history", address: "cache://sb-archive-02/history/0314", keywords: [], unlock: { type: "flag", flag: "recall_0314_receipt_seen" }, pageId: "recall-history-0314" },
   { id: "home", address: "http://search.miskatonic.net/", keywords: ["search"], unlock: always },
   { id: "results", address: "http://search.miskatonic.net/search", keywords: [], unlock: always },
   { id: "library", address: "http://www.miskatonic.edu/library/", keywords: ["miskatonic"], unlock: always, pageId: "miskatonic-library-home" },

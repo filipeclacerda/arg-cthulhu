@@ -4,6 +4,11 @@ import Image from "next/image";
 import "./style.scss";
 import { folders, files, VFile } from "@/app/data/filesystem";
 import { isUnlocked } from "@/app/game/unlock";
+import {
+  ProjectedFile,
+  projectFilesystem,
+  suppressedFiles,
+} from "@/app/game/desktopManifestations";
 import { useProgress } from "@/app/context/ProgressContext";
 import { useWindowManager } from "@/app/context/WindowManagerContext";
 import { IDENTITY_REVEAL_STAGE } from "@/app/utils/narrative";
@@ -86,9 +91,26 @@ const Explorer = ({ folderId = "my-computer" }: ExplorerProps) => {
   const subfolders = folders.filter(
     (f) => f.parentId === currentFolderId && isUnlocked(f.unlock, unlockContext)
   );
+  // "The computer remembers": files the machine has moved out of this folder
+  // are hidden here (they surface as a projection in their new location).
+  const suppressions = suppressedFiles(state);
+  const isSuppressedHere = (fileId: string) =>
+    suppressions.some(
+      (s) => s.sourceFileId === fileId && s.folderId === currentFolderId
+    );
   const folderFiles = files.filter(
-    (f) => f.folderId === currentFolderId && isUnlocked(f.unlock, unlockContext)
+    (f) =>
+      f.folderId === currentFolderId &&
+      isUnlocked(f.unlock, unlockContext) &&
+      !isSuppressedHere(f.id)
   );
+  // Projected duplicates/moves the archive has filed into this folder. Each
+  // opens its canonical source file — a projection never mints new evidence.
+  const projectedFiles = projectFilesystem(state).filter(
+    (projection) => projection.folderId === currentFolderId
+  );
+  const sourceFileOf = (projection: ProjectedFile) =>
+    files.find((f) => f.id === projection.sourceFileId);
 
   // Act 3: when the rot is deep enough, the user folder takes the player's name.
   const displayName = (folder: { id: string; name: string }) => {
@@ -159,7 +181,7 @@ const Explorer = ({ folderId = "my-computer" }: ExplorerProps) => {
     });
   };
 
-  const itemCount = subfolders.length + folderFiles.length;
+  const itemCount = subfolders.length + folderFiles.length + projectedFiles.length;
 
   return (
     <div className="explorer">
@@ -273,6 +295,36 @@ const Explorer = ({ folderId = "my-computer" }: ExplorerProps) => {
               <p>{file.name}</p>
             </div>
           ))}
+          {projectedFiles.map((projection) => {
+            const source = sourceFileOf(projection);
+            return (
+              <div
+                key={projection.instanceId}
+                className="explorer-item"
+                onDoubleClick={() => openFile(projection.sourceFileId)}
+                title={t("doubleClickToOpen")}
+              >
+                {source?.kind === "image" ? (
+                  <span className="explorer-photo-thumbnail">
+                    <Image src={source.content} alt="" width={58} height={44} />
+                  </span>
+                ) : (
+                  <Image
+                    className="explorer-icon"
+                    src={
+                      source
+                        ? fileIconFor(source)
+                        : FILE_ICON
+                    }
+                    alt=""
+                    width={44}
+                    height={44}
+                  />
+                )}
+                <p>{projection.displayName}</p>
+              </div>
+            );
+          })}
         </div>
       </div>
       <div className="explorer-statusbar">

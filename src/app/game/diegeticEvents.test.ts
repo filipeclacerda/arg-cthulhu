@@ -69,6 +69,7 @@ describe("diegetic sound cues", () => {
     expect(soundFor("chapter_seven")).toBe("metalResonance");
     expect(soundFor("endgame_program")).toBe("deepMoan");
     expect(soundFor("micro_two_days_out")).toBe("clock");
+    expect(soundFor("recall_0314")).toBeUndefined();
   });
 });
 

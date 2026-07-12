@@ -13,6 +13,11 @@ import {
 import ClueText from "@/app/components/ClueText/ClueText";
 import { useI18n } from "@/app/i18n";
 import { optionalMissionCodaLines } from "@/app/game/optionalMissions";
+import {
+  legacyReplyId,
+  legacyReplyResidue,
+  modernQuestionLogLine,
+} from "@/app/game/messengerConsequences";
 import { desktopModeFromSearch, isStoryComplete } from "@/app/game/endingLifecycle";
 
 interface NotepadProps {
@@ -109,6 +114,28 @@ const Notepad = ({ fileId }: NotepadProps) => {
     // The printed sheet keeps the resolved line after the live swap on the
     // spool alert; rereads never show PRESENT again.
     baseContent = baseContent.replace("STATUS: PRESENT", "STATUS: DUPLICATED");
+  }
+  if (file.id === "legacy_dialup_log") {
+    // The connection log records the question the player put to NEXT_USER, and
+    // — for the "remember" reply — the session the machine kept.
+    const modernLine = modernQuestionLogLine(state);
+    const residue = legacyReplyResidue(state);
+    const extra: string[] = [];
+    if (modernLine) extra.push(modernLine);
+    if (residue?.dialupLine) extra.push(`03:14:14 ${residue.dialupLine}`);
+    if (extra.length > 0) baseContent += `\n${extra.join("\n")}`;
+  }
+  if (
+    file.id === "legacy_usermap" &&
+    legacyReplyId(state) === "warn" &&
+    legacyReplyResidue(state)
+  ) {
+    // "Do not write your name" — the display field withholds; the owner
+    // checksum still reports the two records as one.
+    baseContent = baseContent.replace(
+      "DISPLAY NAMES: DIFFERENT",
+      "DISPLAY NAME: [WITHHELD]"
+    );
   }
   if (file.id === "miriam_draft" && wasReadBeforeOpen) {
     baseContent = baseContent

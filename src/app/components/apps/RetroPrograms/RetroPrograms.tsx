@@ -7,6 +7,12 @@ import { useI18n } from "@/app/i18n";
 import { useProgress } from "@/app/context/ProgressContext";
 import { isUnlocked } from "@/app/game/unlock";
 import { RECYCLE_ENTRIES } from "@/app/data/recycleBin";
+import { files } from "@/app/data/filesystem";
+import {
+  RECYCLE_BIN_FOLDER_ID,
+  projectRecycleBin,
+  suppressedFiles,
+} from "@/app/game/desktopManifestations";
 import { resolveTokens } from "@/app/utils/narrative";
 import {
   getTelemetryConsent,
@@ -244,12 +250,21 @@ export const SystemProperties = () => {
 export const RecycleBin = () => {
   const { openWindow } = useWindowManager();
   const { state } = useProgress();
+  // Files the archive has moved out of the bin are hidden until (and unless)
+  // they are projected back in — see the APOLOGY.TMP relocation.
+  const binSuppressions = suppressedFiles(state).filter(
+    (s) => s.folderId === RECYCLE_BIN_FOLDER_ID
+  );
+  const isSuppressed = (fileId: string | undefined) =>
+    Boolean(fileId) && binSuppressions.some((s) => s.sourceFileId === fileId);
   const entries = RECYCLE_ENTRIES.filter((entry) => isUnlocked(entry.unlock, {
     flags: state.flags,
     discoveredEvidenceIds: state.discoveredEvidenceIds,
     solvedPuzzleIds: Object.entries(state.puzzles).filter(([, puzzle]) => puzzle.solvedAt).map(([id]) => id) as import("@/app/game/progress").PuzzleId[],
     insightsUnlocked: state.insightsUnlocked,
-  }));
+  }) && !(entry.target.type === "file" && isSuppressed(entry.target.fileId)));
+  // Entries the archive has projected back into the bin (dated tomorrow).
+  const projected = projectRecycleBin(state);
   const emptyExpanded = state.readFileIds.includes("empty_tmp");
   const entrySize = (entry: (typeof RECYCLE_ENTRIES)[number]) =>
     entry.id === "empty" && emptyExpanded ? "404 bytes" : entry.size;
@@ -270,8 +285,29 @@ export const RecycleBin = () => {
           <span>{entry.name}</span>
           <small>{entrySize(entry)}</small>
         </button>)}
+        {projected.map((projection) => {
+          const source = files.find((f) => f.id === projection.sourceFileId);
+          return (
+            <button
+              key={projection.instanceId}
+              title={`${projection.size ?? ""} · ${resolveTokens(projection.modified ?? "")}`}
+              onDoubleClick={() =>
+                openWindow({
+                  id: `notepad-${projection.sourceFileId}`,
+                  appType: "notepad",
+                  title: `${projection.displayName} - Notepad`,
+                  props: { fileId: projection.sourceFileId },
+                })
+              }
+            >
+              <Image src="/icons/notepad.png" alt="" width={34} height={34} />
+              <span>{projection.displayName}</span>
+              <small>{source ? projection.size ?? source.size ?? "" : projection.size ?? ""}</small>
+            </button>
+          );
+        })}
       </div>
-      <div className="recycle-bin__status">{entries.length} object(s) — dates retained where available</div>
+      <div className="recycle-bin__status">{entries.length + projected.length} object(s) — dates retained where available</div>
     </div>
   );
 };

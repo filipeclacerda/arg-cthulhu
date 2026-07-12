@@ -389,6 +389,54 @@ como arquivo depois que a janela fecha, igual às outras três.
 
 ---
 
+## O computador se lembra — manifestações e `RECALL_0314`
+
+O arco que fecha a participação do observador. Não é um enigma nem um vídeo: o desktop demonstra,
+em três estágios, que já catalogou o próximo gesto do jogador. Progressão obrigatória: **detalhe
+impossível → padrão reconhecível → armadilha pessoal**.
+
+**Regras invariantes.** Duplicatas e movimentos são projeções visuais sobre o arquivo canônico —
+abrir qualquer aparição abre o mesmo `sourceFileId`, nunca duplicando evidência, progresso ou
+conclusão. Nenhum arquivo crítico some antes de cumprir sua função (`margin_ch7.enc` só migra para
+`RECOVERED` depois de resolvido). As anomalias não resolvem enigmas nem explicam a metafísica. Fora
+do set piece, no máximo uma anomalia por milestone; depois de `index_name` as mutações cessam e a
+máquina parece esperar uma decisão. Nenhum evento novo roda no aftermath.
+
+**Escalada.** Antes de `lot_114`, desktop normal (estabelecer confiança). Depois de `lot_114`, uma
+segunda `STATUS_QUERY.PRN` aparece em `RECOVERED` datada de amanhã e se anuncia nos Documentos
+Recentes antes de ser aberta. Depois de `margin_cipher`, `margin_ch7.enc` migra para `RECOVERED` (o
+atalho recente ainda aponta para a origem). Depois de `counting_audio`, `counting.wav` reaparece nos
+recentes com data posterior à reprodução. `APOLOGY.TMP`, ao ser aberta na Lixeira, sai para `Work`
+e — depois de `future_log` — volta à Lixeira datada de amanhã, sem perder a cópia em `Work`. Depois
+de `lineage`, os títulos do Explorer/taskbar passam a refletir o observador (`Sarah Bishop` → sua
+designação; `RECOVERED — CURRENT OBSERVER`; `MSN Messenger — archived tomorrow`;
+`office_after.jpg — 2 instances`) e a busca recuperada ganha ecos aditivos do observador (nunca
+interceptam uma consulta válida de enigma).
+
+**Consequências das respostas.** A pergunta moderna feita ao `NEXT_USER` (`alive` / `restore` /
+`break` / `fourth`, ou `missed`) vira uma linha em `DIALUP.LOG` e um recibo seco de sistema no
+`RECALL_0314` — nenhum recibo diz se Sarah está viva ou se `RESTORE` salva ou substitui. A resposta
+enviada de volta a 1998 deixa, depois de `future_log`, um resíduo diferente por escolha: `remember`
+retém uma sessão do navegador (`DIALUP.LOG: SESSION RETAINED`); `warn` faz `USERMAP.DAT` mostrar
+`DISPLAY NAME: [WITHHELD]` com `OWNER CHECKSUM: SAME`; `silence` devolve `EMPTY.TMP` à Lixeira sob o
+perfil de M. Bishop. Cada escolha ganha ainda uma única linha de coda no encerramento, igual para
+todos os finais.
+
+**`RECALL_0314`.** Dispara em desktop quieto quando `future_log` está resolvido,
+`post_end_transcript_seen`, o contato ao vivo fechou, e a sessão de 1998 concluiu (ou a pergunta foi
+perdida), sem final escolhido. Batidas: relógio congela em `03:14:00` / `TIME SOURCE UNAVAILABLE` →
+`DATE/TIME PROPERTIES` com `LAST VALID SYNC {TOMORROW} 03:14` e `REQUESTING PROCESS MSNMSGR.EXE` +
+recibo do sistema → histórico `cache://sb-archive-02/history/0314` com três ações `PENDING` →
+`office_after.jpg` normal que vira a variante arquivada (Media Player em `04:12`) → silêncio total de
+~20–25s → `PENDING → CONFIRMED`, `CLOCK SOURCE RESTORED / OFFSET +24:00:00`,
+`5 RECORDS RECONCILED / 1 SOURCE UNRESOLVED`. A sequência é não-bloqueante (as janelas continuam
+fecháveis), pausa em aba oculta ou ao ser pausada, retoma em `RECOVERY INTERRUPTED — Resume` após
+reload (sem reabrir nada sozinha) e, sob reduced motion, avança só por ação explícita, sem flicker.
+O ambiente é abafado ao silêncio por um override com proprietário e restaurado devagar no fim; o mute
+do jogador permanece soberano.
+
+---
+
 ## Apêndice técnico — mapa narrativa → mecânica
 
 Referência rápida de como cada batida vira código (ver também o plano de implementação).
