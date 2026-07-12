@@ -14,6 +14,7 @@ import ClueText from "@/app/components/ClueText/ClueText";
 import { localizedBrowserText } from "@/app/data/localizedNarrative";
 import {
   BROWSER_PAGES,
+  canRevealCoastPage,
   browserPage,
   browserPageFromVisitedId,
   BrowserPage,
@@ -218,10 +219,8 @@ const RecoveredBrowser = ({
 
     if (
       validateCoastQuery(query) &&
-      isPuzzleSolved("margin_cipher")
+      canRevealCoastPage(isPuzzleSolved("counting_audio"))
     ) {
-      attemptPuzzle("counting_audio");
-      solvePuzzle("counting_audio");
       discoverEvidence("coastline_archive", "coastline-yhanthlei");
       visitPage("coastline-yhanthlei");
       navigate("coast", PAGE_ADDRESS.coast, true, true);

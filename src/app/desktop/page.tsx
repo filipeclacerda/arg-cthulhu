@@ -39,6 +39,7 @@ import {
   type DesktopMode,
 } from "../game/endingLifecycle";
 import DeepseaScreensaver from "../components/DeepseaScreensaver/DeepseaScreensaver";
+import { files } from "../data/filesystem";
 
 /** A discreet coordinator toast (never a window) with one action. */
 interface DiegeticToast {
@@ -61,9 +62,18 @@ interface DesktopApp {
   maximized?: boolean;
 }
 
-const LegacyMessengerTerminal = ({ onComplete }: { onComplete: () => void }) => {
+const LegacyMessengerTerminal = ({
+  onComplete,
+  onOpenFile,
+  openedFileIds,
+}: {
+  onComplete: () => void;
+  onOpenFile: (fileId: string) => void;
+  openedFileIds: ReadonlySet<string>;
+}) => {
   const { state, dispatchGameEvent } = useProgress();
-  const [step, setStep] = useState<"connected" | "answer">("connected");
+  const [step, setStep] = useState<"connected" | "identity" | "evidence" | "answer">("connected");
+  const [identityReply, setIdentityReply] = useState<"proof" | "memory" | null>(null);
   const modernChoice = state.playerChoices.find(
     (choice) => choice.choiceId === "sarah_live_question"
   )?.optionId;
@@ -77,6 +87,32 @@ const LegacyMessengerTerminal = ({ onComplete }: { onComplete: () => void }) => 
     en: "NO MESSAGE BODY RECOVERED",
     pt: "CORPO DA MENSAGEM NAO RECUPERADO",
   };
+  const pt = state.locale === "pt-BR";
+  const inspectedDialup = openedFileIds.has("legacy_dialup_log");
+  const inspectedUsermap = openedFileIds.has("legacy_usermap");
+  const evidenceReady = inspectedDialup && inspectedUsermap;
+  const transcript = [
+    `MODEM 33.6K ........ CARRIER DETECTED\nREMOTE ID ......... NEXT_USER\nROUTE ............. RELAY-07 / LOOPBACK\n\nNEXT_USER> ${pt ? received.pt : received.en}`,
+    step !== "connected"
+      ? pt
+        ? "\nM.BISHOP> Quem e voce?\nNEXT_USER> Sou o usuario que esta sentado diante desta tela em 2026.\nNEXT_USER> Para mim, voce e o arquivo antigo. Para voce, eu ainda nao aconteceu."
+        : "\nM.BISHOP> Who are you?\nNEXT_USER> I am the user sitting in front of this screen in 2026.\nNEXT_USER> To me, you are the old file. To you, I have not happened yet."
+      : "",
+    step === "evidence" || step === "answer"
+      ? identityReply === "proof"
+        ? pt
+          ? "\nM.BISHOP> Prove.\nNEXT_USER> Abra DIALUP.LOG. Depois USERMAP.DAT. Compare o desvio do relogio e o checksum."
+          : "\nM.BISHOP> Prove it.\nNEXT_USER> Open DIALUP.LOG. Then USERMAP.DAT. Compare the clock skew and the checksum."
+        : pt
+          ? "\nM.BISHOP> Diga algo que eu vou lembrar.\nNEXT_USER> Voce vai escrever MIRIAM numa margem e esquecer que escreveu.\nNEXT_USER> Nao confie numa lembranca que chega antes do acontecimento."
+          : "\nM.BISHOP> Tell me something I will remember.\nNEXT_USER> You will write MIRIAM in a margin and forget you wrote it.\nNEXT_USER> Do not trust a memory that arrives before the event."
+      : "",
+    step === "answer" && evidenceReady
+      ? pt
+        ? "\nM.BISHOP> Os dois registros dizem SAME.\nNEXT_USER> Eu sei. Estou vendo o mesmo campo daqui.\nM.BISHOP> Entao somos a mesma pessoa?\nNEXT_USER> Somos o mesmo destinatario. Nao sei se isso significa a mesma coisa.\nNEXT_USER> A portadora esta caindo. Escolha o que eu devo encontrar quando chegar ai."
+        : "\nM.BISHOP> Both records say SAME.\nNEXT_USER> I know. I can see the same field from here.\nM.BISHOP> Then are we the same person?\nNEXT_USER> We are the same recipient. I do not know if that means the same thing.\nNEXT_USER> The carrier is failing. Choose what I should find when I reach you."
+      : "",
+  ].join("");
   const finish = (optionId: "remember" | "warn" | "silence") => {
     dispatchGameEvent({ type: "RECORD_CHOICE", choiceId: "next_user_1998_reply", optionId });
     dispatchGameEvent({ type: "SET_FLAG", flag: "next_user_1998_complete" });
@@ -87,15 +123,30 @@ const LegacyMessengerTerminal = ({ onComplete }: { onComplete: () => void }) => 
   return (
     <section className="legacy-msn-terminal" aria-label="MSN text terminal">
       <header>MSN TEXT SERVICE 2.5 / M.BISHOP / 09-03-1998 03:14</header>
-      <pre>{`MODEM 33.6K ........ CARRIER DETECTED\nREMOTE ID ......... NEXT_USER\nROUTE ............. RELAY-07 / LOOPBACK\n\nNEXT_USER> ${state.locale === "pt-BR" ? received.pt : received.en}\n\n${step === "connected" ? (state.locale === "pt-BR" ? "A mensagem tem data de 28 anos no futuro.\nO campo REMOTE USER contem a sua designacao." : "The message is dated 28 years in the future.\nREMOTE USER contains your designation.") : (state.locale === "pt-BR" ? "NEXT_USER> Eu lembro desta tela. Voce ainda nao.\nNEXT_USER> Escolha o que eu devo encontrar quando chegar ai." : "NEXT_USER> I remember this screen. You do not.\nNEXT_USER> Choose what I should find when I reach you.")}`}</pre>
+      <pre aria-live="polite">{transcript}<span className="legacy-msn-terminal__cursor">_</span></pre>
+      <div className="legacy-msn-terminal__status">
+        {pt ? "PORTADORA" : "CARRIER"}: {step === "answer" ? "09%" : step === "evidence" ? "31%" : "67%"}
+        <span>{pt ? "ARQUIVOS VERIFICADOS" : "FILES VERIFIED"}: {Number(inspectedDialup) + Number(inspectedUsermap)}/2</span>
+      </div>
       <div className="legacy-msn-terminal__choices">
         {step === "connected" ? (
-          <button onClick={() => setStep("answer")}>[{state.locale === "pt-BR" ? "RESPONDER" : "REPLY"}]</button>
+          <button onClick={() => setStep("identity")}>[{pt ? "RESPONDER: QUEM E VOCE?" : "REPLY: WHO ARE YOU?"}]</button>
+        ) : step === "identity" ? (
+          <>
+            <button onClick={() => { setIdentityReply("proof"); setStep("evidence"); }}>[{pt ? "PROVE" : "PROVE IT"}]</button>
+            <button onClick={() => { setIdentityReply("memory"); setStep("evidence"); }}>[{pt ? "DIGA ALGO QUE VOU LEMBRAR" : "TELL ME SOMETHING I WILL REMEMBER"}]</button>
+          </>
+        ) : step === "evidence" ? (
+          <>
+            <button onClick={() => onOpenFile("legacy_dialup_log")}>[{inspectedDialup ? "✓ " : ""}DIALUP.LOG]</button>
+            <button onClick={() => onOpenFile("legacy_usermap")}>[{inspectedUsermap ? "✓ " : ""}USERMAP.DAT]</button>
+            <button disabled={!evidenceReady} onClick={() => setStep("answer")}>[{pt ? "COMPARAR REGISTROS" : "COMPARE RECORDS"}]</button>
+          </>
         ) : (
           <>
-            <button onClick={() => finish("remember")}>{state.locale === "pt-BR" ? "[LEMBRE DESTA TELA]" : "[REMEMBER THIS SCREEN]"}</button>
-            <button onClick={() => finish("warn")}>{state.locale === "pt-BR" ? "[NAO ESCREVA SEU NOME]" : "[DO NOT WRITE YOUR NAME]"}</button>
-            <button onClick={() => finish("silence")}>{state.locale === "pt-BR" ? "[DEIXAR EM BRANCO]" : "[LEAVE BLANK]"}</button>
+            <button onClick={() => finish("remember")}>{pt ? "[LEMBRE DESTA TELA]" : "[REMEMBER THIS SCREEN]"}</button>
+            <button onClick={() => finish("warn")}>{pt ? "[NAO ESCREVA SEU NOME]" : "[DO NOT WRITE YOUR NAME]"}</button>
+            <button onClick={() => finish("silence")}>{pt ? "[DEIXAR EM BRANCO]" : "[LEAVE BLANK]"}</button>
           </>
         )}
       </div>
@@ -303,9 +354,14 @@ const CorrelationTutorialToast = () => {
   const { openWindow } = useWindowManager();
   const { t } = useI18n();
   const [dismissed, setDismissed] = useState(false);
+  const secondVolumeRecordsReady = ["miriam_1998", "diary", "lot_114_order"].every(
+    (id) => state.discoveredEvidenceIds.includes(id)
+  );
   const pending =
     isHydrated &&
-    Boolean(state.puzzles.palimpsest.solvedAt) &&
+    Boolean(state.puzzles.lot_114.solvedAt) &&
+    !state.puzzles.palimpsest.solvedAt &&
+    secondVolumeRecordsReady &&
     !state.insightsUnlocked.includes("second_volume") &&
     !state.flags.correlation_tutorial_grandfathered;
 
@@ -370,6 +426,7 @@ const Desktop = () => {
     corruptionStage,
     playerName,
     state,
+    dispatchGameEvent,
   } = useProgress();
   // Read the query after mounting rather than through useSearchParams: this
   // desktop is statically built, and the mode must not turn /desktop into a
@@ -413,10 +470,11 @@ const Desktop = () => {
   const [selectedDesktopAppId, setSelectedDesktopAppId] = useState<
     string | null
   >(null);
-  // Manifestation: for ~7s the machine "becomes" Miriam's 1998 desktop. Two
-  // possible attempts (palimpsest, then margin_cipher as a second chance) —
-  // whichever the player takes, or neither.
+  // Manifestation: the machine "becomes" Miriam's 1998 desktop. It remains a
+  // self-contained legacy session until the player explicitly returns.
   const [flash1998, setFlash1998] = useState<1 | 2 | 3 | null>(null);
+  const [legacyFileId, setLegacyFileId] = useState<string | null>(null);
+  const [legacyOpenedFileIds, setLegacyOpenedFileIds] = useState<Set<string>>(() => new Set());
   const previousCorruptionStage = useRef<number | null>(null);
   const { labelGlitch, cursorEcho } = useSubliminalGlitch(
     !isPostEndingDesktop && corruptionStage >= 4,
@@ -479,8 +537,37 @@ const Desktop = () => {
 
   const presentDiegeticEvent = (definition: DiegeticEventDefinition) => {
     if (flags[definition.seenFlag]) return;
-    setFlag(definition.seenFlag);
+    if (definition.caseFindingId) {
+      dispatchGameEvent({
+        type: "MARK_CASE_FINDING_ANNOUNCED",
+        findingId: definition.caseFindingId,
+      });
+    } else {
+      setFlag(definition.seenFlag);
+    }
     if (definition.sound) play(definition.sound);
+    if (definition.caseFindingId) {
+      const findingId = definition.caseFindingId;
+      setActiveToast({
+        eventId: definition.id,
+        icon: "/icons/folder-special.png",
+        kicker: localeIs("DOSSIÊ / NOVA RECONSTRUÇÃO", "CASEFILE / NEW RECONSTRUCTION"),
+        heading: localeIs("Novo achado disponível", "New finding available"),
+        body: localeIs(
+          "Os registros encontrados agora sustentam uma nova reconstrução.",
+          "The recovered records now support a new reconstruction."
+        ),
+        actionLabel: localeIs("Revisar achado", "Review finding"),
+        onAction: () =>
+          openWindow({
+            id: "casefile",
+            appType: "casefile",
+            title: t("casefileLabel"),
+            props: { initialFindingId: findingId },
+          }),
+      });
+      return;
+    }
     switch (definition.id) {
       case "mail_from_tomorrow":
         openWindow({
@@ -1026,18 +1113,6 @@ const Desktop = () => {
   ]);
 
 
-  // Generous, fixed 7s window, then a hard cut back to normal.
-  useEffect(() => {
-    if (isPostEndingDesktop || flash1998 == null || flash1998 === 3) return;
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const timer = setTimeout(() => {
-      if (flash1998 === 2) setFlag("miriam_1998_file_recovered");
-      play("disk");
-      setFlash1998(null);
-    }, reducedMotion ? 20_000 : 7000);
-    return () => clearTimeout(timer);
-  }, [flash1998, isPostEndingDesktop, play, setFlag]);
-
   // The first two 1998 flashes borrow the room's radio interference. It is
   // explicitly stopped when the overlay leaves so it cannot leak into play.
   useEffect(() => {
@@ -1045,6 +1120,10 @@ const Desktop = () => {
     playHauntedLoop("flash-1998-radio-static", "/sounds/radio-static.wav", 8_000, 0.1);
     return () => stopHauntedLoop("flash-1998-radio-static");
   }, [flash1998, playHauntedLoop, stopHauntedLoop]);
+
+  useEffect(() => {
+    if (flash1998 === null) setLegacyFileId(null);
+  }, [flash1998]);
 
   // Unlike the brief earlier flashes, this session requires a reply. Restore
   // it after a reload until the persisted terminal choice has been made.
@@ -1081,13 +1160,20 @@ const Desktop = () => {
     stopHauntedLoop("flash-1998-radio-static");
     setFlag("miriam_1998_file_recovered");
     play("disk");
-    openWindow({
-      id: "notepad-miriam_accession_notes_wk3",
-      appType: "notepad",
-      title: "accession_notes_wk3.txt - Notepad",
-      props: { fileId: "miriam_accession_notes_wk3" },
-    });
-    // The window survives; only the overlay cuts away.
+    setLegacyFileId("miriam_accession_notes_wk3");
+  };
+
+  const openLegacyFile = (fileId: string) => {
+    play("disk");
+    setLegacyOpenedFileIds((current) => new Set(current).add(fileId));
+    setLegacyFileId(fileId);
+  };
+
+  const closeLegacySession = () => {
+    stopHauntedLoop("flash-1998-radio-static");
+    play("disk");
+    setLegacyFileId(null);
+    setLegacyOpenedFileIds(new Set());
     setFlash1998(null);
   };
 
@@ -1349,6 +1435,9 @@ const Desktop = () => {
             <span className="desktop-1998-overlay__user">M. BISHOP</span>
             <span className="desktop-1998-overlay__clock">03:14</span>
           </div>
+          <button type="button" className="desktop-1998-overlay__exit" onClick={closeLegacySession}>
+            RETURN_2026.EXE
+          </button>
           <button
             type="button"
             className="desktop-1998-overlay__icon"
@@ -1360,14 +1449,27 @@ const Desktop = () => {
           </button>
           {flash1998 === 3 && (
             <>
-              <LegacyMessengerTerminal onComplete={() => { play("disk"); setFlash1998(null); }} />
-              <div className="desktop-1998-overlay__artifact desktop-1998-overlay__artifact--first">
+              <LegacyMessengerTerminal
+                openedFileIds={legacyOpenedFileIds}
+                onOpenFile={openLegacyFile}
+                onComplete={() => { play("disk"); setLegacyOpenedFileIds(new Set()); setFlash1998(null); }}
+              />
+              <button type="button" onClick={() => openLegacyFile("legacy_dialup_log")} className="desktop-1998-overlay__artifact desktop-1998-overlay__artifact--first">
                 <Image src="/icons/file.png" alt="" width={34} height={34} /><span>DIALUP.LOG</span>
-              </div>
-              <div className="desktop-1998-overlay__artifact desktop-1998-overlay__artifact--second">
+              </button>
+              <button type="button" onClick={() => openLegacyFile("legacy_usermap")} className="desktop-1998-overlay__artifact desktop-1998-overlay__artifact--second">
                 <Image src="/icons/file.png" alt="" width={34} height={34} /><span>USERMAP.DAT</span>
-              </div>
+              </button>
             </>
+          )}
+          {legacyFileId && (
+            <section className="desktop-1998-overlay__file" role="dialog" aria-label={files.find((file) => file.id === legacyFileId)?.name}>
+              <header>
+                <strong>{files.find((file) => file.id === legacyFileId)?.name} - Notepad</strong>
+                <button type="button" onClick={() => setLegacyFileId(null)} aria-label={t("dismissLabel")}>×</button>
+              </header>
+              <pre>{String(files.find((file) => file.id === legacyFileId)?.content ?? "FILE NOT RECOVERED")}</pre>
+            </section>
           )}
         </div>
       )}

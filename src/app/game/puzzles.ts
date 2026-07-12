@@ -25,6 +25,11 @@ import {
   canCompleteOptionalMission,
   optionalMission,
 } from "./optionalMissions";
+import {
+  caseFindingAnnouncedFlag,
+  puzzleCasefileGate,
+  syncCaseFindingAvailability,
+} from "./investigativeProgression";
 
 export const HINT_ONE_MS = 12 * 60 * 1000;
 export const HINT_TWO_MS = 25 * 60 * 1000;
@@ -56,7 +61,7 @@ export const PUZZLE_HINTS: Record<PuzzleId, [string, string, string]> = {
     "In Media Player choose Left, enable Reverse, and play the 4:11 recording.",
   ],
   lineage: [
-    "The archive years are not evenly spaced. Compare each gap with the one before it.",
+    "Write down the gap between each pair of archive years, then compare the resulting intervals.",
     "Each interval retains roughly three quarters of the previous interval.",
     "The gaps are 65, 49, 37, 28, 21, 16, then about 12. Add 12 to 2014 and search the result.",
   ],
@@ -94,7 +99,7 @@ export const PUZZLE_HINTS_PT: Record<PuzzleId, [string, string, string]> = {
     "No Media Player escolha Left, ative Reverse e reproduza a gravação de 4:11.",
   ],
   lineage: [
-    "Os anos do arquivo não têm distâncias iguais. Compare cada intervalo com o anterior.",
+    "Anote a diferença entre cada par de anos do arquivo e depois compare os intervalos obtidos.",
     "Cada intervalo mantém aproximadamente três quartos do intervalo anterior.",
     "Os intervalos são 65, 49, 37, 28, 21, 16 e depois cerca de 12. Some 12 a 2014 e pesquise o resultado.",
   ],
@@ -131,6 +136,12 @@ export interface EventResult {
   sequenceFault?: boolean;
   commandAccepted?: boolean;
   commandError?: RunCommandError;
+  puzzleBlocked?: {
+    puzzleId: PuzzleId;
+    reason: "casefile_required";
+    findingId?: string;
+    insightId?: string;
+  };
   hintUnlocked?: { puzzleId: PuzzleId; level: number; trigger: HintTrigger };
   theoryResult?: {
     insightId: string | null;
@@ -149,10 +160,30 @@ export interface EventResult {
 }
 
 const touch = (state: ProgressStateV3): ProgressStateV3 => ({
-  ...state,
+  ...syncCaseFindingAvailability(state),
   revision: state.revision + 1,
   updatedAt: Date.now(),
 });
+
+const blockedPuzzleResult = (
+  state: ProgressStateV3,
+  puzzleId: PuzzleId
+): EventResult | null => {
+  const gate = puzzleCasefileGate(state, puzzleId);
+  if (gate.allowed) return null;
+  return {
+    state,
+    puzzleBlocked: {
+      puzzleId,
+      reason: "casefile_required",
+      ...(gate.requirement?.kind === "finding"
+        ? { findingId: gate.requirement.findingId }
+        : gate.requirement?.kind === "insight"
+          ? { insightId: gate.requirement.insightId }
+          : {}),
+    },
+  };
+};
 
 const uniquePush = (values: string[], value: string): string[] =>
   values.includes(value) ? values : [...values, value];
@@ -484,6 +515,8 @@ export const reduceGameEvent = (
     case "SOLVE_PUZZLE": {
       const wasSolved = Boolean(state.puzzles[event.puzzleId].solvedAt);
       if (wasSolved) return { state: current };
+      const blocked = blockedPuzzleResult(state, event.puzzleId);
+      if (blocked) return blocked;
       state = solve(state, event.puzzleId, event.solvedAt);
       return {
         state: touch(state),
@@ -575,6 +608,8 @@ export const reduceGameEvent = (
       break;
     case "FUTURE_SEQUENCE_ACTION": {
       if (!state.puzzles.lineage.solvedAt || state.puzzles.future_log.solvedAt) break;
+      const blocked = blockedPuzzleResult(state, "future_log");
+      if (blocked) return blocked;
       const expected = FUTURE_SEQUENCE[state.futureSequenceStep];
       if (event.action === expected) {
         const nextStep = state.futureSequenceStep + 1;
@@ -696,10 +731,12 @@ export const reduceGameEvent = (
         command,
         state.collectedReferences
       );
+      const indexGate = blockedPuzzleResult(state, "index_name");
       if (
         validation.accepted &&
         state.puzzles.future_log.solvedAt &&
-        canRunFinalIndex(state)
+        canRunFinalIndex(state) &&
+        !indexGate
       ) {
         state = solve(state, "index_name");
         return {
@@ -711,7 +748,7 @@ export const reduceGameEvent = (
       if (
         validation.accepted &&
         state.puzzles.future_log.solvedAt &&
-        !canRunFinalIndex(state)
+        (!canRunFinalIndex(state) || indexGate)
       ) {
         return {
           state: current,
@@ -1019,6 +1056,27 @@ export const reduceGameEvent = (
             updatedAt: Date.now(),
           },
         },
+      };
+      break;
+    case "MARK_CASE_FINDING_ANNOUNCED":
+      if (state.announcedCaseFindingIds.includes(event.findingId)) break;
+      state = {
+        ...state,
+        announcedCaseFindingIds: [
+          ...state.announcedCaseFindingIds,
+          event.findingId,
+        ],
+        flags: {
+          ...state.flags,
+          [caseFindingAnnouncedFlag(event.findingId)]: true,
+        },
+      };
+      break;
+    case "MARK_CASE_FINDING_VIEWED":
+      if (state.viewedCaseFindingIds.includes(event.findingId)) break;
+      state = {
+        ...state,
+        viewedCaseFindingIds: [...state.viewedCaseFindingIds, event.findingId],
       };
       break;
     case "UNLOCK_LEAD":

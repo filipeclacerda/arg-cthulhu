@@ -9,6 +9,7 @@ import NavigationGuard from "./components/NavigationGuard/NavigationGuard";
 import SystemContextMenu from "./components/SystemContextMenu/SystemContextMenu";
 import SystemToast from "./components/SystemToast/SystemToast";
 import { PHProvider } from "./components/PHProvider/PHProvider";
+import DevToolsGate from "./components/DevTools/DevToolsGate";
 
 export const metadata: Metadata = {
   title: "The Archive Remembers Tomorrow",
@@ -34,6 +35,7 @@ export default function RootLayout({
                 <SystemContextMenu />
                 {children}
                 <WindowLayer />
+                <DevToolsGate />
               </WindowManagerProvider>
             </ProgressProvider>
           </SoundProvider>

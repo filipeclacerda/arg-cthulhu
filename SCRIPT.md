@@ -670,7 +670,7 @@ somem. O acerto parcial persiste no save.
    envio, diário, catálogo ou cartão de incorporação.
 3. **A água surgiu sob a workstation sem que um cano explicasse** — incidente mais
    manutenção ou frames periciais.
-4. **Livro-Razão da Linhagem (opcional, Ato 2):** em 1977, a linhagem Bishop herdou
+4. **Livro-Razão da Linhagem (obrigatório, Ato 2):** em 1977, a linhagem Bishop herdou
    um livro-razão deliberadamente incompleto — três dos dossiês históricos corroboram.
 5. **Sarah permanece em amanhã, um dia à frente** — e-mail ao vivo mais log/arquivo móvel.
 6. **O relay exige um observador no campo de arquivo** — Tom mais Sarah/log/INDEX.HLP.
@@ -679,8 +679,9 @@ somem. O acerto parcial persiste no save.
 
 Duas frases completas do Ato 1 revelam `RECOVERED`; as três imprimem
 `MIRIAM_DRAFT.PRN` e liberam `RECOVERED/LINEAGE`. As três frases do observador são
-necessárias para o `INDEX /JOIN`. O achado histórico expande a lore, mas não bloqueia o
-fluxo principal.
+necessárias para o `INDEX /JOIN`. A progressão também exige o achado principal do estágio
+anterior: a primeira correlação antes do palimpsesto, Retorno do Volume II antes do áudio,
+Livro-Razão antes da linhagem e Deslocamento Futuro antes do log.
 
 ### Dossiês históricos
 

@@ -54,7 +54,7 @@ const renderAppContent = (
     case "cipher-lab":
       return <CipherLab initialCiphertext={win.props.initialCiphertext} />;
     case "casefile":
-      return <Casefile initialLens={win.props.initialLens ?? "deductions"} initialThreadId={win.props.initialThreadId} />;
+      return <Casefile initialLens={win.props.initialLens ?? "deductions"} initialThreadId={win.props.initialThreadId} initialFindingId={win.props.initialFindingId} />;
     case "case-notes":
       return <CaseNotes />;
     case "archive-viewer":

@@ -7,9 +7,30 @@ import {
   optionalMissionCodaLines,
 } from "./optionalMissions";
 
+const satisfyGate = (
+  state: ReturnType<typeof createInitialProgress>,
+  puzzleId: (typeof PUZZLE_IDS)[number]
+) => {
+  if (puzzleId === "palimpsest") state.insightsUnlocked = ["second_volume"];
+  const findingByPuzzle = {
+    counting_audio: "volume_return",
+    lineage: "lineage_ledger",
+    future_log: "future_displacement",
+    index_name: "chapter_ritual",
+  } as const;
+  const findingId = findingByPuzzle[puzzleId as keyof typeof findingByPuzzle];
+  if (findingId) {
+    state.caseAnswers[findingId] = {
+      slots: {}, lockedSlots: [], evidenceIds: [], attempts: 1, nearMisses: {}, solvedAt: Date.now(),
+    };
+  }
+  return state;
+};
+
 const solveThrough = (lastPuzzle: (typeof PUZZLE_IDS)[number]) => {
   let state = createInitialProgress(1_700_000_000_000, `mission-${lastPuzzle}`);
   for (const puzzleId of PUZZLE_IDS) {
+    state = satisfyGate(state, puzzleId);
     state = reduceGameEvent(state, { type: "SOLVE_PUZZLE", puzzleId }).state;
     if (puzzleId === lastPuzzle) break;
   }

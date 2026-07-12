@@ -1,5 +1,15 @@
-import { ProgressStateV3, PuzzleId, PUZZLE_ORDER } from "./progress";
+import {
+  CaseQuestionId,
+  ProgressStateV3,
+  PuzzleId,
+  PUZZLE_ORDER,
+} from "./progress";
 import { isUnlocked, UnlockCondition, UnlockContext } from "./unlock";
+import {
+  CASE_FINDING_DEFINITIONS,
+  caseFindingAnnouncedFlag,
+  caseFindingAvailableFlag,
+} from "./investigativeProgression";
 
 /**
  * Central registry for every diegetic desktop event — the dialogs, toasts and
@@ -63,6 +73,8 @@ export interface DiegeticEventDefinition {
   sound?: DiegeticSound;
   /** Narrative delay range in ms; defaults to the standard 1.2–2.4s pause. */
   delayRangeMs?: [number, number];
+  /** Present only for a Casefile availability notification. */
+  caseFindingId?: CaseQuestionId;
 }
 
 export const DIEGETIC_GAP_MIN_MS = 1_200;
@@ -78,6 +90,18 @@ export const diegeticEventDelayMs = (
   ];
   return Math.round(min + (max - min) * Math.min(1, Math.max(0, random)));
 };
+
+const CASE_FINDING_EVENTS: DiegeticEventDefinition[] =
+  CASE_FINDING_DEFINITIONS.map(({ id }) => ({
+    id: `case_finding_${id}`,
+    priority: 3 as const,
+    presentation: { kind: "toast" as const },
+    when: { type: "flag" as const, flag: caseFindingAvailableFlag(id) },
+    obsoleteWhen: { type: "flag" as const, flag: caseFindingAnnouncedFlag(id) },
+    seenFlag: caseFindingAnnouncedFlag(id),
+    sound: "chime" as const,
+    caseFindingId: id,
+  }));
 
 export const DIEGETIC_EVENTS: DiegeticEventDefinition[] = [
   // --- Priority 1: mandatory set pieces -----------------------------------
@@ -143,6 +167,18 @@ export const DIEGETIC_EVENTS: DiegeticEventDefinition[] = [
     delayRangeMs: [1_600, 2_400],
   },
   {
+    // counting.wav recovered (margin_cipher reveal). Keep this immediately
+    // after the cipher result: the optional second 1998 session must not hold
+    // the file alert (and its sound cue) behind an open-ended overlay.
+    id: "counting_file",
+    priority: 1,
+    presentation: { kind: "window", windowId: "counting-file-alert" },
+    when: { type: "flag", flag: "puzzle_margin_cipher_solved" },
+    seenFlag: "counting_file_notice_shown",
+    sound: "mechanicalMoan",
+    delayRangeMs: [250, 500],
+  },
+  {
     // Second chance at the 1998 desktop, after margin_cipher.
     id: "flash_1998_attempt_2",
     priority: 1,
@@ -179,16 +215,6 @@ export const DIEGETIC_EVENTS: DiegeticEventDefinition[] = [
     obsoleteWhen: { type: "flag", flag: "puzzle_margin_cipher_solved" },
     seenFlag: "margin_file_notice_shown",
     sound: "disk",
-  },
-  {
-    // counting.wav recovered (margin_cipher reveal).
-    id: "counting_file",
-    priority: 1,
-    presentation: { kind: "window", windowId: "counting-file-alert" },
-    when: { type: "flag", flag: "puzzle_margin_cipher_solved" },
-    obsoleteWhen: { type: "puzzleSolved", puzzleId: "counting_audio" },
-    seenFlag: "counting_file_notice_shown",
-    sound: "mechanicalMoan",
   },
   {
     // CHAPTER_SEVEN appears inside RECOVERED (counting_audio reveal).
@@ -258,6 +284,8 @@ export const DIEGETIC_EVENTS: DiegeticEventDefinition[] = [
     sound: "chime",
     delayRangeMs: [26_000, 26_000],
   },
+
+  ...CASE_FINDING_EVENTS,
 
   // --- Priority 4: optional recoveries (discreet toasts) --------------------
   {

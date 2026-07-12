@@ -437,7 +437,7 @@ body.desktop-mode {
     text-shadow: -1px 0 rgba(0, 200, 255, 0.6);
 }
 
-// Manifestation: ~7s "the machine is Miriam's 1998 desktop again". A hard
+// Manifestation: "the machine is Miriam's 1998 desktop again". The player
 // cut in and out (no fade) — this is a jolt, not a transition.
 .desktop-1998-overlay {
     position: fixed;
@@ -515,14 +515,23 @@ body.desktop-mode {
     font: 14px/1.45 "Courier New", monospace;
 }
 .legacy-msn-terminal header { padding: 5px 8px; color: #fff; background: #000080; font: bold 13px win98, sans-serif; }
-.legacy-msn-terminal pre { min-height: 245px; margin: 0; padding: 18px; white-space: pre-wrap; }
+.legacy-msn-terminal pre { min-height: 245px; max-height: 330px; margin: 0; overflow: auto; padding: 18px; white-space: pre-wrap; }
+.legacy-msn-terminal__status { display: flex; justify-content: space-between; border-block: 1px solid #555; padding: 4px 18px; color: #7f7; font-size: 12px; }
+.legacy-msn-terminal__cursor { animation: legacy-cursor 850ms steps(1) infinite; color: #fff; }
+@keyframes legacy-cursor { 50% { opacity: 0; } }
 .legacy-msn-terminal__choices { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 18px 18px; }
 .legacy-msn-terminal__choices button { border: 0; padding: 3px 5px; color: #fff; background: transparent; font: inherit; cursor: pointer; }
+.legacy-msn-terminal__choices button:disabled { color: #666; cursor: not-allowed; }
 .legacy-msn-terminal__choices button:hover,
 .legacy-msn-terminal__choices button:focus-visible { color: #000; background: #c9c9c9; outline: none; }
-.desktop-1998-overlay__artifact { position: absolute; left: 18px; display: grid; justify-items: center; gap: 3px; color: #fff; font: 12px win98, sans-serif; text-shadow: 1px 1px #000; }
+.desktop-1998-overlay__artifact { position: absolute; left: 18px; display: grid; justify-items: center; gap: 3px; padding: 2px; border: 0; color: #fff; background: transparent; font: 12px win98, sans-serif; text-shadow: 1px 1px #000; cursor: pointer; }
 .desktop-1998-overlay__artifact--first { top: 105px; }
 .desktop-1998-overlay__artifact--second { top: 177px; }
+.desktop-1998-overlay__exit { position: absolute; right: 12px; bottom: 7px; z-index: 2; border: 1px outset #fff; padding: 3px 8px; background: #c0c0c0; font: 12px win98, sans-serif; }
+.desktop-1998-overlay__file { position: absolute; z-index: 4; top: 68px; left: 50%; width: min(620px, calc(100% - 170px)); min-height: 330px; transform: translateX(-50%); border: 2px outset #fff; color: #000; background: #c0c0c0; box-shadow: 2px 2px #000; }
+.desktop-1998-overlay__file header { display: flex; align-items: center; justify-content: space-between; padding: 3px 4px; color: #fff; background: #000080; font: bold 13px win98, sans-serif; }
+.desktop-1998-overlay__file header button { width: 19px; height: 18px; border: 1px outset #fff; padding: 0; background: #c0c0c0; font-weight: bold; line-height: 14px; }
+.desktop-1998-overlay__file pre { min-height: 295px; max-height: 58vh; margin: 2px; overflow: auto; border: 1px inset #fff; padding: 12px; white-space: pre-wrap; background: #fff; font: 13px/1.4 "Courier New", monospace; }
 
 .deepsea-screensaver {
     position: fixed;

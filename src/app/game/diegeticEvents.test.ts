@@ -2,9 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
   DIEGETIC_EVENTS,
   DiegeticEventDefinition,
+  diegeticEventDelayMs,
   selectNextDiegeticEvent,
 } from "./diegeticEvents";
 import { shouldAdvanceLiveContact } from "./liveContact";
+import { UnlockContext } from "./unlock";
 
 const events: DiegeticEventDefinition[] = [
   {
@@ -70,6 +72,40 @@ describe("diegetic sound cues", () => {
     expect(soundFor("endgame_program")).toBe("deepMoan");
     expect(soundFor("micro_two_days_out")).toBe("clock");
     expect(soundFor("recall_0314")).toBeUndefined();
+  });
+
+  it("keeps counting.wav announced even if the puzzle was solved elsewhere", () => {
+    const event = DIEGETIC_EVENTS.find((candidate) => candidate.id === "counting_file");
+    expect(event?.obsoleteWhen).toBeUndefined();
+    expect(event?.sound).toBe("mechanicalMoan");
+    expect(diegeticEventDelayMs(event!, 0)).toBe(250);
+    expect(diegeticEventDelayMs(event!, 1)).toBe(500);
+  });
+
+  it("announces counting.wav before the optional second 1998 session", () => {
+    const context: UnlockContext = {
+      flags: {
+        puzzle_margin_cipher_solved: true,
+        flash_1998_attempt_1_shown: true,
+      },
+      discoveredEvidenceIds: [],
+      solvedPuzzleIds: ["margin_cipher"],
+      insightsUnlocked: [],
+      worldReactionsSeen: [],
+      playerChoices: [],
+      liveContactStatus: "unseen" as const,
+    };
+
+    expect(
+      selectNextDiegeticEvent(context, { focalBusy: false, toastBusy: false })?.id
+    ).toBe("counting_file");
+  });
+
+  it("registers one persistent Casefile toast per finding", () => {
+    const findingEvents = DIEGETIC_EVENTS.filter((event) => event.caseFindingId);
+    expect(findingEvents).toHaveLength(7);
+    expect(findingEvents.every((event) => event.presentation.kind === "toast")).toBe(true);
+    expect(new Set(findingEvents.map((event) => event.seenFlag)).size).toBe(7);
   });
 });
 

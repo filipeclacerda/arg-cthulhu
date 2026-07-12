@@ -1200,9 +1200,9 @@ The system treats these as one user at different offsets.`,
     name: "counting.wav",
     folderId: "restricted",
     kind: "audio",
-    // Let the player hear the impossible recording before the margin explains
-    // how to recover it. The puzzle itself remains gated by progression.
-    unlock: { type: "puzzleSolved", puzzleId: "palimpsest" },
+    // The recording only surfaces after the Vigenere text in margin_ch7.enc
+    // has been decoded successfully.
+    unlock: { type: "puzzleSolved", puzzleId: "margin_cipher" },
     evidenceId: "counting_audio",
     alias: "COUNTI~1.WAV",
     size: "43.1 MB",

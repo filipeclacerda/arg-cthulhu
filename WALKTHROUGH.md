@@ -90,8 +90,9 @@ No **Casefile.exe**, use a lente **Achados**. Clique numa lacuna, escolha ou arr
 fato do tipo pedido, anexe registros que corroborem a frase e pressione **Test finding**.
 Palavras corretas ficam douradas e continuam travadas mesmo se as demais estiverem erradas.
 No primeiro contato, o inspector mostra um memo de capa diegético com esse ciclo; o menu
-**Help** do Casefile abre a legenda de símbolos. Ao extrair o primeiro fato, o sistema mostra
-um toast curto confirmando que ele foi arquivado no Casefile.
+**Help** do Casefile abre a legenda de símbolos. Um achado só aparece quando seus registros
+mínimos foram examinados. Nesse momento, o desktop mostra um toast que abre diretamente a
+nova reconstrução; o selo **NEW** permanece até ela ser revisada.
 
 Resolva os três achados iniciais em qualquer ordem:
 
@@ -114,15 +115,15 @@ criam `MIRIAM_DRAFT.PRN` e abrem `RECOVERED/LINEAGE`.
 Dentro de `LINEAGE`, leia os dossiês de 1863, 1912, 1949 e 1977, o registro de Eleanor
 Vale em 2014, `miriam_margin_match.txt`, a foto `akeley_box_1977.png`, o inventário da
 caixa e o rastro particular da Em. O laudo compara uma anotação de 1998 a outra datada de
-amanhã e atribui ambas à mão de Miriam. O achado histórico opcional é:
+amanhã e atribui ambas à mão de Miriam. O achado histórico obrigatório é:
 
 ```text
 1977 → Bishop → an intentionally incomplete ledger
 ```
 
-Anexe o documento de 1977 e pelo menos dois outros dossiês históricos. Esse achado não
-bloqueia a campanha, mas explica como o aviso chegou a Miriam e alimenta a descoberta do
-final secreto.
+Anexe o documento de 1977 e pelo menos dois outros dossiês históricos. Esse achado libera
+o puzzle de linhagem, explica como o aviso chegou a Miriam e alimenta a descoberta do final
+secreto.
 
 ### Respostas completas do Casefile.exe
 
@@ -308,6 +309,9 @@ Miriam é a chave porque foi a primeira catalogadora da coleção.
 
 ## 5. A gravação de 4:11
 
+Antes da gravação poder avançar a investigação, retenha no Casefile o achado **Retorno do
+Volume II**. A pesquisa costeira só passa a responder depois que o áudio for resolvido.
+
 1. Volte à pasta `RECOVERED`.
 2. Abra `counting.wav`.
 3. No **Media Player**:
@@ -425,6 +429,9 @@ Abra `access_log.txt`. Ele contém:
 ```
 
 Você precisa repetir as três primeiras ações exatamente nessa ordem:
+
+Antes de iniciar a sequência, retenha **Sarah permanece em amanhã, um dia à frente** no
+Casefile; sem esse achado, o log recusa a progressão sem revelar a resposta.
 
 1. Abra `114_verso.tif` e clique em **Mirror**.
 2. Abra `counting.wav`, selecione **Left**, marque **Reverse buffer** e clique em **Play**.

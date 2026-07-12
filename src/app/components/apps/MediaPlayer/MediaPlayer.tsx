@@ -52,6 +52,7 @@ const MediaPlayer = ({ fileId, recallDisplay = false }: { fileId: string; recall
     discoverEvidence,
     markFileRead,
     isPuzzleSolved,
+    solvePuzzle,
     recordSequenceAction,
     collectReference,
     recordNearMiss,
@@ -209,6 +210,10 @@ const MediaPlayer = ({ fileId, recallDisplay = false }: { fileId: string; recall
 
   const handleEnded = () => {
     if (!isPuzzleTrack || !recovered) return;
+    if (!isPuzzleSolved("counting_audio")) {
+      const result = solvePuzzle("counting_audio");
+      if (result.puzzleBlocked) return;
+    }
     if (!state.worldReactionsSeen.includes("post_end_transcript")) {
       // First time only: the set piece replaces the immediate
       // minimized_audio trigger. minimized_audio (and its own haunted loop)

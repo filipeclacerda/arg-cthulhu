@@ -262,6 +262,8 @@ export interface ProgressStateV5 {
   playerChoices: PlayerChoice[];
   optionalDiscoveries: OptionalDiscoveryId[];
   assetVariantsSeen: string[];
+  announcedCaseFindingIds: CaseQuestionId[];
+  viewedCaseFindingIds: CaseQuestionId[];
   liveContact: LiveContactState;
 }
 
@@ -327,6 +329,8 @@ export type GameEvent =
   | { type: "DISCOVER_OPTIONAL"; discoveryId: OptionalDiscoveryId }
   | { type: "COMPLETE_OPTIONAL_MISSION"; missionId: OptionalDiscoveryId }
   | { type: "SEE_ASSET_VARIANT"; variantId: string }
+  | { type: "MARK_CASE_FINDING_ANNOUNCED"; findingId: CaseQuestionId }
+  | { type: "MARK_CASE_FINDING_VIEWED"; findingId: CaseQuestionId }
   | { type: "RESET_BOARD_LAYOUT" }
   | { type: "SET_LOCALE"; locale: Locale }
   | { type: "TOUCH_SEEN"; now: number }
@@ -398,6 +402,8 @@ export const createInitialProgress = (
   playerChoices: [],
   optionalDiscoveries: [],
   assetVariantsSeen: [],
+  announcedCaseFindingIds: [],
+  viewedCaseFindingIds: [],
   liveContact: createInitialLiveContact(),
 });
 

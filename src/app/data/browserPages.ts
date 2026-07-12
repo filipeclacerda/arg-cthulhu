@@ -24,6 +24,9 @@ const always: UnlockCondition = { type: "always" };
 const afterLot: UnlockCondition = { type: "puzzleSolved", puzzleId: "lot_114" };
 const afterMargin: UnlockCondition = { type: "puzzleSolved", puzzleId: "margin_cipher" };
 const deep: UnlockCondition = { type: "puzzleSolved", puzzleId: "counting_audio" };
+/** The coast result consumes the audio solution; searching can never solve it. */
+export const canRevealCoastPage = (countingAudioSolved: boolean): boolean =>
+  countingAudioSolved;
 
 export const BROWSER_PAGES: readonly BrowserPageDefinition[] = [
   { id: "recall-history", address: "cache://sb-archive-02/history/0314", keywords: [], unlock: { type: "flag", flag: "recall_0314_receipt_seen" }, pageId: "recall-history-0314" },

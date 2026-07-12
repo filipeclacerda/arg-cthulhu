@@ -216,6 +216,14 @@ export const migrateProgress = (value: unknown): ProgressStateV4 | null => {
       collectedTokens: Array.isArray(value.collectedTokens)
         ? value.collectedTokens
         : [],
+      announcedCaseFindingIds: Array.isArray(value.announcedCaseFindingIds)
+        ? value.announcedCaseFindingIds
+        : CASE_STATEMENTS.filter((statement) => value.caseAnswers?.[statement.id]?.solvedAt)
+            .map((statement) => statement.id),
+      viewedCaseFindingIds: Array.isArray(value.viewedCaseFindingIds)
+        ? value.viewedCaseFindingIds
+        : CASE_STATEMENTS.filter((statement) => value.caseAnswers?.[statement.id]?.solvedAt)
+            .map((statement) => statement.id),
       liveContact: deriveLiveContact(value as Record<string, any>),
       caseAnswers: normalizeCaseAnswers(value.caseAnswers),
       puzzles: Object.fromEntries(
@@ -287,6 +295,12 @@ export const migrateProgress = (value: unknown): ProgressStateV4 | null => {
       assetVariantsSeen: Array.isArray(legacy.assetVariantsSeen)
         ? legacy.assetVariantsSeen
         : [],
+      announcedCaseFindingIds: CASE_STATEMENTS.filter(
+        (statement) => normalizeCaseAnswers(legacy.caseAnswers)[statement.id]?.solvedAt
+      ).map((statement) => statement.id),
+      viewedCaseFindingIds: CASE_STATEMENTS.filter(
+        (statement) => normalizeCaseAnswers(legacy.caseAnswers)[statement.id]?.solvedAt
+      ).map((statement) => statement.id),
       liveContact: deriveLiveContact(legacy),
     };
   }

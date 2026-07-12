@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BROWSER_PAGES, browserPageFromVisitedId } from "./browserPages";
+import { BROWSER_PAGES, browserPageFromVisitedId, canRevealCoastPage } from "./browserPages";
 import { RECYCLE_ENTRIES } from "./recycleBin";
 import { files } from "./filesystem";
 
@@ -18,6 +18,11 @@ describe("recovered web registry", () => {
       "graymoor-return"
     );
     expect(browserPageFromVisitedId("personnel-14-ev")?.id).toBe("eleanor");
+  });
+
+  it("never reveals the coast search before counting.wav is solved", () => {
+    expect(canRevealCoastPage(false)).toBe(false);
+    expect(canRevealCoastPage(true)).toBe(true);
   });
 });
 

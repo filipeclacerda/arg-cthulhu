@@ -45,6 +45,12 @@ interface DispatchResult {
   sequenceFault?: boolean;
   commandAccepted?: boolean;
   commandError?: RunCommandError;
+  puzzleBlocked?: {
+    puzzleId: PuzzleId;
+    reason: "casefile_required";
+    findingId?: string;
+    insightId?: string;
+  };
   hintUnlocked?: { puzzleId: PuzzleId; level: number };
   theoryResult?: {
     insightId: string | null;
@@ -93,7 +99,7 @@ interface ProgressContextValue {
   markEmailRead: (emailId: string) => void;
   discoverEvidence: (evidenceId: string, resourceId?: string) => void;
   visitPage: (pageId: string) => void;
-  solvePuzzle: (puzzleId: PuzzleId) => void;
+  solvePuzzle: (puzzleId: PuzzleId) => DispatchResult;
   attemptPuzzle: (puzzleId: PuzzleId) => void;
   recordNearMiss: (puzzleId: PuzzleId, kind: AttemptKind) => void;
   unlockHint: (puzzleId: PuzzleId, level?: number) => void;
@@ -545,12 +551,22 @@ export const ProgressProvider = ({
           noticeTimer.current = setTimeout(() => setSystemNotice(null), 3800);
         }
       }
+      if (result.puzzleBlocked) {
+        setSystemNotice(
+          beforeLocale === "pt-BR"
+            ? "O registro ainda não aceita esta conclusão. Revise o novo achado no Dossiê do Caso."
+            : "The record does not accept this conclusion yet. Review the new finding in Casefile.exe."
+        );
+        if (noticeTimer.current) clearTimeout(noticeTimer.current);
+        noticeTimer.current = setTimeout(() => setSystemNotice(null), 4200);
+      }
 
       return {
         solvedPuzzle: result.solvedPuzzle,
         sequenceFault: result.sequenceFault,
         commandAccepted: result.commandAccepted,
         commandError: result.commandError,
+        puzzleBlocked: result.puzzleBlocked,
         hintUnlocked: result.hintUnlocked
           ? {
               puzzleId: result.hintUnlocked.puzzleId,

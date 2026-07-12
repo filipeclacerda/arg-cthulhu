@@ -17,6 +17,33 @@ import {
 } from "./campaign";
 import { FUTURE_SEQUENCE, reduceGameEvent } from "./puzzles";
 
+const satisfyGate = (
+  state: ReturnType<typeof createInitialProgress>,
+  puzzleId: (typeof PUZZLE_IDS)[number]
+) => {
+  if (puzzleId === "palimpsest" && !state.insightsUnlocked.includes("second_volume")) {
+    state.insightsUnlocked.push("second_volume");
+  }
+  const findingByPuzzle = {
+    counting_audio: "volume_return",
+    lineage: "lineage_ledger",
+    future_log: "future_displacement",
+    index_name: "chapter_ritual",
+  } as const;
+  const findingId = findingByPuzzle[puzzleId as keyof typeof findingByPuzzle];
+  if (findingId && !state.caseAnswers[findingId]?.solvedAt) {
+    state.caseAnswers[findingId] = {
+      slots: {}, lockedSlots: [], evidenceIds: [], attempts: 1, nearMisses: {}, solvedAt: Date.now(),
+    };
+  }
+  return state;
+};
+
+const solveForTest = (
+  state: ReturnType<typeof createInitialProgress>,
+  puzzleId: (typeof PUZZLE_IDS)[number]
+) => reduceGameEvent(satisfyGate(state, puzzleId), { type: "SOLVE_PUZZLE", puzzleId }).state;
+
 const completedCase = () => {
   const state = createInitialProgress(1_700_000_000_000, "completed-case");
   state.ending = "shutdown";
@@ -27,8 +54,9 @@ const completedCase = () => {
 const solveThroughFutureLog = () => {
   let state = createInitialProgress(1_700_000_000_000, "test-case");
   for (const puzzleId of PUZZLE_IDS.slice(0, 5)) {
-    state = reduceGameEvent(state, { type: "SOLVE_PUZZLE", puzzleId }).state;
+    state = solveForTest(state, puzzleId);
   }
+  state = satisfyGate(state, "future_log");
   for (const action of FUTURE_SEQUENCE) {
     state = reduceGameEvent(state, {
       type: "FUTURE_SEQUENCE_ACTION",
@@ -113,16 +141,11 @@ describe("ARG progression reducer", () => {
     let state = createInitialProgress(1_700_000_000_000, "test-case");
     expect(puzzleCorruptionStage(state.puzzles)).toBe(0);
 
-    state = reduceGameEvent(state, {
-      type: "SOLVE_PUZZLE",
-      puzzleId: "palimpsest",
-    }).state;
+    state = solveForTest(state, "palimpsest");
     expect(puzzleCorruptionStage(state.puzzles)).toBe(1);
 
-    state = reduceGameEvent(state, {
-      type: "SOLVE_PUZZLE",
-      puzzleId: "lineage",
-    }).state;
+    state = solveForTest(state, "lineage");
+    state = satisfyGate(state, "future_log");
     expect(puzzleCorruptionStage(state.puzzles)).toBe(2);
   });
 
@@ -163,23 +186,24 @@ describe("ARG progression reducer", () => {
       targetInsightId: "second_volume",
       evidenceIds: ["lot_114_order", "diary", "miriam_1998"],
     }).state;
+    state = solveForTest(state, "palimpsest");
     expect(chapterOf()).toBe("chapter_3");
 
     // margin_cipher happens inside stage 3 — it does not create a new stage.
     state = reduceGameEvent(state, { type: "SOLVE_PUZZLE", puzzleId: "margin_cipher" }).state;
     expect(chapterOf()).toBe("chapter_3");
 
-    state = reduceGameEvent(state, { type: "SOLVE_PUZZLE", puzzleId: "counting_audio" }).state;
+    state = solveForTest(state, "counting_audio");
     expect(chapterOf()).toBe("chapter_4");
 
-    state = reduceGameEvent(state, { type: "SOLVE_PUZZLE", puzzleId: "lineage" }).state;
+    state = solveForTest(state, "lineage");
     expect(chapterOf()).toBe("chapter_5");
 
     // future_log happens inside stage 5.
-    state = reduceGameEvent(state, { type: "SOLVE_PUZZLE", puzzleId: "future_log" }).state;
+    state = solveForTest(state, "future_log");
     expect(chapterOf()).toBe("chapter_5");
 
-    state = reduceGameEvent(state, { type: "SOLVE_PUZZLE", puzzleId: "index_name" }).state;
+    state = solveForTest(state, "index_name");
     expect(chapterOf()).toBe("chapter_6");
     expect(investigationStage(state.puzzles)).toBe(6);
   });
@@ -191,6 +215,7 @@ describe("ARG progression reducer", () => {
     expect(investigationStage(state.puzzles)).toBe(1);
 
     state = reduceGameEvent(state, { type: "SOLVE_PUZZLE", puzzleId: "lot_114" }).state;
+    state = solveForTest(state, "palimpsest");
     expect(investigationStage(state.puzzles)).toBe(3);
   });
 
@@ -229,6 +254,7 @@ describe("ARG progression reducer", () => {
     expect(fileUnlocked("office_1998_overlay")).toBe(false);
     expect(fileUnlocked("silent_call")).toBe(false);
     expect(fileUnlocked("observer_outbox")).toBe(false);
+    expect(fileUnlocked("counting_audio")).toBe(false);
 
     state = reduceGameEvent(state, {
       type: "SOLVE_PUZZLE",
@@ -239,23 +265,19 @@ describe("ARG progression reducer", () => {
 
     state = retainSarahFindings(state);
     expect(fileUnlocked("miriam_notebook_scan")).toBe(true);
+    expect(fileUnlocked("counting_audio")).toBe(false);
 
     state = reduceGameEvent(state, {
       type: "SOLVE_PUZZLE",
       puzzleId: "margin_cipher",
     }).state;
     expect(fileUnlocked("directory_comparison")).toBe(true);
+    expect(fileUnlocked("counting_audio")).toBe(true);
 
-    state = reduceGameEvent(state, {
-      type: "SOLVE_PUZZLE",
-      puzzleId: "counting_audio",
-    }).state;
+    state = solveForTest(state, "counting_audio");
     expect(fileUnlocked("office_1998_overlay")).toBe(true);
 
-    state = reduceGameEvent(state, {
-      type: "SOLVE_PUZZLE",
-      puzzleId: "lineage",
-    }).state;
+    state = solveForTest(state, "lineage");
     expect(fileUnlocked("silent_call")).toBe(true);
 
     state = solveThroughFutureLog();
@@ -264,10 +286,8 @@ describe("ARG progression reducer", () => {
 
   it("resets only the future-log sequence after a recognized wrong action", () => {
     let state = createInitialProgress(1_700_000_000_000, "test-case");
-    state = reduceGameEvent(state, {
-      type: "SOLVE_PUZZLE",
-      puzzleId: "lineage",
-    }).state;
+    state = solveForTest(state, "lineage");
+    state = satisfyGate(state, "future_log");
     state = reduceGameEvent(state, {
       type: "FUTURE_SEQUENCE_ACTION",
       action: FUTURE_SEQUENCE[0],
@@ -320,7 +340,7 @@ describe("ARG progression reducer", () => {
     // act-one finding is technically required.
     state = retainObserverFindings(state);
     expect(state.caseAnswers.sarah_intent?.solvedAt ?? null).toBeNull();
-    expect(state.caseAnswers.volume_return?.solvedAt ?? null).toBeNull();
+    expect(state.caseAnswers.volume_return?.solvedAt ?? null).not.toBeNull();
     expect(state.caseAnswers.locked_room_source?.solvedAt ?? null).toBeNull();
     const accepted = reduceGameEvent(state, {
       type: "RUN_COMMAND",
@@ -339,7 +359,6 @@ describe("ARG progression reducer", () => {
       }).state;
     }
     expect(pendingObserverConclusions(state)).toEqual([
-      "future_displacement",
       "relay_observer",
       "chapter_ritual",
     ]);
@@ -392,10 +411,11 @@ describe("ARG progression reducer", () => {
     expect(available()).toEqual([]);
 
     for (const puzzleId of PUZZLE_IDS.slice(0, 5)) {
-      state = reduceGameEvent(state, { type: "SOLVE_PUZZLE", puzzleId }).state;
+      state = solveForTest(state, puzzleId);
     }
     expect(available()).toEqual(["future_displacement"]);
 
+    state = satisfyGate(state, "future_log");
     for (const action of FUTURE_SEQUENCE) {
       state = reduceGameEvent(state, {
         type: "FUTURE_SEQUENCE_ACTION",
@@ -471,10 +491,7 @@ describe("ARG progression reducer", () => {
 
   it("sets solved flags used by desktop progression notices", () => {
     let state = createInitialProgress(1_700_000_000_000, "notice-flags");
-    state = reduceGameEvent(state, {
-      type: "SOLVE_PUZZLE",
-      puzzleId: "palimpsest",
-    }).state;
+    state = solveForTest(state, "palimpsest");
     expect(state.flags.puzzle_palimpsest_solved).toBe(true);
 
     state = reduceGameEvent(state, {

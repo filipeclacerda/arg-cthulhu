@@ -38,11 +38,9 @@ import {
   CASE_STATEMENTS,
   HYPOTHESES,
   INSIGHT_LABELS,
-  ObserverConclusionId,
   TOKENS_BY_ID,
   collectedTokensOfType,
   hypothesisVerdict,
-  isObserverConclusionAvailable,
   localized,
 } from "@/app/game/campaign";
 import {
@@ -72,6 +70,7 @@ import {
   type ProgressStateV5,
 } from "@/app/game/progress";
 import { THEORY_DEFINITIONS } from "@/app/game/theories";
+import { caseFindingState } from "@/app/game/investigativeProgression";
 import "../ArgTools/style.scss";
 import "./evidence-board.scss";
 import "./case-reconstruction.scss";
@@ -269,27 +268,18 @@ const chapterAtLeast = (current: ChapterId, required: ChapterId): boolean =>
 const visibleStatementsForChapter = (
   state: ProgressStateV5
 ): typeof CASE_STATEMENTS =>
-  CASE_STATEMENTS.filter((statement) => {
-    // Each observer conclusion surfaces at its own explicit milestone
-    // (lineage, future_log, the_name) rather than a chapter-number gate.
-    if (statement.act === 3) {
-      return isObserverConclusionAvailable(
-        state,
-        statement.id as ObserverConclusionId
-      );
-    }
-    return (
-      statement.act === 1 ||
-      state.leadsUnlocked.includes(statement.leadId)
-    );
-  });
+  CASE_STATEMENTS.filter(
+    (statement) => caseFindingState(state, statement.id) !== "hidden"
+  );
 
 const Casefile = ({
   initialLens = "deductions",
   initialThreadId,
+  initialFindingId,
 }: {
   initialLens?: CasefileLens;
   initialThreadId?: InsightId;
+  initialFindingId?: CaseQuestionId;
 }) => {
   const {
     discoveredEvidenceIds,
@@ -313,9 +303,13 @@ const Casefile = ({
     [state]
   );
   const firstOpen =
+    (initialFindingId &&
+    visibleStatements.some((statement) => statement.id === initialFindingId)
+      ? initialFindingId
+      : undefined) ??
     visibleStatements.find(
       (statement) => !state.caseAnswers[statement.id]?.solvedAt
-    )?.id ?? visibleStatements[0].id;
+    )?.id ?? visibleStatements[0]?.id ?? CASE_STATEMENTS[0].id;
 
   const [lens, setLens] = useState<CasefileLens>(initialLens);
   const [deductionMode, setDeductionMode] = useState<"finding" | "thread">(
@@ -351,7 +345,7 @@ const Casefile = ({
     useState<CaseQuestionId>(firstOpen);
   const statement =
     visibleStatements.find((candidate) => candidate.id === statementId) ??
-    visibleStatements[0];
+    visibleStatements[0] ?? CASE_STATEMENTS[0];
   const retained = state.caseAnswers[statement.id];
   const solved = Boolean(retained?.solvedAt);
   const [slotSelections, setSlotSelections] = useState<Record<string, string>>(
@@ -370,7 +364,6 @@ const Casefile = ({
   const [timelineOrder, setTimelineOrder] = useState<string[]>([]);
   const [helpLegendOpen, setHelpLegendOpen] = useState(false);
   const [coverMemoVisible, setCoverMemoVisible] = useState(true);
-  const [showNewBadge, setShowNewBadge] = useState(true);
   const [freshBaseline] = useState<Set<string>>(
     () =>
       lastVisitIds?.caseId === state.caseId
@@ -419,11 +412,10 @@ const Casefile = ({
   }, [firstOpen, statementId, visibleStatements]);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => {
-      setShowNewBadge(false);
-    }, 10000);
-    return () => window.clearTimeout(timer);
-  }, []);
+    if (!visibleStatements.some((candidate) => candidate.id === statementId)) return;
+    if (state.viewedCaseFindingIds.includes(statementId)) return;
+    dispatchGameEvent({ type: "MARK_CASE_FINDING_VIEWED", findingId: statementId });
+  }, [dispatchGameEvent, state.viewedCaseFindingIds, statementId, visibleStatements]);
 
   useEffect(() => {
     return () => {
@@ -564,7 +556,9 @@ const Casefile = ({
     () =>
       THEORY_DEFINITIONS.filter(
         (theory) =>
-          chapterAtLeast(currentChapter, theory.availableAt) ||
+          (chapterAtLeast(currentChapter, theory.availableAt) &&
+            theory.required.every((id) => discoveredEvidenceIds.includes(id)) &&
+            (!theory.anyOf || theory.anyOf.some((id) => discoveredEvidenceIds.includes(id)))) ||
           insightsUnlocked.includes(theory.insightId)
       ).map((theory) => {
         const retained = insightsUnlocked.includes(theory.insightId);
@@ -583,17 +577,19 @@ const Casefile = ({
           sourceId: theory.insightId,
         };
       }),
-    [currentChapter, insightsUnlocked, locale, t]
+    [currentChapter, discoveredEvidenceIds, insightsUnlocked, locale, t]
   );
 
   const availableThreads = useMemo(
     () =>
       THEORY_DEFINITIONS.filter(
         (theory) =>
-          chapterAtLeast(currentChapter, theory.availableAt) ||
+          (chapterAtLeast(currentChapter, theory.availableAt) &&
+            theory.required.every((id) => discoveredEvidenceIds.includes(id)) &&
+            (!theory.anyOf || theory.anyOf.some((id) => discoveredEvidenceIds.includes(id)))) ||
           insightsUnlocked.includes(theory.insightId)
       ),
-    [currentChapter, insightsUnlocked]
+    [currentChapter, discoveredEvidenceIds, insightsUnlocked]
   );
   const activeThread =
     availableThreads.find((thread) => thread.insightId === activeThreadId) ??
@@ -609,12 +605,12 @@ const Casefile = ({
     () =>
       (Object.keys(HYPOTHESES) as HypothesisId[]).filter(
         (hypothesisId) =>
-          chapterAtLeast(
-            currentChapter,
-            HYPOTHESIS_MIN_CHAPTERS[hypothesisId]
-          ) || state.hypotheses[hypothesisId]?.status === "refuted"
+          (chapterAtLeast(currentChapter, HYPOTHESIS_MIN_CHAPTERS[hypothesisId]) &&
+            HYPOTHESIS_EVIDENCE_REQUIREMENTS[hypothesisId].every((id) =>
+              discoveredEvidenceIds.includes(id)
+            )) || state.hypotheses[hypothesisId]?.status === "refuted"
       ),
-    [currentChapter, state.hypotheses]
+    [currentChapter, discoveredEvidenceIds, state.hypotheses]
   );
 
   const hypothesisCards = useMemo<CasefileCard[]>(
@@ -904,8 +900,16 @@ const Casefile = ({
   const cardLabelById = (id: string): string =>
     cardsById[id]?.title ?? t("casefileUnknownRecord");
   const freshIds = useMemo(() => {
-    return new Set(discoveredEvidenceIds.filter((id) => !freshBaseline.has(id)));
-  }, [discoveredEvidenceIds, freshBaseline]);
+    return new Set([
+      ...discoveredEvidenceIds.filter((id) => !freshBaseline.has(id)),
+      ...visibleStatements
+        .filter((candidate) => !state.viewedCaseFindingIds.includes(candidate.id))
+        .map((candidate) => claimIdForFinding(candidate.id)),
+    ]);
+  }, [discoveredEvidenceIds, freshBaseline, state.viewedCaseFindingIds, visibleStatements]);
+  const showNewBadge = visibleStatements.some(
+    (candidate) => !state.viewedCaseFindingIds.includes(candidate.id)
+  );
   const visibleIds = useMemo(
     () =>
       new Set([
@@ -1031,7 +1035,6 @@ const Casefile = ({
 
   const openHelpLegend = () => {
     setHelpLegendOpen(true);
-    setShowNewBadge(false);
     returnFocusRef.current = document.activeElement as HTMLElement | null;
     requestAnimationFrame(() => {
       helpDialogRef.current?.focus();
@@ -2237,6 +2240,22 @@ const Casefile = ({
       </div>
     );
   };
+
+  if (visibleStatements.length === 0) {
+    return (
+      <div className="arg-tool casefile evidence-board">
+        <div className="arg-tool__menubar"><span>Casefile.exe</span></div>
+        <section className="casefile__cover-memo" role="status">
+          <strong>{locale === "pt-BR" ? "Nenhum achado disponível" : "No findings available"}</strong>
+          <p>
+            {locale === "pt-BR"
+              ? "Abra e examine registros relacionados antes de reconstruir uma conclusão."
+              : "Open and examine related records before reconstructing a conclusion."}
+          </p>
+        </section>
+      </div>
+    );
+  }
 
   return (
     <div className="arg-tool casefile evidence-board">

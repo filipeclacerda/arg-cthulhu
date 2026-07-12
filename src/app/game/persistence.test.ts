@@ -7,6 +7,24 @@ import {
 } from "./persistence";
 
 describe("save v6", () => {
+  it("grandfathers retained findings without replaying availability notifications", () => {
+    const legacy = createInitialProgress(1_700_000_000_000, "finding-migration");
+    legacy.caseAnswers.sarah_intent = {
+      slots: { time: "time-six-thirty", intent: "intent-go-home" },
+      lockedSlots: ["time", "intent"],
+      evidenceIds: ["chat_em_archive", "todo"],
+      attempts: 1,
+      nearMisses: {},
+      solvedAt: 1_700_000_000_100,
+    };
+    const serialized = { ...legacy } as Record<string, unknown>;
+    delete serialized.announcedCaseFindingIds;
+    delete serialized.viewedCaseFindingIds;
+    const migrated = migrateProgress(serialized);
+    expect(migrated?.announcedCaseFindingIds).toEqual(["sarah_intent"]);
+    expect(migrated?.viewedCaseFindingIds).toEqual(["sarah_intent"]);
+  });
+
   it("round-trips a portable MISK6 case code with campaign state", async () => {
     const state = createInitialProgress(1_700_000_000_000, "case-round-trip");
     state.playerName = "Ada";
