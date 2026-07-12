@@ -8,6 +8,7 @@ import {
   InsightId,
   ProgressStateV5,
   PuzzleId,
+  PUZZLE_ORDER,
 } from "./progress";
 
 export type CaseFindingState = "hidden" | "available" | "retained";
@@ -81,6 +82,10 @@ export type PuzzleGateRequirement =
   | { kind: "finding"; findingId: CaseQuestionId }
   | { kind: "insight"; insightId: InsightId };
 
+export type PuzzleGateReason =
+  | "casefile_required"
+  | "previous_puzzle_required";
+
 export const PUZZLE_CASEFILE_GATES: Partial<
   Record<PuzzleId, PuzzleGateRequirement>
 > = {
@@ -93,7 +98,9 @@ export const PUZZLE_CASEFILE_GATES: Partial<
 
 export interface PuzzleGateResult {
   allowed: boolean;
+  reason?: PuzzleGateReason;
   requirement?: PuzzleGateRequirement;
+  previousPuzzleId?: PuzzleId;
 }
 
 export const puzzleCasefileGate = (
@@ -106,5 +113,34 @@ export const puzzleCasefileGate = (
     requirement.kind === "finding"
       ? Boolean(state.caseAnswers[requirement.findingId]?.solvedAt)
       : state.insightsUnlocked.includes(requirement.insightId);
-  return { allowed, requirement };
+  return { allowed, requirement, ...(allowed ? {} : { reason: "casefile_required" }) };
 };
+
+/**
+ * The main investigation is linear by design: each recovered artifact changes
+ * the meaning of the next one. Enforce that relationship in the reducer as
+ * well as in the UI unlocks, so an old callback, imported state, or future
+ * surface cannot skip a recovery. The Casefile requirement is checked only
+ * after the prior artifact is solved; it never asks for optional evidence.
+ */
+export const puzzleProgressGate = (
+  state: ProgressStateV5,
+  puzzleId: PuzzleId
+): PuzzleGateResult => {
+  const index = PUZZLE_ORDER.indexOf(puzzleId);
+  const previousPuzzleId = index > 0 ? PUZZLE_ORDER[index - 1] : undefined;
+  if (previousPuzzleId && !state.puzzles[previousPuzzleId]?.solvedAt) {
+    return {
+      allowed: false,
+      reason: "previous_puzzle_required",
+      previousPuzzleId,
+    };
+  }
+  return puzzleCasefileGate(state, puzzleId);
+};
+
+/** One persisted prompt per blocked lead keeps the correction durable but quiet. */
+export const puzzleGatePromptRequestedFlag = (puzzleId: PuzzleId): string =>
+  `puzzle_gate_prompt_requested_${puzzleId}`;
+export const puzzleGatePromptShownFlag = (puzzleId: PuzzleId): string =>
+  `puzzle_gate_prompt_shown_${puzzleId}`;

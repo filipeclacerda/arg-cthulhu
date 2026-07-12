@@ -12,6 +12,7 @@ import {
   unseenRecentActivities,
   type RecentActivity,
 } from "@/app/game/recentActivity";
+import { activityDigestFlag } from "@/app/game/programAttention";
 import "../ArgTools/style.scss";
 import "./style.scss";
 
@@ -142,10 +143,6 @@ const CaseNotes = () => {
     ],
   };
 
-  const acknowledgeActivity = (entries: readonly RecentActivity[]) => {
-    entries.forEach((entry) => setFlag(activitySeenFlag(entry.id)));
-  };
-
   const openActivity = (entry: RecentActivity) => {
     setFlag(activitySeenFlag(entry.id));
     if (entry.artifactId) {
@@ -158,7 +155,7 @@ const CaseNotes = () => {
       });
       return;
     }
-    const appType = entry.program === "case-notes" ? "casefile" : entry.program;
+    const appType = entry.id === "endgame" ? "finale" : entry.program;
     openWindow({
       id: `recent-${entry.id}`,
       appType,
@@ -268,7 +265,10 @@ const CaseNotes = () => {
             className="button case-notes__digest"
             type="button"
             disabled={unseenActivity.length === 0}
-            onClick={() => { setTab("activity"); acknowledgeActivity(unseenActivity); }}
+            onClick={() => {
+              setTab("activity");
+              setFlag(activityDigestFlag(state));
+            }}
           >
             {state.locale === "pt-BR"
               ? `O que mudou? (${unseenActivity.length})`

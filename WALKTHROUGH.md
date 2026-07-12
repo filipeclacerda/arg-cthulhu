@@ -887,7 +887,10 @@ uma anomalia, salve e recarregue — nada deve se repetir nem sumir de forma que
 | Depois de `margin_cipher` | `margin_ch7.enc` some da pasta da Sarah e aparece em `RECOVERED` (abre o mesmo conteúdo). Confirme que isso só acontece **depois** de o enigma estar resolvido. |
 | Depois de `counting_audio` | `counting.wav` aparece nos Documentos Recentes com data posterior à reprodução. |
 | Abrir `APOLOGY.TMP` na Lixeira | Ela desaparece da Lixeira e aparece em `Work`. Depois de `future_log`, uma cópia volta à Lixeira datada de amanhã, **mantendo** a de `Work`. |
-| Depois de `lineage` | Títulos passam a refletir o observador: janela/atalho `Sarah Bishop` → sua designação; `RECOVERED — CURRENT OBSERVER`; `MSN Messenger — archived tomorrow`; `office_after.jpg — 2 instances`. A janela do Finale `RECOVERED PROGRAM` **não** é contaminada. |
+| Depois de `lineage` | A contaminação começa pequena: `Sarah Bishop` vira a designação do observador e `office_after.jpg` passa a indicar `2 instances`. |
+| Depois de `future_log` | A regra se espalha: `RECOVERED — CURRENT OBSERVER`, `MSN Messenger — archived tomorrow` e `Recycle Bin — restored tomorrow`. A janela do Finale `RECOVERED PROGRAM` **não** é contaminada. |
+| Ouvir `voicemail_to_em.wav` + resolver `future_log` | A gravação cotidiana reaparece em Documentos Recentes, sem mudar o áudio, mas datada de amanhã. |
+| Ler `GULL_0310.RCT` + resolver `index_name` | Documentos Recentes projeta `GULL_0310 — TABLE FOR 3.RCT`; o Browser mostra uma busca sobre o terceiro lugar que o jogador nunca fez. Ambos abrem a fonte canônica. |
 | Busca no Recovered Browser (pós-`lineage`) | Bloco `RECOVERED ECHOES` com ecos do observador/futuro. Consultas válidas dos enigmas (lote, costa, ano) continuam funcionando exatamente igual. |
 
 ## Consequências do Messenger — QA
@@ -932,11 +935,12 @@ recarregar não reenfileira batidas já vistas.
 ## Orientação e continuidade humana
 
 - **Case Notes → Recentes** reúne até oito alterações derivadas do progresso real. O botão
-  **O que mudou?** reconhece cada item individualmente e nunca revela conteúdo ainda bloqueado.
+  **O que mudou?** reconhece somente o resumo; cada fonte continua marcada até o jogador abrir
+  o programa ou arquivo correspondente. Conteúdo ainda bloqueado nunca é revelado.
 - Programas com material ainda não consultado recebem apenas um asterisco e um brilho curto no
   ícone. O sinal desaparece quando o acontecimento correspondente é reconhecido.
-- O Help Center acrescenta instruções de arrastar, zoom, comparação e áudio reverso somente
-  depois de uma tentativa ou near miss correspondente.
+- O Help Center separa instruções de arrastar cartão, mover o quadro, zoom com `Ctrl`, comparar
+  imagens e áudio reverso. Cada uma surge após atrito real e some quando a ação é dominada.
 - Ao abrir fatos pessoais (`dad_recipe`, `GULL_0310.RCT`, `voicemail_to_em.wav` e
   `unsent_to_dad`), volte à conversa de **Em Bishop** para respostas opcionais adicionais.
 - Antes das escolhas do Finale, o Indexer sempre abre um **registro humano**. Se o recibo do
@@ -955,6 +959,9 @@ recarregar não reenfileira batidas já vistas.
 | Comparação/zoom/arrastar | controle no programa | Help Center contextual |
 | Sessão de 1998 | takeover diegético | registro recente persistente |
 | Finale | RECOVERED PROGRAM | registro recente + menu Iniciar |
+
+O contrato automatizado cobre os sete puzzles principais, a retomada da sessão NEXT_USER e o
+endgame. Cada etapa possui dois canais distintos e pelo menos um caminho persistente de retorno.
 
 Tom Alvarez encontrou a máquina de Sarah, criou uma imagem forense e colocou o pacote
 `SB-0316` na fila do Relay 07 para três colegas. Ele desapareceu antes de completar o envio.

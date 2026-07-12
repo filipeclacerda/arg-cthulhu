@@ -137,6 +137,16 @@ const ImageViewer = ({ fileId, recallDisplay = false }: { fileId: string; recall
   ]);
 
   useEffect(() => {
+    if (!file || progress.flags.image_compare_used) return;
+    const counterpart = file.id === "office_after_photo"
+      ? "office_frames"
+      : file.id === "office_frames" ? "office_after_photo" : null;
+    if (counterpart && progress.readFileIds.includes(counterpart)) {
+      setFlag("image_compare_friction");
+    }
+  }, [file, progress.flags.image_compare_used, progress.readFileIds, setFlag]);
+
+  useEffect(() => {
     setMirrored(false);
     setInverted(false);
     setContrast(50);
@@ -263,7 +273,10 @@ const ImageViewer = ({ fileId, recallDisplay = false }: { fileId: string; recall
           {canCompare && (
             <button
               className={`button ${compareMode ? "active" : ""}`}
-              onClick={() => setCompareMode((value) => !value)}
+              onClick={() => {
+                setCompareMode((value) => !value);
+                setFlag("image_compare_used");
+              }}
             >
               Compare frames
             </button>

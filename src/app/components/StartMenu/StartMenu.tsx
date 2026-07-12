@@ -15,6 +15,8 @@ import {
 import { projectRecentDocuments } from "@/app/game/desktopManifestations";
 import { files } from "@/app/data/filesystem";
 import type { ProgressStateV4 } from "@/app/game/progress";
+import { unseenRecentActivities } from "@/app/game/recentActivity";
+import { appTypeNeedsAttention, programsWithVisibleAttention } from "@/app/game/programAttention";
 
 type MenuView = "root" | "programs" | "accessories" | "recent";
 
@@ -297,6 +299,13 @@ const StartMenu = () => {
   const { locale, t } = useI18n();
 
   const endgameAvailable = hasFlag("endgame_available");
+  const attentionPrograms = programsWithVisibleAttention(state);
+  const unseenActivity = unseenRecentActivities(state);
+  const entryNeedsAttention = (entry: ProgramEntry) => {
+    const fileId = entry.props?.fileId as string | undefined;
+    if (fileId) return unseenActivity.some((activity) => activity.artifactId === fileId);
+    return appTypeNeedsAttention(attentionPrograms, entry.appType);
+  };
 
   const closeMenu = () => {
     setIsOpen(false);
@@ -440,7 +449,7 @@ const StartMenu = () => {
   const renderProgramEntry = (entry: ProgramEntry) => (
     <button
       key={entry.id}
-      className="startMenuButton button startMenuProgram"
+      className={`startMenuButton button startMenuProgram ${entryNeedsAttention(entry) ? "startMenuButton--attention" : ""}`}
       onClick={() => launch(entry)}
     >
       <Image src={entry.icon} alt="" width={30} height={30} />
@@ -452,7 +461,7 @@ const StartMenu = () => {
     <>
       <button
         id="start-menu"
-        className={`button ${isOpen ? "active" : ""}`}
+        className={`button ${isOpen ? "active" : ""} ${attentionPrograms.size > 0 ? "start-menu--attention" : ""}`}
         onClick={toggleMenu}
         aria-expanded={isOpen}
       >
@@ -490,12 +499,12 @@ const StartMenu = () => {
 
               {view === "root" && (
                 <>
-                  <button className="startMenuButton button" onClick={() => setView("programs")}>
+                  <button className={`startMenuButton button ${PROGRAMS.some(entryNeedsAttention) || ACCESSORIES.some(entryNeedsAttention) ? "startMenuButton--attention" : ""}`} onClick={() => setView("programs")}>
                     <Image src="/icons/my-computer.png" alt="" width={30} height={30} />
                     <span>{t("programs")}</span><b>▶</b>
                   </button>
                   <button
-                    className="startMenuButton button"
+                    className={`startMenuButton button ${attentionPrograms.has("explorer") ? "startMenuButton--attention" : ""}`}
                     onClick={() =>
                       launch({
                         id: "my-documents",
@@ -511,7 +520,7 @@ const StartMenu = () => {
                     <span>{t("documents")}</span>
                   </button>
                   <button
-                    className="startMenuButton button"
+                    className={`startMenuButton button ${buildRecentEntries(state).some(entryNeedsAttention) ? "startMenuButton--attention" : ""}`}
                     onClick={() => setView("recent")}
                   >
                     <Image src="/icons/notepad.png" alt="" width={30} height={30} />
@@ -552,7 +561,7 @@ const StartMenu = () => {
                     <span>{t("run")}</span>
                   </button>
                   <button
-                    className={`startMenuButton button ${endgameAvailable ? "startMenuButton--danger" : ""}`}
+                    className={`startMenuButton button ${endgameAvailable ? "startMenuButton--danger" : ""} ${unseenActivity.some((activity) => activity.id === "endgame") ? "startMenuButton--attention" : ""}`}
                     onClick={() => {
                       closeMenu();
                       if (endgameAvailable) {

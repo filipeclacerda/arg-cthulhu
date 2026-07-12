@@ -41,6 +41,12 @@
     align-items: center;
 }
 
+#start-menu.start-menu--attention:not(.active)::after {
+    content: "*";
+    color: #755900;
+    font-weight: bold;
+}
+
 .startMenuButton {
     width: 100%;
     height: calc(var(--ui-scale, 1) * 44px);
@@ -105,6 +111,19 @@
 .startMenuButton--danger {
     color: #8b0000;
     font-weight: bold;
+}
+
+.startMenuButton--attention {
+    font-weight: bold;
+
+    span::after {
+        content: " *";
+        color: #755900;
+    }
+
+    img {
+        filter: drop-shadow(0 0 2px rgba(255, 231, 112, .9));
+    }
 }
 
 .startMenuBack {

@@ -150,6 +150,7 @@ export type TelemetryEventName =
   | "puzzle_near_miss"
   | "hint_unlocked"
   | "puzzle_solved"
+  | "puzzle_gate_redirected"
   | "theory_tested"
   | "ending_chosen";
 

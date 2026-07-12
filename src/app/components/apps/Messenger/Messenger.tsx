@@ -236,6 +236,7 @@ const Messenger = ({ initialThreadId }: { initialThreadId?: string }) => {
   const selected =
     visibleThreads.find((thread) => thread.id === runtime.selectedThreadId) ??
     visibleThreads[0];
+  const pendingEmResponse = nextEmResponse(progress);
 
   useEffect(() => {
     if (
@@ -636,7 +637,9 @@ const Messenger = ({ initialThreadId }: { initialThreadId?: string }) => {
             return (
               <button
                 key={thread.id}
-                className={thread.id === selected.id ? "selected" : ""}
+                className={`${thread.id === selected.id ? "selected" : ""} ${
+                  thread.id === "chat-em" && pendingEmResponse ? "has-new-personal-reply" : ""
+                }`}
                 onClick={() =>
                   dispatch({ type: "OPEN_THREAD", threadId: thread.id })
                 }
@@ -647,7 +650,7 @@ const Messenger = ({ initialThreadId }: { initialThreadId?: string }) => {
                   }`}
                 />
                 <span>
-                  <strong>{thread.title}</strong>
+                  <strong>{thread.title}{thread.id === "chat-em" && pendingEmResponse ? " *" : ""}</strong>
                   <small>
                     {isPulsingOnline ? t("presenceOnline") : presenceLabel(rowPresence)}
                   </small>

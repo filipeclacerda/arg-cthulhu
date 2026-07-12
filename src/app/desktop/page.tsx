@@ -40,7 +40,12 @@ import {
 } from "../game/endingLifecycle";
 import DeepseaScreensaver from "../components/DeepseaScreensaver/DeepseaScreensaver";
 import { files } from "../data/filesystem";
-import { programsNeedingAttention } from "../game/recentActivity";
+import { acknowledgeActivitiesOpenedByWindow, appTypeNeedsAttention, programsWithVisibleAttention, windowNeedsAttention } from "../game/programAttention";
+import {
+  PUZZLE_CASEFILE_GATES,
+  puzzleProgressGate,
+} from "../game/investigativeProgression";
+import { type PuzzleId } from "../game/progress";
 
 /** A discreet coordinator toast (never a window) with one action. */
 interface DiegeticToast {
@@ -62,6 +67,37 @@ interface DesktopApp {
   props?: Record<string, any>;
   maximized?: boolean;
 }
+
+const PUZZLE_GATE_COPY: Record<PuzzleId, { en: string; pt: string }> = {
+  lot_114: {
+    en: "The catalogue is still assembling the first trail.",
+    pt: "O catálogo ainda está reunindo o primeiro rastro.",
+  },
+  palimpsest: {
+    en: "Three records are waiting to be connected around the returning volume.",
+    pt: "Três registros esperam ser conectados em torno do volume que retornou.",
+  },
+  margin_cipher: {
+    en: "The recovered surface needs to be read before its margin can answer.",
+    pt: "A superfície recuperada precisa ser lida antes que a margem responda.",
+  },
+  counting_audio: {
+    en: "The recording is waiting for the Volume II return to be retained as a fact.",
+    pt: "A gravação espera que o retorno do Volume II seja retido como um fato.",
+  },
+  lineage: {
+    en: "The inherited ledger still needs a place in the case record.",
+    pt: "O livro herdado ainda precisa ocupar um lugar no registro do caso.",
+  },
+  future_log: {
+    en: "Sarah's moving date needs to be retained before the machine can replay it.",
+    pt: "A data móvel de Sarah precisa ser retida antes que a máquina possa repeti-la.",
+  },
+  index_name: {
+    en: "Chapter Seven needs a human reconstruction before the index can join it.",
+    pt: "O Capítulo Sete precisa de uma reconstrução humana antes que o índice possa uni-lo.",
+  },
+};
 
 const LegacyMessengerTerminal = ({
   onComplete,
@@ -476,13 +512,23 @@ const Desktop = () => {
   const [flash1998, setFlash1998] = useState<1 | 2 | 3 | null>(null);
   const [legacyFileId, setLegacyFileId] = useState<string | null>(null);
   const [legacyOpenedFileIds, setLegacyOpenedFileIds] = useState<Set<string>>(() => new Set());
-  const attentionPrograms = programsNeedingAttention(state);
+  const attentionPrograms = programsWithVisibleAttention(state);
+  const lastAcknowledgedFocus = useRef<string | null>(null);
   const previousCorruptionStage = useRef<number | null>(null);
   const { labelGlitch, cursorEcho } = useSubliminalGlitch(
     !isPostEndingDesktop && corruptionStage >= 4,
     playerName
   );
   useCorruptionPulse(isPostEndingDesktop ? 0 : corruptionStage, play);
+
+  useEffect(() => {
+    const focused = windows.filter((win) => !win.minimized).sort((a, b) => b.zIndex - a.zIndex)[0];
+    if (!focused) return;
+    const signature = `${focused.id}:${focused.zIndex}`;
+    if (lastAcknowledgedFocus.current === signature) return;
+    lastAcknowledgedFocus.current = signature;
+    acknowledgeActivitiesOpenedByWindow(state, focused, setFlag);
+  }, [setFlag, state, windows]);
 
   // -------------------------------------------------------------------
   // Diegetic event coordinator. Every dialog, toast and takeover that used
@@ -566,6 +612,37 @@ const Desktop = () => {
             appType: "casefile",
             title: t("casefileLabel"),
             props: { initialFindingId: findingId },
+          }),
+      });
+      return;
+    }
+    if (definition.puzzleGatePromptFor) {
+      const puzzleId = definition.puzzleGatePromptFor;
+      const gate = puzzleProgressGate(state, puzzleId);
+      const requirement = PUZZLE_CASEFILE_GATES[puzzleId];
+      const copy = PUZZLE_GATE_COPY[puzzleId];
+      const casefileTarget =
+        gate.reason === "casefile_required" && requirement
+          ? requirement.kind === "finding"
+            ? { initialFindingId: requirement.findingId }
+            : { initialThreadId: requirement.insightId }
+          : null;
+      setActiveToast({
+        eventId: definition.id,
+        icon: "/icons/folder-special.png",
+        kicker: localeIs("DOSSIÊ / RASTRO PENDENTE", "CASEFILE / PENDING TRAIL"),
+        heading: localeIs("A investigação reteve uma peça", "The investigation retained a loose piece"),
+        body: localeIs(copy.pt, copy.en),
+        actionLabel: localeIs(
+          casefileTarget ? "Retomar reconstrução" : "Ver investigação",
+          casefileTarget ? "Resume reconstruction" : "Review investigation"
+        ),
+        onAction: () =>
+          openWindow({
+            id: casefileTarget ? "casefile" : "case-notes",
+            appType: casefileTarget ? "casefile" : "case-notes",
+            title: casefileTarget ? t("casefileLabel") : "Case Notes",
+            props: casefileTarget ?? undefined,
           }),
       });
       return;
@@ -1292,7 +1369,7 @@ const Desktop = () => {
                 key={win.id}
                 className={`button taskbar-window ${
                   win.minimized ? "taskbar-window--minimized" : ""
-                }`}
+                } ${windowNeedsAttention(state, win) ? "taskbar-window--attention" : ""}`}
                 onClick={() => focusWindow(win.id)}
                 title={windowTitle(win)}
               >
@@ -1334,7 +1411,7 @@ const Desktop = () => {
             key={app.id}
             className={`desktop-icon ${
               selectedDesktopAppId === app.id ? "selected" : ""
-            } ${attentionPrograms.has(app.appType === "case-notes" ? "case-notes" : app.appType as never) ? "desktop-icon--attention" : ""}`}
+            } ${appTypeNeedsAttention(attentionPrograms, app.appType) ? "desktop-icon--attention" : ""}`}
             data-app-id={app.id}
             title={t("doubleClickToOpen")}
             onClick={(ev) => handleClickIcon(ev, app.id)}
@@ -1345,10 +1422,11 @@ const Desktop = () => {
           </div>
         ))}
       </div>
-      {!warningDismissed &&
-        isHydrated &&
-        (isReadOnly || !persistenceAvailable || recoveredFromCheckpoint) && (
-          <div className="archive-warning" role="status">
+      <section className="desktop-notification-stack" aria-label="System notifications">
+        {!warningDismissed &&
+          isHydrated &&
+          (isReadOnly || !persistenceAvailable || recoveredFromCheckpoint) && (
+            <div className="archive-warning" role="status">
             <Image src="/icons/help.png" alt="" width={34} height={34} />
             <div>
               <strong>
@@ -1383,10 +1461,10 @@ const Desktop = () => {
             >
               ×
             </button>
-          </div>
-        )}
-      {activeToast && (
-        <div className="archive-warning coordinator-toast" role="status">
+            </div>
+          )}
+        {activeToast && (
+          <div className="archive-warning coordinator-toast" role="status">
           <Image src={activeToast.icon} alt="" width={34} height={34} />
           <div>
             <small>{activeToast.kicker}</small>
@@ -1412,16 +1490,17 @@ const Desktop = () => {
           >
             ×
           </button>
-        </div>
-      )}
-      {!isPostEndingDesktop && <ConclusionReadyToast />}
-      {!isPostEndingDesktop && <CorrelationTutorialToast />}
-      {!isPostEndingDesktop && (
-        <RecallSequence
-          enabled={isHydrated && !isPostEndingDesktop && flash1998 === null}
-          focalBusy={focalBusy}
-        />
-      )}
+          </div>
+        )}
+        {!isPostEndingDesktop && <ConclusionReadyToast />}
+        {!isPostEndingDesktop && <CorrelationTutorialToast />}
+        {!isPostEndingDesktop && (
+          <RecallSequence
+            enabled={isHydrated && !isPostEndingDesktop && flash1998 === null}
+            focalBusy={focalBusy}
+          />
+        )}
+      </section>
       {!isPostEndingDesktop && flash1998 != null && (
         <div
           className="desktop-1998-overlay"

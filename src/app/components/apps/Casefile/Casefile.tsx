@@ -294,6 +294,7 @@ const Casefile = ({
     state,
     dispatchGameEvent,
     currentChapter,
+    setFlag,
   } = useProgress();
   const { locale, t } = useI18n();
   const { openWindow } = useWindowManager();
@@ -337,6 +338,8 @@ const Casefile = ({
   const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [boardZoom, setBoardZoom] = useState(1);
   const [panningBoard, setPanningBoard] = useState(false);
+  const plainBoardWheelCount = useRef(0);
+  const emptyBoardClickCount = useRef(0);
   const [expandedDeckIds, setExpandedDeckIds] = useState<Set<CasefileClaimId>>(
     () => new Set()
   );
@@ -430,9 +433,15 @@ const Casefile = ({
     if (!scroller) return;
 
     const handleBoardWheel = (event: WheelEvent) => {
-      if (!(event.ctrlKey || event.metaKey) || event.deltaY === 0) return;
+      if (event.deltaY === 0) return;
+      if (!(event.ctrlKey || event.metaKey)) {
+        plainBoardWheelCount.current += 1;
+        if (plainBoardWheelCount.current >= 3) setFlag("casefile_zoom_friction");
+        return;
+      }
       event.preventDefault();
       event.stopPropagation();
+      setFlag("casefile_board_zoomed");
 
       const rect = scroller.getBoundingClientRect();
       const pointerX = event.clientX - rect.left;
@@ -455,7 +464,7 @@ const Casefile = ({
 
     scroller.addEventListener("wheel", handleBoardWheel, { passive: false });
     return () => scroller.removeEventListener("wheel", handleBoardWheel);
-  }, []);
+  }, [setFlag]);
 
   const activeClaimId = claimIdForFinding(statement.id);
   const attachedEvidenceIds = displayedEvidenceIds(
@@ -1368,6 +1377,7 @@ const Casefile = ({
         );
         const y = Math.max(0, point.y - offsetY);
         moveBoardCard(cardId, x, y);
+        setFlag("casefile_card_dragged");
         setDragPreview(null);
       } else {
         handleCardClick(cardId);
@@ -1401,10 +1411,12 @@ const Casefile = ({
     const startY = event.clientY;
     const startLeft = scroller.scrollLeft;
     const startTop = scroller.scrollTop;
+    let moved = false;
     setPanningBoard(true);
 
     const handleMove = (moveEvent: MouseEvent) => {
       moveEvent.preventDefault();
+      if (Math.abs(moveEvent.clientX - startX) >= DRAG_THRESHOLD || Math.abs(moveEvent.clientY - startY) >= DRAG_THRESHOLD) moved = true;
       scroller.scrollLeft = startLeft - (moveEvent.clientX - startX);
       scroller.scrollTop = startTop - (moveEvent.clientY - startY);
     };
@@ -1413,6 +1425,13 @@ const Casefile = ({
       window.removeEventListener("mousemove", handleMove);
       window.removeEventListener("mouseup", handleUp);
       setPanningBoard(false);
+      if (moved) {
+        setFlag("casefile_board_panned");
+        emptyBoardClickCount.current = 0;
+      } else {
+        emptyBoardClickCount.current += 1;
+        if (emptyBoardClickCount.current >= 2) setFlag("casefile_pan_friction");
+      }
     };
 
     window.addEventListener("mousemove", handleMove);

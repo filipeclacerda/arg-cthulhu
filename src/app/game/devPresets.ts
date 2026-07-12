@@ -61,13 +61,23 @@ export const eventsForFinding = (id: CaseQuestionId): GameEvent[] => {
 };
 
 export const eventsToSolvePuzzle = (state: ProgressStateV5, puzzleId: PuzzleId): GameEvent[] => {
-  const gate = PUZZLE_CASEFILE_GATES[puzzleId];
-  const prefix = gate?.kind === "insight" && !state.insightsUnlocked.includes(gate.insightId)
-    ? eventsForInsight(gate.insightId)
-    : gate?.kind === "finding" && !state.caseAnswers[gate.findingId]?.solvedAt
-      ? eventsForFinding(gate.findingId)
-      : [];
-  return [...prefix, { type: "SOLVE_PUZZLE", puzzleId }];
+  const puzzleIndex = PUZZLE_IDS.indexOf(puzzleId);
+  let current = state;
+  const events: GameEvent[] = [];
+  for (const candidateId of PUZZLE_IDS.slice(0, puzzleIndex + 1)) {
+    if (current.puzzles[candidateId].solvedAt) continue;
+    const gate = PUZZLE_CASEFILE_GATES[candidateId];
+    const prefix =
+      gate?.kind === "insight" && !current.insightsUnlocked.includes(gate.insightId)
+        ? eventsForInsight(gate.insightId)
+        : gate?.kind === "finding" && !current.caseAnswers[gate.findingId]?.solvedAt
+          ? eventsForFinding(gate.findingId)
+          : [];
+    const next = [...prefix, { type: "SOLVE_PUZZLE", puzzleId: candidateId } as GameEvent];
+    events.push(...next);
+    current = applyEvents(current, next);
+  }
+  return events;
 };
 
 export const STAGE_PRESETS = [

@@ -10,6 +10,7 @@ import { completedOptionalMissionCount, optionalMissionEndingCodas } from "@/app
 import { legacyReplyCoda } from "@/app/game/messengerConsequences";
 import { desktopModeFromSearch } from "@/app/game/endingLifecycle";
 import { selectInitialFinalePresentation } from "@/app/game/finalePresentation";
+import { selectHumanRecord } from "@/app/game/humanRecord";
 import "./style.scss";
 
 type FinaleScreen =
@@ -158,21 +159,10 @@ const Finale = ({
         : "Her father's recipe still asks for a twenty-minute call.";
     return null;
   }, [locale, state.readFileIds]);
-  const humanRecord = useMemo(() => {
-    const pt = locale === "pt-BR";
-    if (state.readFileIds.includes("gull_0310_receipt")) return pt
-      ? "MESA: JANELA 4\nPEDIDOS: 2\nPESSOAS QUE CHEGARAM: 3\n\nEm pagou a conta. Sarah anotou no verso. Nenhuma das duas registrou o terceiro lugar."
-      : "TABLE: WINDOW 4\nORDERS: 2\nPEOPLE ARRIVED: 3\n\nEm paid the bill. Sarah wrote on the reverse. Neither recorded the third place.";
-    if (state.readFileIds.includes("voicemail_to_em")) return pt
-      ? "Sarah perdeu o ônibus das seis. Em ainda esperava pelo jantar.\nPor alguns minutos, esse era o único problema."
-      : "Sarah missed the six o'clock bus. Em was still waiting for dinner.\nFor a few minutes, that was the only problem.";
-    if (state.readFileIds.includes("dad_recipe")) return pt
-      ? "A receita ainda pede uma ligação de vinte minutos.\nO pai de Sarah ainda explicaria tudo desde o começo."
-      : "The recipe still asks for a twenty-minute call.\nSarah's father would still explain it from the beginning.";
-    return pt
-      ? "Sarah prometeu voltar para jantar.\nTom levou sopa ao escritório.\nEm continuou esperando uma ligação."
-      : "Sarah promised to come home for dinner.\nTom brought soup to the office.\nEm kept waiting for a call.";
-  }, [locale, state.readFileIds]);
+  const humanRecord = useMemo(
+    () => selectHumanRecord(state, locale).body,
+    [locale, state]
+  );
   // One residue line for the answer the player sent back into 1998. The same
   // line regardless of which ending was chosen — a residue, not a verdict.
   const legacyCoda = useMemo(

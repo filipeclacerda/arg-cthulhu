@@ -9,6 +9,8 @@ import {
   CASE_FINDING_DEFINITIONS,
   caseFindingAnnouncedFlag,
   caseFindingAvailableFlag,
+  puzzleGatePromptRequestedFlag,
+  puzzleGatePromptShownFlag,
 } from "./investigativeProgression";
 
 /**
@@ -75,6 +77,8 @@ export interface DiegeticEventDefinition {
   delayRangeMs?: [number, number];
   /** Present only for a Casefile availability notification. */
   caseFindingId?: CaseQuestionId;
+  /** A player attempted a valid solution before completing its narrative lead. */
+  puzzleGatePromptFor?: PuzzleId;
 }
 
 export const DIEGETIC_GAP_MIN_MS = 1_200;
@@ -102,6 +106,27 @@ const CASE_FINDING_EVENTS: DiegeticEventDefinition[] =
     sound: "chime" as const,
     caseFindingId: id,
   }));
+
+/**
+ * A blocked completion requests one quiet, actionable redirect rather than a
+ * refusal. The requested flag is set by ProgressContext; the shown flag makes
+ * the prompt non-repeating and the solved condition makes it disappear if the
+ * player independently finishes the lead before the queue reaches it.
+ */
+const PUZZLE_GATE_PROMPT_EVENTS: DiegeticEventDefinition[] = PUZZLE_ORDER.slice(1).map(
+  (puzzleId) => ({
+    id: `puzzle_gate_prompt_${puzzleId}`,
+    priority: 2 as const,
+    presentation: { kind: "toast" as const },
+    when: {
+      type: "flag" as const,
+      flag: puzzleGatePromptRequestedFlag(puzzleId),
+    },
+    obsoleteWhen: { type: "puzzleSolved" as const, puzzleId },
+    seenFlag: puzzleGatePromptShownFlag(puzzleId),
+    puzzleGatePromptFor: puzzleId,
+  })
+);
 
 export const DIEGETIC_EVENTS: DiegeticEventDefinition[] = [
   // --- Priority 1: mandatory set pieces -----------------------------------
@@ -145,6 +170,7 @@ export const DIEGETIC_EVENTS: DiegeticEventDefinition[] = [
     when: { type: "flag", flag: "sarah_email_arrived" },
     seenFlag: "sarah_email_notice_shown",
     sound: "harmonized",
+    delayRangeMs: [1_800, 2_800],
   },
   {
     // RECOVERED appears under My Documents (lot_114 reveal).
@@ -224,6 +250,10 @@ export const DIEGETIC_EVENTS: DiegeticEventDefinition[] = [
     when: { type: "flag", flag: "puzzle_counting_audio_solved" },
     seenFlag: "chapter_seven_notice_shown",
     sound: "metalResonance",
+    // Let the counting set piece end before the archive answers it. The pause
+    // is long enough to create recognition, but short enough not to read as a
+    // missed objective.
+    delayRangeMs: [2_800, 4_200],
   },
   {
     // The recovered program finishes installing — the Finale trigger.
@@ -239,6 +269,9 @@ export const DIEGETIC_EVENTS: DiegeticEventDefinition[] = [
     },
     seenFlag: "endgame_notice_shown",
     sound: "deepMoan",
+    // The last program should feel like the machine deciding to speak, not a
+    // reward toast racing the final index animation.
+    delayRangeMs: [4_500, 7_000],
   },
 
   // --- Priority 2: Sarah live ----------------------------------------------
@@ -282,10 +315,15 @@ export const DIEGETIC_EVENTS: DiegeticEventDefinition[] = [
     when: { type: "flag", flag: "post_end_transcript_seen" },
     seenFlag: "voicemail_notice_shown",
     sound: "chime",
-    delayRangeMs: [26_000, 26_000],
+    // A variable quiet beat keeps this human interruption from feeling like a
+    // scheduled unlock, while still ensuring it arrives before late escalation.
+    delayRangeMs: [22_000, 32_000],
   },
 
   ...CASE_FINDING_EVENTS,
+
+  // --- Player-requested redirects ----------------------------------------
+  ...PUZZLE_GATE_PROMPT_EVENTS,
 
   // --- Priority 4: optional recoveries (discreet toasts) --------------------
   {

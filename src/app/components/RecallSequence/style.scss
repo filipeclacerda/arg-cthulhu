@@ -1,13 +1,3 @@
 .recall-recovery-toast {
-  // Conclusion and Casefile notices can coexist with a recovered save. Keep
-  // this explicit action reachable instead of stacking it at the same bottom.
-  bottom: 276px;
-  z-index: 7900;
-}
-
-@media (max-height: 720px) {
-  .recall-recovery-toast {
-    bottom: 44px;
-    right: 430px;
-  }
+  // Positioned by the desktop notification stack with all other notices.
 }

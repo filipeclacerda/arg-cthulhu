@@ -27,7 +27,7 @@ import {
 } from "./optionalMissions";
 import {
   caseFindingAnnouncedFlag,
-  puzzleCasefileGate,
+  puzzleProgressGate,
   syncCaseFindingAvailability,
 } from "./investigativeProgression";
 
@@ -138,9 +138,10 @@ export interface EventResult {
   commandError?: RunCommandError;
   puzzleBlocked?: {
     puzzleId: PuzzleId;
-    reason: "casefile_required";
+    reason: "casefile_required" | "previous_puzzle_required";
     findingId?: string;
     insightId?: string;
+    previousPuzzleId?: PuzzleId;
   };
   hintUnlocked?: { puzzleId: PuzzleId; level: number; trigger: HintTrigger };
   theoryResult?: {
@@ -169,18 +170,19 @@ const blockedPuzzleResult = (
   state: ProgressStateV3,
   puzzleId: PuzzleId
 ): EventResult | null => {
-  const gate = puzzleCasefileGate(state, puzzleId);
+  const gate = puzzleProgressGate(state, puzzleId);
   if (gate.allowed) return null;
   return {
     state,
     puzzleBlocked: {
       puzzleId,
-      reason: "casefile_required",
+      reason: gate.reason ?? "casefile_required",
       ...(gate.requirement?.kind === "finding"
         ? { findingId: gate.requirement.findingId }
         : gate.requirement?.kind === "insight"
           ? { insightId: gate.requirement.insightId }
           : {}),
+      ...(gate.previousPuzzleId ? { previousPuzzleId: gate.previousPuzzleId } : {}),
     },
   };
 };

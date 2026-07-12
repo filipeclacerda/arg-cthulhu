@@ -29,6 +29,7 @@ import {
 import { useI18n } from "@/app/i18n";
 import { useProgress } from "../../context/ProgressContext";
 import { resolveWindowTitle } from "@/app/game/desktopManifestations";
+import { windowNeedsAttention } from "@/app/game/programAttention";
 
 const renderAppContent = (
   win: WindowInstance,
@@ -156,6 +157,8 @@ const WindowFrame = ({ win }: { win: WindowInstance }) => {
         onMaximize={() => toggleMaximize(win.id)}
         className={`${win.props.windowClassName ?? ""} ${
           win.maximized ? "maximized" : ""
+        } ${
+          windowNeedsAttention(state, win) ? "window--attention" : ""
         }`.trim()}
       >
         {renderAppContent(win, {

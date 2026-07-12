@@ -418,9 +418,12 @@ atalho recente ainda aponta para a origem). Depois de `counting_audio`, `countin
 recentes com data posterior à reprodução. `APOLOGY.TMP`, ao ser aberta na Lixeira, sai para `Work`
 e — depois de `future_log` — volta à Lixeira datada de amanhã, sem perder a cópia em `Work`. Depois
 de `lineage`, os títulos do Explorer/taskbar passam a refletir o observador (`Sarah Bishop` → sua
-designação; `RECOVERED — CURRENT OBSERVER`; `MSN Messenger — archived tomorrow`;
-`office_after.jpg — 2 instances`) e a busca recuperada ganha ecos aditivos do observador (nunca
-interceptam uma consulta válida de enigma).
+designação e `office_after.jpg — 2 instances`). Só depois de `future_log` a regra invade
+`RECOVERED — CURRENT OBSERVER`, `MSN Messenger — archived tomorrow` e
+`Recycle Bin — restored tomorrow`; a busca recuperada ganha ecos aditivos do observador (nunca
+interceptam uma consulta válida de enigma). Perto do final, o voicemail cotidiano reaparece datado
+de amanhã, e o recibo do Gull & Lantern volta como mesa para três junto de uma busca que o jogador
+nunca realizou. São contaminações de lembranças já conhecidas, não novas pistas.
 
 **Consequências das respostas.** A pergunta moderna feita ao `NEXT_USER` (`alive` / `restore` /
 `break` / `fourth`, ou `missed`) vira uma linha em `DIALUP.LOG` e um recibo seco de sistema no

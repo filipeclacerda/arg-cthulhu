@@ -26,6 +26,7 @@ import {
   PuzzleId,
 } from "../game/progress";
 import { reduceGameEvent } from "../game/puzzles";
+import { puzzleGatePromptRequestedFlag } from "../game/investigativeProgression";
 import { RunCommandError } from "../game/validators";
 import { captureTelemetry } from "../game/telemetry";
 import {
@@ -47,9 +48,10 @@ interface DispatchResult {
   commandError?: RunCommandError;
   puzzleBlocked?: {
     puzzleId: PuzzleId;
-    reason: "casefile_required";
+    reason: "casefile_required" | "previous_puzzle_required";
     findingId?: string;
     insightId?: string;
+    previousPuzzleId?: PuzzleId;
   };
   hintUnlocked?: { puzzleId: PuzzleId; level: number };
   theoryResult?: {
@@ -552,13 +554,20 @@ export const ProgressProvider = ({
         }
       }
       if (result.puzzleBlocked) {
-        setSystemNotice(
-          beforeLocale === "pt-BR"
-            ? "O registro ainda não aceita esta conclusão. Revise o novo achado no Dossiê do Caso."
-            : "The record does not accept this conclusion yet. Review the new finding in Casefile.exe."
-        );
-        if (noticeTimer.current) clearTimeout(noticeTimer.current);
-        noticeTimer.current = setTimeout(() => setSystemNotice(null), 4200);
+        // Do not turn a blocked completion into a dead-end system message.
+        // The desktop coordinator turns this persisted signal into a one-time,
+        // actionable Casefile lead after its normal narrative pause.
+        dispatch({
+          type: "SET_FLAG",
+          flag: puzzleGatePromptRequestedFlag(result.puzzleBlocked.puzzleId),
+        });
+        captureTelemetry({
+          name: "puzzle_gate_redirected",
+          properties: {
+            puzzle_id: result.puzzleBlocked.puzzleId,
+            reason: result.puzzleBlocked.reason,
+          },
+        });
       }
 
       return {

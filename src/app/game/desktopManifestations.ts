@@ -127,6 +127,46 @@ export const DESKTOP_MANIFESTATIONS: readonly ManifestationDefinition[] = [
     size: "43.1 MB",
     when: { type: "puzzleSolved", puzzleId: "counting_audio" },
   },
+  // Sarah's completely ordinary message returns only after the archive has
+  // learned to address the observer. Nothing in the recording changes; the
+  // impossible second receipt is the intrusion. This keeps a human voice in
+  // the late-game rhythm without turning it into another puzzle.
+  {
+    instanceId: "voicemail_recent_second_receipt",
+    surface: "recent",
+    sourceFileId: "voicemail_to_em",
+    displayName: "voicemail_to_em (2).wav",
+    folderId: "sarah",
+    modified: "{TOMORROW} 17:44",
+    size: "648 KB",
+    when: {
+      type: "allOf",
+      conditions: [
+        { type: "fileRead", fileId: "voicemail_to_em" },
+        { type: "puzzleSolved", puzzleId: "future_log" },
+      ],
+    },
+  },
+  // The mundane Gull & Lantern receipt is the campaign's recurring human
+  // object. If the player found it, the archive returns it near the finale
+  // with one impossible change in the filename: the table was paid for by two
+  // people, but the recovered system now files a third place.
+  {
+    instanceId: "gull_receipt_party_of_three",
+    surface: "recent",
+    sourceFileId: "gull_0310_receipt",
+    displayName: "GULL_0310 — TABLE FOR 3.RCT",
+    folderId: "deleted",
+    modified: "{TOMORROW} 22:18",
+    size: "1 KB",
+    when: {
+      type: "allOf",
+      conditions: [
+        { type: "fileRead", fileId: "gull_0310_receipt" },
+        { type: "puzzleSolved", puzzleId: "index_name" },
+      ],
+    },
+  },
   // APOLOGY.TMP: an optional artifact the machine relocates. Once the player
   // opens it in the bin it leaves the trash (suppressed) and reappears under
   // Work — this Work copy persists for the rest of the campaign.
@@ -255,6 +295,7 @@ export const titlesContaminated = (state: ProgressStateV3): boolean =>
 
 interface TitleContamination {
   id: string;
+  when: UnlockCondition;
   matches: (title: string) => boolean;
   decorate: (title: string, observerDesignation: string) => string;
 }
@@ -265,6 +306,7 @@ const TITLE_CONTAMINATIONS: readonly TitleContamination[] = [
   {
     // Sarah's name degrades toward the observer's designation.
     id: "sarah_name",
+    when: lineageSolved,
     matches: (title) => title.includes("Sarah Bishop"),
     decorate: (title, designation) => title.replace("Sarah Bishop", designation),
   },
@@ -272,6 +314,7 @@ const TITLE_CONTAMINATIONS: readonly TitleContamination[] = [
     // The RECOVERED folder acquires the current observer — but never the
     // "RECOVERED PROGRAM" finale window, which is a different surface.
     id: "recovered_folder",
+    when: { type: "puzzleSolved", puzzleId: "future_log" },
     matches: (title) =>
       title.includes("RECOVERED") && !title.includes("PROGRAM"),
     decorate: (title) =>
@@ -279,15 +322,26 @@ const TITLE_CONTAMINATIONS: readonly TitleContamination[] = [
   },
   {
     id: "messenger_tomorrow",
+    when: { type: "puzzleSolved", puzzleId: "future_log" },
     matches: (title) => title.includes("MSN Messenger"),
     decorate: (title) =>
       title.includes("archived tomorrow") ? title : `${title} — archived tomorrow`,
   },
   {
     id: "office_after_instances",
+    when: lineageSolved,
     matches: (title) => title.includes("office_after.jpg"),
     decorate: (title) =>
       title.includes("2 instances") ? title : `${title} — 2 instances`,
+  },
+  {
+    // After the future log, even deleting something becomes a future action.
+    // This is deliberately a title-only residue: no file is removed and the
+    // player can still inspect every canonical Recycle Bin item.
+    id: "recycle_restored_tomorrow",
+    when: { type: "puzzleSolved", puzzleId: "future_log" },
+    matches: (title) => title === "Recycle Bin",
+    decorate: (title) => `${title} — restored tomorrow`,
   },
 ];
 
@@ -305,7 +359,12 @@ export const resolveWindowTitle = (
   const designation =
     state.playerName?.trim() || OBSERVER_DESIGNATION_FALLBACK;
   for (const rule of TITLE_CONTAMINATIONS) {
-    if (rule.matches(target.title)) return rule.decorate(target.title, designation);
+    if (
+      isUnlocked(rule.when, manifestationContext(state)) &&
+      rule.matches(target.title)
+    ) {
+      return rule.decorate(target.title, designation);
+    }
   }
   return target.title;
 };
@@ -339,6 +398,20 @@ const SEARCH_ECHOES: readonly SearchEchoDefinition[] = [
     kind: "suggestion",
     when: { type: "puzzleSolved", puzzleId: "future_log" },
     text: (designation) => `who is ${designation.toLowerCase()}`,
+  },
+  {
+    // Conditional payoff for the player who found the ordinary dinner receipt.
+    // It appears as a query they never made only when the final index is ready.
+    id: "gull_third_place_unperformed",
+    kind: "unperformed",
+    when: {
+      type: "allOf",
+      conditions: [
+        { type: "fileRead", fileId: "gull_0310_receipt" },
+        { type: "puzzleSolved", puzzleId: "index_name" },
+      ],
+    },
+    text: () => "gull & lantern table 4 third place setting",
   },
 ];
 

@@ -190,6 +190,23 @@ body.desktop-mode {
     background: #d4d0c8;
 }
 
+.taskbar-window--attention {
+    font-weight: bold;
+    box-shadow: inset 1px 1px #fff7b0, inset -1px -1px #404040;
+    animation: taskbar-attention 520ms steps(2, end) 2;
+
+    span::after { content: " *"; color: #6b5400; }
+}
+
+@keyframes taskbar-attention { 50% { background: #fff0a8; } }
+
+.container.window--attention > .title .p::after {
+    content: "  * NEW";
+    color: #fff0a8;
+    font-size: .78em;
+    letter-spacing: .08em;
+}
+
 .taskbar-tray {
     display: flex;
     align-items: center;
@@ -332,23 +349,31 @@ body.desktop-mode {
     }
 }
 
-// One-time, non-modal "conclusion ready" taskbar toast. Stacks above the
-// persistence warning so both stay reachable when shown together.
-.conclusion-toast {
-    bottom: 128px;
-    z-index: 7890;
+.desktop-notification-stack {
+    position: fixed;
+    right: 18px;
+    bottom: 54px;
+    z-index: 7900;
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: flex-end;
+    gap: 10px;
+    pointer-events: none;
 
-    em {
+    > .archive-warning {
+        position: relative;
+        right: auto;
+        bottom: auto;
+        z-index: auto;
+        pointer-events: auto;
+    }
+
+    .conclusion-toast em {
         font-style: italic;
         font-weight: bold;
     }
-}
 
-.coordinator-toast {
-    bottom: 202px;
-    z-index: 7880;
-
-    small {
+    .coordinator-toast small {
         display: block;
         margin-bottom: 2px;
         color: #4b4b4b;
@@ -380,7 +405,7 @@ body.desktop-mode {
     }
 }
 
-.desktop-icon--attention:not(.selected) span::after {
+.desktop-icon--attention:not(.selected) p::after {
   content: " *";
   color: #fff3a0;
   font-weight: bold;

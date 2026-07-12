@@ -4,6 +4,7 @@ import {
   caseFindingAvailableFlag,
   caseFindingState,
   puzzleCasefileGate,
+  puzzleProgressGate,
   syncCaseFindingAvailability,
 } from "./investigativeProgression";
 import { reduceGameEvent } from "./puzzles";
@@ -29,6 +30,7 @@ describe("investigative progression gates", () => {
 
   it("rejects direct puzzle completion until the Casefile requirement holds", () => {
     let state = createInitialProgress(1_700_000_000_000, "puzzle-gate");
+    state.puzzles.lot_114.solvedAt = 1;
     const blocked = reduceGameEvent(state, {
       type: "SOLVE_PUZZLE",
       puzzleId: "palimpsest",
@@ -47,6 +49,27 @@ describe("investigative progression gates", () => {
       puzzleId: "palimpsest",
     });
     expect(accepted.solvedPuzzle).toBe("palimpsest");
+  });
+
+  it("never lets an imported callback skip an earlier main recovery", () => {
+    const state = createInitialProgress(1_700_000_000_000, "ordered-chain");
+    const gate = puzzleProgressGate(state, "counting_audio");
+
+    expect(gate).toEqual({
+      allowed: false,
+      reason: "previous_puzzle_required",
+      previousPuzzleId: "margin_cipher",
+    });
+
+    const blocked = reduceGameEvent(state, {
+      type: "SOLVE_PUZZLE",
+      puzzleId: "counting_audio",
+    });
+    expect(blocked.puzzleBlocked).toEqual({
+      puzzleId: "counting_audio",
+      reason: "previous_puzzle_required",
+      previousPuzzleId: "margin_cipher",
+    });
   });
 
   it("persists announced and viewed findings independently", () => {

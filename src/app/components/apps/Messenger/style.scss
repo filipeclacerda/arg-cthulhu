@@ -126,6 +126,11 @@
   }
 }
 
+.messenger__contacts .has-new-personal-reply:not(.selected) strong {
+  color: #5e4b00;
+  text-shadow: 1px 1px #fff8c4;
+}
+
 .messenger__contact-heading {
   padding: 6px 7px;
   color: #fff;

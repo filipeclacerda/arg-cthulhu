@@ -21,6 +21,15 @@ const satisfyGate = (
   state: ReturnType<typeof createInitialProgress>,
   puzzleId: (typeof PUZZLE_IDS)[number]
 ) => {
+  // Unit fixtures often jump directly to a later narrative surface. Mirror
+  // the recovered chain here so those fixtures remain valid under the same
+  // reducer rule that protects production callbacks from skipping ahead.
+  const puzzleIndex = PUZZLE_IDS.indexOf(puzzleId);
+  PUZZLE_IDS.slice(0, puzzleIndex).forEach((previousPuzzleId) => {
+    if (!state.puzzles[previousPuzzleId].solvedAt) {
+      state.puzzles[previousPuzzleId].solvedAt = Date.now();
+    }
+  });
   if (puzzleId === "palimpsest" && !state.insightsUnlocked.includes("second_volume")) {
     state.insightsUnlocked.push("second_volume");
   }
@@ -267,10 +276,7 @@ describe("ARG progression reducer", () => {
     expect(fileUnlocked("miriam_notebook_scan")).toBe(true);
     expect(fileUnlocked("counting_audio")).toBe(false);
 
-    state = reduceGameEvent(state, {
-      type: "SOLVE_PUZZLE",
-      puzzleId: "margin_cipher",
-    }).state;
+    state = solveForTest(state, "margin_cipher");
     expect(fileUnlocked("directory_comparison")).toBe(true);
     expect(fileUnlocked("counting_audio")).toBe(true);
 

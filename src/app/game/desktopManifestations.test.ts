@@ -114,6 +114,46 @@ describe("recent document projections", () => {
     expect(entry?.sourceFileId).toBe("counting_audio");
     expect(entry?.modified).toContain("{TOMORROW}");
   });
+
+  it("lets Sarah's ordinary voicemail return only after it was heard and the future log is solved", () => {
+    const state = baseState();
+    solve(state, "future_log");
+    expect(
+      projectRecentDocuments(state).some(
+        (file) => file.instanceId === "voicemail_recent_second_receipt"
+      )
+    ).toBe(false);
+
+    read(state, "voicemail_to_em");
+    const returned = projectRecentDocuments(state).find(
+      (file) => file.instanceId === "voicemail_recent_second_receipt"
+    );
+    expect(returned).toMatchObject({
+      sourceFileId: "voicemail_to_em",
+      displayName: "voicemail_to_em (2).wav",
+      modified: "{TOMORROW} 17:44",
+    });
+  });
+
+  it("changes the mundane dinner receipt near the finale only for players who found it", () => {
+    const state = baseState();
+    solve(state, "index_name");
+    expect(
+      projectRecentDocuments(state).some(
+        (file) => file.instanceId === "gull_receipt_party_of_three"
+      )
+    ).toBe(false);
+
+    read(state, "gull_0310_receipt");
+    const changed = projectRecentDocuments(state).find(
+      (file) => file.instanceId === "gull_receipt_party_of_three"
+    );
+    expect(changed).toMatchObject({
+      sourceFileId: "gull_0310_receipt",
+      displayName: "GULL_0310 — TABLE FOR 3.RCT",
+      modified: "{TOMORROW} 22:18",
+    });
+  });
 });
 
 describe("recycle bin projections and the APOLOGY move", () => {
@@ -166,6 +206,16 @@ describe("window title contamination", () => {
     state.playerName = "Dana";
     solve(state, "lineage");
     expect(resolveWindowTitle({ title: "Sarah Bishop" }, state)).toBe("Dana");
+    // The more explicit temporal contamination waits for the next discovery.
+    expect(resolveWindowTitle({ title: "RECOVERED" }, state)).toBe("RECOVERED");
+    expect(resolveWindowTitle({ title: "MSN Messenger" }, state)).toBe(
+      "MSN Messenger"
+    );
+    expect(resolveWindowTitle({ title: "Recycle Bin" }, state)).toBe(
+      "Recycle Bin"
+    );
+
+    solve(state, "future_log");
     expect(resolveWindowTitle({ title: "RECOVERED" }, state)).toBe(
       "RECOVERED — CURRENT OBSERVER"
     );
@@ -175,6 +225,9 @@ describe("window title contamination", () => {
     expect(
       resolveWindowTitle({ title: "office_after.jpg" }, state)
     ).toBe("office_after.jpg — 2 instances");
+    expect(resolveWindowTitle({ title: "Recycle Bin" }, state)).toBe(
+      "Recycle Bin — restored tomorrow"
+    );
   });
 
   it("never contaminates the RECOVERED PROGRAM finale window", () => {
@@ -215,6 +268,24 @@ describe("browser search echoes", () => {
     expect(
       echoes.some((e) => e.text === "observer — search not performed")
     ).toBe(false);
+  });
+
+  it("returns the dinner's impossible third place as an unperformed late-game query", () => {
+    const state = baseState();
+    read(state, "gull_0310_receipt");
+    solve(state, "future_log");
+    expect(
+      browserSearchEchoes(state, "").some(
+        (echo) => echo.id === "gull_third_place_unperformed"
+      )
+    ).toBe(false);
+
+    solve(state, "index_name");
+    expect(browserSearchEchoes(state, "")).toContainEqual({
+      id: "gull_third_place_unperformed",
+      kind: "unperformed",
+      text: "gull & lantern table 4 third place setting",
+    });
   });
 });
 
