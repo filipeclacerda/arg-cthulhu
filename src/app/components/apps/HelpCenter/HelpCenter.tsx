@@ -4,11 +4,13 @@ import React from "react";
 import { useProgress } from "@/app/context/ProgressContext";
 import { puzzleHintsFor } from "@/app/game/puzzles";
 import { useI18n } from "@/app/i18n";
+import { contextualGuidance } from "@/app/game/contextualGuidance";
 import "../ArgTools/style.scss";
 
 const HelpCenter = () => {
   const { activePuzzle, state, unlockHint } = useProgress();
   const { t } = useI18n();
+  const contextual = contextualGuidance(state);
   if (!activePuzzle) {
     return <div className="arg-tool"><div className="arg-tool__content">{t("noUnresolvedEntries")}</div></div>;
   }
@@ -33,6 +35,19 @@ const HelpCenter = () => {
         )}
         {progress.hintsUnlocked === 0 && (
           <p>{t("noAutomaticHint")}</p>
+        )}
+        {contextual.length > 0 && (
+          <section aria-label={state.locale === "pt-BR" ? "Orientação contextual" : "Contextual guidance"}>
+            <p className="arg-tool__kicker">
+              {state.locale === "pt-BR" ? "AÇÕES OBSERVADAS" : "OBSERVED ACTIONS"}
+            </p>
+            {contextual.map((guide) => (
+              <div className="arg-tool__result" key={guide.id}>
+                <strong>{state.locale === "pt-BR" ? "Dica de interface" : "Interface hint"}</strong>
+                <p>{guide[state.locale === "pt-BR" ? "pt" : "en"]}</p>
+              </div>
+            ))}
+          </section>
         )}
       </div>
       <div className="arg-tool__status">

@@ -188,6 +188,41 @@
   }
 }
 
+.case-notes__digest {
+  width: 100%;
+  margin-top: 10px;
+  min-height: 30px;
+  font-weight: bold;
+}
+
+.case-notes__activity {
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+  background: #fffef4;
+}
+
+.case-notes__activity-entry {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 18px 1fr auto;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 7px;
+  padding: 9px;
+  text-align: left;
+
+  > i { color: #8b6500; font: bold 16px "Courier New", monospace; }
+  > span strong, > span small { display: block; }
+  > span small { margin-top: 3px; color: #555; line-height: 1.35; }
+  > b { color: #000080; font-size: 9px; }
+  &.seen { opacity: .72; }
+  &--critical.new { border-left: 4px solid #000080; }
+  &--supporting.new { border-left: 4px solid #6d671d; }
+  &--atmospheric.new { border-left: 4px solid #777; }
+}
+
 .case-notes__editor {
   display: flex;
   flex-direction: column;

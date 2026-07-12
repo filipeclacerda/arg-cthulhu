@@ -6,6 +6,12 @@ import { useWindowManager } from "@/app/context/WindowManagerContext";
 import { PuzzleId, PUZZLE_IDS } from "@/app/game/progress";
 import { localized, TOKENS_BY_ID } from "@/app/game/campaign";
 import { useI18n } from "@/app/i18n";
+import {
+  activitySeenFlag,
+  recentActivities,
+  unseenRecentActivities,
+  type RecentActivity,
+} from "@/app/game/recentActivity";
 import "../ArgTools/style.scss";
 import "./style.scss";
 
@@ -50,13 +56,16 @@ const CaseNotes = () => {
     discoveredEvidenceIds,
     state,
     activePuzzle,
+    setFlag,
   } = useProgress();
   const { openWindow } = useWindowManager();
   const { t } = useI18n();
   const editorRef = useRef<HTMLTextAreaElement>(null);
   const [tab, setTab] = useState<
-    "notes" | "facts" | "names" | "dates" | "codes"
+    "notes" | "activity" | "facts" | "names" | "dates" | "codes"
   >("notes");
+  const activity = recentActivities(state).slice().reverse().slice(0, 8);
+  const unseenActivity = unseenRecentActivities(state);
   const solvedCount = PUZZLE_IDS.filter(
     (id) => Boolean(state.puzzles[id].solvedAt)
   ).length;
@@ -99,6 +108,7 @@ const CaseNotes = () => {
 
   const autoEntries = {
     notes: [] as string[][],
+    activity: [] as string[][],
     facts: state.collectedTokens
       .map((id) => TOKENS_BY_ID[id])
       .filter(Boolean)
@@ -132,6 +142,30 @@ const CaseNotes = () => {
     ],
   };
 
+  const acknowledgeActivity = (entries: readonly RecentActivity[]) => {
+    entries.forEach((entry) => setFlag(activitySeenFlag(entry.id)));
+  };
+
+  const openActivity = (entry: RecentActivity) => {
+    setFlag(activitySeenFlag(entry.id));
+    if (entry.artifactId) {
+      const audio = entry.artifactId === "counting_audio" || entry.artifactId === "voicemail_to_em";
+      openWindow({
+        id: `recent-${entry.artifactId}`,
+        appType: audio ? "audio" : "notepad",
+        title: entry.artifactId,
+        props: { fileId: entry.artifactId },
+      });
+      return;
+    }
+    const appType = entry.program === "case-notes" ? "casefile" : entry.program;
+    openWindow({
+      id: `recent-${entry.id}`,
+      appType,
+      title: entry.title[state.locale === "pt-BR" ? "pt" : "en"],
+    });
+  };
+
   return (
     <div className="arg-tool case-notes">
       <div className="arg-tool__menubar">
@@ -149,7 +183,7 @@ const CaseNotes = () => {
         </button>
         <div className="case-notes__toolbar-separator" />
         <div className="case-notes__tabs">
-          {(["notes", "facts", "names", "dates", "codes"] as const).map((id) => (
+          {(["notes", "activity", "facts", "names", "dates", "codes"] as const).map((id) => (
             <button
               key={id}
               className={`button ${tab === id ? "active" : ""}`}
@@ -157,6 +191,8 @@ const CaseNotes = () => {
             >
               {id === "notes"
                 ? "My Notes"
+                : id === "activity"
+                  ? state.locale === "pt-BR" ? "Recentes" : "Recent"
                 : id[0].toUpperCase() + id.slice(1)}
             </button>
           ))}
@@ -228,6 +264,16 @@ const CaseNotes = () => {
             <strong>Saved with this case</strong>
             <span>Notes are included in exported Case Codes.</span>
           </div>
+          <button
+            className="button case-notes__digest"
+            type="button"
+            disabled={unseenActivity.length === 0}
+            onClick={() => { setTab("activity"); acknowledgeActivity(unseenActivity); }}
+          >
+            {state.locale === "pt-BR"
+              ? `O que mudou? (${unseenActivity.length})`
+              : `What changed? (${unseenActivity.length})`}
+          </button>
         </aside>
 
         <section className="case-notes__editor">
@@ -247,6 +293,26 @@ const CaseNotes = () => {
               placeholder={`Start with the investigation template, or write freely.\n\nUseful things to track:\n- people and relationships\n- dates that repeat or converge\n- filenames, aliases and coordinates\n- theories you have not proved yet`}
               spellCheck={false}
             />
+          ) : tab === "activity" ? (
+            <div className="case-notes__activity" aria-live="polite">
+              {activity.length === 0 ? (
+                <p>{state.locale === "pt-BR" ? "Nenhuma alteração registrada." : "No changes recorded."}</p>
+              ) : activity.map((entry) => {
+                const key = state.locale === "pt-BR" ? "pt" : "en";
+                const seen = Boolean(state.flags[activitySeenFlag(entry.id)]);
+                return (
+                  <button
+                    className={`button case-notes__activity-entry case-notes__activity-entry--${entry.priority} ${seen ? "seen" : "new"}`}
+                    key={entry.id}
+                    onClick={() => openActivity(entry)}
+                  >
+                    <i>{seen ? "·" : "*"}</i>
+                    <span><strong>{entry.title[key]}</strong><small>{entry.summary[key]}</small></span>
+                    <b>{state.locale === "pt-BR" ? "ABRIR" : "OPEN"}</b>
+                  </button>
+                );
+              })}
+            </div>
           ) : (
             <div className="case-notes__auto-index">
               {autoEntries[tab].map(([label, description]) => (

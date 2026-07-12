@@ -38,6 +38,15 @@ armadilha (observar o padrão é o que o torna real — e você está observando
   contato dentro do computador de Sarah. O relay cria o destinatário somente no instante da
   abertura, coleta uma designação opcional e depois desaparece atrás da imagem montada. O nome
   fornecido nesse limite externo é usado contra o jogador no terceiro ato.
+- **Motivo humano recorrente — mesa 4:** o jantar no Gull & Lantern começa como memória banal
+  de Sarah e Em, reaparece no recibo pago por Em e volta alterado no Finale: dois pedidos, três
+  pessoas presentes. A anomalia nunca substitui o valor da lembrança comum.
+- **Respostas de Em:** são reconstruções opcionais, acionadas somente depois que o jogador abre
+  fatos pessoais. Elas não resolvem puzzles; preservam a voz de Em e o direito de algumas
+  mensagens permanecerem inacabadas.
+- **Último registro humano:** antes da decisão canônica, o Indexer interrompe a abstração com
+  uma lembrança comum escolhida entre o café, o voicemail, a receita ou um fallback sobre
+  Sarah, Tom e Em. Nenhuma escolha final pode pular esse registro.
 - **A Testemunha Submersa** — NÃO é Cthulhu, e nunca é mostrada nem nomeada de verdade. Sarah
   usa "R'lyeh" como aproximação acadêmica. Para a equipe: uma entidade para quem passado e
   futuro são uma só lembrança simultânea. Não entra fisicamente no mundo; é *lembrada* por

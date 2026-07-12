@@ -6,7 +6,7 @@ import { useProgress } from "@/app/context/ProgressContext";
 import { useSound } from "@/app/context/SoundContext";
 import { resolveTokens, formatGameDate, tomorrow } from "@/app/utils/narrative";
 import { TranslationKey, useI18n } from "@/app/i18n";
-import { completedOptionalMissionCount } from "@/app/game/optionalMissions";
+import { completedOptionalMissionCount, optionalMissionEndingCodas } from "@/app/game/optionalMissions";
 import { legacyReplyCoda } from "@/app/game/messengerConsequences";
 import { desktopModeFromSearch } from "@/app/game/endingLifecycle";
 import { selectInitialFinalePresentation } from "@/app/game/finalePresentation";
@@ -15,6 +15,7 @@ import "./style.scss";
 type FinaleScreen =
   | "intro"
   | "identity"
+  | "human_record"
   | "choice"
   | "restore_confirm"
   | "shutdown_confirm"
@@ -157,6 +158,21 @@ const Finale = ({
         : "Her father's recipe still asks for a twenty-minute call.";
     return null;
   }, [locale, state.readFileIds]);
+  const humanRecord = useMemo(() => {
+    const pt = locale === "pt-BR";
+    if (state.readFileIds.includes("gull_0310_receipt")) return pt
+      ? "MESA: JANELA 4\nPEDIDOS: 2\nPESSOAS QUE CHEGARAM: 3\n\nEm pagou a conta. Sarah anotou no verso. Nenhuma das duas registrou o terceiro lugar."
+      : "TABLE: WINDOW 4\nORDERS: 2\nPEOPLE ARRIVED: 3\n\nEm paid the bill. Sarah wrote on the reverse. Neither recorded the third place.";
+    if (state.readFileIds.includes("voicemail_to_em")) return pt
+      ? "Sarah perdeu o ônibus das seis. Em ainda esperava pelo jantar.\nPor alguns minutos, esse era o único problema."
+      : "Sarah missed the six o'clock bus. Em was still waiting for dinner.\nFor a few minutes, that was the only problem.";
+    if (state.readFileIds.includes("dad_recipe")) return pt
+      ? "A receita ainda pede uma ligação de vinte minutos.\nO pai de Sarah ainda explicaria tudo desde o começo."
+      : "The recipe still asks for a twenty-minute call.\nSarah's father would still explain it from the beginning.";
+    return pt
+      ? "Sarah prometeu voltar para jantar.\nTom levou sopa ao escritório.\nEm continuou esperando uma ligação."
+      : "Sarah promised to come home for dinner.\nTom brought soup to the office.\nEm kept waiting for a call.";
+  }, [locale, state.readFileIds]);
   // One residue line for the answer the player sent back into 1998. The same
   // line regardless of which ending was chosen — a residue, not a verdict.
   const legacyCoda = useMemo(
@@ -220,6 +236,11 @@ const Finale = ({
       </button>
     </div>
   );
+  const missionConsequences = (ending: NonNullable<typeof state.ending>) => {
+    const lines = optionalMissionEndingCodas(state.optionalDiscoveries, ending, locale);
+    if (!lines.length) return null;
+    return <section className="finale-takeover__consequences"><strong>{locale === "pt-BR" ? "CONSEQUÊNCIAS RETIDAS" : "RETAINED CONSEQUENCES"}</strong>{lines.map((line) => <p key={line}>{line}</p>)}</section>;
+  };
 
   const witnessBlock = () => {
     const firstOpened = new Date(state.createdAt);
@@ -233,23 +254,29 @@ const Finale = ({
   let content: React.ReactNode;
   if (screen === "intro") {
     content = <>
-      <p className="finale-takeover__step">01 / 03 — {locale === "pt-BR" ? "MONTANDO ÍNDICE RECUPERADO" : "MOUNTING RECOVERED INDEX"}</p>
+      <p className="finale-takeover__step">01 / 04 — {locale === "pt-BR" ? "MONTANDO ÍNDICE RECUPERADO" : "MOUNTING RECOVERED INDEX"}</p>
       <pre className="finale-takeover__terminal">{locale === "pt-BR"
         ? "RELAY-07 / IMAGEM MONTADA\n\n4 REFERÊNCIAS RECONHECIDAS\n3 DESTINATÁRIOS ENCERRADOS\n1 CAMPO AINDA ATIVO\n\nSINCRONIZAÇÃO DO DESKTOP INTERROMPIDA."
         : "RELAY-07 / IMAGE MOUNTED\n\n4 REFERENCES ACKNOWLEDGED\n3 RECIPIENTS CLOSED\n1 FIELD STILL ACTIVE\n\nDESKTOP SYNCHRONIZATION INTERRUPTED."}</pre>
-      <div className="finale-takeover__actions"><button ref={primaryActionRef} className="button btn-lg" onClick={() => { play("future"); setScreen("identity"); }}>{locale === "pt-BR" ? "CONTINUAR" : "CONTINUE"}</button><button className="button" onClick={() => setScreen("choice")}>{locale === "pt-BR" ? "PULAR ANIMAÇÃO" : "SKIP ANIMATION"}</button></div>
+      <div className="finale-takeover__actions"><button ref={primaryActionRef} className="button btn-lg" onClick={() => { play("future"); setScreen("identity"); }}>{locale === "pt-BR" ? "CONTINUAR" : "CONTINUE"}</button><button className="button" onClick={() => setScreen("human_record")}>{locale === "pt-BR" ? "PULAR ANIMAÇÃO" : "SKIP ANIMATION"}</button></div>
     </>;
   } else if (screen === "identity") {
     content = <>
-      <p className="finale-takeover__step">02 / 03 — {locale === "pt-BR" ? "COLISÃO DE IDENTIDADE" : "IDENTITY COLLISION"}</p>
+      <p className="finale-takeover__step">02 / 04 — {locale === "pt-BR" ? "COLISÃO DE IDENTIDADE" : "IDENTITY COLLISION"}</p>
       <pre className="finale-takeover__terminal finale-takeover__terminal--collision">{locale === "pt-BR"
         ? `REGISTRO DE ORIGEM ... SARAH BISHOP\nTESTEMUNHA ........ ${playerName ?? "USUÁRIO SEGUINTE"}\n\nNENHUMA ENTRADA PODE SER DESCARTADA.\nSELECIONE UM REGISTRO CANÔNICO.`
         : `SOURCE RECORD ........ SARAH BISHOP\nWITNESS .............. ${playerName ?? "NEXT USER"}\n\nNO ENTRY MAY BE DISCARDED.\nSELECT A CANONICAL RECORD.`}</pre>
-      <div className="finale-takeover__actions"><button ref={primaryActionRef} className="button btn-lg" onClick={() => setScreen("choice")}>{locale === "pt-BR" ? "ABRIR REGISTRO" : "OPEN RECORD"}</button></div>
+      <div className="finale-takeover__actions"><button ref={primaryActionRef} className="button btn-lg" onClick={() => setScreen("human_record")}>{locale === "pt-BR" ? "ABRIR REGISTRO HUMANO" : "OPEN HUMAN RECORD"}</button></div>
+    </>;
+  } else if (screen === "human_record") {
+    content = <>
+      <p className="finale-takeover__step">03 / 04 — {locale === "pt-BR" ? "MEMÓRIA COMUM" : "ORDINARY MEMORY"}</p>
+      <pre className="finale-takeover__terminal finale-takeover__terminal--human">{locale === "pt-BR" ? "ARQUIVO NÃO INDEXADO\nTIPO: LEMBRANÇA COMUM\nVALOR INVESTIGATIVO: NENHUM\n\n" : "UNINDEXED FILE\nTYPE: ORDINARY MEMORY\nINVESTIGATIVE VALUE: NONE\n\n"}{humanRecord}</pre>
+      <div className="finale-takeover__actions"><button ref={primaryActionRef} className="button btn-lg" onClick={() => setScreen("choice")}>{locale === "pt-BR" ? "MANTER ESTE REGISTRO EM MEMÓRIA" : "KEEP THIS RECORD IN MEMORY"}</button></div>
     </>;
   } else if (screen === "choice") {
     content = <>
-      <p className="finale-takeover__step">03 / 03 — {locale === "pt-BR" ? "SELECIONAR REGISTRO CANÔNICO" : "SELECT CANONICAL RECORD"}</p>
+      <p className="finale-takeover__step">04 / 04 — {locale === "pt-BR" ? "SELECIONAR REGISTRO CANÔNICO" : "SELECT CANONICAL RECORD"}</p>
       <pre className="finale-takeover__terminal finale-takeover__terminal--collision">{resolveTokens(t("finaleChoiceTerminal"), ctx) + witnessBlock()}</pre>
       <div className="finale-takeover__actions"><button ref={primaryActionRef} className="button btn-lg finale-takeover__restore" onClick={() => setScreen("restore_confirm")}>{t("restoreSarahLabel")}</button><button className="button btn-lg finale-takeover__shutdown" onClick={() => setScreen("shutdown_confirm")}>{t("shutDownChoiceLabel")}</button></div>
     </>;
@@ -264,15 +291,15 @@ const Finale = ({
     const terminal = incomplete
       ? locale === "pt-BR" ? `INDEX /RESTORE S.BISHOP /INCOMPLETE\n\nREGISTROS DE ORIGEM ... 3\nCAMPOS GRAVADOS ....... 6\nCAMPO 04 .............. RETIDO\n\nSARAH BISHOP .......... PRESENT\nSARAH BISHOP .......... INCOMPLETE\nDESTINATÁRIO ATIVO .... [não resolvido]` : `INDEX /RESTORE S.BISHOP /INCOMPLETE\n\nSOURCE RECORDS ........ 3\nFIELDS WRITTEN ........ 6\nFIELD 04 .............. WITHHELD\n\nSARAH BISHOP .......... PRESENT\nSARAH BISHOP .......... INCOMPLETE\nACTIVE RECIPIENT ...... [unresolved]`
       : resolveTokens(t("finaleRestoreTerminal"), ctx);
-    content = <><p className="finale-takeover__step">REGISTRO RESTAURADO</p><pre className="finale-takeover__terminal finale-takeover__terminal--restore">{terminal}</pre><p className="finale-takeover__caption">{incomplete ? (locale === "pt-BR" ? `Sarah reaparece às 03:14, mas responde primeiro “${playerName?.trim() || "PRÓXIMO USUÁRIO"}”.` : `Sarah reappears at 03:14, but answers “${playerName?.trim() || "NEXT USER"}” first.`) : `${t("finaleRestoreCaption")} ${tomorrowStr}.`}</p><p className="finale-takeover__caption">{t(echoKey("restore"))}</p>{personalCoda && <p className="finale-takeover__caption">{personalCoda}</p>}{legacyCoda && <p className="finale-takeover__caption finale-takeover__caption--legacy">{legacyCoda}</p>}{codaActions}</>;
+    content = <><p className="finale-takeover__step">REGISTRO RESTAURADO</p><pre className="finale-takeover__terminal finale-takeover__terminal--restore">{terminal}</pre><p className="finale-takeover__caption">{incomplete ? (locale === "pt-BR" ? `Sarah reaparece às 03:14, mas responde primeiro “${playerName?.trim() || "PRÓXIMO USUÁRIO"}”.` : `Sarah reappears at 03:14, but answers “${playerName?.trim() || "NEXT USER"}” first.`) : `${t("finaleRestoreCaption")} ${tomorrowStr}.`}</p><p className="finale-takeover__caption">{t(echoKey("restore"))}</p>{personalCoda && <p className="finale-takeover__caption">{personalCoda}</p>}{legacyCoda && <p className="finale-takeover__caption finale-takeover__caption--legacy">{legacyCoda}</p>}{missionConsequences("restore")}{codaActions}</>;
   } else if (screen === "shutdown") {
-    content = <><p className="finale-takeover__step">RELAY-07 DESLIGADO</p><pre className="finale-takeover__terminal finale-takeover__terminal--shutdown">{t("finaleShutdownTerminal")}</pre><article className="finale-takeover__mail"><header><span>{t("finaleShutdownInboxTitle")}</span><span>{tomorrowStr}</span></header><dl><dt>{t("fromLabel")}</dt><dd>sarah.bishop@miskatonic-research.org</dd><dt>{t("subjectLabel")}</dt><dd>{t("finaleShutdownInboxSubject")}</dd></dl><pre>{resolveTokens(t("finaleShutdownInboxBody"), ctx)}</pre><p>{t(echoKey("shutdown"))}</p>{personalCoda && <p>{personalCoda}</p>}{legacyCoda && <p className="finale-takeover__caption--legacy">{legacyCoda}</p>}</article>{codaActions}</>;
+    content = <><p className="finale-takeover__step">RELAY-07 DESLIGADO</p><pre className="finale-takeover__terminal finale-takeover__terminal--shutdown">{t("finaleShutdownTerminal")}</pre><article className="finale-takeover__mail"><header><span>{t("finaleShutdownInboxTitle")}</span><span>{tomorrowStr}</span></header><dl><dt>{t("fromLabel")}</dt><dd>sarah.bishop@miskatonic-research.org</dd><dt>{t("subjectLabel")}</dt><dd>{t("finaleShutdownInboxSubject")}</dd></dl><pre>{resolveTokens(t("finaleShutdownInboxBody"), ctx)}</pre><p>{t(echoKey("shutdown"))}</p>{personalCoda && <p>{personalCoda}</p>}{legacyCoda && <p className="finale-takeover__caption--legacy">{legacyCoda}</p>}</article>{missionConsequences("shutdown")}{codaActions}</>;
   } else if (screen === "seal") {
-    content = <><p className="finale-takeover__step">CIRCUITO FECHADO</p><pre className="finale-takeover__terminal finale-takeover__terminal--seal">{locale === "pt-BR" ? "INDEX /SEAL RELAY-07 /WITNESS ARCHIVE\n\nFONTE ............ NÃO RESOLVIDA\nARQUIVO .......... SB-0316\nTESTEMUNHA ....... SB-0316\n\nRELAY 07 NÃO POSSUI MAIS UM CAMPO EXTERNO.\nCHECKSUM: 7A:11:07 → 7A:11:08\n\nNENHUMA OPERAÇÃO DE ESCRITA FOI REGISTRADA." : "INDEX /SEAL RELAY-07 /WITNESS ARCHIVE\n\nSOURCE ........... UNRESOLVED\nARCHIVE .......... SB-0316\nWITNESS .......... SB-0316\n\nRELAY 07 NO LONGER HAS AN OUTSIDE FIELD.\nCHECKSUM: 7A:11:07 → 7A:11:08\n\nNO WRITE OPERATION WAS RECORDED."}</pre><p className="finale-takeover__caption">{t("finaleSealCaption")}</p><p className="finale-takeover__caption">{t(echoKey("seal"))}</p>{personalCoda && <p className="finale-takeover__caption">{personalCoda}</p>}{legacyCoda && <p className="finale-takeover__caption finale-takeover__caption--legacy">{legacyCoda}</p>}{codaActions}</>;
+    content = <><p className="finale-takeover__step">CIRCUITO FECHADO</p><pre className="finale-takeover__terminal finale-takeover__terminal--seal">{locale === "pt-BR" ? "INDEX /SEAL RELAY-07 /WITNESS ARCHIVE\n\nFONTE ............ NÃO RESOLVIDA\nARQUIVO .......... SB-0316\nTESTEMUNHA ....... SB-0316\n\nRELAY 07 NÃO POSSUI MAIS UM CAMPO EXTERNO.\nCHECKSUM: 7A:11:07 → 7A:11:08\n\nNENHUMA OPERAÇÃO DE ESCRITA FOI REGISTRADA." : "INDEX /SEAL RELAY-07 /WITNESS ARCHIVE\n\nSOURCE ........... UNRESOLVED\nARCHIVE .......... SB-0316\nWITNESS .......... SB-0316\n\nRELAY 07 NO LONGER HAS AN OUTSIDE FIELD.\nCHECKSUM: 7A:11:07 → 7A:11:08\n\nNO WRITE OPERATION WAS RECORDED."}</pre><p className="finale-takeover__caption">{t("finaleSealCaption")}</p><p className="finale-takeover__caption">{t(echoKey("seal"))}</p>{personalCoda && <p className="finale-takeover__caption">{personalCoda}</p>}{legacyCoda && <p className="finale-takeover__caption finale-takeover__caption--legacy">{legacyCoda}</p>}{missionConsequences("seal")}{codaActions}</>;
   } else if (screen === "archive_self") {
-    content = <><p className="finale-takeover__step">TESTEMUNHA ARQUIVADA</p><pre className="finale-takeover__terminal finale-takeover__terminal--archive">{resolveTokens(t("finaleArchiveSelfTerminal"), ctx)}</pre><p className="finale-takeover__caption">{t("finaleArchiveSelfCaption")}</p>{legacyCoda && <p className="finale-takeover__caption finale-takeover__caption--legacy">{legacyCoda}</p>}{codaActions}</>;
+    content = <><p className="finale-takeover__step">TESTEMUNHA ARQUIVADA</p><pre className="finale-takeover__terminal finale-takeover__terminal--archive">{resolveTokens(t("finaleArchiveSelfTerminal"), ctx)}</pre><p className="finale-takeover__caption">{t("finaleArchiveSelfCaption")}</p>{legacyCoda && <p className="finale-takeover__caption finale-takeover__caption--legacy">{legacyCoda}</p>}{missionConsequences("archive_self")}{codaActions}</>;
   } else if (screen === "leave_blank") {
-    content = <><p className="finale-takeover__step">CAMPO RETIDO</p><pre className="finale-takeover__terminal finale-takeover__terminal--blank">{t("finaleLeaveBlankTerminal")}</pre><p className="finale-takeover__caption">{t("finaleLeaveBlankCaption")}</p>{legacyCoda && <p className="finale-takeover__caption finale-takeover__caption--legacy">{legacyCoda}</p>}{codaActions}</>;
+    content = <><p className="finale-takeover__step">CAMPO RETIDO</p><pre className="finale-takeover__terminal finale-takeover__terminal--blank">{t("finaleLeaveBlankTerminal")}</pre><p className="finale-takeover__caption">{t("finaleLeaveBlankCaption")}</p>{legacyCoda && <p className="finale-takeover__caption finale-takeover__caption--legacy">{legacyCoda}</p>}{missionConsequences("leave_blank")}{codaActions}</>;
   } else {
     const closureTerminal = t("finaleClosureTerminal").replace("{ENDING}", t(recordedEndingKey()));
     content = <><p className="finale-takeover__step">ARQUIVO ENCERRADO</p><h1>{t("finaleStoryComplete")}</h1><pre className="finale-takeover__terminal finale-takeover__terminal--closure">{closureTerminal}</pre><p className="finale-takeover__caption">{t("finaleClosureLead")}</p><div className="finale-takeover__actions"><button ref={primaryActionRef} className="button btn-lg" onClick={returnToRelay}>{t("finaleReturnToRelay")}</button></div></>;

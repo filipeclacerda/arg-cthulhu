@@ -4,6 +4,7 @@ import {
   ProgressStateV3,
   PuzzleId,
   WorldReactionId,
+  EndingId,
 } from "./progress";
 import { isUnlocked, UnlockCondition } from "./unlock";
 
@@ -122,3 +123,35 @@ export const optionalMissionCodaLines = (
   }
   return lines;
 };
+
+const ENDING_CODAS: Record<OptionalMissionId, Record<EndingId, { en: string; pt: string }>> = {
+  two_days_out: {
+    restore: { en: "The parcel reaches its destination. Sarah does not remember sending it.", pt: "O pacote chega ao destino. Sarah não se lembra de tê-lo enviado." },
+    shutdown: { en: "Two days later, Em receives the return notification.", pt: "Dois dias depois, Em recebe a notificação de devolução." },
+    seal: { en: "The tracking route disappears. Em keeps the café receipt.", pt: "A rota de rastreamento desaparece. Em conserva o recibo do café." },
+    leave_blank: { en: "The return route remains open, waiting for a parcel already accepted.", pt: "A rota de devolução permanece aberta, esperando um pacote já aceito." },
+    archive_self: { en: "The return label now names the observer as recipient.", pt: "A etiqueta de devolução agora nomeia o observador como destinatário." },
+  },
+  tom_held_block: {
+    restore: { en: "A retained block recovers one last line from Tom: “Tell Rosa I called.”", pt: "Um bloco retido recupera uma última frase de Tom: “Diga à Rosa que liguei.”" },
+    shutdown: { en: "Tom's hash remains in the police report as a corrupted file.", pt: "O hash de Tom permanece no relatório policial como arquivo corrompido." },
+    seal: { en: "The block is removed. Tom's name returns to the custody manifest.", pt: "O bloco é removido. O nome de Tom retorna ao manifesto de custódia." },
+    leave_blank: { en: "HELD BLOCK 04 continues seeking the operator who mounted it.", pt: "BLOCO RETIDO 04 continua procurando o operador que o montou." },
+    archive_self: { en: "Tom Alvarez is no longer the last operator in the manifest.", pt: "Tom Alvarez deixa de ser o último operador no manifesto." },
+  },
+  eleanor_record: {
+    restore: { en: "Eleanor receives a corrected copy of the record bearing her name.", pt: "Eleanor recebe uma cópia corrigida do registro que leva seu nome." },
+    shutdown: { en: "The contact remains ownerless, but it is not deleted.", pt: "O contato permanece sem proprietário, mas não é apagado." },
+    seal: { en: "The checksum no longer resolves to a living person.", pt: "O checksum deixa de apontar para uma pessoa viva." },
+    leave_blank: { en: "Eleanor's record keeps one empty owner field.", pt: "O registro de Eleanor conserva um campo de proprietário vazio." },
+    archive_self: { en: "The record lists Eleanor Vale and the observer as witnesses.", pt: "O registro lista Eleanor Vale e o observador como testemunhas." },
+  },
+};
+
+export const optionalMissionEndingCodas = (
+  discoveries: readonly OptionalDiscoveryId[],
+  ending: EndingId,
+  locale: Locale
+): string[] => OPTIONAL_MISSION_IDS
+  .filter((id) => discoveries.includes(id))
+  .map((id) => ENDING_CODAS[id][ending][locale === "pt-BR" ? "pt" : "en"]);

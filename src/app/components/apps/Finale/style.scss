@@ -136,6 +136,25 @@ body.finale-takeover-active {
   text-shadow: -1px 0 rgba(255, 55, 128, .7), 1px 0 rgba(71, 215, 255, .72);
 }
 
+.finale-takeover__terminal--human {
+  border-color: #9b936f;
+  color: #f1e8bc;
+  background: #12120e;
+  font-family: Georgia, serif;
+  line-height: 1.65;
+}
+
+.finale-takeover__consequences {
+  width: min(100%, 760px);
+  margin: 14px auto;
+  padding: 12px 15px;
+  border: 1px solid rgba(205, 196, 150, .45);
+  background: rgba(12, 12, 9, .72);
+
+  > strong { color: #d6cd99; font: bold 10px "Courier New", monospace; letter-spacing: .12em; }
+  > p { margin: 7px 0 0; color: #ddd8bd; font-size: 12px; line-height: 1.4; }
+}
+
 .finale-takeover__terminal--restore {
   color: #d9f8ff;
   border-color: #75c7e3;

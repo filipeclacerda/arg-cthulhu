@@ -380,6 +380,22 @@ body.desktop-mode {
     }
 }
 
+.desktop-icon--attention:not(.selected) span::after {
+  content: " *";
+  color: #fff3a0;
+  font-weight: bold;
+  text-shadow: 1px 1px #000;
+}
+
+.desktop-icon--attention:not(.selected) img {
+  filter: drop-shadow(0 0 3px rgba(255, 242, 142, .8));
+  animation: desktop-attention 480ms steps(2, end) 2;
+}
+
+@keyframes desktop-attention {
+  50% { transform: translateY(-1px); }
+}
+
 .new-mail-alert {
     width: calc(var(--ui-scale, 1) * 380px);
     padding: calc(var(--ui-scale, 1) * 4px);

@@ -929,6 +929,33 @@ recarregar não reenfileira batidas já vistas.
 
 ### O computador realmente veio de onde?
 
+## Orientação e continuidade humana
+
+- **Case Notes → Recentes** reúne até oito alterações derivadas do progresso real. O botão
+  **O que mudou?** reconhece cada item individualmente e nunca revela conteúdo ainda bloqueado.
+- Programas com material ainda não consultado recebem apenas um asterisco e um brilho curto no
+  ícone. O sinal desaparece quando o acontecimento correspondente é reconhecido.
+- O Help Center acrescenta instruções de arrastar, zoom, comparação e áudio reverso somente
+  depois de uma tentativa ou near miss correspondente.
+- Ao abrir fatos pessoais (`dad_recipe`, `GULL_0310.RCT`, `voicemail_to_em.wav` e
+  `unsent_to_dad`), volte à conversa de **Em Bishop** para respostas opcionais adicionais.
+- Antes das escolhas do Finale, o Indexer sempre abre um **registro humano**. Se o recibo do
+  Gull & Lantern foi lido, a mesa 4 retorna alterada com três pessoas para apenas dois pedidos.
+- Cada missão opcional concluída produz uma consequência própria para RESTORE, SHUT DOWN,
+  SEAL, LEAVE BLANK ou ARCHIVE SELF.
+
+### Redundância dos passos críticos
+
+| Passo | Descoberta principal | Caminho alternativo |
+| --- | --- | --- |
+| Novo e-mail | aviso do Outlook | Case Notes → Recentes |
+| `counting.wav` liberado | notificação de arquivo | Explorer destacado + Recentes |
+| Próximo achado | toast do Casefile | resumo “O que mudou?” |
+| Reverse/canal | feedback do MediaPlayer | Help Center após near miss |
+| Comparação/zoom/arrastar | controle no programa | Help Center contextual |
+| Sessão de 1998 | takeover diegético | registro recente persistente |
+| Finale | RECOVERED PROGRAM | registro recente + menu Iniciar |
+
 Tom Alvarez encontrou a máquina de Sarah, criou uma imagem forense e colocou o pacote
 `SB-0316` na fila do Relay 07 para três colegas. Ele desapareceu antes de completar o envio.
 Depois disso, um quarto destinatário passou a existir, mas o campo permanecia vazio.

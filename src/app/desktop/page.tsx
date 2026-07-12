@@ -40,6 +40,7 @@ import {
 } from "../game/endingLifecycle";
 import DeepseaScreensaver from "../components/DeepseaScreensaver/DeepseaScreensaver";
 import { files } from "../data/filesystem";
+import { programsNeedingAttention } from "../game/recentActivity";
 
 /** A discreet coordinator toast (never a window) with one action. */
 interface DiegeticToast {
@@ -475,6 +476,7 @@ const Desktop = () => {
   const [flash1998, setFlash1998] = useState<1 | 2 | 3 | null>(null);
   const [legacyFileId, setLegacyFileId] = useState<string | null>(null);
   const [legacyOpenedFileIds, setLegacyOpenedFileIds] = useState<Set<string>>(() => new Set());
+  const attentionPrograms = programsNeedingAttention(state);
   const previousCorruptionStage = useRef<number | null>(null);
   const { labelGlitch, cursorEcho } = useSubliminalGlitch(
     !isPostEndingDesktop && corruptionStage >= 4,
@@ -1332,7 +1334,7 @@ const Desktop = () => {
             key={app.id}
             className={`desktop-icon ${
               selectedDesktopAppId === app.id ? "selected" : ""
-            }`}
+            } ${attentionPrograms.has(app.appType === "case-notes" ? "case-notes" : app.appType as never) ? "desktop-icon--attention" : ""}`}
             data-app-id={app.id}
             title={t("doubleClickToOpen")}
             onClick={(ev) => handleClickIcon(ev, app.id)}

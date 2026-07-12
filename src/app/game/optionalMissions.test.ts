@@ -5,6 +5,7 @@ import {
   completedOptionalMissionCount,
   OPTIONAL_MISSIONS,
   optionalMissionCodaLines,
+  optionalMissionEndingCodas,
 } from "./optionalMissions";
 
 const satisfyGate = (
@@ -55,6 +56,13 @@ describe("optional micro-mission registry", () => {
       "eleanor_record",
     ]);
     expect(PUZZLE_IDS).toHaveLength(7);
+  });
+
+  it("gives every completed mission a consequence specific to the ending", () => {
+    const discoveries = ["two_days_out", "tom_held_block", "eleanor_record"] as const;
+    expect(optionalMissionEndingCodas(discoveries, "restore", "en")).toHaveLength(3);
+    expect(optionalMissionEndingCodas(discoveries, "shutdown", "pt-BR")[1]).toContain("Tom");
+    expect(optionalMissionEndingCodas(discoveries, "archive_self", "en")[2]).toContain("observer");
   });
 
   it("completes Sarah's story only after the final return receipt is opened", () => {

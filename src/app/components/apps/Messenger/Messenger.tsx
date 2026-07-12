@@ -7,6 +7,7 @@ import { useSound } from "@/app/context/SoundContext";
 import { useWindowManager } from "@/app/context/WindowManagerContext";
 import { useFocalSetPieceActive } from "@/app/context/diegeticFocus";
 import { ChatMessage, ChatThread, chats, MessengerPresence } from "@/app/data/chats";
+import { answeredEmResponses, nextEmResponse } from "@/app/game/emResponses";
 import { isUnlocked } from "@/app/game/unlock";
 import {
   createMessengerState,
@@ -541,7 +542,28 @@ const Messenger = ({ initialThreadId }: { initialThreadId?: string }) => {
           },
         ]
       : []),
+    ...(selected.id === "chat-em"
+      ? answeredEmResponses(progress).flatMap((response, index) => {
+          const key = progress.locale === "pt-BR" ? "pt" : "en";
+          return [
+            {
+              id: `em-question-${response.id}`,
+              senderId: "system",
+              timestamp: `RECOVERED ${index + 1}`,
+              body: response.prompt[key],
+              kind: "system" as const,
+            },
+            {
+              id: `em-response-${response.id}`,
+              senderId: "em",
+              timestamp: resolveTokens("{TOMORROW} 03:1" + (5 + index)),
+              body: response.response[key],
+            },
+          ];
+        })
+      : []),
   ];
+  const optionalEmResponse = selected.id === "chat-em" ? nextEmResponse(progress) : null;
   const messages = [
     ...selected.messages.map((message) => ({
       ...message,
@@ -750,6 +772,26 @@ const Messenger = ({ initialThreadId }: { initialThreadId?: string }) => {
                     ? "The window closed. No question was asked in time."
                     : "The window closed after the reply."}
               </p>
+            </div>
+          )}
+
+          {optionalEmResponse && (
+            <div className="messenger__suggested-replies messenger__suggested-replies--em">
+              <p>{progress.locale === "pt-BR" ? "Uma resposta pessoal pode ser reconstruída." : "A personal reply can be reconstructed."}</p>
+              <button
+                className="button"
+                type="button"
+                onClick={() => {
+                  play("chime");
+                  dispatchGameEvent({
+                    type: "RECORD_CHOICE",
+                    choiceId: optionalEmResponse.choiceId,
+                    optionId: optionalEmResponse.id,
+                  });
+                }}
+              >
+                {optionalEmResponse.prompt[progress.locale === "pt-BR" ? "pt" : "en"]}
+              </button>
             </div>
           )}
 
