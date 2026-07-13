@@ -4,6 +4,7 @@ import {
   exportCaseCode,
   importCaseCode,
   migrateProgress,
+  persistProgress,
 } from "./persistence";
 
 describe("save v6", () => {
@@ -96,6 +97,68 @@ describe("save v6", () => {
     );
     const tampered = `${code.slice(0, -1)}${code.endsWith("0") ? "1" : "0"}`;
     await expect(importCaseCode(tampered)).rejects.toThrow("checksum");
+  });
+
+  it("rejects a valid-checksum case code with malformed runtime data", async () => {
+    const state = createInitialProgress(1_700_000_000_000, "invalid-runtime");
+    (state as unknown as { readFileIds: unknown }).readFileIds = "not-an-array";
+    await expect(importCaseCode(await exportCaseCode(state))).rejects.toThrow(
+      "case data is malformed"
+    );
+  });
+
+  it("rejects oversized portable case-code input before decoding", async () => {
+    await expect(importCaseCode(`MISK6.${"A".repeat(200_000)}.000000000000`)).rejects.toThrow(
+      "too large"
+    );
+  });
+
+  it("rejects an encoded payload above the compressed-byte limit", async () => {
+    const bytes = new Uint8Array(100_000).fill(65);
+    let binary = "";
+    for (const byte of bytes) binary += String.fromCharCode(byte);
+    await expect(importCaseCode(`MISK6.${btoa(binary)}.000000000000`)).rejects.toThrow(
+      "too large"
+    );
+  });
+
+  it("rejects a compressed payload whose decompressed content exceeds the limit", async () => {
+    const state = createInitialProgress(1_700_000_000_000, "inflated-code");
+    state.caseNotes = "x".repeat(1_000_000);
+    await expect(exportCaseCode(state)).rejects.toThrow("too large");
+  });
+
+  it("serializes writes and rejects a revision older than the stored save", async () => {
+    const storage = new Map<string, unknown>();
+    const originalIndexedDb = globalThis.indexedDB;
+    const originalLocalStorage = globalThis.localStorage;
+    const first = createInitialProgress(1_700_000_000_000, "write-race");
+    first.revision = 2;
+    const second = { ...first, revision: 3, updatedAt: first.updatedAt + 1 };
+
+    // A tiny asynchronous IndexedDB fake makes overlapping calls exercise the
+    // persistence queue rather than relying on synchronous localStorage.
+    (globalThis as { indexedDB: IDBFactory }).indexedDB = {
+      open: () => {
+        const request = {} as IDBOpenDBRequest;
+        queueMicrotask(() => request.onerror?.(new Event("error")));
+        return request;
+      },
+    } as unknown as IDBFactory;
+    (globalThis as { localStorage: Storage }).localStorage = {
+      getItem: (key) => (storage.has(key) ? JSON.stringify(storage.get(key)) : null),
+      setItem: (key, value) => storage.set(key, JSON.parse(value)),
+      removeItem: (key) => storage.delete(key),
+      clear: () => storage.clear(),
+      key: () => null,
+      length: 0,
+    } as Storage;
+
+    await Promise.all([persistProgress(first), persistProgress(second)]);
+    await expect(persistProgress(first)).rejects.toThrow("stale revision");
+
+    (globalThis as { indexedDB: IDBFactory }).indexedDB = originalIndexedDb;
+    (globalThis as { localStorage: Storage }).localStorage = originalLocalStorage;
   });
 
   it("migrates legacy identity, readings, ending and nearest milestone", () => {

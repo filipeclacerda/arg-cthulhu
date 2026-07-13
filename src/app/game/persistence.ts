@@ -25,6 +25,11 @@ const V4_FALLBACK_STORAGE_KEY = "arg-cthulhu-progress-v4";
 const V3_FALLBACK_STORAGE_KEY = "arg-cthulhu-progress-v3";
 const HEADER_STORAGE_KEY = "arg-cthulhu-progress-header";
 const MAX_CHECKPOINTS = 3;
+export const MAX_CASE_CODE_CHARS = 140_000;
+export const MAX_CASE_CODE_COMPRESSED_BYTES = 96_000;
+export const MAX_CASE_CODE_DECOMPRESSED_BYTES = 512_000;
+
+let persistQueue: Promise<void> = Promise.resolve();
 
 const normalizeCaseAnswers = (
   value: unknown
@@ -181,6 +186,52 @@ const isProgressV5 = (value: unknown): value is ProgressStateV4 => {
     typeof parsed.puzzles === "object" &&
     PUZZLE_IDS.some((id) => Boolean(parsed.puzzles?.[id]))
   );
+};
+
+const isStringArray = (value: unknown): value is string[] =>
+  Array.isArray(value) && value.every((item) => typeof item === "string");
+
+/** Validates current-format saves after migration, before untrusted imports win. */
+const isRuntimeValidProgress = (value: unknown): value is ProgressStateV4 => {
+  if (!value || typeof value !== "object") return false;
+  const state = value as Record<string, unknown>;
+  if (
+    state.version !== 7 ||
+    typeof state.caseId !== "string" ||
+    !state.caseId ||
+    !["en", "pt-BR"].includes(state.locale as string) ||
+    !["createdAt", "updatedAt", "firstSeenAt", "lastSeenAt", "revision"].every(
+      (key) => typeof state[key] === "number" && Number.isFinite(state[key])
+    ) ||
+    (state.playerName !== null && typeof state.playerName !== "string") ||
+    typeof state.caseNotes !== "string" ||
+    !isStringArray(state.readFileIds) ||
+    !isStringArray(state.readEmailIds) ||
+    !isStringArray(state.discoveredEvidenceIds) ||
+    !isStringArray(state.visitedPageIds) ||
+    !isStringArray(state.collectedReferences) ||
+    !isStringArray(state.collectedTokens) ||
+    !isStringArray(state.insightsUnlocked) ||
+    !isStringArray(state.leadsUnlocked) ||
+    !state.flags ||
+    typeof state.flags !== "object" ||
+    !Object.values(state.flags as Record<string, unknown>).every(
+      (flag) => typeof flag === "boolean"
+    ) ||
+    !state.puzzles ||
+    typeof state.puzzles !== "object"
+  ) {
+    return false;
+  }
+  return PUZZLE_IDS.every((id) => {
+    const puzzle = (state.puzzles as Record<string, unknown>)[id];
+    return (
+      puzzle !== null &&
+      typeof puzzle === "object" &&
+      typeof (puzzle as Record<string, unknown>).attempts === "number" &&
+      Number.isFinite((puzzle as Record<string, unknown>).attempts)
+    );
+  });
 };
 
 const markSolved = (
@@ -459,24 +510,40 @@ export const persistProgress = async (
   state: ProgressStateV4,
   checkpoint = false
 ): Promise<"indexeddb" | "localstorage"> => {
-  try {
-    if (checkpoint) {
-      for (let i = MAX_CHECKPOINTS - 1; i > 0; i -= 1) {
-        const previous = await idbGet<unknown>(`${CHECKPOINT_PREFIX}${i - 1}`);
-        if (previous) await idbPut(`${CHECKPOINT_PREFIX}${i}`, previous);
+  const write = async (): Promise<"indexeddb" | "localstorage"> => {
+    const rejectStale = (current: ProgressStateV4 | null) => {
+      if (current?.caseId === state.caseId && current.revision > state.revision) {
+        throw new Error("Cannot persist a stale revision.");
       }
-      const current = await idbGet<unknown>(CURRENT_KEY);
-      if (current) await idbPut(`${CHECKPOINT_PREFIX}0`, current);
+    };
+    try {
+      const current = migrateProgress(await idbGet<unknown>(CURRENT_KEY));
+      rejectStale(current);
+      if (checkpoint) {
+        for (let i = MAX_CHECKPOINTS - 1; i > 0; i -= 1) {
+          const previous = await idbGet<unknown>(`${CHECKPOINT_PREFIX}${i - 1}`);
+          if (previous) await idbPut(`${CHECKPOINT_PREFIX}${i}`, previous);
+        }
+        if (current) await idbPut(`${CHECKPOINT_PREFIX}0`, current);
+      }
+      await idbPut(CURRENT_KEY, state);
+      writeHeader(state);
+      localStorage.setItem(FALLBACK_STORAGE_KEY, JSON.stringify(state));
+      return "indexeddb";
+    } catch (error) {
+      if (error instanceof Error && error.message.includes("stale revision")) {
+        throw error;
+      }
+      const current = readLocalFallback();
+      rejectStale(current);
+      localStorage.setItem(FALLBACK_STORAGE_KEY, JSON.stringify(state));
+      writeHeader(state);
+      return "localstorage";
     }
-    await idbPut(CURRENT_KEY, state);
-    writeHeader(state);
-    localStorage.setItem(FALLBACK_STORAGE_KEY, JSON.stringify(state));
-    return "indexeddb";
-  } catch {
-    localStorage.setItem(FALLBACK_STORAGE_KEY, JSON.stringify(state));
-    writeHeader(state);
-    return "localstorage";
-  }
+  };
+  const pending = persistQueue.then(write);
+  persistQueue = pending.then(() => undefined, () => undefined);
+  return pending;
 };
 
 export const clearCurrentProgress = async (): Promise<void> => {
@@ -541,25 +608,45 @@ const checksum = async (bytes: Uint8Array): Promise<string> => {
 export const exportCaseCode = async (
   state: ProgressStateV4
 ): Promise<string> => {
-  const compressed = zlibSync(strToU8(canonicalize(state)), { level: 9 });
-  return `MISK6.${toBase64Url(compressed)}.${await checksum(compressed)}`;
+  const source = strToU8(canonicalize(state));
+  if (source.byteLength > MAX_CASE_CODE_DECOMPRESSED_BYTES) {
+    throw new Error("Case code is too large.");
+  }
+  const compressed = zlibSync(source, { level: 9 });
+  if (compressed.byteLength > MAX_CASE_CODE_COMPRESSED_BYTES) {
+    throw new Error("Case code is too large.");
+  }
+  const code = `MISK6.${toBase64Url(compressed)}.${await checksum(compressed)}`;
+  if (code.length > MAX_CASE_CODE_CHARS) throw new Error("Case code is too large.");
+  return code;
 };
 
 export const importCaseCode = async (
   code: string
 ): Promise<ProgressStateV4> => {
+  if (code.length > MAX_CASE_CODE_CHARS) throw new Error("Case code is too large.");
   const [prefix, payload, expectedChecksum] = code.trim().split(".");
   if (!["MISK3", "MISK4", "MISK5", "MISK6"].includes(prefix) || !payload || !expectedChecksum) {
     throw new Error("This is not a MISK3, MISK4, MISK5 or MISK6 case code.");
   }
   const compressed = fromBase64Url(payload);
+  if (compressed.byteLength > MAX_CASE_CODE_COMPRESSED_BYTES) {
+    throw new Error("Case code is too large.");
+  }
   const actualChecksum = await checksum(compressed);
   if (actualChecksum !== expectedChecksum.toUpperCase()) {
     throw new Error("Case code checksum does not match.");
   }
-  const parsed = JSON.parse(strFromU8(unzlibSync(compressed)));
+  const decompressed = unzlibSync(compressed);
+  if (decompressed.byteLength > MAX_CASE_CODE_DECOMPRESSED_BYTES) {
+    throw new Error("Case code is too large.");
+  }
+  const parsed = JSON.parse(strFromU8(decompressed));
   const migrated = migrateProgress(parsed);
   if (!migrated) throw new Error("The case data is not compatible.");
+  if (!isRuntimeValidProgress(migrated)) {
+    throw new Error("The case data is malformed.");
+  }
   return {
     ...migrated,
     revision: migrated.revision + 1,

@@ -38,6 +38,7 @@ import {
 } from "../game/persistence";
 import { ABSENCE_THRESHOLD_MS } from "../utils/narrative";
 import { isStoryComplete } from "../game/endingLifecycle";
+import { SessionWriteLock } from "../game/sessionLock";
 
 type SaveStatus = "loading" | "saving" | "saved" | "error" | "readonly";
 
@@ -207,7 +208,7 @@ export const ProgressProvider = ({
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const noticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const previousHintSignature = useRef("");
-  const channelRef = useRef<BroadcastChannel | null>(null);
+  const writeLockRef = useRef<SessionWriteLock | null>(null);
 
   useEffect(() => {
     stateRef.current = state;
@@ -337,34 +338,23 @@ export const ProgressProvider = ({
   }, [isHydrated, isReadOnly]);
 
   useEffect(() => {
-    if (!isHydrated || typeof BroadcastChannel === "undefined") return;
-    const channel = new BroadcastChannel("miskatonic-case-session");
-    channelRef.current = channel;
+    if (!isHydrated) return;
     const tabId = crypto.randomUUID?.() ?? Math.random().toString(36);
-    channel.onmessage = (message) => {
-      if (!message.data || message.data.caseId !== stateRef.current.caseId) return;
-      if (message.data.type === "HELLO" && !isReadOnly) {
-        channel.postMessage({
-          type: "ACTIVE",
-          caseId: stateRef.current.caseId,
-          tabId,
-        });
-      }
-      if (message.data.type === "ACTIVE" && message.data.tabId !== tabId) {
-        setIsReadOnly(true);
-        setSaveStatus("readonly");
-      }
-    };
-    channel.postMessage({
-      type: "HELLO",
+    const lock = new SessionWriteLock({
       caseId: state.caseId,
       tabId,
+      onChange: (writable) => {
+        setIsReadOnly(!writable);
+        setSaveStatus(writable ? "saved" : "readonly");
+      },
     });
+    writeLockRef.current = lock;
+    lock.start();
     return () => {
-      channel.close();
-      channelRef.current = null;
+      lock.stop();
+      writeLockRef.current = null;
     };
-  }, [isHydrated, isReadOnly, state.caseId]);
+  }, [isHydrated, state.caseId]);
 
   useEffect(() => {
     if (!isHydrated || isReadOnly || isStoryComplete(stateRef.current)) return;
