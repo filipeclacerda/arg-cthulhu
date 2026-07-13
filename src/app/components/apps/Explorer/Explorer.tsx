@@ -15,6 +15,7 @@ import { IDENTITY_REVEAL_STAGE } from "@/app/utils/narrative";
 import { TranslationKey, useI18n } from "@/app/i18n";
 import { ChapterId } from "@/app/game/progress";
 import { useNameDegradation } from "@/app/hooks/useNameDegradation";
+import { shouldActivateDesktopItem } from "@/app/game/comfort";
 
 interface ExplorerProps {
   folderId?: string;
@@ -182,6 +183,11 @@ const Explorer = ({ folderId = "my-computer" }: ExplorerProps) => {
   };
 
   const itemCount = subfolders.length + folderFiles.length + projectedFiles.length;
+  const activateWithKeyboard = (event: React.KeyboardEvent, action: () => void) => {
+    if (!shouldActivateDesktopItem(event.key)) return;
+    event.preventDefault();
+    action();
+  };
 
   return (
     <div className="explorer">
@@ -232,7 +238,11 @@ const Explorer = ({ folderId = "my-computer" }: ExplorerProps) => {
           {currentFolder?.parentId && (
             <div
               className="explorer-item"
+              role="button"
+              tabIndex={0}
+              aria-label={t("upLabel")}
               onDoubleClick={() => setCurrentFolderId(currentFolder.parentId!)}
+              onKeyDown={(event) => activateWithKeyboard(event, () => setCurrentFolderId(currentFolder.parentId!))}
             >
               <Image className="explorer-icon" src={DEFAULT_FOLDER_ICON} alt="" width={44} height={44} />
               <p>..</p>
@@ -242,10 +252,17 @@ const Explorer = ({ folderId = "my-computer" }: ExplorerProps) => {
             <div
               key={folder.id}
               className="explorer-item"
+              role="button"
+              tabIndex={0}
+              aria-label={displayName(folder)}
               onDoubleClick={() => {
                 setSelectedFileId(null);
                 setCurrentFolderId(folder.id);
               }}
+              onKeyDown={(event) => activateWithKeyboard(event, () => {
+                setSelectedFileId(null);
+                setCurrentFolderId(folder.id);
+              })}
               title={t("doubleClickToOpen")}
             >
               <Image
@@ -266,6 +283,10 @@ const Explorer = ({ folderId = "my-computer" }: ExplorerProps) => {
               }`}
               onClick={() => setSelectedFileId(file.id)}
               onDoubleClick={() => openFile(file.id)}
+              role="button"
+              tabIndex={0}
+              aria-label={file.name}
+              onKeyDown={(event) => activateWithKeyboard(event, () => openFile(file.id))}
               title={t("doubleClickToOpen")}
             >
               {file.kind === "image" ? (
@@ -302,6 +323,10 @@ const Explorer = ({ folderId = "my-computer" }: ExplorerProps) => {
                 key={projection.instanceId}
                 className="explorer-item"
                 onDoubleClick={() => openFile(projection.sourceFileId)}
+                role="button"
+                tabIndex={0}
+                aria-label={projection.displayName}
+                onKeyDown={(event) => activateWithKeyboard(event, () => openFile(projection.sourceFileId))}
                 title={t("doubleClickToOpen")}
               >
                 {source?.kind === "image" ? (

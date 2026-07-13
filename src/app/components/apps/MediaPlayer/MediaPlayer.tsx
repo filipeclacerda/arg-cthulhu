@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useProgress } from "@/app/context/ProgressContext";
 import { useSound } from "@/app/context/SoundContext";
+import { useComfort } from "@/app/context/ComfortContext";
 import { files } from "@/app/data/filesystem";
 import { localizedTranscript } from "@/app/data/localizedNarrative";
 import "../ArgTools/style.scss";
@@ -61,6 +62,7 @@ const MediaPlayer = ({ fileId, recallDisplay = false }: { fileId: string; recall
     setFlag,
   } = useProgress();
   const { playHauntedLoop } = useSound();
+  const { settings } = useComfort();
   const [channel, setChannel] = useState<Channel>("stereo");
   const [reverse, setReverse] = useState(false);
   const [recovered, setRecovered] = useState(false);
@@ -97,6 +99,10 @@ const MediaPlayer = ({ fileId, recallDisplay = false }: { fileId: string; recall
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, []);
+
+  useEffect(() => {
+    if (audioRef.current) audioRef.current.volume = settings.mediaVolume;
+  }, [settings.mediaVolume]);
 
   if (!file) return <div className="arg-tool">{t("audioNotFound")}</div>;
 

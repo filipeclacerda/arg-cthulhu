@@ -81,6 +81,57 @@ body {
   transform: translate(-50%, 0);
 }
 
+.navigation-guard-safe-exit {
+  position: fixed;
+  right: calc(var(--ui-scale, 1) * 12px);
+  top: calc(var(--ui-scale, 1) * 12px);
+  z-index: 20001;
+  min-height: calc(var(--ui-scale, 1) * 28px);
+  font-size: calc(var(--ui-scale, 1) * 12px);
+}
+
+:focus-visible {
+  outline: 3px solid #ffff00;
+  outline-offset: 2px;
+}
+
+html[data-reduced-motion="true"] *,
+html[data-reduced-motion="true"] *::before,
+html[data-reduced-motion="true"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  scroll-behavior: auto !important;
+  transition-duration: 0.01ms !important;
+}
+
+html[data-reduced-flicker="true"] .desktop-atmosphere,
+html[data-reduced-flicker="true"] .cursor-echo,
+html[data-reduced-flicker="true"] .desktop-icon--attention {
+  animation: none !important;
+  filter: none !important;
+}
+
+html[data-high-contrast="true"] body,
+html[data-high-contrast="true"] .container,
+html[data-high-contrast="true"] .explorer,
+html[data-high-contrast="true"] .system-properties {
+  background: #000 !important;
+  background-image: none !important;
+  color: #fff !important;
+}
+
+html[data-high-contrast="true"] button,
+html[data-high-contrast="true"] input,
+html[data-high-contrast="true"] select {
+  background: #000 !important;
+  color: #fff !important;
+  border: 2px solid #fff !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: 0.01ms !important; }
+}
+
 .system-toast {
   position: fixed;
   bottom: calc(var(--ui-scale, 1) * 44px);

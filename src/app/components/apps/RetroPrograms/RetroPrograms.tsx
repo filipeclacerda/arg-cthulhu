@@ -5,6 +5,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useWindowManager } from "@/app/context/WindowManagerContext";
 import { useI18n } from "@/app/i18n";
 import { useProgress } from "@/app/context/ProgressContext";
+import { useComfort } from "@/app/context/ComfortContext";
 import { isUnlocked } from "@/app/game/unlock";
 import { RECYCLE_ENTRIES } from "@/app/data/recycleBin";
 import { files } from "@/app/data/filesystem";
@@ -165,6 +166,7 @@ export const Paint = () => {
 export const SystemProperties = () => {
   const { locale, setLocale, t } = useI18n();
   const { state } = useProgress();
+  const { settings, updateSettings } = useComfort();
   const [telemetry, setTelemetry] =
     useState<TelemetryConsent>("unknown");
 
@@ -185,6 +187,20 @@ export const SystemProperties = () => {
         <strong>Microsoft Windows 98</strong>
         <span>Second Edition</span>
         <span>4.10.2222 A</span>
+      </div>
+      <div className="system-properties__comfort">
+        <strong>{locale === "pt-BR" ? "Conforto de exibição" : "Display comfort"}</strong>
+        <label><input type="checkbox" checked={settings.reducedMotion} onChange={(event) => updateSettings({ reducedMotion: event.target.checked })} />{locale === "pt-BR" ? "Reduzir movimento" : "Reduce motion"}</label>
+        <label><input type="checkbox" checked={settings.reducedFlicker} onChange={(event) => updateSettings({ reducedFlicker: event.target.checked })} />{locale === "pt-BR" ? "Reduzir cintilação" : "Reduce flicker"}</label>
+        <label><input type="checkbox" checked={settings.highContrast} onChange={(event) => updateSettings({ highContrast: event.target.checked })} />{locale === "pt-BR" ? "Alto contraste" : "High contrast"}</label>
+        {(["ambientVolume", "effectsVolume", "mediaVolume"] as const).map((key) => (
+          <label key={key}>
+            {locale === "pt-BR"
+              ? ({ ambientVolume: "Ambiente", effectsVolume: "Efeitos", mediaVolume: "Mídia" }[key])
+              : ({ ambientVolume: "Ambient", effectsVolume: "Effects", mediaVolume: "Media" }[key])}
+            <input type="range" min="0" max="1" step="0.05" value={settings[key]} onChange={(event) => updateSettings({ [key]: Number(event.target.value) })} />
+          </label>
+        ))}
       </div>
     </div>
     <div className="system-properties__rule" />

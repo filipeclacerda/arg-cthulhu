@@ -2,12 +2,14 @@
 
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { useI18n } from "@/app/i18n";
 
 const GUARD_KEY = "__miskatonicNavigationGuard";
 const GUARD_URL_KEY = "__miskatonicNavigationGuardUrl";
 
 const NavigationGuard = () => {
   const pathname = usePathname();
+  const { locale } = useI18n();
   const [blocked, setBlocked] = useState(false);
   const noticeTimer = useRef<number | null>(null);
 
@@ -81,7 +83,7 @@ const NavigationGuard = () => {
     };
   }, [pathname]);
 
-  return (
+  return (<>
     <div
       className={`navigation-guard-notice ${
         blocked ? "navigation-guard-notice--visible" : ""
@@ -100,7 +102,14 @@ const NavigationGuard = () => {
           : "Close the sealed session from inside the relay."}
       </span>
     </div>
-  );
+    <button
+      type="button"
+      className="navigation-guard-safe-exit"
+      onClick={() => window.location.assign(pathname === "/desktop" ? "/play" : "/")}
+    >
+      {locale === "pt-BR" ? "Saída segura" : "Safe exit"}
+    </button>
+    </>);
 };
 
 export default NavigationGuard;

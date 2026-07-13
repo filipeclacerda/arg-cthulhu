@@ -12,6 +12,7 @@ import { useSound, type AmbientStage } from "../context/SoundContext";
 import { useSubliminalGlitch } from "../hooks/useSubliminalGlitch";
 import { useCorruptionPulse } from "../hooks/useCorruptionPulse";
 import { useI18n, TranslationKey } from "../i18n";
+import { shouldActivateDesktopItem } from "../game/comfort";
 import {
   OBSERVER_CONCLUSION_IDS,
   OBSERVER_CONCLUSION_LABELS,
@@ -1312,6 +1313,14 @@ const Desktop = () => {
     setSelectedDesktopAppId(null);
   };
 
+  const handleIconKeyDown = (event: React.KeyboardEvent<HTMLDivElement>, app: DesktopApp) => {
+    if (!shouldActivateDesktopItem(event.key)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    openWindow({ id: app.id, appType: app.appType, title: appLabel(app), props: app.props, maximized: app.maximized });
+    setSelectedDesktopAppId(null);
+  };
+
   if (!booted) {
     return (
       <main className="boot-splash">
@@ -1439,9 +1448,16 @@ const Desktop = () => {
               selectedDesktopAppId === app.id ? "selected" : ""
             } ${appTypeNeedsAttention(attentionPrograms, app.appType) ? "desktop-icon--attention" : ""}`}
             data-app-id={app.id}
+            role="button"
+            tabIndex={0}
+            aria-label={appLabel(app)}
             title={t("doubleClickToOpen")}
             onClick={(ev) => handleClickIcon(ev, app.id)}
             onDoubleClick={(ev) => handleDoubleClickIcon(ev, app)}
+            onKeyDown={(event) => handleIconKeyDown(event, app)}
+            onPointerUp={(event) => {
+              if (event.pointerType === "touch") handleDoubleClickIcon(event as unknown as React.MouseEvent<HTMLDivElement, MouseEvent>, app);
+            }}
           >
             <Image src={app.icon} alt={appLabel(app)} width={46} height={46} />
             <p>{appLabel(app)}</p>

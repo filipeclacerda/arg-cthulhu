@@ -25,6 +25,7 @@ type FinaleScreen =
   | "shutdown"
   | "seal_confirm"
   | "seal"
+  | "leave_blank_confirm"
   | "leave_blank"
   | "archive_self"
   | "closure";
@@ -217,6 +218,11 @@ const Finale = ({
     play("glitch");
     setScreen("archive_self");
   };
+  const handleLeaveBlank = () => {
+    chooseEnding("leave_blank");
+    play("future");
+    setScreen("leave_blank");
+  };
 
   const codaActions = (
     <div className="finale-takeover__actions finale-takeover__actions--coda">
@@ -268,12 +274,14 @@ const Finale = ({
     content = <>
       <p className="finale-takeover__step">04 / 04 — {locale === "pt-BR" ? "SELECIONAR REGISTRO CANÔNICO" : "SELECT CANONICAL RECORD"}</p>
       <pre className="finale-takeover__terminal finale-takeover__terminal--collision">{resolveTokens(t("finaleChoiceTerminal"), ctx) + witnessBlock()}</pre>
-      <div className="finale-takeover__actions"><button ref={primaryActionRef} className="button btn-lg finale-takeover__restore" onClick={() => setScreen("restore_confirm")}>{t("restoreSarahLabel")}</button><button className="button btn-lg finale-takeover__shutdown" onClick={() => setScreen("shutdown_confirm")}>{t("shutDownChoiceLabel")}</button></div>
+      <div className="finale-takeover__actions"><button ref={primaryActionRef} className="button btn-lg finale-takeover__restore" onClick={() => setScreen("restore_confirm")}>{t("restoreSarahLabel")}</button><button className="button btn-lg finale-takeover__shutdown" onClick={() => setScreen("shutdown_confirm")}>{t("shutDownChoiceLabel")}</button><button className="button btn-lg" onClick={() => setScreen("leave_blank_confirm")}>{t("leaveBlankLabel")}</button></div>
     </>;
   } else if (screen === "restore_confirm") {
     content = <><p className="finale-takeover__step">CONFIRMAÇÃO NECESSÁRIA</p><pre className="finale-takeover__terminal">{locale === "pt-BR" ? "INDEX /RESTORE S.BISHOP\n\nA OPERAÇÃO OCUPARÁ UM REGISTRO CANÔNICO.\nCONFIRMAR GRAVAÇÃO?" : "INDEX /RESTORE S.BISHOP\n\nTHIS OPERATION WILL OCCUPY ONE CANONICAL RECORD.\nCONFIRM WRITE?"}</pre><div className="finale-takeover__actions"><button ref={primaryActionRef} className="button btn-lg finale-takeover__restore" onClick={handleRestore}>{locale === "pt-BR" ? "CONCLUIR REGISTRO" : "COMPLETE RECORD"}</button>{incompleteRestoreAvailable && <button className="button" onClick={handleIncompleteRestore}>{locale === "pt-BR" ? "PRESERVAR CAMPO INCOMPLETO" : "PRESERVE INCOMPLETE FIELD"}</button>}<button className="button" onClick={() => setScreen("choice")}>{t("back")}</button></div></>;
   } else if (screen === "shutdown_confirm") {
     content = <><p className="finale-takeover__step">CONFIRMAÇÃO NECESSÁRIA</p><pre className="finale-takeover__terminal">{locale === "pt-BR" ? "SHUT DOWN RELAY-07\n\nSARAH BISHOP NÃO SERÁ RESTAURADA.\nO PRÓXIMO CAMPO CONTINUARÁ ABERTO.\n\nCONFIRMAR DESLIGAMENTO?" : "SHUT DOWN RELAY-07\n\nSARAH BISHOP WILL NOT BE RESTORED.\nTHE NEXT FIELD WILL REMAIN OPEN.\n\nCONFIRM SHUTDOWN?"}</pre><div className="finale-takeover__actions"><button ref={primaryActionRef} className="button btn-lg finale-takeover__shutdown" onClick={handleShutdown}>{t("shutDownChoiceLabel")}</button><button className="button" onClick={() => setScreen("choice")}>{t("back")}</button></div></>;
+  } else if (screen === "leave_blank_confirm") {
+    content = <><p className="finale-takeover__step">{locale === "pt-BR" ? "CONFIRMAÇÃO NECESSÁRIA" : "CONFIRMATION REQUIRED"}</p><pre className="finale-takeover__terminal">{locale === "pt-BR" ? "INDEX /LEAVE-BLANK\n\nO CAMPO EXTERNO PERMANECERÁ ABERTO.\nO RELAY NÃO SERÁ ENCERRADO.\n\nCONFIRMAR RETORNO AO CAMPO EM BRANCO?" : "INDEX /LEAVE-BLANK\n\nTHE OUTSIDE FIELD WILL REMAIN OPEN.\nTHE RELAY WILL NOT CLOSE.\n\nCONFIRM RETURN TO THE BLANK FIELD?"}</pre><div className="finale-takeover__actions"><button ref={primaryActionRef} className="button btn-lg" onClick={handleLeaveBlank}>{t("leaveBlankLabel")}</button><button className="button" onClick={() => setScreen("choice")}>{t("back")}</button></div></>;
   } else if (screen === "seal_confirm") {
     content = <><p className="finale-takeover__step">RELAY EXTERNO DETECTADO</p><pre className="finale-takeover__terminal finale-takeover__terminal--seal">{locale === "pt-BR" ? "INDEX /SEAL RELAY-07 /WITNESS ARCHIVE\n\nUM CAMPO EXTERNO SERÁ REMOVIDO.\nNENHUMA OPERAÇÃO É REVERSÍVEL." : "INDEX /SEAL RELAY-07 /WITNESS ARCHIVE\n\nONE OUTSIDE FIELD WILL BE REMOVED.\nNO OPERATION IS REVERSIBLE."}</pre><div className="finale-takeover__actions"><button ref={primaryActionRef} className="button btn-lg finale-takeover__seal" onClick={handleSeal}>{locale === "pt-BR" ? "SELAR RELAY" : "SEAL RELAY"}</button>{archiveSelfAvailable && <button className="button btn-lg finale-takeover__seal" onClick={handleArchiveSelf}>{t("archiveYourselfLabel")}</button>}</div></>;
   } else if (screen === "restore" || screen === "restore_incomplete") {

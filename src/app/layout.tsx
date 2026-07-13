@@ -4,12 +4,14 @@ import { WindowManagerProvider } from "./context/WindowManagerContext";
 import { ProgressProvider } from "./context/ProgressContext";
 import { ZoomProvider } from "./context/ZoomContext";
 import { SoundProvider } from "./context/SoundContext";
+import { ComfortProvider } from "./context/ComfortContext";
 import { WindowLayer } from "./components/WindowFrame/WindowFrame";
 import NavigationGuard from "./components/NavigationGuard/NavigationGuard";
 import SystemContextMenu from "./components/SystemContextMenu/SystemContextMenu";
 import SystemToast from "./components/SystemToast/SystemToast";
 import { PHProvider } from "./components/PHProvider/PHProvider";
 import DevToolsGate from "./components/DevTools/DevToolsGate";
+import LocaleDocumentSync from "./components/LocaleDocumentSync/LocaleDocumentSync";
 
 export const metadata: Metadata = {
   title: "The Archive Remembers Tomorrow",
@@ -27,9 +29,11 @@ export default function RootLayout({
       <body>
         <PHProvider>
         <ZoomProvider>
+          <ComfortProvider>
           <SoundProvider>
             <ProgressProvider>
               <WindowManagerProvider>
+                <LocaleDocumentSync />
                 <NavigationGuard />
                 <SystemToast />
                 <SystemContextMenu />
@@ -39,6 +43,7 @@ export default function RootLayout({
               </WindowManagerProvider>
             </ProgressProvider>
           </SoundProvider>
+          </ComfortProvider>
         </ZoomProvider>
         </PHProvider>
       </body>

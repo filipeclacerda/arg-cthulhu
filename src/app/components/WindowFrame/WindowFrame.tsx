@@ -30,6 +30,7 @@ import { useI18n } from "@/app/i18n";
 import { useProgress } from "../../context/ProgressContext";
 import { resolveWindowTitle } from "@/app/game/desktopManifestations";
 import { windowNeedsAttention } from "@/app/game/programAttention";
+import { clampWindowPosition } from "@/app/game/comfort";
 
 const renderAppContent = (
   win: WindowInstance,
@@ -94,7 +95,7 @@ const WindowFrame = ({ win }: { win: WindowInstance }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const dragOffset = useRef<{ x: number; y: number } | null>(null);
 
-  const handleMouseDown = (ev: React.MouseEvent<HTMLDivElement>) => {
+  const handlePointerDown = (ev: React.PointerEvent<HTMLDivElement>) => {
     focusWindow(win.id);
     const target = ev.target as HTMLElement;
     if (
@@ -110,13 +111,20 @@ const WindowFrame = ({ win }: { win: WindowInstance }) => {
       y: ev.clientY - rect.top,
     };
 
-    const handleMouseMove = (e: MouseEvent) => {
+    ev.currentTarget.setPointerCapture?.(ev.pointerId);
+    const handlePointerMove = (e: PointerEvent) => {
       if (!dragOffset.current || !containerRef.current) return;
-      containerRef.current.style.left = `${e.clientX - dragOffset.current.x}px`;
-      containerRef.current.style.top = `${e.clientY - dragOffset.current.y}px`;
+      const rect = containerRef.current.getBoundingClientRect();
+      const next = clampWindowPosition(
+        { x: e.clientX - dragOffset.current.x, y: e.clientY - dragOffset.current.y },
+        { width: rect.width, height: rect.height },
+        { width: window.innerWidth, height: window.innerHeight - 40 }
+      );
+      containerRef.current.style.left = `${next.x}px`;
+      containerRef.current.style.top = `${next.y}px`;
     };
 
-    const handleMouseUp = () => {
+    const handlePointerUp = () => {
       if (containerRef.current) {
         moveWindow(
           win.id,
@@ -125,12 +133,12 @@ const WindowFrame = ({ win }: { win: WindowInstance }) => {
         );
       }
       dragOffset.current = null;
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseup", handleMouseUp);
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
     };
 
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mouseup", handleMouseUp);
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", handlePointerUp);
   };
 
   if (win.minimized) return null;
@@ -144,7 +152,7 @@ const WindowFrame = ({ win }: { win: WindowInstance }) => {
         top: win.maximized ? 0 : win.position.y,
         zIndex: win.zIndex,
       }}
-      onMouseDown={handleMouseDown}
+      onPointerDown={handlePointerDown}
     >
       <WindowComponent
         title={

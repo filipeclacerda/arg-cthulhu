@@ -7,6 +7,7 @@ import React, {
   useRef,
   useState,
 } from "react";
+import { useComfort } from "./ComfortContext";
 
 const STORAGE_KEY = "arg-cthulhu-muted";
 
@@ -105,6 +106,7 @@ interface SoundContextValue {
 const SoundContext = createContext<SoundContextValue | null>(null);
 
 export const SoundProvider = ({ children }: { children: React.ReactNode }) => {
+  const { settings } = useComfort();
   const [muted, setMuted] = useState(false);
   const mutedRef = useRef(muted);
   const poolRef = useRef<Partial<Record<SoundName, HTMLAudioElement>>>({});
@@ -154,7 +156,7 @@ export const SoundProvider = ({ children }: { children: React.ReactNode }) => {
         poolRef.current[name] = audio;
       }
       audio.currentTime = 0;
-      audio.volume = SOUND_VOLUME[name];
+      audio.volume = SOUND_VOLUME[name] * settings.effectsVolume;
       void audio.play().catch(() => {});
       // Browsers often block ambience until the first deliberate interaction.
       // Any successful interface sound is also a safe point to retry the room.
@@ -169,12 +171,12 @@ export const SoundProvider = ({ children }: { children: React.ReactNode }) => {
   const clampVolume = (value: number) => Math.max(0, Math.min(1, value));
 
   // The stage's base volume, ducked by whichever owned override is quietest.
-  const effectiveAmbientVolume = (): number => {
+  const effectiveAmbientVolume = useCallback((): number => {
     const stage = ambientStageRef.current;
-    const base = stage === null ? 0 : AMBIENT_VOLUME[stage];
+    const base = stage === null ? 0 : AMBIENT_VOLUME[stage] * settings.ambientVolume;
     if (ambientOverridesRef.current.size === 0) return base;
     return clampVolume(Math.min(base, ...ambientOverridesRef.current.values()));
-  };
+  }, [settings.ambientVolume]);
 
   const fadeAmbientTo = (target: number, fadeMs = 0) => {
     const audio = ambientRef.current;
@@ -263,14 +265,18 @@ export const SoundProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       const audio = new Audio(src);
       audio.loop = true;
-      audio.volume = volume;
+      audio.volume = volume * settings.mediaVolume;
       if (!mutedRef.current) audio.play().catch(() => {});
       const timer = setTimeout(() => stopHauntedLoop(id), durationMs);
       hauntedLoopsRef.current[id] = { audio, timer };
     } catch {
       // Audio unavailable in this environment — fail silently.
     }
-  }, [stopHauntedLoop]);
+  }, [settings.mediaVolume, stopHauntedLoop]);
+
+  useEffect(() => {
+    if (ambientRef.current) ambientRef.current.volume = effectiveAmbientVolume();
+  }, [effectiveAmbientVolume]);
 
   const value: SoundContextValue = {
     muted,
