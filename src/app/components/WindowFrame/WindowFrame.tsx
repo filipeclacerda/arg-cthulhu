@@ -40,7 +40,7 @@ const renderAppContent = (
     case "explorer":
       return <Explorer folderId={win.props.folderId} />;
     case "notepad":
-      return <Notepad fileId={win.props.fileId} />;
+      return <Notepad fileId={win.props.fileId ?? ""} />;
     case "email":
       return <Email />;
     case "finale":
@@ -50,9 +50,9 @@ const renderAppContent = (
     case "messenger":
       return <Messenger initialThreadId={win.props.initialThreadId} />;
     case "image":
-      return <ImageViewer fileId={win.props.fileId} recallDisplay={win.props.recallDisplay} />;
+      return <ImageViewer fileId={win.props.fileId ?? ""} recallDisplay={win.props.recallDisplay} />;
     case "audio":
-      return <MediaPlayer fileId={win.props.fileId} recallDisplay={win.props.recallDisplay} />;
+      return <MediaPlayer fileId={win.props.fileId ?? ""} recallDisplay={win.props.recallDisplay} />;
     case "cipher-lab":
       return <CipherLab initialCiphertext={win.props.initialCiphertext} />;
     case "casefile":
@@ -64,7 +64,7 @@ const renderAppContent = (
     case "clock-properties":
       return <ClockProperties />;
     case "properties":
-      return <FileProperties fileId={win.props.fileId} />;
+      return <FileProperties fileId={win.props.fileId ?? ""} />;
     case "help":
       return <HelpCenter />;
     case "calculator":

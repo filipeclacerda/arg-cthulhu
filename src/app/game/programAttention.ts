@@ -39,7 +39,7 @@ const activityMatchesWindow = (
   win: Pick<WindowInstance, "appType" | "props">,
 ): boolean => {
   if (activity.id === "endgame") return win.appType === "finale";
-  if (activity.artifactId) return win.props.fileId === activity.artifactId;
+  if (activity.artifactId) return "fileId" in win.props && win.props.fileId === activity.artifactId;
   return win.appType === activity.program;
 };
 

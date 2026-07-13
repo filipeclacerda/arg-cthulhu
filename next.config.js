@@ -6,6 +6,8 @@
 const isDesktopBuild = process.env.BUILD_TARGET === "desktop";
 
 const nextConfig = {
+  // Playwright uses the loopback hostname for a stable local webServer URL.
+  allowedDevOrigins: ["127.0.0.1"],
   ...(isDesktopBuild
     ? {
         output: "export",

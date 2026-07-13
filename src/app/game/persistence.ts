@@ -447,8 +447,26 @@ export const hasSaveHeader = (): SaveHeader | null => {
 
 export const loadProgress = async (): Promise<LoadResult> => {
   let persistenceAvailable = true;
+  let fallback: ProgressStateV4 | null = null;
+  try {
+    fallback = readLocalFallback();
+  } catch {
+    persistenceAvailable = false;
+  }
   try {
     const current = migrateProgress(await idbGet<unknown>(CURRENT_KEY));
+    // The fallback is written in the same transaction path as IndexedDB. If
+    // a tab has just committed a newer local revision while an older IDB
+    // request resolves, resume the newer case instead of reverting locale or
+    // progress during a route transition.
+    if (fallback && (!current || fallback.updatedAt >= current.updatedAt)) {
+      return {
+        state: fallback,
+        source: "localstorage",
+        recovered: false,
+        persistenceAvailable,
+      };
+    }
     if (current) {
       return {
         state: current,
@@ -475,7 +493,6 @@ export const loadProgress = async (): Promise<LoadResult> => {
   }
 
   try {
-    const fallback = readLocalFallback();
     if (fallback) {
       return {
         state: fallback,

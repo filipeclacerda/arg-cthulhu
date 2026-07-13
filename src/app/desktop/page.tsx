@@ -12,7 +12,6 @@ import { useSound, type AmbientStage } from "../context/SoundContext";
 import { useSubliminalGlitch } from "../hooks/useSubliminalGlitch";
 import { useCorruptionPulse } from "../hooks/useCorruptionPulse";
 import { useI18n, TranslationKey } from "../i18n";
-import { shouldActivateDesktopItem } from "../game/comfort";
 import {
   OBSERVER_CONCLUSION_IDS,
   OBSERVER_CONCLUSION_LABELS,
@@ -21,14 +20,12 @@ import {
   localized,
 } from "../game/campaign";
 import {
-  DIEGETIC_EVENTS,
   DIEGETIC_FOCAL_WINDOW_IDS,
   DIEGETIC_SET_PIECE_WINDOW_IDS,
   DiegeticEventDefinition,
   diegeticContext,
-  diegeticEventDelayMs,
-  selectNextDiegeticEvent,
 } from "../game/diegeticEvents";
+import { useDiegeticEventCoordinator } from "../hooks/useDiegeticEventCoordinator";
 import { setFocalSetPieceActive } from "../context/diegeticFocus";
 import { resolveWindowTitle } from "../game/desktopManifestations";
 import { legacyReplyResidue } from "../game/messengerConsequences";
@@ -47,6 +44,10 @@ import {
   puzzleProgressGate,
 } from "../game/investigativeProgression";
 import { type PuzzleId } from "../game/progress";
+import { FirstSessionOrientation } from "../components/desktop/FirstSessionOrientation";
+import { DesktopIcon } from "../components/desktop/DesktopIcon";
+import { CaseCodeCopyButton } from "../components/desktop/CaseCodeCopyButton";
+import { Legacy1998Overlay } from "../components/desktop/Legacy1998Overlay";
 
 /** A discreet coordinator toast (never a window) with one action. */
 interface DiegeticToast {
@@ -68,32 +69,6 @@ interface DesktopApp {
   props?: Record<string, any>;
   maximized?: boolean;
 }
-
-const FIRST_SESSION_GUIDES = [
-  { id: "inbox", title: "Inbox", en: "Unread mail stays unread until you open it. Start here when the machine leaves a message.", pt: "Mensagens não lidas continuam assim até você abri-las. Comece aqui quando a máquina deixar uma mensagem." },
-  { id: "recent", title: "Recent Documents", en: "The archive may return a document here before it explains why. Check the dates.", pt: "O arquivo pode devolver um documento aqui antes de explicar por quê. Observe as datas." },
-  { id: "casefile", title: "Casefile", en: "Keep findings here, then connect them when the record is ready. Nothing is consumed by looking.", pt: "Guarde achados aqui e conecte-os quando o registro estiver pronto. Consultar não consome nada." },
-] as const;
-
-const FirstSessionOrientation = ({
-  locale,
-  open,
-}: { locale: "en" | "pt-BR"; open: (id: string) => void }) => {
-  const [dismissed, setDismissed] = useState<string[]>([]);
-  useEffect(() => {
-    setDismissed(FIRST_SESSION_GUIDES.filter((guide) => window.localStorage.getItem(`miskatonic-onboarding-${guide.id}`) === "dismissed").map((guide) => guide.id));
-  }, []);
-  const visible = FIRST_SESSION_GUIDES.filter((guide) => !dismissed.includes(guide.id));
-  if (!visible.length) return null;
-  return <aside className="archive-warning onboarding-orientation" role="status">
-    <small>{locale === "pt-BR" ? "NOTA DO RELÉ // PRIMEIRA SESSÃO" : "RELAY NOTE // FIRST SESSION"}</small>
-    {visible.map((guide) => <article key={guide.id}>
-      <strong>{guide.title}</strong><p>{locale === "pt-BR" ? guide.pt : guide.en}</p>
-      <button className="button" type="button" onClick={() => open(guide.id)}>{locale === "pt-BR" ? "Abrir" : "Open"}</button>
-      <button className="button" type="button" aria-label={locale === "pt-BR" ? "Dispensar orientação" : "Dismiss orientation"} onClick={() => { window.localStorage.setItem(`miskatonic-onboarding-${guide.id}`, "dismissed"); setDismissed((current) => [...current, guide.id]); }}>×</button>
-    </article>)}
-  </aside>;
-};
 
 const PUZZLE_GATE_COPY: Record<PuzzleId, { en: string; pt: string }> = {
   lot_114: {
@@ -529,7 +504,6 @@ const Desktop = () => {
     readonly: "statusReadonly",
   };
   const [warningDismissed, setWarningDismissed] = useState(false);
-  const [caseCodeCopied, setCaseCodeCopied] = useState(false);
   const [booted, setBooted] = useState(false);
   const [selectedDesktopAppId, setSelectedDesktopAppId] = useState<
     string | null
@@ -1088,34 +1062,12 @@ const Desktop = () => {
       }
     }
   };
-  const presentRef = useRef(presentDiegeticEvent);
-  useEffect(() => {
-    presentRef.current = presentDiegeticEvent;
+  useDiegeticEventCoordinator({
+    enabled: isHydrated,
+    context: diegeticContext(state),
+    gates: { focalBusy: focalBusy || recallActive, toastBusy: activeToast !== null, aftermathReview: isPostEndingDesktop },
+    present: presentDiegeticEvent,
   });
-
-  const nextEventId = isHydrated
-    ? selectNextDiegeticEvent(diegeticContext(state), {
-        focalBusy: focalBusy || recallActive,
-        toastBusy: activeToast !== null,
-        aftermathReview: isPostEndingDesktop,
-      })?.id ?? null
-    : null;
-
-  useEffect(() => {
-    if (!nextEventId) return;
-    const definition = DIEGETIC_EVENTS.find(
-      (event) => event.id === nextEventId
-    );
-    if (!definition) return;
-    const timer = setTimeout(
-      () => presentRef.current(definition),
-      diegeticEventDelayMs(definition)
-    );
-    return () => clearTimeout(timer);
-    // The narrative pause does not restart on unrelated renders: the
-    // presenter is read through a ref at fire time and a gate change changes
-    // `nextEventId`, which cancels this timer.
-  }, [nextEventId]);
 
   useEffect(() => {
     const timer = setTimeout(() => setBooted(true), 1700);
@@ -1283,43 +1235,11 @@ const Desktop = () => {
     setFlash1998(null);
   };
 
-  const onClickOffsideIcon = (
-    ev: React.MouseEvent<HTMLDivElement, MouseEvent>
-  ) => {
+  const onClickOffsideIcon = (ev: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     const target = ev.target as HTMLElement;
     if (!target.closest(".desktop-icon")) setSelectedDesktopAppId(null);
   };
 
-  const handleClickIcon = (
-    ev: React.MouseEvent<HTMLDivElement, MouseEvent>,
-    appId: string
-  ) => {
-    ev.stopPropagation();
-    setSelectedDesktopAppId(appId);
-  };
-
-  const handleDoubleClickIcon = (
-    ev: React.MouseEvent<HTMLDivElement, MouseEvent>,
-    app: DesktopApp
-  ) => {
-    ev.stopPropagation();
-    openWindow({
-      id: app.id,
-      appType: app.appType,
-      title: appLabel(app),
-      props: app.props,
-      maximized: app.maximized,
-    });
-    setSelectedDesktopAppId(null);
-  };
-
-  const handleIconKeyDown = (event: React.KeyboardEvent<HTMLDivElement>, app: DesktopApp) => {
-    if (!shouldActivateDesktopItem(event.key)) return;
-    event.preventDefault();
-    event.stopPropagation();
-    openWindow({ id: app.id, appType: app.appType, title: appLabel(app), props: app.props, maximized: app.maximized });
-    setSelectedDesktopAppId(null);
-  };
 
   if (!booted) {
     return (
@@ -1441,28 +1361,9 @@ const Desktop = () => {
         </div>
       </div>
       <div id="desktop-icons" onClick={(ev) => onClickOffsideIcon(ev)}>
-        {desktopApps.map((app) => (
-          <div
-            key={app.id}
-            className={`desktop-icon ${
-              selectedDesktopAppId === app.id ? "selected" : ""
-            } ${appTypeNeedsAttention(attentionPrograms, app.appType) ? "desktop-icon--attention" : ""}`}
-            data-app-id={app.id}
-            role="button"
-            tabIndex={0}
-            aria-label={appLabel(app)}
-            title={t("doubleClickToOpen")}
-            onClick={(ev) => handleClickIcon(ev, app.id)}
-            onDoubleClick={(ev) => handleDoubleClickIcon(ev, app)}
-            onKeyDown={(event) => handleIconKeyDown(event, app)}
-            onPointerUp={(event) => {
-              if (event.pointerType === "touch") handleDoubleClickIcon(event as unknown as React.MouseEvent<HTMLDivElement, MouseEvent>, app);
-            }}
-          >
-            <Image src={app.icon} alt={appLabel(app)} width={46} height={46} />
-            <p>{appLabel(app)}</p>
-          </div>
-        ))}
+        {desktopApps.map((app) => <DesktopIcon key={app.id} id={app.id} label={appLabel(app)} icon={app.icon}
+          selected={selectedDesktopAppId === app.id} attention={appTypeNeedsAttention(attentionPrograms, app.appType)}
+          onSelect={() => setSelectedDesktopAppId(app.id)} onOpen={() => { openWindow({ id: app.id, appType: app.appType, title: appLabel(app), props: app.props, maximized: app.maximized }); setSelectedDesktopAppId(null); }} />)}
       </div>
       <section className="desktop-notification-stack" aria-label="System notifications">
         {!warningDismissed &&
@@ -1484,18 +1385,10 @@ const Desktop = () => {
                   : t("exportCaseCodeHint")}
               </p>
             </div>
-            {!isReadOnly && (
-              <button
-                className="button"
-                onClick={async () => {
-                  const code = await exportCode();
-                  await navigator.clipboard.writeText(code);
-                  setCaseCodeCopied(true);
-                }}
-              >
-                {caseCodeCopied ? t("copiedLabel") : t("copyCaseCodeLabel")}
-              </button>
-            )}
+            {!isReadOnly && <CaseCodeCopyButton copy={exportCode} labels={{
+              copy: t("copyCaseCodeLabel"), copied: t("copiedLabel"),
+              failed: state.locale === "pt-BR" ? "Não foi possível copiar o código. Tente novamente." : "The case code could not be copied. Try again.",
+            }} />}
             <button
               className="button archive-warning__close"
               aria-label={t("dismissLabel")}
@@ -1549,32 +1442,7 @@ const Desktop = () => {
         if (id === "casefile") openWindow({ id: "casefile", appType: "casefile", title: t("casefileLabel"), maximized: true });
       }} />}
       {!isPostEndingDesktop && flash1998 != null && (
-        <div
-          className="desktop-1998-overlay"
-          role="dialog"
-          aria-modal="true"
-          aria-label={
-            state.locale === "pt-BR"
-              ? "Sessão legada de 1998 detectada"
-              : "Legacy 1998 session detected"
-          }
-        >
-          <div className="desktop-1998-overlay__taskbar">
-            <span className="desktop-1998-overlay__user">M. BISHOP</span>
-            <span className="desktop-1998-overlay__clock">03:14</span>
-          </div>
-          <button type="button" className="desktop-1998-overlay__exit" onClick={closeLegacySession}>
-            RETURN_2026.EXE
-          </button>
-          <button
-            type="button"
-            className="desktop-1998-overlay__icon"
-            onClick={openMiriamAccessionFile}
-            autoFocus
-          >
-            <Image src="/icons/notepad.png" alt="" width={40} height={40} />
-            <p>accession_notes_wk3.txt</p>
-          </button>
+        <Legacy1998Overlay locale={state.locale} onExit={closeLegacySession} onOpenAccession={openMiriamAccessionFile}>
           {flash1998 === 3 && (
             <>
               <LegacyMessengerTerminal
@@ -1599,7 +1467,7 @@ const Desktop = () => {
               <pre>{String(files.find((file) => file.id === legacyFileId)?.content ?? "FILE NOT RECOVERED")}</pre>
             </section>
           )}
-        </div>
+        </Legacy1998Overlay>
       )}
     </main>
   );
