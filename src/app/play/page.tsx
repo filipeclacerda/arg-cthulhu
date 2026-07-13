@@ -10,17 +10,11 @@ import {
   isStoryComplete,
 } from "../game/endingLifecycle";
 import posthog from "posthog-js";
-import {
-  captureTelemetry,
-  getTelemetryConsent,
-  setTelemetryConsent,
-  TelemetryConsent,
-} from "../game/telemetry";
+import { getTelemetryConsent } from "../game/telemetry";
 import { useI18n } from "../i18n";
 import "./page.scss";
 
-const SARAH_USERNAME = "sarah.bishop";
-const SARAH_PASSWORD = "password";
+const VERIFIED_CREDENTIALS = "sarah.bishop / password";
 
 const BOOT_LINES: Record<Locale, string[]> = {
   en: [
@@ -62,15 +56,10 @@ export default function Home() {
   const [phase, setPhase] = useState<"sealed" | "mount">("sealed");
   const [visibleLines, setVisibleLines] = useState(0);
   const [observerName, setObserverName] = useState("");
-  const [username, setUsername] = useState(SARAH_USERNAME);
-  const [password, setPassword] = useState(SARAH_PASSWORD);
-  const [authError, setAuthError] = useState("");
   const [showImport, setShowImport] = useState(false);
   const [caseCode, setCaseCode] = useState("");
   const [casePreview, setCasePreview] = useState<ProgressStateV4 | null>(null);
   const [caseError, setCaseError] = useState("");
-  const [telemetryChoice, setTelemetryChoice] =
-    useState<TelemetryConsent>("unknown");
   const [preferencesReady, setPreferencesReady] = useState(false);
   const [hasMounted, setHasMounted] = useState(false);
   const [exportedCode, setExportedCode] = useState("");
@@ -102,8 +91,7 @@ export default function Home() {
   useEffect(() => {
     if (!isHydrated) return;
     const consent = getTelemetryConsent();
-    setTelemetryChoice(consent);
-    if (consent !== "unknown") setPreferencesReady(true);
+    setPreferencesReady(true);
   }, [isHydrated]);
 
   const hasExistingCase =
@@ -126,10 +114,6 @@ export default function Home() {
     : null;
 
   const mountImage = () => {
-    if (username !== SARAH_USERNAME || password !== SARAH_PASSWORD) {
-      setAuthError("ACCESS DENIED // recovered credentials do not match image header");
-      return;
-    }
     setPlayerName(observerName.trim() || null);
     setFlag("relay_envelope_opened");
     posthog.capture("image_mounted", {
@@ -153,20 +137,6 @@ export default function Home() {
     }
   };
 
-  const chooseDiagnostics = (consent: "granted" | "denied") => {
-    setTelemetryConsent(consent);
-    setTelemetryChoice(consent);
-    setPreferencesReady(true);
-    if (consent === "granted") {
-      posthog.opt_in_capturing();
-      captureTelemetry({
-        name: "session_start",
-        properties: { act: puzzleAct(state), locale },
-      });
-    } else {
-      posthog.opt_out_capturing();
-    }
-  };
 
   if (!hasMounted) {
     return (
@@ -207,31 +177,7 @@ export default function Home() {
               {t("portuguese")}
             </button>
           </div>
-          <div className="relay-preflight__privacy">
-            <strong>{t("telemetryTitle")}</strong>
-            <p>{t("telemetryBody")}</p>
-            <small>{t("consentCanChange")}</small>
-          </div>
-          <div className="relay-preflight__actions">
-            <button
-              type="button"
-              disabled={!isHydrated}
-              onClick={() => chooseDiagnostics("denied")}
-            >
-              {t("telemetryDecline")}
-            </button>
-            <button
-              type="button"
-              disabled={!isHydrated}
-              onClick={() => chooseDiagnostics("granted")}
-            >
-              {t("telemetryAccept")}
-            </button>
-          </div>
           {!isHydrated && <p>CHECKING LOCAL ARCHIVE...</p>}
-          {telemetryChoice !== "unknown" && (
-            <small>{telemetryChoice}</small>
-          )}
         </section>
       </main>
     );
@@ -481,32 +427,16 @@ export default function Home() {
                       placeholder={isPt ? "opcional / armazenado no log" : "optional / stored in access log"}
                     />
                   </label>
-                  <div className="relay-credentials">
-                    <label>
-                      {isPt ? "Usuário da imagem" : "Image username"}
-                      <input
-                        value={username}
-                        onChange={(event) => setUsername(event.target.value)}
-                        autoComplete="off"
-                      />
-                    </label>
-                    <label>
-                      {isPt ? "Senha recuperada" : "Recovered password"}
-                      <input
-                        type="password"
-                        value={password}
-                        onChange={(event) => setPassword(event.target.value)}
-                        autoComplete="off"
-                      />
-                    </label>
+                  <div className="relay-credentials" aria-label={isPt ? "Credenciais verificadas" : "Verified credentials"}>
+                    <strong>{isPt ? "Credenciais verificadas" : "Verified credentials"}</strong>
+                    <code>{VERIFIED_CREDENTIALS}</code>
                   </div>
                   <p className="relay-credential-source">
                     {isPt
                       ? "Credenciais recuperadas do manifesto de Alvarez:"
                       : "Credentials recovered from Alvarez upload manifest:"}
-                    <code>sarah.bishop / password</code>
+                    {isPt ? "Acesso confirmado no manifesto de upload de Alvarez." : "Access confirmed against Alvarez's upload manifest."}
                   </p>
-                  {authError && <p className="relay-error">{authError}</p>}
                   <button className="relay-command" type="submit">
                     [ {hasExistingCase
                       ? isPt ? "CONTINUAR CASO MONTADO" : "CONTINUE MOUNTED CASE"

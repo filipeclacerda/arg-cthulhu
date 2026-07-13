@@ -5,6 +5,9 @@ const CONSENT_KEY = "miskatonic-telemetry-consent";
 
 export type TelemetryConsent = "unknown" | "granted" | "denied";
 
+/** Consent is an optional preference; it must never gate access to the game. */
+export const isPlayAllowed = (_consent: TelemetryConsent): boolean => true;
+
 export const getTelemetryConsent = (): TelemetryConsent => {
   if (typeof window === "undefined") return "unknown";
   const value = window.localStorage.getItem(CONSENT_KEY);

@@ -68,6 +68,32 @@ interface DesktopApp {
   maximized?: boolean;
 }
 
+const FIRST_SESSION_GUIDES = [
+  { id: "inbox", title: "Inbox", en: "Unread mail stays unread until you open it. Start here when the machine leaves a message.", pt: "Mensagens não lidas continuam assim até você abri-las. Comece aqui quando a máquina deixar uma mensagem." },
+  { id: "recent", title: "Recent Documents", en: "The archive may return a document here before it explains why. Check the dates.", pt: "O arquivo pode devolver um documento aqui antes de explicar por quê. Observe as datas." },
+  { id: "casefile", title: "Casefile", en: "Keep findings here, then connect them when the record is ready. Nothing is consumed by looking.", pt: "Guarde achados aqui e conecte-os quando o registro estiver pronto. Consultar não consome nada." },
+] as const;
+
+const FirstSessionOrientation = ({
+  locale,
+  open,
+}: { locale: "en" | "pt-BR"; open: (id: string) => void }) => {
+  const [dismissed, setDismissed] = useState<string[]>([]);
+  useEffect(() => {
+    setDismissed(FIRST_SESSION_GUIDES.filter((guide) => window.localStorage.getItem(`miskatonic-onboarding-${guide.id}`) === "dismissed").map((guide) => guide.id));
+  }, []);
+  const visible = FIRST_SESSION_GUIDES.filter((guide) => !dismissed.includes(guide.id));
+  if (!visible.length) return null;
+  return <aside className="archive-warning onboarding-orientation" role="status">
+    <small>{locale === "pt-BR" ? "NOTA DO RELÉ // PRIMEIRA SESSÃO" : "RELAY NOTE // FIRST SESSION"}</small>
+    {visible.map((guide) => <article key={guide.id}>
+      <strong>{guide.title}</strong><p>{locale === "pt-BR" ? guide.pt : guide.en}</p>
+      <button className="button" type="button" onClick={() => open(guide.id)}>{locale === "pt-BR" ? "Abrir" : "Open"}</button>
+      <button className="button" type="button" aria-label={locale === "pt-BR" ? "Dispensar orientação" : "Dismiss orientation"} onClick={() => { window.localStorage.setItem(`miskatonic-onboarding-${guide.id}`, "dismissed"); setDismissed((current) => [...current, guide.id]); }}>×</button>
+    </article>)}
+  </aside>;
+};
+
 const PUZZLE_GATE_COPY: Record<PuzzleId, { en: string; pt: string }> = {
   lot_114: {
     en: "The catalogue is still assembling the first trail.",
@@ -261,7 +287,7 @@ const StatusSheetAlert = () => {
   const { flags, state } = useProgress();
   const { play } = useSound();
   const { openWindow } = useWindowManager();
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
   const duplicated = Boolean(flags.status_sheet_duplicated);
   const [flashed, setFlashed] = useState(false);
   const wasDuplicated = useRef(duplicated);
@@ -488,7 +514,7 @@ const Desktop = () => {
     muted,
     toggleMuted,
   } = useSound();
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
   const appLabel = (app: DesktopApp) => (app.labelKey ? t(app.labelKey) : app.label);
   const windowTitle = (win: (typeof windows)[number]) =>
     win.appType === "casefile"
@@ -1501,6 +1527,11 @@ const Desktop = () => {
           />
         )}
       </section>
+      {!isPostEndingDesktop && <FirstSessionOrientation locale={state.locale} open={(id) => {
+        if (id === "inbox") openWindow({ id: "inbox", appType: "email", title: "Outlook Express" });
+        if (id === "recent") openWindow({ id: "recent-documents", appType: "explorer", title: locale === "pt-BR" ? "Documentos recentes" : "Recent Documents", props: { folderId: "sarah" } });
+        if (id === "casefile") openWindow({ id: "casefile", appType: "casefile", title: t("casefileLabel"), maximized: true });
+      }} />}
       {!isPostEndingDesktop && flash1998 != null && (
         <div
           className="desktop-1998-overlay"

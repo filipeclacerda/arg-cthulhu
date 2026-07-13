@@ -54,16 +54,14 @@ const Email = () => {
     }));
   const visibleEmailIds = visibleEmails.map((email) => email.id).join("|");
 
-  const [selectedId, setSelectedId] = useState<string | null>(
-    visibleEmails[0]?.id ?? null
-  );
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   // Re-select the first visible email whenever the list grows (e.g. after a
   // flag fires mid-session and Sarah's live email appears).
   useEffect(() => {
     setSelectedId((prev) => {
       if (prev && visibleEmails.some((e) => e.id === prev)) return prev;
-      return visibleEmails[0]?.id ?? null;
+      return null;
     });
   }, [visibleEmailIds]); // eslint-disable-line react-hooks/exhaustive-deps
 

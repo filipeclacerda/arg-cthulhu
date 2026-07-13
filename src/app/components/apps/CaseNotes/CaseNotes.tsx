@@ -60,7 +60,7 @@ const CaseNotes = () => {
     setFlag,
   } = useProgress();
   const { openWindow } = useWindowManager();
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
   const editorRef = useRef<HTMLTextAreaElement>(null);
   const [tab, setTab] = useState<
     "notes" | "activity" | "facts" | "names" | "dates" | "codes"
@@ -226,16 +226,15 @@ const CaseNotes = () => {
       <div className="case-notes__workspace">
         <aside className="case-notes__guide">
           <p className="case-notes__eyebrow">INVESTIGATOR&apos;S WORKBOOK</p>
-          <h2>Keep what the machine makes easy to forget.</h2>
+          <h2>{locale === "pt-BR" ? "Guarde o que a máquina torna fácil esquecer." : "Keep what the machine makes easy to forget."}</h2>
           <p>
-            Record names, dates, codes and unanswered questions. Select text
-            anywhere, right-click it, then choose{" "}
-            <strong>Add selection to Case Notes</strong>.
+            {locale === "pt-BR" ? "Registre nomes, datas, códigos e perguntas sem resposta. Selecione um texto, clique com o botão direito e escolha " : "Record names, dates, codes and unanswered questions. Select text anywhere, right-click it, then choose "}
+            <strong>{locale === "pt-BR" ? "Adicionar seleção às Notas do caso" : "Add selection to Case Notes"}</strong>.
           </p>
 
           <div className="case-notes__progress">
             <div>
-              <strong>Case progress</strong>
+              <strong>{locale === "pt-BR" ? "Progresso do caso" : "Case progress"}</strong>
               <span>{solvedCount} solved</span>
             </div>
             <ol>
