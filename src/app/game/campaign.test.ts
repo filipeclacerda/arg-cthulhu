@@ -349,8 +349,8 @@ describe("campaign graph", () => {
     const counterIndex = files.find((file) => file.id === "counter_index_note");
 
     expect(directory?.unlock).toEqual({ type: "puzzleSolved", puzzleId: "margin_cipher" });
-    expect(pastPhoto?.content).toBe("/photos/office_1998_overlay.png");
-    expect(futurePhoto?.content).toBe("/photos/office_tomorrow_overlay.png");
+    expect(pastPhoto?.content).toBe("/photos/office_1998_overlay.webp");
+    expect(futurePhoto?.content).toBe("/photos/office_tomorrow_overlay.webp");
     expect(silentCall).toMatchObject({
       kind: "audio",
       unlock: { type: "puzzleSolved", puzzleId: "lineage" },

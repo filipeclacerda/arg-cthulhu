@@ -213,7 +213,7 @@ export const files: VFile[] = [
     caption: "Em: “Proof that you do, technically, still exist.”",
     comment:
       "Sarah kept this one even though she hated having her picture taken. The beige computer behind her belonged to Miriam.",
-    content: "/photos/sarah_archive_office_2026.png",
+    content: "/photos/sarah_archive_office_2026.webp",
   },
   {
     id: "photo_miriam_sarah",
@@ -232,7 +232,7 @@ export const files: VFile[] = [
     caption: "Miriam and Sarah. Seven weeks before the Whateley deposit arrived.",
     comment:
       "The monitor and tower in this photograph are the machine now being viewed. Sarah was seven when Miriam disappeared.",
-    content: "/photos/miriam_sarah_1998.png",
+    content: "/photos/miriam_sarah_1998.webp",
   },
   {
     id: "photo_sarah_em_coast",
@@ -251,7 +251,7 @@ export const files: VFile[] = [
     caption: "Sarah and Em. The trip where Sarah promised not to make everything research.",
     comment:
       "Em says the vertical shape offshore is an old piling. She does not remember seeing it when the photograph was taken.",
-    content: "/photos/sarah_em_coast_2025.png",
+    content: "/photos/sarah_em_coast_2025.webp",
   },
   {
     id: "photo_sarah_tom",
@@ -270,7 +270,7 @@ export const files: VFile[] = [
     caption: "Tom and Sarah after the Special Collections symposium.",
     comment:
       "Tom wrote on the printout: “You survived questions, lukewarm coffee, and Professor Armitage's slides.”",
-    content: "/photos/sarah_tom_campus_2024.png",
+    content: "/photos/sarah_tom_campus_2024.webp",
   },
   {
     id: "photo_bishop_birthday",
@@ -289,7 +289,7 @@ export const files: VFile[] = [
     caption: "Dad's 65th. Sarah made it before the candles burned down.",
     comment:
       "Em renamed the file three times before settling on this. The original name was everybody_act_normal.png.",
-    content: "/photos/bishop_birthday_2025.png",
+    content: "/photos/bishop_birthday_2025.webp",
   },
   {
     id: "photo_sarah_em_kitchen",
@@ -308,7 +308,7 @@ export const files: VFile[] = [
     caption: "After the birthday dishes. Em kept taking pictures until Sarah laughed.",
     comment:
       "A coast postcard on the fridge matches the shape Em later noticed in the Innsmouth photograph.",
-    content: "/photos/sarah_em_kitchen_2025.png",
+    content: "/photos/sarah_em_kitchen_2025.webp",
   },
   {
     id: "fridge_postcard_note",
@@ -347,7 +347,7 @@ Then it was waiting before we were there.`,
     caption: "Sarah's extremely serious notes from the quarterly collections meeting.",
     comment:
       "Three sea monsters, a coffee cup and a caricature labeled PROFESSOR A. None of them are evidence.",
-    content: "/photos/sarah_meeting_doodles.png",
+    content: "/photos/sarah_meeting_doodles.webp",
   },
   {
     id: "photo_sarah_bus",
@@ -366,7 +366,7 @@ Then it was waiting before we were there.`,
     caption: "Em: “She did occasionally leave the archive.”",
     comment:
       "Sarah bought ingredients for Dad's chowder and still forgot the thyme.",
-    content: "/photos/sarah_bus_2025.png",
+    content: "/photos/sarah_bus_2025.webp",
   },
   {
     id: "whateley_accession_card",
@@ -385,7 +385,7 @@ Then it was waiting before we were there.`,
     caption: "The original accession card. The Volume II field was never completed.",
     comment:
       "Blue pencil and the handwritten arrow are both attributed to Miriam Bishop.",
-    content: "/artifacts/whateley_accession_card_1998.png",
+    content: "/artifacts/whateley_accession_card_1998.webp",
   },
   {
     id: "miriam_notebook_scan",
@@ -412,7 +412,7 @@ Then it was waiting before we were there.`,
     caption: "Working notes ending on September 3, 1998.",
     comment:
       "The final catalog field says LEAVE BLANK. Sarah kept the tomato drawing with the scan.",
-    content: "/artifacts/miriam_working_notebook_1998.png",
+    content: "/artifacts/miriam_working_notebook_1998.webp",
   },
   {
     id: "dad_recipe",
@@ -678,7 +678,7 @@ Status: CLOSED — ADMINISTRATIVE`,
     caption: "Frames 11 and 13. The monitor is dark and the chair is empty in both.",
     comment:
       "Frame 12, taken between these photographs, contains the seated reflection.",
-    content: "/photos/office_frames_11_13.png",
+    content: "/photos/office_frames_11_13.webp",
   },
   {
     id: "diary",
@@ -1193,7 +1193,7 @@ The system treats these as one user at different offsets.`,
     size: "14.8 MB",
     modified: "{TOMORROW} 03:12",
     reference: "A1",
-    content: "/artifacts/114-verso.png",
+    content: "/artifacts/114-verso.webp",
   },
   {
     id: "counting_audio",
@@ -1227,7 +1227,7 @@ The system treats these as one user at different offsets.`,
     caption: "Seven dates converge on a location scraped from the chart.",
     comment:
       "Each annotation uses a different hand. The 1998 mark matches Miriam's accession pencil.",
-    content: "/artifacts/innsmouth_hydrographic_chart.png",
+    content: "/artifacts/innsmouth_hydrographic_chart.webp",
   },
   {
     id: "manuscript",
@@ -1312,7 +1312,7 @@ The office was empty when this was taken. The monitor was off. You are looking a
     caption: "Evidence photograph 2026-0316-4 / frame 12.",
     comment:
       "The evidence index describes the monitor as powered off. The seated reflection does not appear in frames 11 or 13.",
-    content: "/photos/office_after_2026.png",
+    content: "/photos/office_after_2026.webp",
   },
   {
     id: "office_1998_overlay",
@@ -1331,7 +1331,7 @@ The office was empty when this was taken. The monitor was off. You are looking a
     caption: "The same office twenty-eight years before frame 12.",
     comment:
       "The filing cabinet label is blank. Its outline does not align with any object in this exposure.",
-    content: "/photos/office_1998_overlay.png",
+    content: "/photos/office_1998_overlay.webp",
   },
   {
     id: "office_tomorrow_overlay",
@@ -1350,7 +1350,7 @@ The office was empty when this was taken. The monitor was off. You are looking a
     caption: "A third exposure indexed one day ahead of the mounted session.",
     comment:
       "The room appears older, not later. The pale vertical absence is not visible in either source alone.",
-    content: "/photos/office_tomorrow_overlay.png",
+    content: "/photos/office_tomorrow_overlay.webp",
   },
   {
     id: "directory_comparison",
@@ -1670,7 +1670,7 @@ Tom doesn't know I did this. Whoever opens the blank field after me, I need them
     caption: "Tom's upload setup before he stopped answering.",
     comment:
       "The external drive is powered. The floppy label was unreadable before the photograph was compressed.",
-    content: "/artifacts/tom_relay_disk_2026.png",
+    content: "/artifacts/tom_relay_disk_2026.webp",
     embeddedVariant: {
       id: "tom-relay-thumbnail",
       label: "SB-0316 / HOLD BLOCK 04",
@@ -1980,7 +1980,7 @@ In 1998, Miriam requested this exact box by a shelfmark that had never been assi
     caption: "The transfer box Miriam accepted in 1977, photographed after Em opened it.",
     comment:
       "The ledger inside is swollen from salt. The blank label is newer than the box.",
-    content: "/artifacts/bishop_transfer_box_1977.png",
+    content: "/artifacts/bishop_transfer_box_1977.webp",
   },
   {
     id: "bishop_transfer_inventory",

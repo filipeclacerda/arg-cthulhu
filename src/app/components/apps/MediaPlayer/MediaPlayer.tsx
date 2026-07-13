@@ -10,6 +10,7 @@ import "../ArgTools/style.scss";
 import "./style.scss";
 import { puzzleHintsFor } from "@/app/game/puzzles";
 import { useI18n } from "@/app/i18n";
+import { preferredAudioSource } from "@/app/utils/media";
 
 type Channel = "stereo" | "left" | "right";
 type CallMix = "sum" | "left" | "right";
@@ -149,9 +150,9 @@ const MediaPlayer = ({ fileId, recallDisplay = false }: { fileId: string; recall
         setFlag("silent_call_solved");
       }
       if (audioRef.current) {
-        audioRef.current.src = correct
+        audioRef.current.src = preferredAudioSource(correct
           ? "/artifacts/call-without-voice-recovered.wav"
-          : file.content;
+          : file.content);
         audioRef.current.currentTime = 0;
         try {
           await audioRef.current.play();
@@ -164,7 +165,7 @@ const MediaPlayer = ({ fileId, recallDisplay = false }: { fileId: string; recall
     if (!isPuzzleTrack) {
       setRecovered(true);
       if (audioRef.current) {
-        audioRef.current.src = file.content;
+        audioRef.current.src = preferredAudioSource(file.content);
         audioRef.current.currentTime = 0;
         try {
           await audioRef.current.play();
@@ -192,9 +193,9 @@ const MediaPlayer = ({ fileId, recallDisplay = false }: { fileId: string; recall
     }
     setRecovered(correct);
     if (audioRef.current) {
-      audioRef.current.src = correct
+      audioRef.current.src = preferredAudioSource(correct
         ? "/artifacts/counting-recovered.wav"
-        : file.content;
+        : file.content);
       audioRef.current.currentTime = 0;
       try {
         await audioRef.current.play();
@@ -354,7 +355,7 @@ const MediaPlayer = ({ fileId, recallDisplay = false }: { fileId: string; recall
           <audio
             ref={audioRef}
             controls
-            preload="metadata"
+            preload="none"
             src={file.content}
             onPause={() => {
               if (audioRef.current && !audioRef.current.ended) {

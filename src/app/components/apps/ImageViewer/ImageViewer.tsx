@@ -225,10 +225,10 @@ const ImageViewer = ({ fileId, recallDisplay = false }: { fileId: string; recall
       progress.flags.office_after_photo_changed ||
       (!progress.flags.recall_0314_started &&
         progress.assetVariantsSeen.includes("office-after-reflection-shift")))
-      ? "/photos/office_after_changed_2026.png"
+      ? "/photos/office_after_changed_2026.webp"
       : file.id === "photo_bishop_birthday" &&
           progress.puzzles.lineage.solvedAt
-        ? "/photos/bishop_birthday_empty_chair_2025.png"
+        ? "/photos/bishop_birthday_empty_chair_2025.webp"
         : file.content;
   const allTemporalLayers = Object.values(temporalLayers).every(Boolean);
   const solveTemporalOverlay = () => {
@@ -411,13 +411,13 @@ const ImageViewer = ({ fileId, recallDisplay = false }: { fileId: string; recall
               className={`image-viewer__temporal-stack image-viewer__temporal-stack--${temporalBlend}`}
             >
               {temporalLayers.past && (
-                <Image src="/photos/office_1998_overlay.png" alt="Office exposure, 1998" fill sizes="900px" priority />
+                <Image src="/photos/office_1998_overlay.webp" alt="Office exposure, 1998" fill sizes="900px" loading="lazy" />
               )}
               {temporalLayers.present && (
-                <Image key={displayedSource} src={displayedSource} alt="Office exposure, 2026" fill sizes="900px" priority />
+                <Image key={displayedSource} src={displayedSource} alt="Office exposure, 2026" fill sizes="900px" loading="lazy" />
               )}
               {temporalLayers.future && (
-                <Image src="/photos/office_tomorrow_overlay.png" alt="Office exposure, tomorrow" fill sizes="900px" priority />
+                <Image src="/photos/office_tomorrow_overlay.webp" alt="Office exposure, tomorrow" fill sizes="900px" loading="lazy" />
               )}
               {temporalSolved && (
                 <div className="image-viewer__temporal-reveal" aria-live="polite">
@@ -437,7 +437,7 @@ const ImageViewer = ({ fileId, recallDisplay = false }: { fileId: string; recall
               alt={file.caption ?? file.name}
               fill
               sizes="900px"
-              priority
+              loading="lazy"
             />
           )}
           {compareMode && comparisonFile && (

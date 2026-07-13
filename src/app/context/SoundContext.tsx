@@ -7,6 +7,7 @@ import React, {
   useRef,
   useState,
 } from "react";
+import { preferredAudioSource } from "@/app/utils/media";
 import { useComfort } from "./ComfortContext";
 
 const STORAGE_KEY = "arg-cthulhu-muted";
@@ -152,7 +153,7 @@ export const SoundProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       let audio = poolRef.current[name];
       if (!audio) {
-        audio = new Audio(SOUND_FILES[name]);
+        audio = new Audio(preferredAudioSource(SOUND_FILES[name]));
         poolRef.current[name] = audio;
       }
       audio.currentTime = 0;
@@ -215,7 +216,7 @@ export const SoundProvider = ({ children }: { children: React.ReactNode }) => {
       ambientRef.current = null;
       return;
     }
-    const nextSrc = AMBIENT_FILES[stage];
+    const nextSrc = preferredAudioSource(AMBIENT_FILES[stage]);
     const currentSrc = ambientRef.current?.getAttribute("src");
     if (!ambientRef.current || currentSrc !== nextSrc) {
       ambientRef.current?.pause();
@@ -263,7 +264,7 @@ export const SoundProvider = ({ children }: { children: React.ReactNode }) => {
   ) => {
     if (hauntedLoopsRef.current[id]) return;
     try {
-      const audio = new Audio(src);
+      const audio = new Audio(preferredAudioSource(src));
       audio.loop = true;
       audio.volume = volume * settings.mediaVolume;
       if (!mutedRef.current) audio.play().catch(() => {});
