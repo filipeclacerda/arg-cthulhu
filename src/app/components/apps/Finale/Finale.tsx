@@ -18,6 +18,7 @@ type FinaleScreen =
   | "identity"
   | "human_record"
   | "choice"
+  | "pending_return"
   | "restore_confirm"
   | "shutdown_confirm"
   | "restore"
@@ -47,6 +48,7 @@ const Finale = ({
     markEndingClosureSeen,
     state,
     setFlag,
+    clearFlag,
   } = useProgress();
   const { play } = useSound();
   const { t, locale } = useI18n();
@@ -67,6 +69,11 @@ const Finale = ({
     }
     return "intro";
   });
+  const hasPendingReturn = hasFlag("pending_return_after_absence");
+
+  useEffect(() => {
+    if (hasPendingReturn && !state.ending) setScreen("pending_return");
+  }, [hasPendingReturn, state.ending]);
 
   // The choice is the narrative boundary: looking at the mounting screen is
   // not the same as deliberately leaving the canonical record open.
@@ -219,6 +226,7 @@ const Finale = ({
     setScreen("archive_self");
   };
   const handleLeaveBlank = () => {
+    clearFlag("pending_return_after_absence");
     chooseEnding("leave_blank");
     play("future");
     setScreen("leave_blank");
@@ -248,7 +256,9 @@ const Finale = ({
   };
 
   let content: React.ReactNode;
-  if (screen === "intro") {
+  if (screen === "pending_return") {
+    content = <><p className="finale-takeover__step">RETORNO PENDENTE / PENDING RETURN</p><pre className="finale-takeover__terminal">{locale === "pt-BR" ? "O RELAY FOI ENCONTRADO APÓS UMA AUSÊNCIA.\n\nNENHUM REGISTRO FOI ENCERRADO.\nO CAMPO EM BRANCO AINDA AGUARDA UMA DECISÃO." : "THE RELAY WAS FOUND AFTER AN ABSENCE.\n\nNO RECORD WAS CLOSED.\nTHE BLANK FIELD STILL AWAITS A DECISION."}</pre><div className="finale-takeover__actions"><button ref={primaryActionRef} className="button btn-lg" onClick={() => { clearFlag("pending_return_after_absence"); setScreen("choice"); }}>{locale === "pt-BR" ? "RETOMAR ESCOLHA" : "RESUME CHOICE"}</button><button className="button" onClick={() => { clearFlag("pending_return_after_absence"); onRequestClose?.(); }}>{locale === "pt-BR" ? "CANCELAR E VOLTAR AO DESKTOP" : "CANCEL AND RETURN TO DESKTOP"}</button></div></>;
+  } else if (screen === "intro") {
     content = <>
       <p className="finale-takeover__step">01 / 04 — {locale === "pt-BR" ? "MONTANDO ÍNDICE RECUPERADO" : "MOUNTING RECOVERED INDEX"}</p>
       <pre className="finale-takeover__terminal">{locale === "pt-BR"

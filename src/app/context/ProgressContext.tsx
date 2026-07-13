@@ -98,6 +98,7 @@ interface ProgressContextValue {
   insightsUnlocked: InsightId[];
   dispatchGameEvent: (event: GameEvent) => DispatchResult;
   setFlag: (flag: string) => void;
+  clearFlag: (flag: string) => void;
   markFileRead: (fileId: string) => void;
   markEmailRead: (emailId: string) => void;
   discoverEvidence: (evidenceId: string, resourceId?: string) => void;
@@ -220,11 +221,10 @@ export const ProgressProvider = ({
       if (cancelled) return;
       const now = Date.now();
       const gap = result.state.lastSeenAt ? now - result.state.lastSeenAt : 0;
-      // Walking away from the open final field is itself an ending. If the
-      // choice screen was seen, no ending was chosen, and the observer left,
-      // the blank is committed on their return — nothing announces it.
+      // Walking away from the open final field is a recoverable pending return,
+      // not an implicit canonical ending. The Finale must ask explicitly.
       const flags = result.state.flags;
-      const leftFieldBlank =
+      const pendingReturn =
         gap > ABSENCE_THRESHOLD_MS &&
         Boolean(flags.finale_choice_seen) &&
         Boolean(flags.endgame_available) &&
@@ -241,16 +241,11 @@ export const ProgressProvider = ({
           ...(gap > ABSENCE_THRESHOLD_MS
             ? { returned_after_absence: true }
             : {}),
-          ...(leftFieldBlank ? { ending_leave_blank: true } : {}),
+          ...(pendingReturn ? { pending_return_after_absence: true } : {}),
         },
         lastSeenAt: now,
       };
-      const hydrated = leftFieldBlank
-        ? reduceGameEvent(hydratedBase, {
-            type: "CHOOSE_ENDING",
-            ending: "leave_blank",
-          }).state
-        : hydratedBase;
+      const hydrated = hydratedBase;
       dispatch({ type: "HYDRATE", state: hydrated });
       setPersistenceAvailable(result.persistenceAvailable);
       setRecoveredFromCheckpoint(result.recovered);
@@ -607,6 +602,10 @@ export const ProgressProvider = ({
     (flag: string) => dispatchGameEvent({ type: "SET_FLAG", flag }),
     [dispatchGameEvent]
   );
+  const clearFlag = useCallback(
+    (flag: string) => dispatchGameEvent({ type: "CLEAR_FLAG", flag }),
+    [dispatchGameEvent]
+  );
   const markFileRead = useCallback(
     (fileId: string) =>
       dispatchGameEvent({ type: "MARK_FILE_READ", fileId }),
@@ -795,6 +794,7 @@ export const ProgressProvider = ({
       insightsUnlocked: state.insightsUnlocked,
       dispatchGameEvent,
       setFlag,
+      clearFlag,
       markFileRead,
       markEmailRead,
       discoverEvidence,
@@ -827,6 +827,7 @@ export const ProgressProvider = ({
     [
       attemptPuzzle,
       chooseEnding,
+      clearFlag,
       collectReference,
       collectToken,
       discoverEvidence,

@@ -274,6 +274,7 @@ export type ProgressStateV3 = ProgressStateV5;
 
 export type GameEvent =
   | { type: "SET_FLAG"; flag: string }
+  | { type: "CLEAR_FLAG"; flag: string }
   | { type: "MARK_FILE_READ"; fileId: string }
   | { type: "MARK_EMAIL_READ"; emailId: string }
   | { type: "DISCOVER_EVIDENCE"; evidenceId: string; resourceId?: string }

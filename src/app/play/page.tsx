@@ -11,6 +11,7 @@ import {
 } from "../game/endingLifecycle";
 import posthog from "posthog-js";
 import { getTelemetryConsent } from "../game/telemetry";
+import { copyCaseCode } from "../game/caseCodeClipboard";
 import { useI18n } from "../i18n";
 import "./page.scss";
 
@@ -64,6 +65,7 @@ export default function Home() {
   const [hasMounted, setHasMounted] = useState(false);
   const [exportedCode, setExportedCode] = useState("");
   const [exportError, setExportError] = useState("");
+  const [copyFeedback, setCopyFeedback] = useState("");
 
   useEffect(() => {
     setHasMounted(true);
@@ -408,7 +410,13 @@ export default function Home() {
                     {exportedCode && (
                       <label>
                         {isPt ? "Código portátil do caso" : "Portable case code"}
-                        <textarea value={exportedCode} readOnly rows={3} />
+                        <textarea id="exported-case-code" value={exportedCode} readOnly rows={3} onFocus={(event) => event.currentTarget.select()} />
+                        <button type="button" className="relay-inline-command" onClick={async () => {
+                          const result = await copyCaseCode(exportedCode);
+                          setCopyFeedback(result === "copied" ? (isPt ? "Código copiado." : "Code copied.") : (isPt ? "Não foi possível copiar; o código está selecionado para copiar manualmente." : "Could not copy; the code is selected for manual copying."));
+                          if (result !== "copied") document.getElementById("exported-case-code")?.focus();
+                        }}>{isPt ? "Copiar código" : "Copy code"}</button>
+                        {copyFeedback && <p role="status">{copyFeedback}</p>}
                       </label>
                     )}
                   </div>

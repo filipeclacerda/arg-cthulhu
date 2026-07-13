@@ -419,6 +419,11 @@ export const reduceGameEvent = (
         state = { ...state, flags: { ...state.flags, [event.flag]: true } };
       }
       break;
+    case "CLEAR_FLAG":
+      if (state.flags[event.flag]) {
+        state = { ...state, flags: { ...state.flags, [event.flag]: false } };
+      }
+      break;
     case "MARK_FILE_READ":
       if (
         state.readFileIds.includes(event.fileId) &&
