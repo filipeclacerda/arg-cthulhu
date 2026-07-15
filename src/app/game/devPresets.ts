@@ -16,6 +16,7 @@ import {
   createInitialProgress,
 } from "./progress";
 import { reduceGameEvent } from "./puzzles";
+import { theoryFor } from "./theories";
 import { UnlockCondition, isUnlocked } from "./unlock";
 
 export const INSIGHT_SOLUTIONS: Record<InsightId, string[]> = {
@@ -44,10 +45,18 @@ export const applyEvents = (state: ProgressStateV5, events: GameEvent[]): Progre
   events.reduce((current, event) => reduceGameEvent(current, event).state, state);
 
 export const eventsForInsight = (id: InsightId): GameEvent[] => {
+  if (id === "second_volume") return eventsForFinding("volume_return");
   const evidenceIds = INSIGHT_SOLUTIONS[id];
+  const theory = theoryFor(id);
+  if (!theory) return [];
   return [
     ...evidenceIds.map((evidenceId): GameEvent => ({ type: "DISCOVER_EVIDENCE", evidenceId })),
-    { type: "TEST_THEORY", evidenceIds, targetInsightId: id },
+    {
+      type: "TEST_THEORY",
+      evidenceIds,
+      targetInsightId: id,
+      selectedClaimId: theory.correctClaimId,
+    },
   ];
 };
 

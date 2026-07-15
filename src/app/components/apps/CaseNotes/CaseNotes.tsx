@@ -160,6 +160,10 @@ const CaseNotes = () => {
       id: `recent-${entry.id}`,
       appType,
       title: entry.title[state.locale === "pt-BR" ? "pt" : "en"],
+      props:
+        entry.id === "deduction-ready"
+          ? { initialLens: "deductions", initialThreadId: "miriam_break" }
+          : undefined,
     });
   };
 

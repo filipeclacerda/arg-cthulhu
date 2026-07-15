@@ -147,6 +147,25 @@
     padding: calc(var(--ui-scale, 1) * 4px);
     color: #000;
 
+    .explorer-file-visual {
+      position: relative;
+      display: inline-block;
+      vertical-align: top;
+    }
+
+    .explorer-unread-mark {
+      position: absolute;
+      z-index: 1;
+      top: calc(var(--ui-scale, 1) * -7px);
+      right: calc(var(--ui-scale, 1) * -10px);
+      color: #8b0000;
+      font-family: "Courier New", monospace;
+      font-size: calc(var(--ui-scale, 1) * 22px);
+      font-weight: bold;
+      line-height: 1;
+      text-shadow: 1px 1px #fff;
+    }
+
     .explorer-icon {
       display: block;
       width: calc(var(--ui-scale, 1) * 44px);
@@ -195,6 +214,11 @@
     &:hover {
       background-color: #000080;
       color: #fff;
+
+      .explorer-unread-mark {
+        color: #ff6b6b;
+        text-shadow: 1px 1px #000;
+      }
     }
 
     &.selected {
@@ -202,6 +226,11 @@
       color: #fff;
       outline: 1px dotted #fff;
       outline-offset: -3px;
+
+      .explorer-unread-mark {
+        color: #ff6b6b;
+        text-shadow: 1px 1px #000;
+      }
     }
 
     &--special {

@@ -90,10 +90,7 @@
 
 .casefile__tools {
   min-width: 0;
-  flex: 1 1 520px;
-  display: flex;
-  align-items: center;
-  gap: 8px 10px;
+  flex: 0 1 auto;
   padding: 3px 5px;
   border: 1px solid #9a9a9a;
   box-shadow: inset 1px 1px #fff, inset -1px -1px #808080;
@@ -160,6 +157,10 @@
 }
 
 details.casefile__tools {
+  position: relative;
+  display: block;
+  margin-left: auto;
+
   summary {
     height: 24px;
     display: inline-grid;
@@ -174,19 +175,25 @@ details.casefile__tools {
     border-style: inset;
   }
 
-  > label,
-  > button {
-    margin-left: 6px;
-  }
-
-  select {
-    margin-left: 5px;
-    font: 11px Tahoma, Arial, sans-serif;
+  .casefile__tools-panel {
+    position: absolute;
+    z-index: 20;
+    top: calc(100% + 4px);
+    right: 0;
+    width: min(560px, calc(100vw - 70px));
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 10px;
+    padding: 8px;
+    border: 2px outset #efefef;
+    background: #c8c8c8;
+    box-shadow: 3px 4px 9px rgba(0, 0, 0, 0.28);
   }
 }
 
 .casefile__workspace {
-  grid-template-columns: minmax(0, 1fr) 315px;
+  grid-template-columns: minmax(0, 1fr) minmax(365px, 38%);
 }
 
 .casefile__canvas {
@@ -240,31 +247,11 @@ details.casefile__tools {
   background-color: #e2f5f6;
 }
 
-.casefile-card--relevant {
-  outline: 2px dashed rgba(255, 214, 91, 0.92);
-  outline-offset: 3px;
-}
-
-// In thread mode, yellow identifies every record that can complete the active
-// correlation. It is intentionally distinct from the blue "selected" state.
-.evidence-card.casefile-card--thread-match {
-  --card-accent: #9b7311;
-  background-color: #fff0ad;
-  box-shadow:
-    inset 0 0 0 2px #d0a321,
-    2px 3px 0 rgba(0, 0, 0, 0.36),
-    0 0 12px rgba(255, 203, 57, 0.48);
-
-  &:hover {
-    background-color: #fff6ca;
-  }
-}
-
 .casefile-card--attached {
   box-shadow:
-    0 0 0 3px #0a4c9a,
+    0 0 0 2px rgba(43, 92, 126, 0.72),
     2px 3px 0 rgba(0, 0, 0, 0.36),
-    0 0 12px rgba(52, 125, 214, 0.55);
+    0 0 8px rgba(52, 125, 214, 0.3);
 }
 
 .casefile-card__footer {
@@ -551,11 +538,11 @@ details.casefile__tools {
 
 .casefile-thread-list {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 4px;
 
   button {
-    min-height: 38px;
+    min-height: 46px;
     grid-template-columns: 22px minmax(0, 1fr);
     gap: 7px;
     padding: 6px 8px;
@@ -591,13 +578,17 @@ details.casefile__tools {
       border: 0;
       color: #70530d;
       background: #f3df9d;
-      font: 700 10px/1 "Segoe UI", Tahoma, Arial, sans-serif;
+      font: 700 11px/1 "Segoe UI", Tahoma, Arial, sans-serif;
     }
 
     span {
-      -webkit-line-clamp: 1;
-      white-space: nowrap;
+      display: -webkit-box;
+      overflow: hidden;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      white-space: normal;
       font-size: 11px;
+      line-height: 1.25;
     }
 
     &.retained i {
@@ -710,6 +701,116 @@ details.casefile__tools {
 
   span {
     color: #cfe3ff;
+  }
+}
+
+.casefile-sources {
+  margin-top: 9px;
+  padding-top: 8px;
+  border-top: 1px dotted #9a9074;
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 5px;
+  }
+
+  header strong {
+    font-size: 10px;
+    text-transform: uppercase;
+  }
+
+  header span {
+    padding: 2px 5px;
+    border: 1px solid #6f8795;
+    color: #27485b;
+    background: #dfedf1;
+    font: bold 8px "Courier New", monospace;
+  }
+
+  > p {
+    margin: 0;
+    color: #5f5849;
+    font-size: 10px;
+    line-height: 1.35;
+  }
+}
+
+.casefile-sources__list {
+  display: grid;
+  gap: 4px;
+}
+
+.casefile-sources__item {
+  min-height: 27px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 28px 28px;
+  align-items: center;
+  border: 1px solid #8098a4;
+  color: #203b49;
+  background: #edf5f7;
+  font-size: 10px;
+
+  > span {
+    overflow: hidden;
+    padding: 5px 6px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  button {
+    align-self: stretch;
+    border: 0;
+    border-left: 1px solid #a5b7bf;
+    color: #183e56;
+    background: transparent;
+    cursor: pointer;
+  }
+}
+
+.casefile-investigation-question {
+  border-color: #567b91;
+  background: linear-gradient(180deg, #f9fcfc, #edf5f7);
+
+  > span {
+    color: #28566d;
+  }
+
+  > strong {
+    color: #183e56;
+    font-size: 15px;
+    line-height: 1.4;
+  }
+}
+
+.casefile-guidance-offer,
+.casefile-guidance-result {
+  margin: 8px 0;
+  padding: 7px;
+  border-left: 3px solid #557b8d;
+  color: #2d454f;
+  background: #e7f0f2;
+  font-size: 11px;
+  line-height: 1.4;
+
+  p {
+    margin: 0;
+  }
+}
+
+.casefile-guidance-offer > div {
+  display: flex;
+  gap: 5px;
+  margin-top: 6px;
+
+  .button {
+    width: auto;
+    min-width: 92px;
+    height: 25px;
+    margin: 0;
+    font-size: 11px;
   }
 }
 
@@ -1107,6 +1208,322 @@ details.casefile__tools {
   color: #7c6e5a;
 }
 
+.casefile-contradictions article.active {
+  border-color: #6b1d24;
+  box-shadow: inset 3px 0 #6b1d24;
+}
+
+.casefile-contradictions__hypothesis {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  align-items: start;
+  gap: 5px;
+  padding: 2px 0 5px;
+  border: 0;
+  color: #5d1717;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+
+  &:disabled {
+    cursor: default;
+  }
+
+  > span {
+    padding: 0;
+    border: 0;
+    color: #7a1f27;
+    background: transparent;
+    font-size: 13px;
+  }
+}
+
+.casefile-refutation-workspace {
+  display: grid !important;
+  gap: 7px !important;
+  margin: 5px 0 0 !important;
+  padding-top: 7px;
+  border-top: 1px dotted #bd9a94;
+}
+
+.casefile-refutation-workspace__evidence {
+  min-height: 31px;
+  display: grid !important;
+  gap: 4px !important;
+  margin: 0 !important;
+
+  em {
+    color: #786c64;
+    font-size: 10px;
+  }
+
+  button {
+    width: 100%;
+    padding: 5px 6px;
+    border: 1px solid #7d8f99;
+    color: #173e54;
+    background: #e4f0f4;
+    font: 10px Tahoma, Arial, sans-serif;
+    text-align: left;
+    cursor: pointer;
+  }
+}
+
+.casefile-refutation-workspace__actions {
+  display: flex !important;
+  gap: 5px !important;
+  margin: 0 !important;
+
+  .button {
+    flex: 1;
+    margin: 0;
+  }
+}
+
+.casefile-contradictions .casefile-guidance-offer {
+  display: block;
+  margin: 0;
+
+  > div {
+    margin: 6px 0 0;
+  }
+}
+
+.casefile-contradictions .casefile-guidance-result {
+  display: block;
+  margin: 0;
+}
+
+.casefile-investigation-selectors {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+
+  > button {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 4px 8px;
+    min-height: 92px;
+    padding: 9px;
+    border: 1px solid #8f876f;
+    color: #423b2e;
+    text-align: left;
+    background: #f4f0df;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      border-color: #456f84;
+      background: #eef6f7;
+    }
+
+    &.active {
+      border: 2px solid #2d6985;
+      padding: 8px;
+      color: #173e54;
+      background: #e5f1f4;
+      box-shadow: inset 4px 0 #2d6985;
+    }
+
+    &:disabled {
+      opacity: 0.48;
+      cursor: default;
+    }
+
+    span {
+      display: grid;
+      gap: 2px;
+    }
+
+    i {
+      width: fit-content;
+      padding: 2px 4px;
+      color: #fff;
+      background: #2d6985;
+      font: 700 9px/1.1 "Courier New", monospace;
+      letter-spacing: 0.05em;
+    }
+
+    strong {
+      font: 700 13px/1.15 "Segoe UI", Tahoma, sans-serif;
+    }
+
+    small,
+    p {
+      font-size: 11px;
+      line-height: 1.25;
+    }
+
+    small {
+      color: #315d70;
+      font-weight: 700;
+    }
+
+    b {
+      color: #2d6985;
+      font: 700 12px/1 "Courier New", monospace;
+    }
+
+    p {
+      grid-column: 1 / -1;
+      margin: 2px 0 0;
+      color: #5b5549;
+    }
+  }
+}
+
+.casefile-claim-options {
+  display: grid;
+  gap: 5px;
+  margin: 9px 0;
+  padding: 8px;
+  border: 1px solid #7f9ba8;
+  background: rgba(255, 255, 255, 0.68);
+
+  legend {
+    padding: 0 4px;
+    color: #214e64;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  legend b,
+  + .casefile-evidence-step b {
+    display: inline-grid;
+    width: 18px;
+    height: 18px;
+    place-items: center;
+    border-radius: 50%;
+    color: #fff;
+    background: #2d6985;
+    font-size: 10px;
+  }
+
+  label {
+    display: grid;
+    grid-template-columns: 17px minmax(0, 1fr);
+    gap: 6px;
+    align-items: start;
+    padding: 6px;
+    border: 1px solid #c6d2d6;
+    color: #263e48;
+    background: #f8fbfb;
+    font-size: 11px;
+    line-height: 1.3;
+    cursor: pointer;
+
+    &:has(input:checked) {
+      border-color: #2d6985;
+      background: #dcecf1;
+      box-shadow: inset 3px 0 #2d6985;
+    }
+  }
+}
+
+.casefile-evidence-step {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 7px;
+  color: #214e64;
+  font-size: 11px;
+
+  span {
+    font: 700 11px "Courier New", monospace;
+  }
+}
+
+.casefile-deduction-help {
+  display: grid;
+  gap: 6px;
+  margin-top: 7px;
+
+  > .button {
+    width: fit-content;
+    min-height: 27px;
+    padding: 3px 8px;
+    font-size: 11px;
+  }
+}
+
+.casefile-investigation-question {
+  .evidence-board__theory-cards button,
+  .evidence-board__theory-actions .button,
+  .evidence-board__selection span,
+  .evidence-board__selection p,
+  .evidence-board__selection button,
+  .casefile-card__selected-tag,
+  em {
+    font-size: 11px;
+  }
+}
+
+.casefile-present-deduction {
+  font-weight: 700;
+}
+
+.casefile-deduction-confirmed {
+  display: grid;
+  gap: 5px;
+  margin: 9px 0;
+  padding: 9px;
+  border: 1px solid #a47c18;
+  background: #fff4ca;
+
+  > span,
+  > small {
+    color: #745510;
+    font: 700 11px/1.2 "Courier New", monospace;
+  }
+
+  > strong {
+    color: #3f300b;
+    font-size: 12px;
+    line-height: 1.35;
+  }
+
+  > div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  button,
+  .casefile-guidance-result--anchor button {
+    padding: 4px 6px;
+    border: 1px solid #94721f;
+    color: #533e0d;
+    background: #fff9e6;
+    font-size: 11px;
+    cursor: pointer;
+  }
+}
+
+.casefile-guidance-result--anchor button {
+  margin-top: 6px;
+  border: 1px solid #2d6985;
+  color: #173e54;
+  background: #f3fbfd;
+  font-size: 11px;
+}
+
+.casefile-deductions-empty {
+  margin: 0;
+  padding: 10px;
+  border: 1px dashed #8f876f;
+  color: #5b5549;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.casefile-card--key-record {
+  outline: 4px solid rgba(41, 137, 180, 0.58) !important;
+  outline-offset: 3px;
+  box-shadow: 0 0 0 7px rgba(41, 137, 180, 0.16), 2px 4px 8px rgba(30, 67, 84, 0.35) !important;
+}
+
 @media (max-width: 900px) {
   .casefile__header {
     align-items: stretch;
@@ -1123,5 +1540,9 @@ details.casefile__tools {
 
   .casefile__inspector {
     max-height: 260px;
+  }
+
+  .casefile-investigation-selectors {
+    grid-template-columns: 1fr;
   }
 }

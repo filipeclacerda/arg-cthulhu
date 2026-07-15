@@ -33,6 +33,14 @@ describe("desktop interaction surfaces", () => {
     expect(open).toHaveBeenCalledWith("recent");
   });
 
+  it("keeps first-session guidance out of a maximized focal surface", () => {
+    render(
+      <FirstSessionOrientation locale="pt-BR" open={vi.fn()} suppressed />
+    );
+
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+
   it("shows a visible error when clipboard access fails", async () => {
     Object.assign(navigator, { clipboard: { writeText: vi.fn().mockRejectedValue(new Error("denied")) } });
     render(<CaseCodeCopyButton copy={async () => "CASE"} labels={{ copy: "Copy", copied: "Copied", failed: "Copy failed" }} />);

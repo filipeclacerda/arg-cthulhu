@@ -161,6 +161,44 @@ describe("diegetic sound cues", () => {
     expect(findingEvents.every((event) => event.presentation.kind === "toast")).toBe(true);
     expect(new Set(findingEvents.map((event) => event.seenFlag)).size).toBe(7);
   });
+
+  it("registers one dismissible explanation for the first actionable deduction", () => {
+    const question = DIEGETIC_EVENTS.find(
+      (event) => event.id === "first_deduction_available"
+    )!;
+    const pending: UnlockContext = {
+      flags: { first_deduction_available: true },
+      discoveredEvidenceIds: [],
+      solvedPuzzleIds: [],
+      insightsUnlocked: [],
+      worldReactionsSeen: [],
+      playerChoices: [],
+      liveContactStatus: "unseen",
+    };
+
+    expect(question.presentation.kind).toBe("toast");
+    expect(question.seenFlag).toBe("first_deduction_notice_shown");
+    expect(
+      selectNextDiegeticEvent(
+        pending,
+        { focalBusy: false, toastBusy: false },
+        [question]
+      )?.id
+    ).toBe(question.id);
+    expect(
+      selectNextDiegeticEvent(
+        {
+          ...pending,
+          flags: {
+            first_deduction_available: true,
+            first_deduction_notice_shown: true,
+          },
+        },
+        { focalBusy: false, toastBusy: false },
+        [question]
+      )
+    ).toBeNull();
+  });
 });
 
 describe("live contact focus gates", () => {

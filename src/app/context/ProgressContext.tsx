@@ -39,6 +39,7 @@ import {
 import { ABSENCE_THRESHOLD_MS } from "../utils/narrative";
 import { isStoryComplete } from "../game/endingLifecycle";
 import { SessionWriteLock } from "../game/sessionLock";
+import type { HypothesisRefutationEvaluation } from "../game/casefile";
 
 type SaveStatus = "loading" | "saving" | "saved" | "error" | "readonly";
 
@@ -58,10 +59,11 @@ interface DispatchResult {
   theoryResult?: {
     insightId: string | null;
     alreadyKnown: boolean;
-    matchedCount: number;
-    requiredCount: number;
-    missingKinds: string[];
+    matchedCount?: number;
+    requiredCount?: number;
+    missingKinds?: string[];
   };
+  hypothesisResult?: HypothesisRefutationEvaluation;
   caseAnswerResult?: {
     questionId: string;
     accepted: boolean;
@@ -111,7 +113,11 @@ interface ProgressContextValue {
   collectToken: (tokenId: string) => void;
   moveBoardCard: (cardId: string, x: number, y: number) => void;
   toggleBoardConnection: (fromId: string, toId: string) => void;
-  testTheory: (evidenceIds: string[], targetInsightId?: InsightId) => DispatchResult;
+  testTheory: (
+    evidenceIds: string[],
+    targetInsightId: InsightId,
+    selectedClaimId: string
+  ) => DispatchResult;
   resetBoardLayout: () => void;
   recordSequenceAction: (action: string) => DispatchResult;
   runCommand: (command: string) => DispatchResult;
@@ -568,6 +574,7 @@ export const ProgressProvider = ({
             }
           : undefined,
         theoryResult: result.theoryResult,
+        hypothesisResult: result.hypothesisResult,
         caseAnswerResult: result.caseAnswerResult,
       };
     },
@@ -670,8 +677,17 @@ export const ProgressProvider = ({
     [dispatchGameEvent]
   );
   const testTheory = useCallback(
-    (evidenceIds: string[], targetInsightId?: InsightId) =>
-      dispatchGameEvent({ type: "TEST_THEORY", evidenceIds, targetInsightId }),
+    (
+      evidenceIds: string[],
+      targetInsightId: InsightId,
+      selectedClaimId: string
+    ) =>
+      dispatchGameEvent({
+        type: "TEST_THEORY",
+        evidenceIds,
+        targetInsightId,
+        selectedClaimId,
+      }),
     [dispatchGameEvent]
   );
   const resetBoardLayout = useCallback(

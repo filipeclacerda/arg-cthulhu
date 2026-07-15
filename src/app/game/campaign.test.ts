@@ -16,6 +16,8 @@ import {
   HYPOTHESES,
   TOKEN_SOURCE_EVIDENCE,
   TOKENS,
+  evidenceIdsForCaseAnswer,
+  evidenceIdsFromSlotSelections,
   hypothesisVerdict,
   validateCampaignGraph,
   validateStatement,
@@ -43,6 +45,27 @@ describe("campaign graph", () => {
       evidence: "ok",
       accepted: true,
     });
+  });
+
+  it("derives fact sources and discovered support without manual attachment", () => {
+    expect(
+      evidenceIdsFromSlotSelections({
+        time: "time-six-thirty",
+        intent: "intent-go-home",
+        unknown: "not-a-token",
+      })
+    ).toEqual(["lecture_draft"]);
+
+    expect(
+      evidenceIdsForCaseAnswer(
+        "sarah_intent",
+        {
+          time: "time-six-thirty",
+          intent: "intent-go-home",
+        },
+        ["solitaire_save", "dad_email", "todo"]
+      )
+    ).toEqual(["lecture_draft", "dad_email", "todo"]);
   });
 
   it("returns partial correctness for Golden-Idol-style lock-in", () => {

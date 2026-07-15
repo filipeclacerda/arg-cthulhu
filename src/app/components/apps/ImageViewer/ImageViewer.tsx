@@ -17,6 +17,7 @@ const ImageViewer = ({ fileId, recallDisplay = false }: { fileId: string; recall
   const file = files.find((candidate) => candidate.id === currentFileId);
   const {
     discoverEvidence,
+    markFileRead,
     solvePuzzle,
     isPuzzleSolved,
     state: progress,
@@ -110,6 +111,13 @@ const ImageViewer = ({ fileId, recallDisplay = false }: { fileId: string; recall
   useEffect(() => {
     setCurrentFileId(fileId);
   }, [fileId]);
+
+  useEffect(() => {
+    if (!file || recallDisplay) return;
+    markFileRead(file.id);
+    // `file.id` is the resource boundary here; the context callback is stable.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [file?.id, recallDisplay]);
 
   useEffect(() => {
     if (file?.evidenceId) discoverEvidence(file.evidenceId, file.id);

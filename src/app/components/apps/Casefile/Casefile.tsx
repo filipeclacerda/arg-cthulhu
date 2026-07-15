@@ -40,6 +40,7 @@ import {
   INSIGHT_LABELS,
   TOKENS_BY_ID,
   collectedTokensOfType,
+  evidenceIdsForCaseAnswer,
   hypothesisVerdict,
   localized,
 } from "@/app/game/campaign";
@@ -58,7 +59,6 @@ import {
   retainedFindingsFromAnswers,
   sharedEvidenceIds,
 } from "@/app/game/casefile";
-import { displayedEvidenceIds } from "@/app/game/casefile";
 import {
   CaseQuestionId,
   CHAPTER_IDS,
@@ -69,7 +69,10 @@ import {
   chapterIndex,
   type ProgressStateV5,
 } from "@/app/game/progress";
-import { THEORY_DEFINITIONS } from "@/app/game/theories";
+import {
+  THEORY_DEFINITIONS,
+  isTheoryActionable,
+} from "@/app/game/theories";
 import { caseFindingState } from "@/app/game/investigativeProgression";
 import "../ArgTools/style.scss";
 import "./evidence-board.scss";
@@ -227,19 +230,8 @@ const RECORD_PAGE_ADDRESS: Partial<Record<string, string>> = {
 
 const pairKey = (a: string, b: string): string => [a, b].sort().join("|");
 
-const sagPath = (x1: number, y1: number, x2: number, y2: number): string => {
-  const dx = x2 - x1;
-  const dy = y2 - y1;
-  const distance = Math.hypot(dx, dy) || 1;
-  const midX = (x1 + x2) / 2;
-  const midY = (y1 + y2) / 2;
-  const sag = Math.min(38, distance * 0.14);
-  const normalX = -dy / distance;
-  const normalY = dx / distance;
-  return `M ${x1} ${y1} Q ${midX + normalX * sag} ${
-    midY + normalY * sag
-  } ${x2} ${y2}`;
-};
+const connectionKeysForSelection = (ids: string[]): string[] =>
+  ids.slice(1).map((id, index) => pairKey(ids[index], id));
 
 const initials = (title: string) =>
   title
@@ -284,9 +276,11 @@ const Casefile = ({
   const {
     discoveredEvidenceIds,
     boardPositions,
+    boardConnections,
     confirmedConnections,
     moveBoardCard,
     resetBoardLayout,
+    toggleBoardConnection,
     testTheory,
     insightsUnlocked,
     caseNotes,
@@ -313,15 +307,32 @@ const Casefile = ({
     )?.id ?? visibleStatements[0]?.id ?? CASE_STATEMENTS[0].id;
 
   const [lens, setLens] = useState<CasefileLens>(initialLens);
-  const [deductionMode, setDeductionMode] = useState<"finding" | "thread">(
-    "finding"
-  );
   const [activeThreadId, setActiveThreadId] = useState<InsightId | null>(
     initialThreadId ?? null
   );
+  const [investigationView, setInvestigationView] = useState<
+    "reconstructions" | "deductions"
+  >(() =>
+    initialThreadId ||
+    !visibleStatements.some((candidate) => !state.caseAnswers[candidate.id]?.solvedAt)
+      ? "deductions"
+      : "reconstructions"
+  );
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [theoryIds, setTheoryIds] = useState<string[]>([]);
+  const [selectedClaimId, setSelectedClaimId] = useState<string | null>(null);
   const [theoryFeedback, setTheoryFeedback] = useState("");
+  const [activeHypothesisId, setActiveHypothesisId] =
+    useState<HypothesisId | null>(null);
+  const [hypothesisEvidenceIds, setHypothesisEvidenceIds] = useState<string[]>(
+    []
+  );
+  const [hypothesisFailures, setHypothesisFailures] = useState<
+    Partial<Record<HypothesisId, number>>
+  >({});
+  const [acceptedHypothesisGuidance, setAcceptedHypothesisGuidance] = useState<
+    Set<HypothesisId>
+  >(() => new Set());
   const [filter, setFilter] = useState<"all" | CasefileCategory>("all");
   const [chapterFilter, setChapterFilter] = useState<"all" | ChapterId>("all");
   const [showUnexplainedOnly, setShowUnexplainedOnly] = useState(false);
@@ -355,14 +366,10 @@ const Casefile = ({
     retained?.slots ?? {}
   );
   const [activeSlot, setActiveSlot] = useState<string | null>(null);
-  const [evidenceIds, setEvidenceIds] = useState<string[]>(
-    retained?.evidenceIds ?? []
-  );
   const [caseFeedback, setCaseFeedback] = useState("");
   const [caseFeedbackTone, setCaseFeedbackTone] = useState<
     "neutral" | "warm" | "cold"
   >("neutral");
-  const [evidenceFilter, setEvidenceFilter] = useState("");
   const [dossierCard, setDossierCard] = useState<CasefileCard | null>(null);
   const [timelineOrder, setTimelineOrder] = useState<string[]>([]);
   const [helpLegendOpen, setHelpLegendOpen] = useState(false);
@@ -389,7 +396,7 @@ const Casefile = ({
   useEffect(() => {
     if (!initialThreadId) return;
     setLens("deductions");
-    setDeductionMode("thread");
+    setInvestigationView("deductions");
     setActiveThreadId(initialThreadId);
   }, [initialThreadId]);
 
@@ -467,13 +474,16 @@ const Casefile = ({
   }, [setFlag]);
 
   const activeClaimId = claimIdForFinding(statement.id);
-  const attachedEvidenceIds = displayedEvidenceIds(
-    solved,
-    retained?.evidenceIds,
-    evidenceIds
-  );
   const lockedSlots = retained?.lockedSlots ?? [];
   const effectiveSlots = { ...(retained?.slots ?? {}), ...slotSelections };
+  const derivedEvidenceIds = evidenceIdsForCaseAnswer(
+    statement.id,
+    effectiveSlots,
+    discoveredEvidenceIds
+  );
+  const attachedEvidenceIds = solved
+    ? retained?.evidenceIds ?? derivedEvidenceIds
+    : derivedEvidenceIds;
   const selectedSlot =
     statement.slots.find((slot) => slot.key === activeSlot) ??
     statement.slots.find((slot) => !lockedSlots.includes(slot.key)) ??
@@ -561,66 +571,91 @@ const Casefile = ({
     [locale, visibleStatements]
   );
 
-  const correlationCards = useMemo<CasefileCard[]>(
-    () =>
-      THEORY_DEFINITIONS.filter(
-        (theory) =>
-          (chapterAtLeast(currentChapter, theory.availableAt) &&
-            theory.required.every((id) => discoveredEvidenceIds.includes(id)) &&
-            (!theory.anyOf || theory.anyOf.some((id) => discoveredEvidenceIds.includes(id)))) ||
-          insightsUnlocked.includes(theory.insightId)
-      ).map((theory) => {
-        const retained = insightsUnlocked.includes(theory.insightId);
-        return {
-          id: `correlation:${theory.insightId}`,
-          title: retained
-            ? localized(INSIGHT_LABELS[theory.insightId], locale)
-            : `${t("casefileThreadLabel")} ${
-                THEORY_DEFINITIONS.indexOf(theory) + 1
-              }`,
-          summary: retained
-            ? t("casefileCorrelationSummary")
-            : localized(theory.hint, locale),
-          category: "correlation",
-          claimId: `correlation:${theory.insightId}`,
-          sourceId: theory.insightId,
-        };
-      }),
-    [currentChapter, discoveredEvidenceIds, insightsUnlocked, locale, t]
-  );
-
   const availableThreads = useMemo(
     () =>
       THEORY_DEFINITIONS.filter(
         (theory) =>
-          (chapterAtLeast(currentChapter, theory.availableAt) &&
-            theory.required.every((id) => discoveredEvidenceIds.includes(id)) &&
-            (!theory.anyOf || theory.anyOf.some((id) => discoveredEvidenceIds.includes(id)))) ||
-          insightsUnlocked.includes(theory.insightId)
+          isTheoryActionable(theory, {
+            currentChapter,
+            discoveredEvidenceIds,
+            completedFindingIds: visibleStatements
+              .filter((candidate) => Boolean(state.caseAnswers[candidate.id]?.solvedAt))
+              .map((candidate) => candidate.id),
+            retainedInsightIds: insightsUnlocked,
+          })
       ),
-    [currentChapter, discoveredEvidenceIds, insightsUnlocked]
+    [
+      currentChapter,
+      discoveredEvidenceIds,
+      insightsUnlocked,
+      state.caseAnswers,
+      visibleStatements,
+    ]
   );
-  const activeThread =
-    availableThreads.find((thread) => thread.insightId === activeThreadId) ??
-    availableThreads[0];
-  const activeThreadFailures = activeThread
-    ? state.theoryAttempts.filter(
-        (attempt) =>
-          attempt.targetInsightId === activeThread.insightId && !attempt.insightId
-      ).length
-    : 0;
+  const activeThread = activeThreadId
+    ? availableThreads.find((thread) => thread.insightId === activeThreadId)
+    : undefined;
+  const activeThreadRetained = Boolean(
+    activeThread && insightsUnlocked.includes(activeThread.insightId)
+  );
+  const activeThreadAttempt = activeThread
+    ? [...state.theoryAttempts]
+        .reverse()
+        .find(
+          (attempt) =>
+            attempt.targetInsightId === activeThread.insightId &&
+            attempt.insightId === activeThread.insightId
+        )
+    : undefined;
+  const levelOneFlag = activeThread
+    ? `casefile_guidance_${activeThread.insightId}_level_1`
+    : "";
+  const levelTwoReadyFlag = activeThread
+    ? `casefile_guidance_${activeThread.insightId}_level_2_ready`
+    : "";
+  const levelTwoFlag = activeThread
+    ? `casefile_guidance_${activeThread.insightId}_level_2`
+    : "";
+  const levelOneUsed = Boolean(levelOneFlag && state.flags[levelOneFlag]);
+  const levelTwoReady = Boolean(levelTwoReadyFlag && state.flags[levelTwoReadyFlag]);
+  const levelTwoUsed = Boolean(levelTwoFlag && state.flags[levelTwoFlag]);
+
+  useEffect(() => {
+    if (lens !== "deductions" || investigationView !== "deductions") return;
+    if (
+      activeThreadId &&
+      availableThreads.some((thread) => thread.insightId === activeThreadId)
+    ) {
+      return;
+    }
+    const next =
+      availableThreads.find(
+        (thread) => !insightsUnlocked.includes(thread.insightId)
+      ) ?? availableThreads[0];
+    setActiveThreadId(next?.insightId ?? null);
+  }, [activeThreadId, availableThreads, insightsUnlocked, investigationView, lens]);
 
   const visibleHypothesisIds = useMemo(
     () =>
       (Object.keys(HYPOTHESES) as HypothesisId[]).filter(
         (hypothesisId) =>
-          (chapterAtLeast(currentChapter, HYPOTHESIS_MIN_CHAPTERS[hypothesisId]) &&
-            HYPOTHESIS_EVIDENCE_REQUIREMENTS[hypothesisId].every((id) =>
-              discoveredEvidenceIds.includes(id)
-            )) || state.hypotheses[hypothesisId]?.status === "refuted"
+          chapterAtLeast(currentChapter, HYPOTHESIS_MIN_CHAPTERS[hypothesisId]) ||
+          state.hypotheses[hypothesisId]?.status === "refuted"
       ),
-    [currentChapter, discoveredEvidenceIds, state.hypotheses]
+    [currentChapter, state.hypotheses]
   );
+
+  useEffect(() => {
+    if (lens !== "contradictions") return;
+    if (
+      activeHypothesisId &&
+      visibleHypothesisIds.includes(activeHypothesisId)
+    ) {
+      return;
+    }
+    setActiveHypothesisId(visibleHypothesisIds[0] ?? null);
+    setHypothesisEvidenceIds([]);
+  }, [activeHypothesisId, lens, visibleHypothesisIds]);
 
   const hypothesisCards = useMemo<CasefileCard[]>(
     () =>
@@ -658,12 +693,6 @@ const Casefile = ({
       position:
         boardPositions[card.id] ?? casefileClaimPosition(index, "finding"),
     }));
-    const correlations = correlationCards.map((card, index) => ({
-      card,
-      position:
-        boardPositions[card.id] ??
-        casefileClaimPosition(index, "correlation"),
-    }));
     const hypotheses =
       lens === "contradictions"
         ? hypothesisCards.map((card, index) => ({
@@ -673,10 +702,9 @@ const Casefile = ({
               casefileClaimPosition(index, "hypothesis"),
           }))
         : [];
-    return [...people, ...evidence, ...findings, ...correlations, ...hypotheses];
+    return [...people, ...evidence, ...findings, ...hypotheses];
   }, [
     boardPositions,
-    correlationCards,
     evidenceCards,
     evidenceLayout,
     findingCards,
@@ -699,10 +727,10 @@ const Casefile = ({
   );
   const pendingFindingKeys = useMemo(
     () =>
-      lens === "deductions" && deductionMode === "finding"
+      lens === "deductions" && !activeThread
         ? attachedEvidenceIds.map((id) => pairKey(activeClaimId, id))
         : [],
-    [activeClaimId, attachedEvidenceIds, deductionMode, lens]
+    [activeClaimId, activeThread, attachedEvidenceIds, lens]
   );
   const allConfirmedConnections = useMemo(
     () => Array.from(new Set([...confirmedConnections, ...solvedFindingKeys])),
@@ -715,19 +743,21 @@ const Casefile = ({
     );
     return ids;
   }, [allConfirmedConnections]);
-  const relevantEvidence = useMemo(() => {
-    if (lens === "deductions" && deductionMode === "thread" && activeThread) {
-      return new Set([
-        ...activeThread.required,
-        ...(activeThread.anyOf ?? []),
-      ]);
-    }
-    const relevant = new Set<string>([
-      ...(statement.evidence.allOf ?? []),
-      ...(statement.evidence.anyOf ?? []),
-    ]);
-    return relevant;
-  }, [activeThread, deductionMode, lens, statement]);
+  const workingSelectionKeys = useMemo(
+    () =>
+      lens === "deductions" && activeThread
+        ? connectionKeysForSelection(theoryIds)
+        : lens === "contradictions" && activeHypothesisId
+          ? connectionKeysForSelection(hypothesisEvidenceIds)
+          : [],
+    [
+      activeHypothesisId,
+      activeThread,
+      hypothesisEvidenceIds,
+      lens,
+      theoryIds,
+    ]
+  );
   const timelineEvidence = useMemo(
     () =>
       new Set(
@@ -933,6 +963,10 @@ const Casefile = ({
     () => new Set(allConfirmedConnections),
     [allConfirmedConnections]
   );
+  const personalConnectionSet = useMemo(
+    () => new Set(boardConnections),
+    [boardConnections]
+  );
   const confirmedCardIds = useMemo(() => {
     const ids = new Set<string>();
     allConfirmedConnections.forEach((key) =>
@@ -948,9 +982,19 @@ const Casefile = ({
   const allThreadKeys = useMemo(
     () =>
       Array.from(
-        new Set([...allConfirmedConnections, ...pendingFindingKeys])
+        new Set([
+          ...boardConnections,
+          ...allConfirmedConnections,
+          ...pendingFindingKeys,
+          ...workingSelectionKeys,
+        ])
       ),
-    [allConfirmedConnections, pendingFindingKeys]
+    [
+      allConfirmedConnections,
+      boardConnections,
+      pendingFindingKeys,
+      workingSelectionKeys,
+    ]
   );
   const deckCanvasBottom = useMemo(
     () =>
@@ -1008,13 +1052,12 @@ const Casefile = ({
     const saved = state.caseAnswers[id];
     setStatementId(id);
     setSlotSelections(saved?.slots ?? {});
-    setEvidenceIds(saved?.evidenceIds ?? []);
     setActiveSlot(null);
     setCaseFeedback("");
     setCaseFeedbackTone("neutral");
-    setEvidenceFilter("");
     setLens("deductions");
-    setDeductionMode("finding");
+    setInvestigationView("reconstructions");
+    setActiveThreadId(null);
     setSelectedId(claimIdForFinding(id));
   };
 
@@ -1074,18 +1117,6 @@ const Casefile = ({
     setCaseFeedback("");
   };
 
-  const toggleEvidence = (id: string) => {
-    if (solved) return;
-    setEvidenceIds((current) =>
-      current.includes(id)
-        ? current.filter((candidate) => candidate !== id)
-        : current.length < 5
-          ? [...current, id]
-          : [...current.slice(1), id]
-    );
-    setCaseFeedback("");
-  };
-
   const openRecord = (card: CasefileCard) => {
     if (card.category === "person") {
       openDossierDialog(card);
@@ -1128,7 +1159,7 @@ const Casefile = ({
     });
   };
 
-  const locateOnBoard = (cardId: string) => {
+  const locateOnBoard = (cardId: string, selectCard = true) => {
     const deck = retainedDecks.find((candidate) =>
       candidate.evidence.some((card) => card.id === cardId)
     );
@@ -1140,7 +1171,7 @@ const Casefile = ({
       setFilter("all");
       setShowUnexplainedOnly(false);
     }
-    setSelectedId(cardId);
+    if (selectCard) setSelectedId(cardId);
     const deckEvidenceIndex =
       deck?.evidence.findIndex((card) => card.id === cardId) ?? -1;
     const target =
@@ -1180,7 +1211,7 @@ const Casefile = ({
       type: "SUBMIT_CASE_ANSWER",
       questionId: statement.id,
       slotSelections: effectiveSlots,
-      evidenceIds,
+      evidenceIds: [],
     });
     const outcome = result.caseAnswerResult;
     const newlyLocked = outcome?.lockedSlots ?? [];
@@ -1212,33 +1243,40 @@ const Casefile = ({
       play("error");
       return;
     }
-    if (theoryIds.length === 0) {
+    const minimumRecords = activeThread.required.length + (activeThread.anyOf ? 1 : 0);
+    if (!selectedClaimId || theoryIds.length < minimumRecords) {
       setTheoryFeedback(t("theoryEmpty"));
       return;
     }
-    const result = testTheory(theoryIds, activeThread.insightId);
+    const result = testTheory(theoryIds, activeThread.insightId, selectedClaimId);
     const insightId = result.theoryResult?.insightId as InsightId | null;
     if (insightId) {
       setTheoryFeedback(localized(INSIGHT_LABELS[insightId], locale));
+      setTheoryIds([]);
     } else {
-      const progress = result.theoryResult;
-      const base = t("casefileThreadProgress")
-        .replace("{matched}", String(progress?.matchedCount ?? 0))
-        .replace("{required}", String(progress?.requiredCount ?? 0));
-      const kinds = progress?.missingKinds ?? [];
-      const categoryHint =
-        activeThreadFailures + 1 >= 2 && kinds.length > 0
-          ? ` ${t("casefileThreadKinds")}: ${kinds
-              .map((kind) => categoryLabel(kind as CasefileCategory))
-              .join(", ")}.`
-          : "";
-      setTheoryFeedback(`${base}${categoryHint}`);
+      if (levelOneUsed && !levelTwoUsed) setFlag(levelTwoReadyFlag);
+      setTheoryFeedback(localized(activeThread.failureCopy, locale));
     }
     if (insightId && !result.theoryResult?.alreadyKnown) {
       play("chime");
     } else if (!insightId) {
       play("error");
     }
+  };
+
+  const pinWorkingThread = () => {
+    const newKeys = workingSelectionKeys.filter(
+      (key) => !personalConnectionSet.has(key) && !confirmedSet.has(key)
+    );
+    newKeys.forEach((key) => {
+      const [fromId, toId] = key.split("|");
+      toggleBoardConnection(fromId, toId);
+    });
+    setTheoryFeedback(
+      newKeys.length > 0
+        ? t("casefileWorkingThreadPinned")
+        : t("casefileWorkingThreadAlreadyPinned")
+    );
   };
 
   const refuteHypothesis = (hypothesisId: HypothesisId) => {
@@ -1250,19 +1288,28 @@ const Casefile = ({
       play("error");
       return;
     }
-    const ids = HYPOTHESIS_EVIDENCE_REQUIREMENTS[hypothesisId];
-    if (!ids.every((id) => discoveredEvidenceIds.includes(id))) {
+    if (hypothesisEvidenceIds.length < 2) {
       setTheoryFeedback(t("casefileHypothesisEvidenceNeeded"));
       play("error");
       return;
     }
-    dispatchGameEvent({
+    const result = dispatchGameEvent({
       type: "SET_HYPOTHESIS",
       hypothesisId,
       status: "refuted",
-      evidenceIds: ids,
+      evidenceIds: hypothesisEvidenceIds,
     });
+    if (!result.hypothesisResult?.accepted) {
+      setHypothesisFailures((current) => ({
+        ...current,
+        [hypothesisId]: (current[hypothesisId] ?? 0) + 1,
+      }));
+      setTheoryFeedback(t("casefileHypothesisRejected"));
+      play("error");
+      return;
+    }
     setTheoryFeedback(localized(HYPOTHESES[hypothesisId].truth, locale));
+    setHypothesisEvidenceIds([]);
     play("chime");
   };
 
@@ -1273,23 +1320,50 @@ const Casefile = ({
       selectStatement(findingId);
       return;
     }
-    if (
-      lens === "deductions" &&
-      deductionMode === "finding" &&
-      card &&
-      card.category !== "correlation"
-    ) {
-      setSelectedId(cardId);
-      toggleEvidence(cardId);
+    if (card?.category === "correlation" && card.sourceId) {
+      setLens("deductions");
+      setActiveThreadId(card.sourceId as InsightId);
+      setTheoryIds([]);
+      setTheoryFeedback("");
+      return;
+    }
+    if (card?.category === "hypothesis" && card.sourceId) {
+      setLens("contradictions");
+      setActiveHypothesisId(card.sourceId as HypothesisId);
+      setHypothesisEvidenceIds([]);
+      setTheoryFeedback("");
       return;
     }
     if (
       lens === "deductions" &&
-      deductionMode === "thread" &&
+      !activeThread
+    ) {
+      setSelectedId((previous) => (previous === cardId ? null : cardId));
+      return;
+    }
+    if (
+      lens === "deductions" &&
+      activeThread &&
       isCorrelationCandidate(card)
     ) {
       setTheoryFeedback("");
       setTheoryIds((current) =>
+        current.includes(cardId)
+          ? current.filter((id) => id !== cardId)
+          : current.length < 4
+            ? [...current, cardId]
+            : [...current.slice(1), cardId]
+      );
+      setSelectedId(cardId);
+      return;
+    }
+    if (
+      lens === "contradictions" &&
+      activeHypothesisId &&
+      discoveredEvidenceIds.includes(cardId)
+    ) {
+      setTheoryFeedback("");
+      setHypothesisEvidenceIds((current) =>
         current.includes(cardId)
           ? current.filter((id) => id !== cardId)
           : current.length < 4
@@ -1529,22 +1603,6 @@ const Casefile = ({
     return { label: t("casefileStatusFiled"), tone: "filed" };
   };
 
-  const allCardsForLists = useMemo(
-    () =>
-      [
-        ...PERSON_CARDS.map((card) => localizeCard(card) as CasefileCard),
-        ...(evidenceCards as CasefileCard[]),
-      ],
-    [evidenceCards, localizeCard]
-  );
-  const normalizedEvidenceFilter = evidenceFilter.trim().toLowerCase();
-  const filteredListCards = allCardsForLists.filter(
-    (card) =>
-      !normalizedEvidenceFilter ||
-      card.title.toLowerCase().includes(normalizedEvidenceFilter) ||
-      card.summary.toLowerCase().includes(normalizedEvidenceFilter)
-  );
-
   const knownTimelineEvents = CASEFILE_TIMELINE_EVENTS.filter((event) =>
     discoveredEvidenceIds.includes(event.evidenceId)
   );
@@ -1616,7 +1674,54 @@ const Casefile = ({
   }, [helpLegendOpen]);
 
   const renderInspector = () => {
-    if (lens === "deductions" && deductionMode === "finding") {
+    const pendingReconstructions = visibleStatements.filter(
+      (candidate) => !state.caseAnswers[candidate.id]?.solvedAt
+    ).length;
+    const pendingDeductions = availableThreads.filter(
+      (thread) => !insightsUnlocked.includes(thread.insightId)
+    ).length;
+    const investigationSelectors = (
+      <div className="casefile-investigation-selectors" role="group">
+        <button
+          type="button"
+          className={investigationView === "reconstructions" ? "active" : ""}
+          onClick={() => {
+            setInvestigationView("reconstructions");
+            setActiveThreadId(null);
+            setTheoryFeedback("");
+          }}
+        >
+          <span>
+            {pendingReconstructions > 0 && <i>{t("casefileNextStage")}</i>}
+            <strong>{t("casefileReconstructions")}</strong>
+            <small>{t("casefileReconstructionsQuestion")}</small>
+          </span>
+          <b>{solvedFindingsVisible}/{visibleStatements.length}</b>
+          <p>{t("casefileReconstructionsDescription")}</p>
+        </button>
+        <button
+          type="button"
+          className={investigationView === "deductions" ? "active" : ""}
+          disabled={availableThreads.length === 0}
+          onClick={() => {
+            setInvestigationView("deductions");
+            setTheoryFeedback("");
+          }}
+        >
+          <span>
+            {pendingReconstructions === 0 && pendingDeductions > 0 && (
+              <i>{t("casefileNextStage")}</i>
+            )}
+            <strong>{t("casefileDeductions")}</strong>
+            <small>{t("casefileDeductionsQuestion")}</small>
+          </span>
+          <b>{availableThreads.length - pendingDeductions}/{availableThreads.length}</b>
+          <p>{t("casefileDeductionsDescription")}</p>
+        </button>
+      </div>
+    );
+
+    if (lens === "deductions" && investigationView === "reconstructions") {
       return (
         <section
           id={lensPanelId("deductions")}
@@ -1624,8 +1729,9 @@ const Casefile = ({
           role="tabpanel"
           aria-labelledby={lensTabId("deductions")}
         >
+          {investigationSelectors}
           <div className="casefile-claim-list">
-            <strong>{t("casefileFindings")}</strong>
+            <strong>{t("casefileReconstructions")}</strong>
             {visibleStatements.map((candidate) => {
               const saved = state.caseAnswers[candidate.id];
               const locked = saved?.lockedSlots.length ?? 0;
@@ -1643,34 +1749,6 @@ const Casefile = ({
                 </button>
               );
             })}
-            <strong className="casefile-claim-list__section">
-              {t("casefileCorrelations")}
-            </strong>
-            <div className="casefile-thread-list">
-              {availableThreads.map((thread, index) => {
-                const retainedThread = insightsUnlocked.includes(thread.insightId);
-                return (
-                  <button
-                    key={thread.insightId}
-                    type="button"
-                    className={retainedThread ? "retained" : ""}
-                    onClick={() => {
-                      setActiveThreadId(thread.insightId);
-                      setDeductionMode("thread");
-                      setTheoryIds([]);
-                      setTheoryFeedback("");
-                    }}
-                  >
-                    <i>{retainedThread ? "✓" : `${index + 1}`}</i>
-                    <span>
-                      {retainedThread
-                        ? localized(INSIGHT_LABELS[thread.insightId], locale)
-                        : `${t("casefileThreadLabel")} ${index + 1}`}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
           </div>
 
           <section className="casefile-reconstruction">
@@ -1692,30 +1770,42 @@ const Casefile = ({
                 )}
               </div>
             </div>
-            <div className="casefile-attached">
+            <div className="casefile-sources">
               <header>
-                <strong>
-                  {t("casefileAttachedRecords")}
-                </strong>
-                <span>{attachedEvidenceIds.length}/5</span>
+                <strong>{t("casefileEvidenceSources")}</strong>
+                <span>{t("casefileAutoFiledTag")}</span>
               </header>
               {attachedEvidenceIds.length === 0 ? (
-                <p>
-                  {t("casefileAttachedRecordsHint")}
-                </p>
+                <p>{t("casefileEvidenceSourcesHint")}</p>
               ) : (
-                attachedEvidenceIds.map((id) => (
-                  <button
-                    type="button"
-                    className="casefile-attached__item"
-                    key={id}
-                    onClick={() => toggleEvidence(id)}
-                    disabled={solved}
-                  >
-                    {cardLabelById(id)}
-                    <span>{solved ? "LOCK" : "×"}</span>
-                  </button>
-                ))
+                <div className="casefile-sources__list">
+                  {attachedEvidenceIds.map((id) => {
+                    const sourceCard = cardsById[id];
+                    return (
+                      <div className="casefile-sources__item" key={id}>
+                        <span>{cardLabelById(id)}</span>
+                        {sourceCard && (
+                          <>
+                            <button
+                              type="button"
+                              aria-label={`${t("casefileOpenRecord")} ${sourceCard.title}`}
+                              onClick={() => openRecord(sourceCard)}
+                            >
+                              ◉
+                            </button>
+                            <button
+                              type="button"
+                              aria-label={`${t("casefileLocateOnBoard")} ${sourceCard.title}`}
+                              onClick={() => locateOnBoard(sourceCard.id)}
+                            >
+                              ⌖
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               )}
             </div>
             <button
@@ -1737,7 +1827,6 @@ const Casefile = ({
                 type="button"
                 onClick={() => {
                   setActiveThreadId("second_volume");
-                  setDeductionMode("thread");
                   setTheoryIds([]);
                 }}
               >
@@ -1751,49 +1840,6 @@ const Casefile = ({
             )}
           </section>
 
-          <section className="casefile-evidence-list">
-            <input
-              type="search"
-              value={evidenceFilter}
-              onChange={(event) => setEvidenceFilter(event.target.value)}
-              placeholder={t("casefileFilterFoundations")}
-            />
-            {filteredListCards.map((card) => {
-              const selected = activeEvidenceSet.has(card.id);
-              const relevant = relevantEvidence.has(card.id);
-              return (
-                <div
-                  className={`casefile-evidence-row ${
-                    selected ? "selected" : ""
-                  } ${relevant ? "relevant" : ""}`}
-                  key={card.id}
-                >
-                  <button
-                    type="button"
-                    onClick={() => toggleEvidence(card.id)}
-                    disabled={solved}
-                  >
-                    <strong>{card.title}</strong>
-                    <small>{card.summary}</small>
-                  </button>
-                  <button
-                    type="button"
-                    aria-label={`${t("casefileOpenRecord")} ${card.title}`}
-                    onClick={() => openRecord(card)}
-                  >
-                    ◉
-                  </button>
-                  <button
-                    type="button"
-                    aria-label={`${t("casefileLocateOnBoard")} ${card.title}`}
-                    onClick={() => locateOnBoard(card.id)}
-                  >
-                    ⌖
-                  </button>
-                </div>
-              );
-            })}
-          </section>
         </section>
       );
     }
@@ -1873,76 +1919,134 @@ const Casefile = ({
         >
           <section className="casefile-contradictions">
             <strong>{t("casefileCompetingHypotheses")}</strong>
-            <p>{t("casefileNeedTwoRecordsToRefute")}</p>
+            <p>{t("casefileRefutationIntro")}</p>
             {visibleHypothesisIds.map((hypothesisId) => {
               const record = state.hypotheses[hypothesisId];
-              const requiredIds = HYPOTHESIS_EVIDENCE_REQUIREMENTS[hypothesisId];
-              const readyCount = requiredIds.filter((id) =>
-                discoveredEvidenceIds.includes(id)
-              ).length;
               const refuted = record?.status === "refuted";
               const verdict = hypothesisVerdict(hypothesisId);
               const isInconclusive = refuted && verdict === "inconclusive";
+              const active = activeHypothesisId === hypothesisId;
+              const failures = hypothesisFailures[hypothesisId] ?? 0;
+              const guidanceAccepted =
+                acceptedHypothesisGuidance.has(hypothesisId);
+              const requiredCategories = Array.from(
+                new Set(
+                  HYPOTHESIS_EVIDENCE_REQUIREMENTS[hypothesisId]
+                    .map((id) => cardsById[id]?.category)
+                    .filter((category): category is CasefileCategory =>
+                      Boolean(category)
+                    )
+                )
+              );
               return (
                 <article
                   key={hypothesisId}
-                  className={
-                    refuted
-                      ? isInconclusive
-                        ? "refuted inconclusive"
-                        : "refuted"
-                      : "locked"
-                  }
+                  className={[
+                    refuted ? "refuted" : "",
+                    isInconclusive ? "inconclusive" : "",
+                    active ? "active" : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
                 >
-                  <h4>{localized(HYPOTHESES[hypothesisId].title, locale)}</h4>
+                  <button
+                    type="button"
+                    className="casefile-contradictions__hypothesis"
+                    disabled={refuted}
+                    aria-pressed={active}
+                    onClick={() => {
+                      setActiveHypothesisId(hypothesisId);
+                      setHypothesisEvidenceIds([]);
+                      setTheoryFeedback("");
+                    }}
+                  >
+                    <span>{active ? "▸" : "○"}</span>
+                    <h4>{localized(HYPOTHESES[hypothesisId].title, locale)}</h4>
+                  </button>
                   {refuted ? (
                     <p className="casefile-contradictions__explanation">
                       {localized(HYPOTHESES[hypothesisId].truth, locale)}
                     </p>
-                  ) : (
-                    <p>{t("casefileNeedTwoRecordsToRefute")}</p>
-                  )}
-                  <div className="casefile-contradictions__progress">
-                    <strong>
-                      {readyCount}/{requiredIds.length}
-                    </strong>
-                    <span>
-                      {t("casefileRecordsFound")}
-                    </span>
-                  </div>
-                  <div className="casefile-contradictions__slots">
-                    {requiredIds.map((id) => (
-                      <span
-                        key={id}
-                        className={
-                          discoveredEvidenceIds.includes(id) ? "ready" : ""
-                        }
-                      >
-                        <span
-                          aria-hidden="true"
-                          className={`casefile-contradictions__slot-state ${
-                            discoveredEvidenceIds.includes(id)
-                              ? "casefile-contradictions__slot-state--found"
-                              : "casefile-contradictions__slot-state--missing"
-                          }`}
+                  ) : active ? (
+                    <div className="casefile-refutation-workspace">
+                      <p>{t("casefileRefutationSelectEvidence")}</p>
+                      <div className="casefile-refutation-workspace__evidence">
+                        {hypothesisEvidenceIds.length === 0 ? (
+                          <em>{t("casefileNoEvidenceSelected")}</em>
+                        ) : (
+                          hypothesisEvidenceIds.map((id) => (
+                            <button
+                              type="button"
+                              key={id}
+                              onClick={() =>
+                                setHypothesisEvidenceIds((current) =>
+                                  current.filter((item) => item !== id)
+                                )
+                              }
+                            >
+                              {cardLabelById(id)} ×
+                            </button>
+                          ))
+                        )}
+                      </div>
+                      {failures >= 2 && !guidanceAccepted && (
+                        <div className="casefile-guidance-offer">
+                          <p>{t("casefileGuidanceOffer")}</p>
+                          <div>
+                            <button
+                              type="button"
+                              className="button"
+                              onClick={() =>
+                                setAcceptedHypothesisGuidance((current) =>
+                                  new Set(current).add(hypothesisId)
+                                )
+                              }
+                            >
+                              {t("casefileAcceptGuidance")}
+                            </button>
+                            <button
+                              type="button"
+                              className="button"
+                              onClick={() =>
+                                setHypothesisFailures((current) => ({
+                                  ...current,
+                                  [hypothesisId]: 0,
+                                }))
+                              }
+                            >
+                              {t("casefileNotNow")}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                      {guidanceAccepted && (
+                        <p className="casefile-guidance-result">
+                          {t("casefileThreadKinds")}: {requiredCategories
+                            .map(categoryLabel)
+                            .join(", ")}.
+                        </p>
+                      )}
+                      <div className="casefile-refutation-workspace__actions">
+                        <button
+                          className="button"
+                          disabled={hypothesisEvidenceIds.length < 2}
+                          onClick={() => refuteHypothesis(hypothesisId)}
                         >
-                          {discoveredEvidenceIds.includes(id) ? "•" : "◯"}
-                        </span>
-                        {cardLabelById(id)}
-                      </span>
-                    ))}
-                  </div>
-                  <button
-                    className="button"
-                    disabled={refuted || readyCount < requiredIds.length}
-                    onClick={() => refuteHypothesis(hypothesisId)}
-                  >
-                    {refuted
-                      ? isInconclusive
-                        ? t("casefileInconclusive")
-                        : t("casefileRefuted")
-                      : t("casefileRefute")}
-                  </button>
+                          {t("casefileRefute")}
+                        </button>
+                        <button
+                          type="button"
+                          className="button"
+                          disabled={workingSelectionKeys.length === 0}
+                          onClick={pinWorkingThread}
+                        >
+                          {t("casefilePinWorkingThread")}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p>{t("casefileSelectHypothesis")}</p>
+                  )}
                 </article>
               );
             })}
@@ -1954,6 +2058,29 @@ const Casefile = ({
       );
     }
 
+    if (!activeThread) {
+      return (
+        <section className="casefile-inspector__stack">
+          {investigationSelectors}
+          <p className="casefile-deductions-empty">
+            {t("casefileNoActionableDeductions")}
+          </p>
+        </section>
+      );
+    }
+
+    const minimumTheoryRecords =
+      activeThread.required.length + (activeThread.anyOf ? 1 : 0);
+    const correctClaim = activeThread.claims.find(
+      (claim) => claim.id === activeThread.correctClaimId
+    );
+    const confirmedSourceIds = activeThreadAttempt?.evidenceIds ?? [
+      ...activeThread.required,
+      ...(activeThread.anyOf
+        ? activeThread.anyOf.filter((id) => discoveredEvidenceIds.includes(id)).slice(0, 1)
+        : []),
+    ];
+
     return (
       <section
         id={lensPanelId("deductions")}
@@ -1961,15 +2088,9 @@ const Casefile = ({
         role="tabpanel"
         aria-labelledby={lensTabId("deductions")}
       >
+        {investigationSelectors}
         <div className="casefile-claim-list casefile-claim-list--threads">
           <strong>{t("casefileDeductions")}</strong>
-          <button
-            type="button"
-            className="casefile-claim-list__back"
-            onClick={() => setDeductionMode("finding")}
-          >
-            <i>←</i><span>{t("casefileFindings")}</span>
-          </button>
           <div className="casefile-thread-list">
             {availableThreads.map((thread, index) => {
               const retainedThread = insightsUnlocked.includes(thread.insightId);
@@ -1983,26 +2104,78 @@ const Casefile = ({
                   onClick={() => {
                     setActiveThreadId(thread.insightId);
                     setTheoryIds([]);
+                    setSelectedClaimId(null);
                     setTheoryFeedback("");
                   }}
                 >
                   <i>{retainedThread ? "✓" : `${index + 1}`}</i>
-                  <span>{retainedThread ? localized(INSIGHT_LABELS[thread.insightId], locale) : `${t("casefileThreadLabel")} ${index + 1}`}</span>
+                  <span>
+                    {retainedThread
+                      ? localized(INSIGHT_LABELS[thread.insightId], locale)
+                      : localized(thread.question, locale)}
+                  </span>
                 </button>
               );
             })}
           </div>
         </div>
-        <section className="evidence-board__theory">
-          <span>{t("casefileCorrelationTray")}</span>
-          <strong>{activeThread ? (insightsUnlocked.includes(activeThread.insightId) ? localized(INSIGHT_LABELS[activeThread.insightId], locale) : localized(activeThread.hint, locale)) : t("theoryPrompt")}</strong>
-          <p className="casefile-correlation-hint">
-            {activeThreadFailures >= 2
-              ? t("casefileThreadKindsHint")
-              : t("casefileCorrelationHint")}
-          </p>
+        <section className="evidence-board__theory casefile-investigation-question">
+          <span>{t("casefileInvestigationQuestion")}</span>
+          <strong>
+            {activeThread
+              ? localized(activeThread.question, locale)
+              : t("theoryPrompt")}
+          </strong>
+          {activeThreadRetained ? (
+            <div className="casefile-deduction-confirmed">
+              <span>{t("casefileConfirmedThesis")}</span>
+              <strong>
+                {correctClaim
+                  ? localized(correctClaim.copy, locale)
+                  : localized(INSIGHT_LABELS[activeThread.insightId], locale)}
+              </strong>
+              <small>{t("casefileConfirmedSources")}</small>
+              <div>
+                {confirmedSourceIds.map((id) => (
+                  <button type="button" key={id} onClick={() => locateOnBoard(id)}>
+                    {cardLabelById(id)}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <>
+              <fieldset className="casefile-claim-options">
+                <legend><b>1</b> {t("casefileChooseThesis")}</legend>
+                {activeThread.claims.map((claim) => (
+                  <label key={claim.id}>
+                    <input
+                      type="radio"
+                      name={`casefile-claim-${activeThread.insightId}`}
+                      checked={selectedClaimId === claim.id}
+                      onChange={() => {
+                        setSelectedClaimId(claim.id);
+                        setTheoryFeedback("");
+                      }}
+                    />
+                    <span>{localized(claim.copy, locale)}</span>
+                  </label>
+                ))}
+              </fieldset>
+              <div className="casefile-evidence-step">
+                <strong><b>2</b> {t("casefileChooseSupportingRecords")}</strong>
+                <span>{theoryIds.length}/{minimumTheoryRecords}</span>
+              </div>
+            </>
+          )}
+          {levelOneUsed && (
+            <div className="casefile-guidance-result">
+              <strong>{t("casefileHintLabel")}</strong>
+              <p>{localized(activeThread.guidance.level1, locale)}</p>
+            </div>
+          )}
           <div className="evidence-board__theory-cards">
-            {theoryIds.length === 0 ? (
+            {activeThreadRetained ? null : theoryIds.length === 0 ? (
               <em>—</em>
                 ) : (
                   theoryIds.map((id) => (
@@ -2023,22 +2196,72 @@ const Casefile = ({
                   ))
                 )}
           </div>
-          <div className="evidence-board__theory-actions">
-            <button type="button" className="button" onClick={submitTheory}>
-              {t("testTheory")}
-            </button>
-            <button
-              type="button"
-              className="button"
-              disabled={theoryIds.length === 0}
-              onClick={() => {
-                setTheoryIds([]);
-                setTheoryFeedback("");
-              }}
-            >
-              {t("clearTheory")}
-            </button>
-          </div>
+          {!activeThreadRetained && (
+            <>
+              <div className="evidence-board__theory-actions">
+                <button
+                  type="button"
+                  className="button casefile-present-deduction"
+                  disabled={!selectedClaimId || theoryIds.length < minimumTheoryRecords}
+                  onClick={submitTheory}
+                >
+                  {t("casefilePresentDeduction")}
+                </button>
+                <button
+                  type="button"
+                  className="button"
+                  disabled={workingSelectionKeys.length === 0}
+                  onClick={pinWorkingThread}
+                >
+                  {t("casefileSaveHypothesis")}
+                </button>
+                <button
+                  type="button"
+                  className="button"
+                  disabled={theoryIds.length === 0}
+                  onClick={() => {
+                    setTheoryIds([]);
+                    setTheoryFeedback("");
+                  }}
+                >
+                  {t("clearTheory")}
+                </button>
+              </div>
+              <div className="casefile-deduction-help">
+                {!levelOneUsed && (
+                  <button type="button" className="button" onClick={() => setFlag(levelOneFlag)}>
+                    {t("casefileRequestOptionalHint")}
+                  </button>
+                )}
+                {levelOneUsed && levelTwoReady && !levelTwoUsed && (
+                  <button
+                    type="button"
+                    className="button"
+                    onClick={() => {
+                      setFlag(levelTwoFlag);
+                      locateOnBoard(activeThread.guidance.level2.evidenceId, false);
+                    }}
+                  >
+                    {t("casefileRevealKeyRecord")}
+                  </button>
+                )}
+                {levelTwoUsed && (
+                  <div className="casefile-guidance-result casefile-guidance-result--anchor">
+                    <strong>{t("casefileKeyRecordLabel")}</strong>
+                    <p>{localized(activeThread.guidance.level2.copy, locale)}</p>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        locateOnBoard(activeThread.guidance.level2.evidenceId, false)
+                      }
+                    >
+                      ⌖ {cardLabelById(activeThread.guidance.level2.evidenceId)}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
           {selectedCard && (
             <div className="evidence-board__selection">
               <span>
@@ -2067,10 +2290,14 @@ const Casefile = ({
           )}
         </section>
 
-        {insightsUnlocked.length > 0 && (
+        {availableThreads.some((thread) =>
+          insightsUnlocked.includes(thread.insightId)
+        ) && (
           <section className="evidence-board__insights">
             <strong>{t("casefileRetainedCorrelations")}</strong>
-            {insightsUnlocked.map((insightId) => (
+            {availableThreads
+              .filter((thread) => insightsUnlocked.includes(thread.insightId))
+              .map(({ insightId }) => (
               <div className="evidence-board__insight-row" key={insightId}>
                 <p>{localized(INSIGHT_LABELS[insightId], locale)}</p>
                 <button
@@ -2110,19 +2337,40 @@ const Casefile = ({
               const to = cardsById[toId];
               if (!from || !to) return null;
               const confirmed = confirmedSet.has(key);
+              const personal = personalConnectionSet.has(key);
+              const working = workingSelectionKeys.includes(key);
               return (
                 <div
                   key={key}
-                  className={confirmed ? "evidence-board__thread--confirmed" : ""}
+                  className={[
+                    confirmed ? "evidence-board__thread--confirmed" : "",
+                    personal ? "evidence-board__thread--personal" : "",
+                    working ? "evidence-board__thread--working" : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
                 >
                   <span>{from.title}</span>
-                  <i>{confirmed ? "✦" : "↔"}</i>
+                  <i>{confirmed ? "✦" : personal ? "⌁" : "↔"}</i>
                   <span>{to.title}</span>
                   <span className="evidence-board__thread-confirmed-tag">
                     {confirmed
                       ? t("confirmedTag")
-                      : t("casefileAttachedTag")}
+                      : personal
+                        ? t("casefilePersonalThreadTag")
+                        : working
+                          ? t("casefileWorkingThreadTag")
+                          : t("casefileAutoFiledTag")}
                   </span>
+                  {personal && !confirmed && (
+                    <button
+                      type="button"
+                      aria-label={t("casefileRemoveWorkingThread")}
+                      onClick={() => toggleBoardConnection(fromId, toId)}
+                    >
+                      ×
+                    </button>
+                  )}
                 </div>
               );
             })
@@ -2141,26 +2389,30 @@ const Casefile = ({
     const meta = CATEGORY_META[card.category];
     const status = cardStatus(card);
     const facts = collectedTokensForEvidence(card.id, state.collectedTokens);
-    const relevant = relevantEvidence.has(card.id);
-    const threadMatch =
-      lens === "deductions" && deductionMode === "thread" && relevant;
     const attached = activeEvidenceSet.has(card.id);
+    const selectedForReasoning =
+      theoryIds.includes(card.id) || hypothesisEvidenceIds.includes(card.id);
     const fresh = freshIds.has(card.id);
     const dragging = !options.decked && dragPreview?.id === card.id;
     const located = flashId === card.id;
+    const keyRecord = Boolean(
+      activeThread &&
+        levelTwoUsed &&
+        card.id === activeThread.guidance.level2.evidenceId
+    );
     const shared = sharedRetainedEvidenceIds.has(card.id);
     const className = `evidence-card evidence-card--${card.category} ${
       selectedId === card.id ? "evidence-card--selected" : ""
-    } ${theoryIds.includes(card.id) ? "evidence-card--theory" : ""} ${
+    } ${selectedForReasoning ? "evidence-card--theory" : ""} ${
       confirmedCardIds.has(card.id) ? "evidence-card--confirmed" : ""
-    } ${relevant ? "casefile-card--relevant" : ""} ${
-      threadMatch ? "casefile-card--thread-match" : ""
     } ${
       attached ? "casefile-card--attached" : ""
     } ${shared ? "evidence-card--shared" : ""
     } ${fresh ? "casefile-card--fresh" : ""} ${
       dragging ? "evidence-card--dragging" : ""
     } ${located ? "casefile-card--locate" : ""} ${
+      keyRecord ? "casefile-card--key-record" : ""
+    } ${
       options.decked ? "evidence-card--decked" : ""
     } casefile-card--${status.tone}`;
 
@@ -2170,6 +2422,9 @@ const Casefile = ({
         role="button"
         tabIndex={0}
         className={className}
+        data-reasoning-label={
+          selectedForReasoning ? t("casefileWorkingThreadTag") : undefined
+        }
         style={{ left: position.x, top: position.y }}
         onMouseDown={(event) => {
           if (options.decked) {
@@ -2198,10 +2453,10 @@ const Casefile = ({
         }}
         aria-label={`${card.title}. ${card.summary}`}
         title={
-          lens === "deductions" && deductionMode === "finding"
-            ? t("casefileAttachToFinding")
-            : lens === "deductions" && deductionMode === "thread"
+          lens === "deductions" && activeThread
               ? t("casefileAddOrRemoveCorrelation")
+              : lens === "contradictions" && activeHypothesisId
+                ? t("casefileAddOrRemoveRefutation")
               : t("casefileSelect")
         }
       >
@@ -2280,8 +2535,6 @@ const Casefile = ({
     <div className="arg-tool casefile evidence-board">
       <div className="arg-tool__menubar">
         <span>Casefile.exe</span>
-        <span>{t("menuView")}</span>
-        <span>{t("menuConnections")}</span>
         <button
           type="button"
           className="casefile__menubar-help"
@@ -2354,68 +2607,72 @@ const Casefile = ({
             placeholder={t("findPlaceholder")}
           />
         </label>
-        <div className="casefile__tools" aria-label={t("casefileOptions")}>
-          <span className="casefile__tools-title">{t("casefileOptions")}</span>
-          <label>
-            {t("casefileShow")}
-            <select
-              value={filter}
-              onChange={(event) =>
-                setFilter(event.target.value as "all" | CasefileCategory)
-              }
-            >
-              <option value="all">
-                {t("all")} ({allPositioned.length})
-              </option>
-              {(Object.keys(CATEGORY_META) as CasefileCategory[]).map(
-                (category) => (
-                  <option
-                    key={category}
-                    value={category}
-                    disabled={!categoryCounts[category]}
-                  >
-                    {categoryLabel(category)} ({categoryCounts[category] ?? 0})
-                  </option>
-                )
-              )}
-            </select>
-          </label>
-          <label>
-            {t("casefileChapterFilter")}
-            <select
-              value={chapterFilter}
-              onChange={(event) =>
-                setChapterFilter(event.target.value as "all" | ChapterId)
-              }
-            >
-              <option value="all">{t("all")}</option>
-              {chapterOptions.map((chapterId) => (
-                <option key={chapterId} value={chapterId}>
-                  {chapterId.replace("chapter_", "")}. {t(CHAPTER_TITLE_KEYS[chapterId])}
+        <details className="casefile__tools">
+          <summary>{t("casefileOptions")}</summary>
+          <div className="casefile__tools-panel">
+            <label>
+              {t("casefileShow")}
+              <select
+                value={filter}
+                onChange={(event) =>
+                  setFilter(event.target.value as "all" | CasefileCategory)
+                }
+              >
+                <option value="all">
+                  {t("all")} ({allPositioned.length})
                 </option>
-              ))}
-            </select>
-          </label>
-          <label className="casefile__checkbox">
-            <input
-              type="checkbox"
-              checked={showUnexplainedOnly}
-              onChange={(event) => setShowUnexplainedOnly(event.target.checked)}
-            />
-            {t("casefileOnlyUnexplained")}
-          </label>
-          <button
-            type="button"
-            className="button evidence-board__reset"
-            disabled={Object.keys(boardPositions).length === 0}
-            onClick={() => {
-              resetBoardLayout();
-              setSelectedId(null);
-            }}
-          >
-            {t("resetLayout")}
-          </button>
-        </div>
+                {(Object.keys(CATEGORY_META) as CasefileCategory[])
+                  .filter((category) => category !== "correlation")
+                  .map(
+                  (category) => (
+                    <option
+                      key={category}
+                      value={category}
+                      disabled={!categoryCounts[category]}
+                    >
+                      {categoryLabel(category)} ({categoryCounts[category] ?? 0})
+                    </option>
+                  )
+                )}
+              </select>
+            </label>
+            <label>
+              {t("casefileChapterFilter")}
+              <select
+                value={chapterFilter}
+                onChange={(event) =>
+                  setChapterFilter(event.target.value as "all" | ChapterId)
+                }
+              >
+                <option value="all">{t("all")}</option>
+                {chapterOptions.map((chapterId) => (
+                  <option key={chapterId} value={chapterId}>
+                    {chapterId.replace("chapter_", "")}. {t(CHAPTER_TITLE_KEYS[chapterId])}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="casefile__checkbox">
+              <input
+                type="checkbox"
+                checked={showUnexplainedOnly}
+                onChange={(event) => setShowUnexplainedOnly(event.target.checked)}
+              />
+              {t("casefileOnlyUnexplained")}
+            </label>
+            <button
+              type="button"
+              className="button evidence-board__reset"
+              disabled={Object.keys(boardPositions).length === 0}
+              onClick={() => {
+                resetBoardLayout();
+                setSelectedId(null);
+              }}
+            >
+              {t("resetLayout")}
+            </button>
+          </div>
+        </details>
       </div>
 
       <div className="evidence-board__workspace casefile__workspace">
@@ -2462,106 +2719,65 @@ const Casefile = ({
             <div className="evidence-board__zone casefile__zone--claims">
               {t("casefileZoneClaims")}
             </div>
-            <div className="evidence-board__zone casefile__zone--correlations">
-              {t("casefileCorrelations")}
-            </div>
             {lens === "contradictions" && (
               <div className="evidence-board__zone casefile__zone--hypotheses">
                 {t("casefileHypotheses")}
               </div>
             )}
 
-            <svg
-              className="evidence-board__strings"
-              width={CASEFILE_BOARD_WIDTH}
-              height={canvasHeight}
-              aria-hidden="true"
-            >
-              {pendingFindingKeys
-                .filter((key) => !confirmedSet.has(key))
-                .map((key) => {
-                  const [fromId, toId] = key.split("|");
-                  const from = positionsById[fromId];
-                  const to = positionsById[toId];
-                  if (
-                    !from ||
-                    !to ||
-                    !visibleIds.has(fromId) ||
-                    !visibleIds.has(toId)
-                  ) {
-                    return null;
-                  }
-                  const x1 = from.x + CARD_WIDTH / 2;
-                  const y1 = from.y + CARD_HEIGHT / 2;
-                  const x2 = to.x + CARD_WIDTH / 2;
-                  const y2 = to.y + CARD_HEIGHT / 2;
-                  const d = sagPath(x1, y1, x2, y2);
-                  const touchesFocus =
-                    focusId != null &&
-                    (fromId === focusId || toId === focusId);
-                  const groupClass = focusId
-                    ? `evidence-board__string-group ${
-                        touchesFocus
-                          ? "evidence-board__string-group--focused"
-                          : "evidence-board__string-group--dimmed"
-                      }`
-                    : "evidence-board__string-group";
-                  return (
-                    <g key={key} className={groupClass}>
-                      <path d={d} className="evidence-board__string-shadow" />
-                      <path d={d} className="evidence-board__string" />
-                    </g>
-                  );
-                })}
-
-              {allConfirmedConnections.map((key) => {
-                const [fromId, toId] = key.split("|");
-                const from = positionsById[fromId];
-                const to = positionsById[toId];
-                if (
-                  !from ||
-                  !to ||
-                  !visibleIds.has(fromId) ||
-                  !visibleIds.has(toId)
-                ) {
-                  return null;
-                }
-                const x1 = from.x + CARD_WIDTH / 2;
-                const y1 = from.y + CARD_HEIGHT / 2;
-                const x2 = to.x + CARD_WIDTH / 2;
-                const y2 = to.y + CARD_HEIGHT / 2;
-                const d = sagPath(x1, y1, x2, y2);
-                const touchesFocus =
-                  focusId != null && (fromId === focusId || toId === focusId);
-                const groupClass = [
-                  "evidence-board__string-group",
-                  "evidence-board__confirmed-group",
-                  focusId
-                    ? touchesFocus
-                      ? "evidence-board__string-group--focused"
-                      : "evidence-board__string-group--dimmed"
-                    : "",
-                ]
-                  .filter(Boolean)
-                  .join(" ");
-                return (
-                  <g key={key} className={groupClass}>
-                    <path d={d} className="evidence-board__string-shadow" />
-                    <path d={d} className="evidence-board__string evidence-board__string--confirmed">
-                      <title>{t("confirmedCorrelation")}</title>
-                    </path>
-                    <circle
-                      cx={(x1 + x2) / 2}
-                      cy={(y1 + y2) / 2}
-                      r={5}
-                      className="evidence-board__confirmed-seal"
-                    >
-                      <title>{t("confirmedCorrelation")}</title>
-                    </circle>
-                  </g>
-                );
-              })}
-            </svg>
+            {allThreadKeys.map((key) => {
+              const [fromId, toId] = key.split("|");
+              const from = positionsById[fromId];
+              const to = positionsById[toId];
+              if (
+                !from ||
+                !to ||
+                !visibleIds.has(fromId) ||
+                !visibleIds.has(toId)
+              ) {
+                return null;
+              }
+              const x1 = from.x + CARD_WIDTH / 2;
+              const y1 = from.y + CARD_HEIGHT / 2;
+              const x2 = to.x + CARD_WIDTH / 2;
+              const y2 = to.y + CARD_HEIGHT / 2;
+              const touchesFocus =
+                focusId != null && (fromId === focusId || toId === focusId);
+              const working = workingSelectionKeys.includes(key);
+              const personal = personalConnectionSet.has(key);
+              const confirmed = confirmedSet.has(key);
+              const length = Math.hypot(x2 - x1, y2 - y1);
+              const angle = (Math.atan2(y2 - y1, x2 - x1) * 180) / Math.PI;
+              return (
+                <div
+                  key={key}
+                  aria-hidden="true"
+                  className={[
+                    "evidence-board__working-line",
+                    confirmed
+                      ? "evidence-board__working-line--confirmed"
+                      : working
+                      ? "evidence-board__working-line--active"
+                      : personal
+                        ? "evidence-board__working-line--personal"
+                        : "evidence-board__working-line--source",
+                    focusId
+                      ? touchesFocus
+                        ? "evidence-board__working-line--focused"
+                        : "evidence-board__working-line--dimmed"
+                      : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                  style={{
+                    left: x1,
+                    top: y1,
+                    width: length,
+                    transform: `translateY(-50%) rotate(${angle}deg)`,
+                  }}
+                />
+              );
+            })}
 
             {visibleDecks.map((deck) => {
               const expanded = deckIsExpanded(deck.id);
@@ -2646,9 +2862,7 @@ const Casefile = ({
 
         <aside className="evidence-board__inspector casefile__inspector">
           <p className="arg-tool__kicker">
-            {lens === "deductions" && deductionMode === "thread"
-              ? t("casefileCorrelations").toUpperCase()
-              : t(LENS_LABEL_KEYS[lens]).toUpperCase()}
+            {t(LENS_LABEL_KEYS[lens]).toUpperCase()}
           </p>
           {renderInspector()}
         </aside>

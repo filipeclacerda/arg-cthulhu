@@ -320,6 +320,24 @@ export const DIEGETIC_EVENTS: DiegeticEventDefinition[] = [
     delayRangeMs: [22_000, 32_000],
   },
 
+  {
+    // Only the first actionable deduction receives an explicit explanation.
+    // Later unlocks rely on the Casefile badge and recent activity.
+    id: "first_deduction_available",
+    priority: 3,
+    presentation: { kind: "toast" },
+    when: { type: "flag", flag: "first_deduction_available" },
+    obsoleteWhen: {
+      type: "anyOf",
+      conditions: [
+        { type: "flag", flag: "first_deduction_notice_shown" },
+        { type: "flag", flag: "correlation_tutorial_grandfathered" },
+      ],
+    },
+    seenFlag: "first_deduction_notice_shown",
+    sound: "chime",
+  },
+
   ...CASE_FINDING_EVENTS,
 
   // --- Player-requested redirects ----------------------------------------

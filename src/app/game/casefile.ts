@@ -4,7 +4,9 @@ import {
   LocalizedCopy,
   TOKENS,
   TokenDefinition,
+  hypothesisVerdict,
 } from "./campaign";
+import type { HypothesisVerdict } from "./campaign";
 import {
   CaseAnswer,
   CaseQuestionId,
@@ -79,6 +81,55 @@ export const HYPOTHESIS_EVIDENCE_REQUIREMENTS: Record<
   sarah_fled: ["incident_report", "chat_em_archive"],
   innsmouth_theft: ["lot_114_order", "catalogue_lot_114"],
   sarah_chose_observer: ["split_record", "read_receipts", "hash_manifest"],
+};
+
+export type HypothesisRefutationReason =
+  | "accepted"
+  | "evidence_mismatch"
+  | "unknown_hypothesis";
+
+/** Safe result for player-authored refutations; never returns solution ids. */
+export interface HypothesisRefutationEvaluation {
+  hypothesisId: HypothesisId;
+  accepted: boolean;
+  reason: HypothesisRefutationReason;
+  verdict: HypothesisVerdict | null;
+  selectedCount: number;
+  requiredCount: number;
+}
+
+/**
+ * Tests the exact records chosen by the player. Extra records do not pass: the
+ * player must identify the contradiction rather than select the whole board.
+ */
+export const evaluateHypothesisRefutation = (
+  hypothesisId: HypothesisId,
+  evidenceIds: readonly string[]
+): HypothesisRefutationEvaluation => {
+  const requiredEvidenceIds = HYPOTHESIS_EVIDENCE_REQUIREMENTS[hypothesisId];
+  const selected = Array.from(new Set(evidenceIds));
+  if (!requiredEvidenceIds) {
+    return {
+      hypothesisId,
+      accepted: false,
+      reason: "unknown_hypothesis",
+      verdict: null,
+      selectedCount: selected.length,
+      requiredCount: 0,
+    };
+  }
+  const required = new Set(requiredEvidenceIds);
+  const accepted =
+    selected.length === required.size &&
+    selected.every((evidenceId) => required.has(evidenceId));
+  return {
+    hypothesisId,
+    accepted,
+    reason: accepted ? "accepted" : "evidence_mismatch",
+    verdict: accepted ? hypothesisVerdict(hypothesisId) : null,
+    selectedCount: selected.length,
+    requiredCount: required.size,
+  };
 };
 
 export const CASEFILE_FINDING_CLAIMS: CasefileClaim[] = CASE_STATEMENTS.map(

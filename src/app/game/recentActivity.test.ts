@@ -52,6 +52,18 @@ describe("recent activity", () => {
     });
   });
 
+  it("frames the first Casefile objective as an active story question", () => {
+    const state = createInitialProgress();
+    state.puzzles.lot_114.solvedAt = Date.now();
+
+    const question = recentActivities(state).find(
+      (entry) => entry.id === "lot-114"
+    );
+    expect(question?.title.pt).toBe("Como o Volume II reapareceu?");
+    expect(question?.summary.pt).toContain("procedência");
+    expect(question?.summary.pt).not.toContain("reter");
+  });
+
   it("keeps an interrupted NEXT_USER carrier resumable and replaces it after completion", () => {
     const state = createInitialProgress();
     state.flags.next_user_handshake_sent = true;

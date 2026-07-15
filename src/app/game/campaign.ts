@@ -124,6 +124,31 @@ export const TOKENS_BY_ID: Record<string, TokenDefinition> = Object.fromEntries(
   TOKENS.map((token) => [token.id, token])
 );
 
+/**
+ * Resolves the evidence records that produced the facts currently placed in a
+ * reconstruction. The helper deliberately knows nothing about UI state: old
+ * saves, imports and the Casefile can all derive the same sources from the
+ * selected token ids.
+ */
+export const evidenceIdsFromSlotSelections = (
+  slotSelections: Readonly<Record<string, string | undefined>>
+): string[] => {
+  const evidenceIds: string[] = [];
+  const seen = new Set<string>();
+
+  Object.values(slotSelections).forEach((tokenId) => {
+    if (!tokenId) return;
+    const evidenceId =
+      TOKENS_BY_ID[tokenId]?.sourceEvidenceId ??
+      TOKEN_SOURCE_EVIDENCE[tokenId];
+    if (!evidenceId || seen.has(evidenceId)) return;
+    seen.add(evidenceId);
+    evidenceIds.push(evidenceId);
+  });
+
+  return evidenceIds;
+};
+
 /** Collected tokens of a given type — the candidate pool for a statement slot. */
 export const collectedTokensOfType = (
   type: TokenType,
@@ -466,6 +491,29 @@ export const findStatement = (
   id: CaseQuestionId
 ): CaseStatementDefinition | undefined =>
   CASE_STATEMENTS.find((statement) => statement.id === id);
+
+/**
+ * Evidence retained with a reconstruction when the Casefile handles attachment
+ * automatically. Besides each selected fact's own record, this includes only
+ * already-discovered records authored as support for the active question.
+ */
+export const evidenceIdsForCaseAnswer = (
+  statementId: CaseQuestionId,
+  slotSelections: Readonly<Record<string, string | undefined>>,
+  discoveredEvidenceIds: readonly string[]
+): string[] => {
+  const statement = findStatement(statementId);
+  const relevantSupport = new Set([
+    ...(statement?.evidence.allOf ?? []),
+    ...(statement?.evidence.anyOf ?? []),
+  ]);
+  return Array.from(
+    new Set([
+      ...evidenceIdsFromSlotSelections(slotSelections),
+      ...discoveredEvidenceIds.filter((id) => relevantSupport.has(id)),
+    ])
+  );
+};
 
 /** Checks the evidence requirement independently of the slot answers. */
 export const checkEvidence = (

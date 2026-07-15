@@ -11,11 +11,25 @@ import {
   PUZZLE_IDS,
 } from "./progress";
 import {
+  CASE_STATEMENTS,
   OBSERVER_CONCLUSION_LABELS,
+  evidenceIdsFromSlotSelections,
   isObserverConclusionAvailable,
   pendingObserverConclusions,
 } from "./campaign";
 import { FUTURE_SEQUENCE, reduceGameEvent } from "./puzzles";
+import { theoryFor } from "./theories";
+
+const deductionEvent = (
+  targetInsightId: Exclude<Parameters<typeof theoryFor>[0], "second_volume">,
+  evidenceIds: string[],
+  selectedClaimId = theoryFor(targetInsightId)!.correctClaimId
+): GameEvent => ({
+  type: "TEST_THEORY",
+  targetInsightId,
+  selectedClaimId,
+  evidenceIds,
+});
 
 const satisfyGate = (
   state: ReturnType<typeof createInitialProgress>,
@@ -191,9 +205,13 @@ describe("ARG progression reducer", () => {
     expect(chapterOf()).toBe("chapter_2");
 
     state = reduceGameEvent(state, {
-      type: "TEST_THEORY",
-      targetInsightId: "second_volume",
-      evidenceIds: ["lot_114_order", "diary", "miriam_1998"],
+      type: "SUBMIT_CASE_ANSWER",
+      questionId: "volume_return",
+      slotSelections: {
+        cause: "cause-deliberately-sent",
+        family: "family-bishop",
+      },
+      evidenceIds: ["diary", "miriam_1998"],
     }).state;
     state = solveForTest(state, "palimpsest");
     expect(chapterOf()).toBe("chapter_3");
@@ -544,33 +562,137 @@ describe("ARG progression reducer", () => {
     expect(result.hintUnlocked?.trigger).toBe("near_miss");
   });
 
-  it("records the selected first thread and reports partial progress without exposing records", () => {
+  it("records the selected thesis without exposing which part of a failed deduction was wrong", () => {
     const initial = createInitialProgress(1_700_000_000_000, "theory");
-    const partial = reduceGameEvent(initial, {
-      type: "TEST_THEORY",
-      targetInsightId: "second_volume",
-      evidenceIds: ["lot_114_order", "diary"],
-    });
-    expect(partial.theoryResult).toMatchObject({
+    const partial = reduceGameEvent(
+      initial,
+      deductionEvent("miriam_break", ["miriam_1998", "miriam_letter_1998"])
+    );
+    expect(partial.theoryResult).toEqual({
       insightId: null,
-      matchedCount: 2,
-      requiredCount: 3,
-      missingKinds: ["document"],
+      alreadyKnown: false,
     });
     expect(partial.state.theoryAttempts[0]).toMatchObject({
-      targetInsightId: "second_volume",
+      targetInsightId: "miriam_break",
+      selectedClaimId: "miriam_deliberate",
       insightId: null,
     });
 
+    const result = reduceGameEvent(
+      initial,
+      deductionEvent("miriam_break", [
+        "miriam_1998",
+        "miriam_letter_1998",
+        "miriam_notebook",
+      ])
+    );
+
+    expect(result.theoryResult?.insightId).toBe("miriam_break");
+    expect(result.state.insightsUnlocked).toContain("miriam_break");
+    expect(result.state.puzzles.lot_114.solvedAt).toBeNull();
+  });
+
+  it("keeps deduction progress private after an incorrect thesis", () => {
+    const initial = createInitialProgress(
+      1_700_000_000_000,
+      "private-theory-feedback"
+    );
+    const result = reduceGameEvent(
+      initial,
+      deductionEvent(
+        "miriam_break",
+        ["miriam_1998", "miriam_letter_1998", "miriam_notebook"],
+        "miriam_corruption"
+      )
+    );
+
+    expect(result.theoryResult).toEqual({
+      insightId: null,
+      alreadyKnown: false,
+    });
+  });
+
+  it("solves every mandatory finding without manually attached evidence", () => {
+    for (const statement of CASE_STATEMENTS) {
+      const support = [
+        ...(statement.evidence.allOf ?? []),
+        ...(statement.evidence.anyOf ?? []),
+      ];
+      const initial = {
+        ...createInitialProgress(
+          1_700_000_000_000,
+          `automatic-${statement.id}`
+        ),
+        discoveredEvidenceIds: support,
+      };
+      const slotSelections = Object.fromEntries(
+        statement.slots.map((slot) => [slot.key, slot.correctTokenId])
+      );
+      const result = reduceGameEvent(initial, {
+        type: "SUBMIT_CASE_ANSWER",
+        questionId: statement.id,
+        slotSelections,
+        evidenceIds: [],
+      });
+
+      expect(result.caseAnswerResult, statement.id).toMatchObject({
+        accepted: true,
+        reason: "accepted",
+      });
+      expect(result.state.caseAnswers[statement.id]?.evidenceIds).toEqual(
+        expect.arrayContaining(evidenceIdsFromSlotSelections(slotSelections))
+      );
+    }
+  });
+
+  it("retains the Volume II conclusion automatically with its reconstruction", () => {
+    const initial = createInitialProgress(1_700_000_000_000, "volume-auto-insight");
     const result = reduceGameEvent(initial, {
-      targetInsightId: "second_volume",
-      type: "TEST_THEORY",
-      evidenceIds: ["lot_114_order", "diary", "miriam_1998"],
+      type: "SUBMIT_CASE_ANSWER",
+      questionId: "volume_return",
+      slotSelections: {
+        cause: "cause-deliberately-sent",
+        family: "family-bishop",
+      },
+      evidenceIds: ["miriam_1998", "diary"],
     });
 
-    expect(result.theoryResult?.insightId).toBe("second_volume");
+    expect(result.caseAnswerResult?.accepted).toBe(true);
     expect(result.state.insightsUnlocked).toContain("second_volume");
-    expect(result.state.puzzles.lot_114.solvedAt).toBeNull();
+    expect(result.state.flags.insight_second_volume).toBe(true);
+  });
+
+  it("persists only a contradiction the player actually selected", () => {
+    const initial = createInitialProgress(
+      1_700_000_000_000,
+      "chosen-refutation"
+    );
+    const rejected = reduceGameEvent(initial, {
+      type: "SET_HYPOTHESIS",
+      hypothesisId: "tom_forged_image",
+      status: "refuted",
+      evidenceIds: ["tom_last_message", "incident_report"],
+    });
+    expect(rejected.hypothesisResult).toMatchObject({
+      accepted: false,
+      reason: "evidence_mismatch",
+    });
+    expect(rejected.state.hypotheses.tom_forged_image).toBeUndefined();
+
+    const accepted = reduceGameEvent(initial, {
+      type: "SET_HYPOTHESIS",
+      hypothesisId: "tom_forged_image",
+      status: "refuted",
+      evidenceIds: ["future_access_log", "tom_last_message"],
+    });
+    expect(accepted.hypothesisResult).toMatchObject({
+      accepted: true,
+      verdict: "refuted",
+    });
+    expect(accepted.state.hypotheses.tom_forged_image).toMatchObject({
+      status: "refuted",
+      evidenceIds: ["future_access_log", "tom_last_message"],
+    });
   });
 
   it("rewards two corroborated act-one findings without opening RECOVERED", () => {
@@ -673,7 +795,7 @@ describe("ARG progression reducer", () => {
     );
   });
 
-  it("rejects a plausible conclusion without corroborating evidence", () => {
+  it("rejects a plausible conclusion before corroborating evidence is discovered", () => {
     const initial = createInitialProgress(1_700_000_000_000, "weak-case");
     const result = reduceGameEvent(initial, {
       type: "SUBMIT_CASE_ANSWER",
@@ -682,7 +804,7 @@ describe("ARG progression reducer", () => {
         time: "time-six-thirty",
         intent: "intent-go-home",
       },
-      evidenceIds: ["todo"],
+      evidenceIds: [],
     });
     expect(result.caseAnswerResult).toMatchObject({
       accepted: false,
@@ -729,48 +851,52 @@ describe("ARG progression reducer", () => {
 
   it("pins a confirmed thread between every card behind a validated theory", () => {
     const initial = createInitialProgress(1_700_000_000_000, "theory-thread");
-    const result = reduceGameEvent(initial, {
-      type: "TEST_THEORY",
-      evidenceIds: ["lot_114_order", "diary", "miriam_1998"],
-    });
-
-    expect(result.state.confirmedConnections).toEqual(
-      expect.arrayContaining([
-        "diary|lot_114_order",
-        "diary|miriam_1998",
-        "lot_114_order|miriam_1998",
+    const result = reduceGameEvent(
+      initial,
+      deductionEvent("miriam_break", [
+        "miriam_1998",
+        "miriam_letter_1998",
+        "miriam_notebook",
       ])
     );
 
-    const unmatched = reduceGameEvent(result.state, {
-      type: "TEST_THEORY",
-      evidenceIds: ["person-sarah", "person-tom"],
-    });
+    expect(result.state.confirmedConnections).toEqual(
+      expect.arrayContaining([
+        "miriam_1998|miriam_letter_1998",
+        "miriam_1998|miriam_notebook",
+        "miriam_letter_1998|miriam_notebook",
+      ])
+    );
+
+    const unmatched = reduceGameEvent(
+      result.state,
+      deductionEvent(
+        "observer_relay",
+        ["person-sarah", "person-tom", "future_access_log"],
+        "relay_tom_recipient"
+      )
+    );
     expect(unmatched.theoryResult?.insightId).toBeNull();
     expect(unmatched.state.confirmedConnections).toBe(
       result.state.confirmedConnections
     );
   });
 
-  it("requires all six correlations before enabling relay containment", () => {
+  it("requires the automatic Volume II conclusion and all five deductions before containment", () => {
     let state = retainSarahFindings(retainObserverFindings(solveThroughFutureLog()));
     state = reduceGameEvent(state, {
       type: "SOLVE_PUZZLE",
       puzzleId: "index_name",
     }).state;
-    const theorySets = [
-      ["miriam_1998", "diary", "lot_114_order"],
-      ["person-miriam", "person-sarah", "lineage_pattern"],
-      ["person-sarah", "person-tom", "future_access_log"],
-      ["incident_report", "maintenance_record", "whitfield_memo"],
-      ["miriam_1998", "miriam_letter_1998", "miriam_notebook"],
-      ["future_access_log", "index_help", "record_2014"],
-    ];
-    for (const evidenceIds of theorySets) {
-      state = reduceGameEvent(state, {
-        type: "TEST_THEORY",
-        evidenceIds,
-      }).state;
+    const deductions = [
+      ["cataloguer_lineage", ["person-miriam", "person-sarah", "lineage_pattern"]],
+      ["observer_relay", ["person-sarah", "person-tom", "future_access_log"]],
+      ["institutional_suppression", ["incident_report", "maintenance_record", "whitfield_memo"]],
+      ["miriam_break", ["miriam_1998", "miriam_letter_1998", "miriam_notebook"]],
+      ["self_index", ["future_access_log", "index_help", "record_2014"]],
+    ] as const;
+    for (const [insightId, evidenceIds] of deductions) {
+      state = reduceGameEvent(state, deductionEvent(insightId, [...evidenceIds])).state;
     }
     expect(state.insightsUnlocked).toHaveLength(6);
     const result = reduceGameEvent(state, {
@@ -855,19 +981,15 @@ describe("ARG progression reducer", () => {
       type: "SOLVE_PUZZLE",
       puzzleId: "index_name",
     }).state;
-    const theorySets = [
-      ["miriam_1998", "diary", "lot_114_order"],
-      ["person-miriam", "person-sarah", "lineage_pattern"],
-      ["person-sarah", "person-tom", "future_access_log"],
-      ["incident_report", "maintenance_record", "whitfield_memo"],
-      ["miriam_1998", "miriam_letter_1998", "miriam_notebook"],
-      ["future_access_log", "index_help", "record_2014"],
-    ];
-    for (const evidenceIds of theorySets) {
-      state = reduceGameEvent(state, {
-        type: "TEST_THEORY",
-        evidenceIds,
-      }).state;
+    const deductions = [
+      ["cataloguer_lineage", ["person-miriam", "person-sarah", "lineage_pattern"]],
+      ["observer_relay", ["person-sarah", "person-tom", "future_access_log"]],
+      ["institutional_suppression", ["incident_report", "maintenance_record", "whitfield_memo"]],
+      ["miriam_break", ["miriam_1998", "miriam_letter_1998", "miriam_notebook"]],
+      ["self_index", ["future_access_log", "index_help", "record_2014"]],
+    ] as const;
+    for (const [insightId, evidenceIds] of deductions) {
+      state = reduceGameEvent(state, deductionEvent(insightId, [...evidenceIds])).state;
     }
     state = reduceGameEvent(state, {
       type: "RUN_COMMAND",

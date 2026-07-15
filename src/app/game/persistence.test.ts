@@ -236,6 +236,14 @@ describe("save v6", () => {
       boardConnections: ["diary|finding:sarah_intent"],
       confirmedConnections: ["diary|miriam_1998"],
       insightsUnlocked: ["second_volume"],
+      theoryAttempts: [
+        {
+          evidenceIds: ["diary", "miriam_1998"],
+          attemptedAt: 1_700_000_000_100,
+          insightId: null,
+          targetInsightId: "miriam_break",
+        },
+      ],
     } as any;
 
     const migrated = migrateProgress(legacy);
@@ -249,6 +257,7 @@ describe("save v6", () => {
     ]);
     expect(migrated?.confirmedConnections).toEqual(["diary|miriam_1998"]);
     expect(migrated?.insightsUnlocked).toEqual(["second_volume"]);
+    expect(migrated?.theoryAttempts[0].selectedClaimId).toBeUndefined();
   });
 
   it("fills v7 puzzle defaults when importing an older v5 puzzle set", () => {

@@ -13,6 +13,7 @@ import {
   collectedTokensForEvidence,
   evidenceIdsForClaim,
   evidenceUsageById,
+  evaluateHypothesisRefutation,
   exclusiveEvidenceByClaim,
   isCasefileRelevantEvidence,
   retainedFindingsFromAnswers,
@@ -41,10 +42,24 @@ describe("casefile graph", () => {
     );
   });
 
-  it("exposes every optional theory as a retained-correlation claim", () => {
+  it("keeps every deduction in the internal correlation registry", () => {
     expect(CASEFILE_CORRELATION_CLAIMS.map((claim) => claim.id)).toEqual(
       THEORY_DEFINITIONS.map((theory) => `correlation:${theory.insightId}`)
     );
+  });
+
+  it("authors localized theses, feedback and two help levels for every deduction", () => {
+    for (const theory of THEORY_DEFINITIONS) {
+      expect(theory.question.en).toBeTruthy();
+      expect(theory.question["pt-BR"]).toBeTruthy();
+      expect(theory.claims).toHaveLength(3);
+      expect(theory.claims.some((claim) => claim.id === theory.correctClaimId)).toBe(true);
+      expect(theory.failureCopy.en).toBeTruthy();
+      expect(theory.failureCopy["pt-BR"]).toBeTruthy();
+      expect(theory.guidance.level1.en).toBeTruthy();
+      expect(theory.guidance.level1["pt-BR"]).toBeTruthy();
+      expect(theory.guidance.level2.evidenceId).toBeTruthy();
+    }
   });
 
   it("keeps hypothesis refutation evidence explicit and two-source", () => {
@@ -55,6 +70,38 @@ describe("casefile graph", () => {
         claim.requiredEvidenceIds
       );
     }
+  });
+
+  it("evaluates player-selected refutations without exposing solution ids", () => {
+    const mismatch = evaluateHypothesisRefutation("tom_forged_image", [
+      "tom_last_message",
+    ]);
+    expect(mismatch).toEqual({
+      hypothesisId: "tom_forged_image",
+      accepted: false,
+      reason: "evidence_mismatch",
+      verdict: null,
+      selectedCount: 1,
+      requiredCount: 2,
+    });
+    expect(mismatch).not.toHaveProperty("requiredEvidenceIds");
+    expect(mismatch).not.toHaveProperty("missingEvidenceIds");
+
+    expect(
+      evaluateHypothesisRefutation("sarah_chose_observer", [
+        "split_record",
+        "read_receipts",
+        "hash_manifest",
+      ])
+    ).toMatchObject({ accepted: true, verdict: "inconclusive" });
+
+    expect(
+      evaluateHypothesisRefutation("tom_forged_image", [
+        "tom_last_message",
+        "future_access_log",
+        "incident_report",
+      ])
+    ).toMatchObject({ accepted: false, reason: "evidence_mismatch" });
   });
 
   it("maps extracted fact chips back to their source evidence", () => {

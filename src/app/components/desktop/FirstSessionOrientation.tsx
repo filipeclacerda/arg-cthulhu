@@ -11,14 +11,14 @@ const GUIDES = [
 
 export type FirstSessionGuideId = (typeof GUIDES)[number]["id"];
 
-export function FirstSessionOrientation({ locale, open }: { locale: "en" | "pt-BR"; open: (id: FirstSessionGuideId) => void }) {
+export function FirstSessionOrientation({ locale, open, suppressed = false }: { locale: "en" | "pt-BR"; open: (id: FirstSessionGuideId) => void; suppressed?: boolean }) {
   const [dismissed, setDismissed] = useState<string[]>([]);
   useEffect(() => {
     setDismissed(GUIDES.filter((guide) => window.localStorage.getItem(`miskatonic-onboarding-${guide.id}`) === "dismissed").map((guide) => guide.id));
   }, []);
 
   const guide = GUIDES.find((candidate) => !dismissed.includes(candidate.id));
-  if (!guide) return null;
+  if (!guide || suppressed) return null;
 
   const dismiss = () => {
     window.localStorage.setItem(`miskatonic-onboarding-${guide.id}`, "dismissed");

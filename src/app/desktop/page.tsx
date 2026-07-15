@@ -72,32 +72,32 @@ interface DesktopApp {
 
 const PUZZLE_GATE_COPY: Record<PuzzleId, { en: string; pt: string }> = {
   lot_114: {
-    en: "The catalogue is still assembling the first trail.",
-    pt: "O catálogo ainda está reunindo o primeiro rastro.",
+    en: "What connects Lot 114 to the record Sarah was following?",
+    pt: "O que liga o Lote 114 ao registro que Sarah estava seguindo?",
   },
   palimpsest: {
-    en: "Three records are waiting to be connected around the returning volume.",
-    pt: "Três registros esperam ser conectados em torno do volume que retornou.",
+    en: "How did Volume II reappear?",
+    pt: "Como o Volume II reapareceu?",
   },
   margin_cipher: {
-    en: "The recovered surface needs to be read before its margin can answer.",
-    pt: "A superfície recuperada precisa ser lida antes que a margem responda.",
+    en: "What does the recovered surface conceal in its margin?",
+    pt: "O que a superfície recuperada esconde em sua margem?",
   },
   counting_audio: {
-    en: "The recording is waiting for the Volume II return to be retained as a fact.",
-    pt: "A gravação espera que o retorno do Volume II seja retido como um fato.",
+    en: "What does Volume II's return establish about the recovered recording?",
+    pt: "O que o retorno do Volume II estabelece sobre a gravação recuperada?",
   },
   lineage: {
-    en: "The inherited ledger still needs a place in the case record.",
-    pt: "O livro herdado ainda precisa ocupar um lugar no registro do caso.",
+    en: "Whose history does the inherited ledger preserve, and where does Sarah enter it?",
+    pt: "De quem é a história preservada pelo livro herdado, e onde Sarah entra nela?",
   },
   future_log: {
-    en: "Sarah's moving date needs to be retained before the machine can replay it.",
-    pt: "A data móvel de Sarah precisa ser retida antes que a máquina possa repeti-la.",
+    en: "Why does Sarah's record place her actions one day ahead?",
+    pt: "Por que o registro de Sarah coloca suas ações um dia à frente?",
   },
   index_name: {
-    en: "Chapter Seven needs a human reconstruction before the index can join it.",
-    pt: "O Capítulo Sete precisa de uma reconstrução humana antes que o índice possa uni-lo.",
+    en: "What human sequence connects Chapter Seven's four references?",
+    pt: "Que sequência humana conecta as quatro referências do Capítulo Sete?",
   },
 };
 
@@ -387,57 +387,6 @@ const ConclusionReadyToast = () => {
   );
 };
 
-/** Keeps the first correlation in view once the next chapter is waiting on it. */
-const CorrelationTutorialToast = () => {
-  const { isHydrated, state } = useProgress();
-  const { openWindow } = useWindowManager();
-  const { t } = useI18n();
-  const [dismissed, setDismissed] = useState(false);
-  const secondVolumeRecordsReady = ["miriam_1998", "diary", "lot_114_order"].every(
-    (id) => state.discoveredEvidenceIds.includes(id)
-  );
-  const pending =
-    isHydrated &&
-    Boolean(state.puzzles.lot_114.solvedAt) &&
-    !state.puzzles.palimpsest.solvedAt &&
-    secondVolumeRecordsReady &&
-    !state.insightsUnlocked.includes("second_volume") &&
-    !state.flags.correlation_tutorial_grandfathered;
-
-  if (!pending || dismissed) return null;
-  return (
-    <div className="archive-warning conclusion-toast" role="status">
-      <Image src="/icons/folder-special.png" alt="" width={34} height={34} />
-      <div>
-        <strong>{t("correlationTutorialKicker")}</strong>
-        <p>{t("correlationTutorialBody")}</p>
-      </div>
-      <button
-        className="button"
-        type="button"
-        onClick={() =>
-          openWindow({
-            id: "casefile",
-            appType: "casefile",
-            title: t("casefileLabel"),
-            props: { initialLens: "deductions", initialThreadId: "second_volume" },
-            maximized: true,
-          })
-        }
-      >
-        {t("correlationTutorialAction")}
-      </button>
-      <button
-        className="button archive-warning__close"
-        aria-label={t("dismissLabel")}
-        onClick={() => setDismissed(true)}
-      >
-        ×
-      </button>
-    </div>
-  );
-};
-
 const appIcon = (appType: AppType) => {
   if (appType === "browser") return "/icons/internet-explorer.png";
   if (appType === "email") return "/icons/outlook-express.png";
@@ -555,6 +504,9 @@ const Desktop = () => {
   // trigger gate other events use.
   const recallActive =
     !isPostEndingDesktop && recallStatus(flags) === "active";
+  const maximizedCasefileOpen = windows.some(
+    (win) => win.appType === "casefile" && !win.minimized && win.maximized
+  );
 
   // Mandatory set pieces (priority-1 focal events and the 1998 overlay)
   // pause Sarah's live-contact timer in the Messenger.
@@ -601,12 +553,12 @@ const Desktop = () => {
         eventId: definition.id,
         icon: "/icons/folder-special.png",
         kicker: localeIs("DOSSIÊ / NOVA RECONSTRUÇÃO", "CASEFILE / NEW RECONSTRUCTION"),
-        heading: localeIs("Novo achado disponível", "New finding available"),
+        heading: localeIs("Nova reconstrução disponível", "New reconstruction available"),
         body: localeIs(
           "Os registros encontrados agora sustentam uma nova reconstrução.",
           "The recovered records now support a new reconstruction."
         ),
-        actionLabel: localeIs("Revisar achado", "Review finding"),
+        actionLabel: localeIs("Revisar reconstrução", "Review reconstruction"),
         onAction: () =>
           openWindow({
             id: "casefile",
@@ -626,17 +578,19 @@ const Desktop = () => {
         gate.reason === "casefile_required" && requirement
           ? requirement.kind === "finding"
             ? { initialFindingId: requirement.findingId }
-            : { initialThreadId: requirement.insightId }
+            : requirement.insightId === "second_volume"
+              ? { initialFindingId: "volume_return" as const }
+              : { initialThreadId: requirement.insightId }
           : null;
       setActiveToast({
         eventId: definition.id,
         icon: "/icons/folder-special.png",
-        kicker: localeIs("DOSSIÊ / RASTRO PENDENTE", "CASEFILE / PENDING TRAIL"),
-        heading: localeIs("A investigação reteve uma peça", "The investigation retained a loose piece"),
+        kicker: localeIs("DOSSIÊ / PERGUNTA ATIVA", "CASEFILE / ACTIVE QUESTION"),
+        heading: localeIs("Pergunta em aberto", "Open question"),
         body: localeIs(copy.pt, copy.en),
         actionLabel: localeIs(
-          casefileTarget ? "Retomar reconstrução" : "Ver investigação",
-          casefileTarget ? "Resume reconstruction" : "Review investigation"
+          casefileTarget ? "Revisar evidências" : "Revisar investigação",
+          casefileTarget ? "Review evidence" : "Review investigation"
         ),
         onAction: () =>
           openWindow({
@@ -649,6 +603,36 @@ const Desktop = () => {
       return;
     }
     switch (definition.id) {
+      case "first_deduction_available":
+        setActiveToast({
+          eventId: definition.id,
+          icon: "/icons/folder-special.png",
+          kicker: localeIs(
+            "DOSSIÊ / NOVA ETAPA",
+            "CASEFILE / NEW STEP"
+          ),
+          heading: localeIs(
+            "Os fatos estão estabelecidos",
+            "The facts are established"
+          ),
+          body: localeIs(
+            "Agora escolha uma tese e prove o que eles significam.",
+            "Now choose a thesis and prove what they mean."
+          ),
+          actionLabel: localeIs("Abrir dedução", "Open deduction"),
+          onAction: () =>
+            openWindow({
+              id: "casefile",
+              appType: "casefile",
+              title: t("casefileLabel"),
+              props: {
+                initialLens: "deductions",
+                initialThreadId: "miriam_break",
+              },
+              maximized: true,
+            }),
+        });
+        break;
       case "mail_from_tomorrow":
         openWindow({
           id: "new-mail-alert",
@@ -1428,14 +1412,15 @@ const Desktop = () => {
           </div>
         )}
         {!isPostEndingDesktop && <ConclusionReadyToast />}
-        {!isPostEndingDesktop && <CorrelationTutorialToast />}
         {!isPostEndingDesktop && (
           <RecallSequence
             enabled={isHydrated && !isPostEndingDesktop && flash1998 === null}
             focalBusy={focalBusy}
           />
         )}
-        {!isPostEndingDesktop && <FirstSessionOrientation locale={state.locale} open={(id) => {
+        {!isPostEndingDesktop && <FirstSessionOrientation locale={state.locale} suppressed={
+          maximizedCasefileOpen || focalBusy || recallActive || activeToast !== null
+        } open={(id) => {
           if (id === "inbox") openWindow({ id: "inbox", appType: "email", title: "Outlook Express" });
           if (id === "recent") openWindow({ id: "recent-documents", appType: "explorer", title: locale === "pt-BR" ? "Documentos recentes" : "Recent Documents", props: { folderId: "sarah" } });
           if (id === "casefile") openWindow({ id: "casefile", appType: "casefile", title: t("casefileLabel"), maximized: true });

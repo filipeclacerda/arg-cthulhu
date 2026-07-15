@@ -181,6 +181,8 @@ export interface TheoryAttempt {
   evidenceIds: string[];
   attemptedAt: number;
   insightId: InsightId | null;
+  /** Optional so imported attempts created before explicit theses remain valid. */
+  selectedClaimId?: string;
   /** The thread the player was actively assembling, when the attempt came from Deductions. */
   targetInsightId?: InsightId;
 }
@@ -308,8 +310,8 @@ export type GameEvent =
   | {
       type: "TEST_THEORY";
       evidenceIds: string[];
-      /** Optional for imported/legacy callers; Deductions always supplies it. */
-      targetInsightId?: InsightId;
+      targetInsightId: InsightId;
+      selectedClaimId: string;
     }
   | {
       type: "SUBMIT_CASE_ANSWER";

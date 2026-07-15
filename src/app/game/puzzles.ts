@@ -6,18 +6,22 @@ import {
   LIVE_CONTACT_WINDOW_MS,
   ProgressStateV3,
   PuzzleId,
+  currentChapter,
+  progressChapterSnapshot,
 } from "./progress";
 import {
   actOneAnswerCount,
   canRunFinalIndex,
+  evidenceIdsForCaseAnswer,
   findStatement,
   hasAllInsights,
   observerAnswerCount,
   validateStatement,
 } from "./campaign";
 import {
-  evaluateTheory,
+  THEORY_DEFINITIONS,
   evaluateTheoryAttempt,
+  isTheoryActionable,
   theoryConnectionKeys,
 } from "./theories";
 import { RunCommandError, validateIndexCommand } from "./validators";
@@ -30,6 +34,10 @@ import {
   puzzleProgressGate,
   syncCaseFindingAvailability,
 } from "./investigativeProgression";
+import {
+  evaluateHypothesisRefutation,
+} from "./casefile";
+import type { HypothesisRefutationEvaluation } from "./casefile";
 
 export const HINT_ONE_MS = 12 * 60 * 1000;
 export const HINT_TWO_MS = 25 * 60 * 1000;
@@ -147,10 +155,11 @@ export interface EventResult {
   theoryResult?: {
     insightId: string | null;
     alreadyKnown: boolean;
-    matchedCount: number;
-    requiredCount: number;
-    missingKinds: string[];
+    matchedCount?: number;
+    requiredCount?: number;
+    missingKinds?: string[];
   };
+  hypothesisResult?: HypothesisRefutationEvaluation;
   caseAnswerResult?: {
     questionId: string;
     accepted: boolean;
@@ -160,11 +169,41 @@ export interface EventResult {
   };
 }
 
-const touch = (state: ProgressStateV3): ProgressStateV3 => ({
-  ...syncCaseFindingAvailability(state),
-  revision: state.revision + 1,
-  updatedAt: Date.now(),
-});
+const syncFirstDeductionAvailability = (
+  state: ProgressStateV3
+): ProgressStateV3 => {
+  if (state.flags.first_deduction_available) return state;
+  const completedFindingIds = Object.entries(state.caseAnswers)
+    .filter(([, answer]) => Boolean(answer?.solvedAt))
+    .map(([id]) => id as keyof ProgressStateV3["caseAnswers"]);
+  const actionable = THEORY_DEFINITIONS.some(
+    (theory) =>
+      !state.insightsUnlocked.includes(theory.insightId) &&
+      isTheoryActionable(theory, {
+        currentChapter: currentChapter(progressChapterSnapshot(state)),
+        discoveredEvidenceIds: state.discoveredEvidenceIds,
+        completedFindingIds,
+        retainedInsightIds: state.insightsUnlocked,
+      })
+  );
+  return actionable
+    ? {
+        ...state,
+        flags: { ...state.flags, first_deduction_available: true },
+      }
+    : state;
+};
+
+const touch = (state: ProgressStateV3): ProgressStateV3 => {
+  const synchronized = syncFirstDeductionAvailability(
+    syncCaseFindingAvailability(state)
+  );
+  return {
+    ...synchronized,
+    revision: state.revision + 1,
+    updatedAt: Date.now(),
+  };
+};
 
 const blockedPuzzleResult = (
   state: ProgressStateV3,
@@ -858,14 +897,11 @@ export const reduceGameEvent = (
     }
     case "TEST_THEORY": {
       const evidenceIds = Array.from(new Set(event.evidenceIds)).sort();
-      const evaluation = event.targetInsightId
-        ? evaluateTheoryAttempt(event.targetInsightId, evidenceIds)
-        : {
-            insightId: evaluateTheory(evidenceIds),
-            matchedCount: 0,
-            requiredCount: 0,
-            missingKinds: [],
-          };
+      const evaluation = evaluateTheoryAttempt(
+        event.targetInsightId,
+        event.selectedClaimId,
+        evidenceIds
+      );
       const insightId = evaluation.insightId;
       const alreadyKnown = Boolean(
         insightId && state.insightsUnlocked.includes(insightId)
@@ -888,9 +924,8 @@ export const reduceGameEvent = (
             evidenceIds,
             attemptedAt: Date.now(),
             insightId,
-            ...(event.targetInsightId
-              ? { targetInsightId: event.targetInsightId }
-              : {}),
+            targetInsightId: event.targetInsightId,
+            selectedClaimId: event.selectedClaimId,
           },
         ],
         flags: {
@@ -906,20 +941,30 @@ export const reduceGameEvent = (
         theoryResult: {
           insightId,
           alreadyKnown,
-          matchedCount: evaluation.matchedCount,
-          requiredCount: evaluation.requiredCount,
-          missingKinds: evaluation.missingKinds,
         },
       };
     }
     case "SUBMIT_CASE_ANSWER": {
-      const evidenceIds = Array.from(new Set(event.evidenceIds)).sort();
+      const existing = state.caseAnswers[event.questionId];
+      const combinedSlotSelections = {
+        ...(existing?.slots ?? {}),
+        ...event.slotSelections,
+      };
+      const evidenceIds = Array.from(
+        new Set([
+          ...event.evidenceIds,
+          ...evidenceIdsForCaseAnswer(
+            event.questionId,
+            combinedSlotSelections,
+            state.discoveredEvidenceIds
+          ),
+        ])
+      ).sort();
       const validation = validateStatement(
         event.questionId,
-        event.slotSelections,
+        combinedSlotSelections,
         evidenceIds
       );
-      const existing = state.caseAnswers[event.questionId];
       if (existing?.solvedAt) {
         return {
           state: current,
@@ -946,10 +991,9 @@ export const reduceGameEvent = (
       const requiredSlotCount = statement?.slots.length ?? Number.MAX_SAFE_INTEGER;
       const solved = lockedSlots.length === requiredSlotCount && evidenceHolds;
       const retainedSlots = Object.fromEntries(
-        Object.entries({
-          ...(existing?.slots ?? {}),
-          ...event.slotSelections,
-        }).filter(([slot]) => lockedSlots.includes(slot))
+        Object.entries(combinedSlotSelections).filter(([slot]) =>
+          lockedSlots.includes(slot)
+        )
       );
       const now = Date.now();
       const wrongSlotCount = Object.values(validation.slots).filter(
@@ -1005,6 +1049,16 @@ export const reduceGameEvent = (
           },
         };
       }
+      if (
+        event.questionId === "volume_return" &&
+        !state.insightsUnlocked.includes("second_volume")
+      ) {
+        state = {
+          ...state,
+          insightsUnlocked: [...state.insightsUnlocked, "second_volume"],
+          flags: { ...state.flags, insight_second_volume: true },
+        };
+      }
       const actOneCount = actOneAnswerCount(state);
       const observerCount = observerAnswerCount(state);
       if (actOneCount >= 2) {
@@ -1052,7 +1106,28 @@ export const reduceGameEvent = (
         },
       };
     }
-    case "SET_HYPOTHESIS":
+    case "SET_HYPOTHESIS": {
+      if (event.status === "refuted") {
+        const evaluation = evaluateHypothesisRefutation(
+          event.hypothesisId,
+          event.evidenceIds
+        );
+        if (!evaluation.accepted) {
+          return { state: current, hypothesisResult: evaluation };
+        }
+        state = {
+          ...state,
+          hypotheses: {
+            ...state.hypotheses,
+            [event.hypothesisId]: {
+              status: event.status,
+              evidenceIds: Array.from(new Set(event.evidenceIds)).sort(),
+              updatedAt: Date.now(),
+            },
+          },
+        };
+        return { state: touch(state), hypothesisResult: evaluation };
+      }
       state = {
         ...state,
         hypotheses: {
@@ -1065,6 +1140,7 @@ export const reduceGameEvent = (
         },
       };
       break;
+    }
     case "MARK_CASE_FINDING_ANNOUNCED":
       if (state.announcedCaseFindingIds.includes(event.findingId)) break;
       state = {

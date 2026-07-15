@@ -65,6 +65,7 @@ const Explorer = ({ folderId = "my-computer" }: ExplorerProps) => {
   const { t } = useI18n();
   const [currentFolderId, setCurrentFolderId] = useState(folderId);
   const [selectedFileId, setSelectedFileId] = useState<string | null>(null);
+  const unreadLabel = state.locale === "pt-BR" ? "Não lido" : "Unread";
   // Stage 3 only: at IDENTITY_REVEAL_STAGE the folder is already renamed to
   // the player, and RESTORE already put "Sarah Bishop" back — degrading the
   // name in either of those states would fight the manifestation it's part of.
@@ -285,34 +286,47 @@ const Explorer = ({ folderId = "my-computer" }: ExplorerProps) => {
               onDoubleClick={() => openFile(file.id)}
               role="button"
               tabIndex={0}
-              aria-label={file.name}
+              aria-label={`${file.name}${
+                state.readFileIds.includes(file.id) ? "" : ` — ${unreadLabel}`
+              }`}
               onKeyDown={(event) => activateWithKeyboard(event, () => openFile(file.id))}
               title={t("doubleClickToOpen")}
             >
-              {file.kind === "image" ? (
-                <span
-                  className={`explorer-photo-thumbnail ${
-                    isDocumentScan(file)
-                      ? "explorer-photo-thumbnail--document"
-                      : ""
-                  }`}
-                >
+              <span className="explorer-file-visual">
+                {file.kind === "image" ? (
+                  <span
+                    className={`explorer-photo-thumbnail ${
+                      isDocumentScan(file)
+                        ? "explorer-photo-thumbnail--document"
+                        : ""
+                    }`}
+                  >
+                    <Image
+                      src={file.content}
+                      alt=""
+                      width={58}
+                      height={44}
+                    />
+                  </span>
+                ) : (
                   <Image
-                    src={file.content}
+                    className="explorer-icon"
+                    src={fileIconFor(file)}
                     alt=""
-                    width={58}
+                    width={44}
                     height={44}
                   />
-                </span>
-              ) : (
-                <Image
-                  className="explorer-icon"
-                  src={fileIconFor(file)}
-                  alt=""
-                  width={44}
-                  height={44}
-                />
-              )}
+                )}
+                {!state.readFileIds.includes(file.id) && (
+                  <span
+                    className="explorer-unread-mark"
+                    title={unreadLabel}
+                    aria-hidden="true"
+                  >
+                    *
+                  </span>
+                )}
+              </span>
               <p>{file.name}</p>
             </div>
           ))}
@@ -325,27 +339,42 @@ const Explorer = ({ folderId = "my-computer" }: ExplorerProps) => {
                 onDoubleClick={() => openFile(projection.sourceFileId)}
                 role="button"
                 tabIndex={0}
-                aria-label={projection.displayName}
+                aria-label={`${projection.displayName}${
+                  state.readFileIds.includes(projection.sourceFileId)
+                    ? ""
+                    : ` — ${unreadLabel}`
+                }`}
                 onKeyDown={(event) => activateWithKeyboard(event, () => openFile(projection.sourceFileId))}
                 title={t("doubleClickToOpen")}
               >
-                {source?.kind === "image" ? (
-                  <span className="explorer-photo-thumbnail">
-                    <Image src={source.content} alt="" width={58} height={44} />
-                  </span>
-                ) : (
-                  <Image
-                    className="explorer-icon"
-                    src={
-                      source
-                        ? fileIconFor(source)
-                        : FILE_ICON
-                    }
-                    alt=""
-                    width={44}
-                    height={44}
-                  />
-                )}
+                <span className="explorer-file-visual">
+                  {source?.kind === "image" ? (
+                    <span className="explorer-photo-thumbnail">
+                      <Image src={source.content} alt="" width={58} height={44} />
+                    </span>
+                  ) : (
+                    <Image
+                      className="explorer-icon"
+                      src={
+                        source
+                          ? fileIconFor(source)
+                          : FILE_ICON
+                      }
+                      alt=""
+                      width={44}
+                      height={44}
+                    />
+                  )}
+                  {!state.readFileIds.includes(projection.sourceFileId) && (
+                    <span
+                      className="explorer-unread-mark"
+                      title={unreadLabel}
+                      aria-hidden="true"
+                    >
+                      *
+                    </span>
+                  )}
+                </span>
                 <p>{projection.displayName}</p>
               </div>
             );
