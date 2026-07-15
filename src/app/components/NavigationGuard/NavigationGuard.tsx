@@ -2,18 +2,17 @@
 
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { useI18n } from "@/app/i18n";
 
 const GUARD_KEY = "__miskatonicNavigationGuard";
 const GUARD_URL_KEY = "__miskatonicNavigationGuardUrl";
 
 const NavigationGuard = () => {
   const pathname = usePathname();
-  const { locale } = useI18n();
   const [blocked, setBlocked] = useState(false);
   const noticeTimer = useRef<number | null>(null);
 
   useEffect(() => {
+    if (pathname !== "/desktop") return;
     const lockedUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
 
     const showBlockedNotice = () => {
@@ -83,7 +82,9 @@ const NavigationGuard = () => {
     };
   }, [pathname]);
 
-  return (<>
+  if (pathname !== "/desktop") return null;
+
+  return (
     <div
       className={`navigation-guard-notice ${
         blocked ? "navigation-guard-notice--visible" : ""
@@ -91,25 +92,10 @@ const NavigationGuard = () => {
       role="status"
       aria-live="polite"
     >
-      <strong>
-        {pathname === "/desktop"
-          ? "Mounted image cannot be left this way."
-          : "Relay session cannot be left this way."}
-      </strong>
-      <span>
-        {pathname === "/desktop"
-          ? "Use the controls inside the recovered computer."
-          : "Close the sealed session from inside the relay."}
-      </span>
+      <strong>Mounted image cannot be left this way.</strong>
+      <span>Use Disconnect in the Start menu to leave the mounted image.</span>
     </div>
-    <button
-      type="button"
-      className="navigation-guard-safe-exit"
-      onClick={() => window.location.assign(pathname === "/desktop" ? "/play" : "/")}
-    >
-      {locale === "pt-BR" ? "Saída segura" : "Safe exit"}
-    </button>
-    </>);
+  );
 };
 
 export default NavigationGuard;

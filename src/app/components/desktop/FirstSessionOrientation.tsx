@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState } from "react";
 
 const GUIDES = [
@@ -15,14 +16,23 @@ export function FirstSessionOrientation({ locale, open }: { locale: "en" | "pt-B
   useEffect(() => {
     setDismissed(GUIDES.filter((guide) => window.localStorage.getItem(`miskatonic-onboarding-${guide.id}`) === "dismissed").map((guide) => guide.id));
   }, []);
-  const visible = GUIDES.filter((guide) => !dismissed.includes(guide.id));
-  if (!visible.length) return null;
-  return <aside className="archive-warning onboarding-orientation" role="status">
-    <small>{locale === "pt-BR" ? "NOTA DO RELÉ // PRIMEIRA SESSÃO" : "RELAY NOTE // FIRST SESSION"}</small>
-    {visible.map((guide) => <article key={guide.id}>
-      <strong>{guide.title}</strong><p>{locale === "pt-BR" ? guide.pt : guide.en}</p>
-      <button className="button" type="button" onClick={() => open(guide.id)}>{locale === "pt-BR" ? "Abrir" : "Open"}</button>
-      <button className="button" type="button" aria-label={locale === "pt-BR" ? "Dispensar orientação" : "Dismiss orientation"} onClick={() => { window.localStorage.setItem(`miskatonic-onboarding-${guide.id}`, "dismissed"); setDismissed((current) => [...current, guide.id]); }}>×</button>
-    </article>)}
+
+  const guide = GUIDES.find((candidate) => !dismissed.includes(candidate.id));
+  if (!guide) return null;
+
+  const dismiss = () => {
+    window.localStorage.setItem(`miskatonic-onboarding-${guide.id}`, "dismissed");
+    setDismissed((current) => [...current, guide.id]);
+  };
+
+  return <aside className="archive-warning coordinator-toast onboarding-orientation" role="status">
+    <Image src="/icons/help.png" alt="" width={34} height={34} />
+    <div>
+      <small>{locale === "pt-BR" ? "NOTA DO RELÉ // PRIMEIRA SESSÃO" : "RELAY NOTE // FIRST SESSION"}</small>
+      <strong>{guide.title}</strong>
+      <p>{locale === "pt-BR" ? guide.pt : guide.en}</p>
+    </div>
+    <button className="button" type="button" onClick={() => open(guide.id)}>{locale === "pt-BR" ? "Abrir" : "Open"}</button>
+    <button className="button archive-warning__close" type="button" aria-label={locale === "pt-BR" ? "Dispensar orientação" : "Dismiss orientation"} onClick={dismiss}>×</button>
   </aside>;
 }

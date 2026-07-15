@@ -1435,12 +1435,12 @@ const Desktop = () => {
             focalBusy={focalBusy}
           />
         )}
+        {!isPostEndingDesktop && <FirstSessionOrientation locale={state.locale} open={(id) => {
+          if (id === "inbox") openWindow({ id: "inbox", appType: "email", title: "Outlook Express" });
+          if (id === "recent") openWindow({ id: "recent-documents", appType: "explorer", title: locale === "pt-BR" ? "Documentos recentes" : "Recent Documents", props: { folderId: "sarah" } });
+          if (id === "casefile") openWindow({ id: "casefile", appType: "casefile", title: t("casefileLabel"), maximized: true });
+        }} />}
       </section>
-      {!isPostEndingDesktop && <FirstSessionOrientation locale={state.locale} open={(id) => {
-        if (id === "inbox") openWindow({ id: "inbox", appType: "email", title: "Outlook Express" });
-        if (id === "recent") openWindow({ id: "recent-documents", appType: "explorer", title: locale === "pt-BR" ? "Documentos recentes" : "Recent Documents", props: { folderId: "sarah" } });
-        if (id === "casefile") openWindow({ id: "casefile", appType: "casefile", title: t("casefileLabel"), maximized: true });
-      }} />}
       {!isPostEndingDesktop && flash1998 != null && (
         <Legacy1998Overlay locale={state.locale} onExit={closeLegacySession} onOpenAccession={openMiriamAccessionFile}>
           {flash1998 === 3 && (

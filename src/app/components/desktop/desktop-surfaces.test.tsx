@@ -15,15 +15,22 @@ describe("desktop interaction surfaces", () => {
     expect(onOpen).toHaveBeenCalledTimes(2);
   });
 
-  it("persists dismissed first-session guidance", async () => {
+  it("renders first-session guidance as one standard notification at a time", async () => {
     const open = vi.fn();
     render(<FirstSessionOrientation locale="pt-BR" open={open} />);
-    const dismiss = screen.getAllByRole("button", { name: "Dispensar orientação" })[0];
-    fireEvent.click(dismiss);
+
+    const notification = screen.getByRole("status");
+    expect(notification).toHaveClass("archive-warning", "coordinator-toast");
+    expect(screen.getByText("Inbox")).toBeInTheDocument();
+    expect(screen.queryByText("Recent Documents")).not.toBeInTheDocument();
+    expect(screen.getAllByRole("button")).toHaveLength(2);
+
+    fireEvent.click(screen.getByRole("button", { name: "Dispensar orientação" }));
     expect(window.localStorage.getItem("miskatonic-onboarding-inbox")).toBe("dismissed");
-    fireEvent.click(screen.getAllByRole("button", { name: "Abrir" })[0]);
+    await waitFor(() => expect(screen.getByText("Recent Documents")).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole("button", { name: "Abrir" }));
     expect(open).toHaveBeenCalledWith("recent");
-    await waitFor(() => expect(screen.getByRole("status")).toBeInTheDocument());
   });
 
   it("shows a visible error when clipboard access fails", async () => {

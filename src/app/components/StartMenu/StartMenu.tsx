@@ -561,6 +561,16 @@ const StartMenu = () => {
                     <span>{t("run")}</span>
                   </button>
                   <button
+                    className="startMenuButton button"
+                    onClick={() => {
+                      closeMenu();
+                      window.location.assign("/play");
+                    }}
+                  >
+                    <Image src="/icons/internet-explorer.png" alt="" width={30} height={30} />
+                    <span>{locale === "pt-BR" ? "Desconectar" : "Disconnect"}</span>
+                  </button>
+                  <button
                     className={`startMenuButton button ${endgameAvailable ? "startMenuButton--danger" : ""} ${unseenActivity.some((activity) => activity.id === "endgame") ? "startMenuButton--attention" : ""}`}
                     onClick={() => {
                       closeMenu();

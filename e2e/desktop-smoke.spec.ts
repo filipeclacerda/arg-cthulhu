@@ -26,4 +26,17 @@ test.describe("relay to desktop smoke", () => {
     await expect(page.locator("#desktop-root")).toBeVisible({ timeout: 8_000 });
     await expect(page.locator("html")).toHaveAttribute("lang", "pt-BR");
   });
+
+  test("allows normal browser history on relay pages and exposes Disconnect only inside the desktop", async ({ page }) => {
+    await page.goto("/archive");
+    await page.goto("/play");
+    await page.goBack();
+    await expect(page).toHaveURL(/\/archive$/);
+
+    await page.goto("/desktop");
+    await expect(page.locator("#desktop-root")).toBeVisible({ timeout: 8_000 });
+    await page.getByRole("button", { name: /Start|Iniciar/i }).click();
+    await page.getByRole("button", { name: /Disconnect|Desconectar/i }).click();
+    await expect(page).toHaveURL(/\/play$/);
+  });
 });
